@@ -1,0 +1,74 @@
+---
+import { Image } from 'astro:assets';
+import profile from '../../assets/profile.jpeg';
+import { NAV_LINKS, SITE } from '../../lib/links';
+import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
+import ThemeToggle from './ThemeToggle.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
+
+interface Props {
+  locale: Locale;
+  current?: string;
+}
+
+const { locale, current = '/' } = Astro.props;
+const t = useTranslations(locale);
+const compactName = `P. ${SITE.name.split(' ').pop() ?? ''}`;
+---
+
+<nav
+  class="sticky top-0 z-50 flex items-center justify-between border-b border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] px-14 py-4 backdrop-blur-[14px] backdrop-saturate-150"
+>
+  <!-- Avatar + name -->
+  <a
+    href={localizedPath('/', locale)}
+    class="group flex items-center gap-3.5"
+    aria-label={SITE.name}
+  >
+    <span
+      class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-colors duration-200 group-hover:border-[var(--color-accent)]"
+    >
+      <Image
+        src={profile}
+        alt={SITE.name}
+        width={64}
+        height={64}
+        loading="eager"
+        class="h-full w-full object-cover [filter:grayscale(0.1)_contrast(1.05)] transition-[filter] duration-200 group-hover:[filter:none]"
+      />
+    </span>
+    <span
+      class="font-display text-[16px] font-bold tracking-[-0.01em] text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]"
+    >
+      {compactName}
+    </span>
+  </a>
+
+  <!-- Nav links -->
+  <ul class="flex gap-[2px] font-mono text-[13px] text-[var(--color-fg-dim)]">
+    {
+      NAV_LINKS.map((link) => {
+        const href = localizedPath(link.href, locale);
+        return (
+          <li>
+            <a
+              href={href}
+              class:list={[
+                'rounded-md px-3.5 py-1.5 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
+                current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
+              ]}
+            >
+              {t.nav[link.key]}
+            </a>
+          </li>
+        );
+      })
+    }
+  </ul>
+
+  <!-- Language + theme -->
+  <div class="flex items-center gap-3">
+    <LanguageSwitch locale={locale} ariaLabel={t.languageSwitchAria} />
+    <ThemeToggle ariaLabel={t.toggleThemeAria} />
+  </div>
+</nav>

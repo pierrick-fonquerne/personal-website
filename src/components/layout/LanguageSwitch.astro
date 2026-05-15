@@ -1,0 +1,44 @@
+---
+import { LOCALES, switchLocalePath, type Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  ariaLabel?: string;
+}
+
+const { locale, ariaLabel = 'Switch language' } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<div
+  class="inline-flex items-center gap-px rounded-md border border-[var(--color-line-strong)] p-[2px] font-mono text-[11px] uppercase"
+  aria-label={ariaLabel}
+>
+  {
+    LOCALES.map((l) => {
+      const isActive = l === locale;
+      const href = switchLocalePath(currentPath, locale, l);
+      return (
+        <a
+          href={href}
+          aria-current={isActive ? 'true' : undefined}
+          class:list={[
+            'relative cursor-pointer rounded-[3px] px-2 py-1 transition-colors duration-150',
+            isActive
+              ? 'text-[var(--color-bg)]'
+              : 'text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]',
+          ]}
+        >
+          {isActive && (
+            <span
+              transition:name="lang-pill"
+              class="absolute inset-0 -z-0 rounded-[3px] bg-[var(--color-fg)]"
+              aria-hidden="true"
+            />
+          )}
+          <span class="relative z-10">{l}</span>
+        </a>
+      );
+    })
+  }
+</div>
