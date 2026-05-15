@@ -1,0 +1,25 @@
+---
+interface Props {
+  href: string;
+  label: string;
+  external?: boolean;
+  class?: string;
+}
+
+const { href, label, external = false, class: className = '' } = Astro.props;
+
+const externalAttrs = external ? { target: '_blank', rel: 'noopener noreferrer' } : {};
+---
+
+<a
+  href={href}
+  aria-label={label}
+  title={label}
+  class:list={[
+    'inline-flex h-[34px] w-[34px] items-center justify-center rounded-lg text-[var(--color-fg-muted)] transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-accent)]',
+    className,
+  ]}
+  {...externalAttrs}
+>
+  <slot />
+</a>

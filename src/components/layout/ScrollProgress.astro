@@ -1,0 +1,43 @@
+---
+// Scroll progress bar pinned to the top of the viewport.
+---
+
+<div class="scroll-progress" aria-hidden="true">
+  <div id="scroll-progress-bar" class="bar"></div>
+</div>
+
+<style>
+  .scroll-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 100;
+    background: color-mix(in oklab, var(--color-fg) 5%, transparent);
+  }
+  .bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(
+      90deg,
+      var(--color-accent),
+      color-mix(in oklab, var(--color-accent) 40%, white)
+    );
+    transition: width 100ms linear;
+  }
+</style>
+
+<script>
+  const bar = document.getElementById('scroll-progress-bar');
+  if (bar) {
+    const update = () => {
+      const h = document.documentElement.scrollHeight - window.innerHeight;
+      const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+      bar.style.width = `${pct}%`;
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+</script>

@@ -1,0 +1,109 @@
+---
+import { Image } from 'astro:assets';
+import profile from '../../assets/profile.jpeg';
+import { NAV_LINKS, SOCIAL_LINKS, SITE } from '../../lib/links';
+import IconLink from '../ui/IconLink.astro';
+import PulseDot from '../ui/PulseDot.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import Github from '../ui/icons/Github.astro';
+import LinkedIn from '../ui/icons/LinkedIn.astro';
+import Mail from '../ui/icons/Mail.astro';
+
+interface Props {
+  current?: string;
+}
+
+const { current = '/' } = Astro.props;
+---
+
+<nav
+  class="sticky top-0 z-50 flex items-center justify-between border-b border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] px-14 py-4 backdrop-blur-[14px] backdrop-saturate-150"
+>
+  <!-- Avatar + Logo -->
+  <div class="flex items-center gap-3.5">
+    <a
+      href="/about"
+      class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-all duration-200 hover:border-[var(--color-accent)]"
+      aria-label="About Pierrick"
+    >
+      <Image
+        src={profile}
+        alt="Pierrick Fonquerne"
+        width={64}
+        height={64}
+        loading="eager"
+        class="h-full w-full object-cover [filter:grayscale(0.1)_contrast(1.05)] transition-[filter] duration-200 hover:[filter:none]"
+      />
+    </a>
+    <a
+      href="/"
+      class="flex items-baseline gap-[5px] text-[18px] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      <span>{SITE.shortName}</span>
+      <span
+        class="dot inline-block h-[7px] w-[7px] -translate-y-[2px] rounded-full bg-[var(--color-accent)]"
+      ></span>
+    </a>
+  </div>
+
+  <!-- Nav links -->
+  <ul class="flex gap-[2px] font-mono text-[13px] text-[var(--color-fg-dim)]">
+    {
+      NAV_LINKS.map((link) => (
+        <li>
+          <a
+            href={link.href}
+            class:list={[
+              'rounded-md px-3.5 py-1.5 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
+              current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
+            ]}
+          >
+            {link.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <!-- Status + socials + theme toggle -->
+  <div class="flex items-center gap-3.5">
+    <div
+      class="hidden items-center gap-2 font-mono text-xs text-[var(--color-fg-muted)] md:inline-flex"
+    >
+      <PulseDot color="success" />
+      <span>{SITE.status}</span>
+    </div>
+    <div class="flex gap-1 border-l border-[var(--color-line)] pl-3">
+      {
+        SOCIAL_LINKS.map((s) => (
+          <IconLink href={s.href} label={s.label} external={s.href.startsWith('http')}>
+            {s.icon === 'github' && <Github />}
+            {s.icon === 'linkedin' && <LinkedIn />}
+            {s.icon === 'mail' && <Mail />}
+          </IconLink>
+        ))
+      }
+    </div>
+    <ThemeToggle />
+  </div>
+</nav>
+
+<style>
+  .dot {
+    animation: dot-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes dot-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-accent) 60%, transparent);
+    }
+    50% {
+      box-shadow: 0 0 0 8px color-mix(in oklab, var(--color-accent) 0%, transparent);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dot {
+      animation: none;
+    }
+  }
+</style>

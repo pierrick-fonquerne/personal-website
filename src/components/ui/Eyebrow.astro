@@ -1,0 +1,38 @@
+---
+interface Props {
+  text: string;
+  class?: string;
+}
+
+const { text, class: className = '' } = Astro.props;
+---
+
+<div
+  class:list={[
+    'inline-flex items-center gap-3 font-mono text-xs tracking-[0.18em] text-[var(--color-accent)] uppercase',
+    className,
+  ]}
+>
+  <span class="line h-px w-9 bg-[var(--color-accent)]"></span>
+  <span>{text}</span>
+</div>
+
+<style>
+  .line {
+    animation: line-grow 1s 0.2s both ease-out;
+    transform-origin: left center;
+  }
+  @keyframes line-grow {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .line {
+      animation: none;
+    }
+  }
+</style>

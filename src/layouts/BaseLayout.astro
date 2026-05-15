@@ -1,0 +1,73 @@
+---
+import '../styles/globals.css';
+import Nav from '../components/layout/Nav.astro';
+import Footer from '../components/layout/Footer.astro';
+import ScrollProgress from '../components/layout/ScrollProgress.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  ogImage?: string;
+  current?: string;
+}
+
+const {
+  title,
+  description = 'Pierrick Fonquerne — passionate developer. Projects, writing and research.',
+  ogImage = '/og-default.png',
+  current,
+} = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
+---
+
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalURL} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:image" content={new URL(ogImage, Astro.site).toString()} />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fafaf7" media="(prefers-color-scheme: light)" />
+
+    {/* Restore saved theme before paint — avoids FOUC on initial render */}
+    <script is:inline>
+      (() => {
+        try {
+          const stored = localStorage.getItem('theme');
+          const preferred = window.matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark';
+          const theme = stored ?? preferred;
+          document.documentElement.setAttribute('data-theme', theme);
+        } catch {
+          /* localStorage unavailable */
+        }
+      })();
+    </script>
+  </head>
+  <body class="relative">
+    <ScrollProgress />
+    <Nav current={current} />
+    <main class="relative z-[3]">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
