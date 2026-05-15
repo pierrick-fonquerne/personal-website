@@ -14,7 +14,7 @@ export const SITE = {
   shortName: 'PF',
   location: 'Paris · France',
   email: 'pierrick.fonquerne@gmail.com',
-  status: 'Currently shipping',
+  status: 'Currently learning Rust & Deep learning',
   github: 'https://github.com/pierrick-fonquerne',
   linkedin: 'https://www.linkedin.com/in/pierrickfonquerne/',
 } as const;
