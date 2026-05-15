@@ -1,0 +1,22 @@
+---
+interface Props {
+  title: string;
+  count?: string;
+  class?: string;
+}
+
+const { title, count, class: className = '' } = Astro.props;
+---
+
+<div class:list={['mt-20 mb-6 flex items-baseline justify-between px-14', className]}>
+  <h2
+    class="font-mono text-[12px] font-medium tracking-[0.18em] text-[var(--color-fg-dim)] uppercase"
+  >
+    {title}
+  </h2>
+  {
+    count && (
+      <span class="font-mono text-[12px] tracking-[0.1em] text-[var(--color-fg-dim)]">{count}</span>
+    )
+  }
+</div>

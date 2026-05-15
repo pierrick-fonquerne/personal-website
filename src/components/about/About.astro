@@ -1,0 +1,47 @@
+---
+import { Image } from 'astro:assets';
+import profile from '../../assets/profile.jpeg';
+import SectionHead from '../ui/SectionHead.astro';
+import { useTranslations, type Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<SectionHead title={t.about.title} />
+
+<section class="mx-auto max-w-[1280px] px-14 pb-24">
+  <div
+    class="grid grid-cols-1 justify-items-center gap-6 border-t border-[var(--color-line)] pt-12"
+  >
+    <figure class="portrait-wrap relative w-full max-w-[420px]">
+      <div
+        class="portrait-frame pointer-events-none absolute -inset-2 rounded-md border border-[var(--color-line)]"
+      >
+      </div>
+      <div
+        class="portrait relative overflow-hidden rounded-sm border border-[var(--color-line-strong)]"
+        style="aspect-ratio: 4 / 5;"
+      >
+        <Image
+          src={profile}
+          alt="Pierrick Fonquerne"
+          widths={[360, 640, 960]}
+          sizes="(min-width: 768px) 420px, 80vw"
+          loading="lazy"
+          class="h-full w-full object-cover [filter:grayscale(0.15)_contrast(1.05)]"
+        />
+      </div>
+      <figcaption
+        class="mt-4 flex items-center justify-between font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase"
+      >
+        <span>[PHOTO · {t.about.photoYear}]</span>
+        <span class="text-[var(--color-accent)]">{t.about.caption}</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>

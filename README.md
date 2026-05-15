@@ -1,6 +1,6 @@
 # personal-website
 
-My personal site & portfolio — a place to share projects, writing and research.
+My personal site & portfolio. A place to share projects, writing and research.
 
 Built with **Astro 5**, **TypeScript** (strict), **Tailwind CSS 4** and **MDX**.
 

@@ -1,0 +1,80 @@
+---
+import SectionHead from '../ui/SectionHead.astro';
+import { useTranslations, type Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<SectionHead title={t.career.title} count={t.career.count} />
+
+<div class="career-list mx-auto max-w-[1280px] px-14 pb-12">
+  {
+    t.career.items.map((item) => (
+      <article class="career-row reveal grid grid-cols-1 gap-3 border-t border-[var(--color-line)] py-7 md:grid-cols-[220px_1fr]">
+        <div class="font-mono text-[12px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase">
+          {item.period}
+        </div>
+        <div>
+          <h3 class="text-[22px] font-semibold tracking-[-0.01em] text-[var(--color-fg)]">
+            {item.role}
+          </h3>
+          <div class="mt-1 font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-muted)]">
+            {item.place}
+          </div>
+          <p class="mt-3 max-w-[68ch] text-[15px] leading-[1.55] text-[var(--color-fg-muted)]">
+            {item.summary}
+          </p>
+        </div>
+      </article>
+    ))
+  }
+  <div class="border-t border-[var(--color-line)]" aria-hidden="true"></div>
+</div>
+
+<style>
+  .career-row {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.7s ease-out,
+      transform 0.7s ease-out;
+  }
+  .career-row.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .career-row {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const reveal = () => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add('in'), i * 80);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+    document
+      .querySelectorAll<HTMLElement>('.career-row:not(.in)')
+      .forEach((el) => observer.observe(el));
+  };
+
+  reveal();
+  document.addEventListener('astro:page-load', reveal);
+</script>

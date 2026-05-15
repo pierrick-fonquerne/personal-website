@@ -17,7 +17,7 @@ export interface SocialLink {
 export const SITE = {
   name: 'Pierrick Fonquerne',
   shortName: 'PF',
-  location: 'Paris · France',
+  location: 'Limoux · Aude · France',
   email: 'pierrick.fonquerne@gmail.com',
   github: 'https://github.com/pierrick-fonquerne',
   linkedin: 'https://www.linkedin.com/in/pierrickfonquerne/',
