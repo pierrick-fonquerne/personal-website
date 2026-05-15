@@ -21,6 +21,7 @@ const currentPath = Astro.url.pathname;
       return (
         <a
           href={href}
+          data-locale={l}
           aria-current={isActive ? 'true' : undefined}
           class:list={[
             'relative cursor-pointer rounded-[3px] px-2 py-1 transition-colors duration-150',
@@ -42,3 +43,22 @@ const currentPath = Astro.url.pathname;
     })
   }
 </div>
+
+<script>
+  // Persist the user's manual language choice so the first-visit auto-detect
+  // in BaseLayout becomes a no-op on future loads.
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const anchor = target.closest<HTMLAnchorElement>('a[data-locale]');
+    if (!anchor) return;
+    const loc = anchor.getAttribute('data-locale');
+    if (loc) {
+      try {
+        localStorage.setItem('lang', loc);
+      } catch {
+        // localStorage unavailable
+      }
+    }
+  });
+</script>
