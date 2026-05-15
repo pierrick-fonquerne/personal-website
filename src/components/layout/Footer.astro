@@ -18,7 +18,8 @@ const siteVersion = 'v2026.05';
         // Colophon
       </h4>
       <p class="max-w-[36ch] text-[15px] leading-[1.55] text-[var(--color-fg-muted)]">
-        Hand-built in Paris with Astro · Tailwind · MDX. Fonts: Geist, Inter, JetBrains Mono.
+        This site is hand-built. No trackers, no analytics, no popups. Just code. Astro · Tailwind
+        · MDX.
       </p>
     </div>
 
@@ -111,11 +112,7 @@ const siteVersion = 'v2026.05';
   <div
     class="flex flex-col items-start justify-between gap-3 border-t border-[var(--color-line)] pt-6 font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)] md:flex-row md:items-center"
   >
-    <div>
-      © {new Date().getFullYear()}
-      {SITE.name.toUpperCase()} ·
-      <span class="text-[var(--color-fg-muted)]">{siteVersion}</span>
-    </div>
-    <div>BUILT IN PARIS</div>
+    <div>© {new Date().getFullYear()} {SITE.name.toUpperCase()}</div>
+    <div class="text-[var(--color-fg-muted)]">{siteVersion}</div>
   </div>
 </footer>
