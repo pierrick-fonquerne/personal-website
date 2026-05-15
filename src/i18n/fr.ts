@@ -131,12 +131,13 @@ const fr: Translations = {
   },
   stack: {
     title: '// Stack',
-    count: '09 / domaines',
+    count: '10 / domaines',
     groups: [
       { category: 'Architecture', techs: 'CQRS · Event Sourcing' },
       { category: 'Frontend', techs: 'Angular · React' },
       { category: 'Langages', techs: 'C# .NET · TypeScript · Rust' },
       { category: 'Conception', techs: 'Domain-Driven Design' },
+      { category: 'Principes', techs: 'Clean Architecture · SOLID' },
       { category: 'Bases de données', techs: 'SQL Server · Postgres (Marten) · MongoDB' },
       { category: 'Tests', techs: 'xUnit · Testcontainers' },
       { category: 'Cloud', techs: 'Azure' },
