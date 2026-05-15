@@ -1,0 +1,4 @@
+@import 'tailwindcss';
+
+/* Design tokens — defined in tokens.css (étape 2) */
+@import './tokens.css';
