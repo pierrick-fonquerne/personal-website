@@ -1,3 +1,10 @@
+# Brainstorming visual companion
+.superpowers/
+
+# Astro
+dist/
+.astro/
+
 # Logs
 logs
 *.log
