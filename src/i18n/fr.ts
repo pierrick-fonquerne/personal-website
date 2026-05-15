@@ -18,9 +18,6 @@ const fr: Translations = {
       'Le squelette est en place — le hero, le marquee et la section à propos arrivent à l’étape 3.',
   },
   footer: {
-    colophonTitle: '// Colophon',
-    colophonBody:
-      'Ce site est construit à la main. Pas de tracker, pas d’analytics, pas de popup. Juste du code. Astro · Tailwind · MDX.',
     siteTitle: '// Site',
     elsewhereTitle: '// Ailleurs',
     contactTitle: '// Contact',

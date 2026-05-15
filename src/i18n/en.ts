@@ -15,8 +15,6 @@ export interface Translations {
     placeholder: string;
   };
   footer: {
-    colophonTitle: string;
-    colophonBody: string;
     siteTitle: string;
     elsewhereTitle: string;
     contactTitle: string;
@@ -46,9 +44,6 @@ const en: Translations = {
     placeholder: 'Layout scaffold ready — hero, marquee and about section land in étape 3.',
   },
   footer: {
-    colophonTitle: '// Colophon',
-    colophonBody:
-      'This site is hand-built. No trackers, no analytics, no popups. Just code. Astro · Tailwind · MDX.',
     siteTitle: '// Site',
     elsewhereTitle: '// Elsewhere',
     contactTitle: '// Contact',
