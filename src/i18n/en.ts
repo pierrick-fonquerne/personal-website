@@ -56,8 +56,18 @@ export interface Translations {
   };
   about: {
     title: string;
-    caption: string;
+    greeting: string;
+    lead: string;
     photoYear: string;
+    contactLabel: string;
+    stats: {
+      xpLabel: string;
+      xpValue: string;
+      basedLabel: string;
+      basedValue: string;
+      offHoursLabel: string;
+      offHoursValue: string;
+    };
   };
   footer: {
     siteTitle: string;
@@ -172,8 +182,18 @@ const en: Translations = {
   },
   about: {
     title: '// About',
-    caption: 'Pierrick Fonquerne · Limoux, FR',
+    greeting: 'Hi, I’m Pierrick.',
+    lead: 'A passionate full-stack developer building software since 2012, from a small village in southern France.',
     photoYear: '2025',
+    contactLabel: '// Find me elsewhere',
+    stats: {
+      xpLabel: 'XP',
+      xpValue: '12+ years',
+      basedLabel: 'Based',
+      basedValue: 'Limoux · Aude · FR',
+      offHoursLabel: 'Off-hours',
+      offHoursValue: 'Volunteer firefighter',
+    },
   },
   footer: {
     siteTitle: '// Site',

@@ -2,6 +2,10 @@
 import { Image } from 'astro:assets';
 import profile from '../../assets/profile.jpeg';
 import SectionHead from '../ui/SectionHead.astro';
+import Github from '../ui/icons/Github.astro';
+import LinkedIn from '../ui/icons/LinkedIn.astro';
+import Mail from '../ui/icons/Mail.astro';
+import { SOCIAL_LINKS } from '../../lib/links';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -10,6 +14,11 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+const stats = [
+  { label: t.about.stats.xpLabel, value: t.about.stats.xpValue },
+  { label: t.about.stats.basedLabel, value: t.about.stats.basedValue },
+  { label: t.about.stats.offHoursLabel, value: t.about.stats.offHoursValue },
+];
 ---
 
 <section
@@ -20,13 +29,12 @@ const t = useTranslations(locale);
   <SectionHead id="about-heading" title={t.about.title} />
 
   <div
-    class="grid grid-cols-1 justify-items-center gap-6 border-t border-[var(--color-line)] pt-12"
+    class="grid grid-cols-1 gap-12 border-t border-[var(--color-line)] pt-12 md:grid-cols-[420px_1fr]"
   >
     <figure class="portrait-wrap relative w-full max-w-[420px]">
       <div
         class="portrait-frame pointer-events-none absolute -inset-2 rounded-md border border-[var(--color-line)]"
-      >
-      </div>
+      ></div>
       <div
         class="portrait relative overflow-hidden rounded-sm border border-[var(--color-line-strong)]"
         style="aspect-ratio: 4 / 5;"
@@ -41,11 +49,64 @@ const t = useTranslations(locale);
         />
       </div>
       <figcaption
-        class="mt-4 flex items-center justify-between font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase"
+        class="mt-4 font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase"
       >
-        <span>[PHOTO · {t.about.photoYear}]</span>
-        <span class="text-[var(--color-accent)]">{t.about.caption}</span>
+        [PHOTO · {t.about.photoYear}]
       </figcaption>
     </figure>
+
+    <div class="flex flex-col">
+      <h3
+        class="font-display text-[clamp(28px,3.4vw,40px)] leading-[1.1] font-extrabold tracking-[-0.02em] text-[var(--color-fg)]"
+      >
+        {t.about.greeting}
+      </h3>
+      <p class="mt-5 max-w-[52ch] text-[18px] leading-[1.55] text-[var(--color-fg-muted)]">
+        {t.about.lead}
+      </p>
+
+      <dl
+        class="mt-10 grid grid-cols-1 gap-x-6 gap-y-5 border-t border-[var(--color-line)] pt-6 sm:grid-cols-[140px_1fr]"
+      >
+        {
+          stats.map((s) => (
+            <Fragment>
+              <dt class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+                {s.label}
+              </dt>
+              <dd class="text-[15px] text-[var(--color-fg)]">{s.value}</dd>
+            </Fragment>
+          ))
+        }
+      </dl>
+
+      <div class="mt-10 border-t border-[var(--color-line)] pt-6">
+        <div
+          class="mb-3 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
+        >
+          {t.about.contactLabel}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {
+            SOCIAL_LINKS.map((s) => {
+              const external = s.href.startsWith('http');
+              return (
+                <a
+                  href={s.href}
+                  target={external ? '_blank' : undefined}
+                  rel={external ? 'noopener noreferrer' : undefined}
+                  class="inline-flex items-center gap-2 rounded-md border border-[var(--color-line-strong)] px-3.5 py-2 font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg)] uppercase transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  {s.icon === 'github' && <Github class="h-[14px] w-[14px]" />}
+                  {s.icon === 'linkedin' && <LinkedIn class="h-[14px] w-[14px]" />}
+                  {s.icon === 'mail' && <Mail class="h-[14px] w-[14px]" />}
+                  {t.socials[s.labelKey]}
+                </a>
+              );
+            })
+          }
+        </div>
+      </div>
+    </div>
   </div>
 </section>

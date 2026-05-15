@@ -102,8 +102,18 @@ const fr: Translations = {
   },
   about: {
     title: '// À propos',
-    caption: 'Pierrick Fonquerne · Limoux, FR',
+    greeting: 'Salut, moi c’est Pierrick.',
+    lead: 'Développeur full-stack passionné, je construis des logiciels depuis 2012 — depuis un petit village du sud de la France.',
     photoYear: '2025',
+    contactLabel: '// Me retrouver ailleurs',
+    stats: {
+      xpLabel: 'XP',
+      xpValue: '12+ ans',
+      basedLabel: 'Localisation',
+      basedValue: 'Limoux · Aude · FR',
+      offHoursLabel: 'Hors travail',
+      offHoursValue: 'Sapeur-pompier volontaire',
+    },
   },
   footer: {
     siteTitle: '// Site',
