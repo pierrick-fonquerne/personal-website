@@ -12,9 +12,13 @@ const { locale } = Astro.props;
 const t = useTranslations(locale);
 ---
 
-<SectionHead title={t.about.title} />
+<section
+  id="about"
+  aria-labelledby="about-heading"
+  class="mx-auto mt-20 max-w-[1280px] px-14 pb-24"
+>
+  <SectionHead id="about-heading" title={t.about.title} />
 
-<section class="mx-auto max-w-[1280px] px-14 pb-24">
   <div
     class="grid grid-cols-1 justify-items-center gap-6 border-t border-[var(--color-line)] pt-12"
   >

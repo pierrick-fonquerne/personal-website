@@ -34,6 +34,7 @@ const fr: Translations = {
   career: {
     title: '// Parcours',
     count: '07 / postes',
+    nowLabel: 'AUJ.',
     items: [
       {
         period: '2021 — AUJ.',
@@ -113,6 +114,9 @@ const fr: Translations = {
     github: 'GitHub',
     linkedin: 'LinkedIn',
     email: 'Email',
+  },
+  a11y: {
+    skipToContent: 'Aller au contenu',
   },
 };
 

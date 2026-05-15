@@ -1,15 +1,17 @@
 ---
 interface Props {
+  id?: string;
   title: string;
   count?: string;
   class?: string;
 }
 
-const { title, count, class: className = '' } = Astro.props;
+const { id, title, count, class: className = '' } = Astro.props;
 ---
 
-<div class:list={['mt-20 mb-6 flex items-baseline justify-between px-14', className]}>
+<div class:list={['mb-6 flex items-baseline justify-between', className]}>
   <h2
+    id={id}
     class="font-mono text-[12px] font-medium tracking-[0.18em] text-[var(--color-fg-dim)] uppercase"
   >
     {title}

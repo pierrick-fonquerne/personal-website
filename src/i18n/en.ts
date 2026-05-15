@@ -43,7 +43,11 @@ export interface Translations {
   career: {
     title: string;
     count: string;
+    nowLabel: string;
     items: CareerItem[];
+  };
+  a11y: {
+    skipToContent: string;
   };
   stack: {
     title: string;
@@ -101,6 +105,7 @@ const en: Translations = {
   career: {
     title: '// Journey',
     count: '07 / roles',
+    nowLabel: 'NOW',
     items: [
       {
         period: '2021 — NOW',
@@ -179,6 +184,9 @@ const en: Translations = {
     github: 'GitHub',
     linkedin: 'LinkedIn',
     email: 'Email',
+  },
+  a11y: {
+    skipToContent: 'Skip to content',
   },
 };
 
