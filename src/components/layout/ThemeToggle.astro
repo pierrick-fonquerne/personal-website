@@ -29,10 +29,14 @@ const { ariaLabel = 'Toggle theme' } = Astro.props;
 </style>
 
 <script>
-  const toggle = document.getElementById('theme-toggle');
-  const html = document.documentElement;
+  // Event delegation on document so the listener survives view transitions
+  // (the button element is re-rendered on every navigation).
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest('#theme-toggle')) return;
 
-  toggle?.addEventListener('click', () => {
+    const html = document.documentElement;
     const current = html.getAttribute('data-theme') ?? 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
     html.setAttribute('data-theme', next);
