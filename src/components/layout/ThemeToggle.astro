@@ -1,13 +1,19 @@
 ---
 import Sun from '../ui/icons/Sun.astro';
 import Moon from '../ui/icons/Moon.astro';
+
+interface Props {
+  ariaLabel?: string;
+}
+
+const { ariaLabel = 'Toggle theme' } = Astro.props;
 ---
 
 <button
   id="theme-toggle"
   type="button"
   class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-[var(--color-line-strong)] bg-transparent text-[var(--color-fg)] transition-colors duration-200 hover:bg-[var(--color-hover)]"
-  aria-label="Toggle theme"
+  aria-label={ariaLabel}
 >
   <span class="icon-light"><Sun /></span>
   <span class="icon-dark hidden"><Moon /></span>

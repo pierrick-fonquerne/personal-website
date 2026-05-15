@@ -1,12 +1,17 @@
+import type { Translations } from '../i18n/en';
+
+export type NavKey = keyof Translations['nav'];
+
 export interface NavLink {
+  key: NavKey;
   href: string;
-  label: string;
 }
 
 export interface SocialLink {
   href: string;
-  label: string;
   icon: 'github' | 'linkedin' | 'mail' | 'rss';
+  /** Key into translations.socials for the accessible label. */
+  labelKey: keyof Translations['socials'];
 }
 
 export const SITE = {
@@ -14,21 +19,22 @@ export const SITE = {
   shortName: 'PF',
   location: 'Paris · France',
   email: 'pierrick.fonquerne@gmail.com',
-  status: 'Currently learning Rust & Deep learning',
   github: 'https://github.com/pierrick-fonquerne',
   linkedin: 'https://www.linkedin.com/in/pierrickfonquerne/',
+  githubHandle: 'github.com/pierrick-fonquerne',
+  linkedinHandle: 'linkedin.com/in/pierrickfonquerne',
 } as const;
 
-export const NAV_LINKS: NavLink[] = [
-  { href: '/', label: 'index' },
-  { href: '/work', label: 'work' },
-  { href: '/writing', label: 'writing' },
-  { href: '/research', label: 'research' },
-  { href: '/about', label: 'about' },
+export const NAV_LINKS: readonly NavLink[] = [
+  { key: 'index', href: '/' },
+  { key: 'work', href: '/work' },
+  { key: 'writing', href: '/writing' },
+  { key: 'research', href: '/research' },
+  { key: 'about', href: '/about' },
 ];
 
-export const SOCIAL_LINKS: SocialLink[] = [
-  { href: SITE.github, label: 'GitHub', icon: 'github' },
-  { href: SITE.linkedin, label: 'LinkedIn', icon: 'linkedin' },
-  { href: `mailto:${SITE.email}`, label: 'Email', icon: 'mail' },
+export const SOCIAL_LINKS: readonly SocialLink[] = [
+  { href: SITE.github, icon: 'github', labelKey: 'github' },
+  { href: SITE.linkedin, icon: 'linkedin', labelKey: 'linkedin' },
+  { href: `mailto:${SITE.email}`, icon: 'mail', labelKey: 'email' },
 ];

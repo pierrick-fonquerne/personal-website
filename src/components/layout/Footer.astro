@@ -1,10 +1,17 @@
 ---
 import { NAV_LINKS, SITE } from '../../lib/links';
+import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
 import Rss from '../ui/icons/Rss.astro';
 
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
 const siteVersion = 'v2026.05';
 ---
 
@@ -15,11 +22,10 @@ const siteVersion = 'v2026.05';
       <h4
         class="mb-3.5 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
       >
-        // Colophon
+        {t.footer.colophonTitle}
       </h4>
       <p class="max-w-[36ch] text-[15px] leading-[1.55] text-[var(--color-fg-muted)]">
-        This site is hand-built. No trackers, no analytics, no popups. Just code. Astro · Tailwind
-        · MDX.
+        {t.footer.colophonBody}
       </p>
     </div>
 
@@ -28,17 +34,17 @@ const siteVersion = 'v2026.05';
       <h4
         class="mb-3.5 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
       >
-        // Site
+        {t.footer.siteTitle}
       </h4>
       <ul class="flex flex-col gap-2 text-sm text-[var(--color-fg-muted)]">
         {
           NAV_LINKS.map((link) => (
             <li>
               <a
-                href={link.href}
+                href={localizedPath(link.href, locale)}
                 class="transition-colors duration-200 hover:text-[var(--color-accent)]"
               >
-                {link.label}
+                {t.nav[link.key]}
               </a>
             </li>
           ))
@@ -51,7 +57,7 @@ const siteVersion = 'v2026.05';
       <h4
         class="mb-3.5 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
       >
-        // Elsewhere
+        {t.footer.elsewhereTitle}
       </h4>
       <ul class="flex flex-col gap-2 text-sm text-[var(--color-fg-muted)]">
         <li>
@@ -62,7 +68,7 @@ const siteVersion = 'v2026.05';
             class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
           >
             <Github class="h-[14px] w-[14px] opacity-70" />
-            github.com/pierrick-fonquerne
+            {SITE.githubHandle}
           </a>
         </li>
         <li>
@@ -73,16 +79,16 @@ const siteVersion = 'v2026.05';
             class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
           >
             <LinkedIn class="h-[14px] w-[14px] opacity-70" />
-            linkedin.com/in/pierrickfonquerne
+            {SITE.linkedinHandle}
           </a>
         </li>
         <li>
           <a
-            href="/rss.xml"
+            href={localizedPath('/rss.xml', locale)}
             class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
           >
             <Rss class="h-[14px] w-[14px] opacity-70" />
-            RSS feed
+            {t.footer.rssLabel}
           </a>
         </li>
       </ul>
@@ -93,7 +99,7 @@ const siteVersion = 'v2026.05';
       <h4
         class="mb-3.5 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
       >
-        // Contact
+        {t.footer.contactTitle}
       </h4>
       <ul class="flex flex-col gap-2 text-sm text-[var(--color-fg-muted)]">
         <li>
