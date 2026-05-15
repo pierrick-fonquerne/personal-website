@@ -18,7 +18,6 @@ export interface Translations {
     siteTitle: string;
     elsewhereTitle: string;
     contactTitle: string;
-    rssLabel: string;
   };
   socials: {
     github: string;
@@ -40,14 +39,13 @@ const en: Translations = {
   toggleThemeAria: 'Toggle theme',
   languageSwitchAria: 'Switch language',
   hero: {
-    eyebrow: 'PORTFOLIO · v2026.05',
+    eyebrow: 'PORTFOLIO',
     placeholder: 'Layout scaffold ready — hero, marquee and about section land in étape 3.',
   },
   footer: {
     siteTitle: '// Site',
     elsewhereTitle: '// Elsewhere',
     contactTitle: '// Contact',
-    rssLabel: 'RSS feed',
   },
   socials: {
     github: 'GitHub',

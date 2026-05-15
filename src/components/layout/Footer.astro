@@ -4,7 +4,6 @@ import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
-import Rss from '../ui/icons/Rss.astro';
 
 interface Props {
   locale: Locale;
@@ -24,7 +23,9 @@ const siteVersion = 'v2026.05';
       >
         {t.footer.siteTitle}
       </h4>
-      <ul class="flex flex-col gap-2 text-sm text-[var(--color-fg-muted)]">
+      <ul
+        class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm text-[var(--color-fg-muted)]"
+      >
         {
           NAV_LINKS.map((link) => (
             <li>
@@ -68,15 +69,6 @@ const siteVersion = 'v2026.05';
           >
             <LinkedIn class="h-[14px] w-[14px] opacity-70" />
             {SITE.linkedinHandle}
-          </a>
-        </li>
-        <li>
-          <a
-            href={localizedPath('/rss.xml', locale)}
-            class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
-          >
-            <Rss class="h-[14px] w-[14px] opacity-70" />
-            {t.footer.rssLabel}
           </a>
         </li>
       </ul>

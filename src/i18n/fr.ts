@@ -13,7 +13,7 @@ const fr: Translations = {
   toggleThemeAria: 'Changer de thème',
   languageSwitchAria: 'Changer de langue',
   hero: {
-    eyebrow: 'PORTFOLIO · v2026.05',
+    eyebrow: 'PORTFOLIO',
     placeholder:
       'Le squelette est en place — le hero, le marquee et la section à propos arrivent à l’étape 3.',
   },
@@ -21,7 +21,6 @@ const fr: Translations = {
     siteTitle: '// Site',
     elsewhereTitle: '// Ailleurs',
     contactTitle: '// Contact',
-    rssLabel: 'Flux RSS',
   },
   socials: {
     github: 'GitHub',
