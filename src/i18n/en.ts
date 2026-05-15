@@ -243,7 +243,7 @@ const en: Translations = {
   about: {
     title: '// About',
     greeting: 'Hi, I’m Pierrick.',
-    lead: 'A passionate full-stack developer since 2012, from a small village in southern France.',
+    lead: 'Hooked on code since childhood, professional full-stack developer since 2014. Based in a small village in southern France.',
     photoYear: '2025',
     contactLabel: '// Find me elsewhere',
     stats: {

@@ -148,7 +148,7 @@ const fr: Translations = {
   about: {
     title: '// À propos',
     greeting: 'Salut, moi c’est Pierrick.',
-    lead: 'Développeur full-stack passionné, depuis 2012 depuis un petit village du sud de la France.',
+    lead: 'Passionné par le code depuis l’enfance, développeur full-stack professionnel depuis 2014. Basé dans un petit village du sud de la France.',
     photoYear: '2025',
     contactLabel: '// Me retrouver ailleurs',
     stats: {
