@@ -2,11 +2,11 @@ import type { Translations } from './en';
 
 const fr: Translations = {
   nav: {
-    index: 'accueil',
-    work: 'travaux',
-    writing: 'écrits',
-    research: 'recherche',
-    about: 'à propos',
+    home: 'Accueil',
+    projects: 'Projets',
+    blog: 'Blog',
+    research: 'Recherche',
+    about: 'À propos',
   },
   status: 'J’apprends Rust & le deep learning',
   aboutAvatarAria: 'À propos de Pierrick',
