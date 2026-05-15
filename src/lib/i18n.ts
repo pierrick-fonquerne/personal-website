@@ -3,8 +3,8 @@ import fr from '../i18n/fr';
 
 export type Locale = 'en' | 'fr';
 
-export const DEFAULT_LOCALE: Locale = 'en';
-export const LOCALES: readonly Locale[] = ['en', 'fr'] as const;
+export const DEFAULT_LOCALE: Locale = 'fr';
+export const LOCALES: readonly Locale[] = ['fr', 'en'] as const;
 
 const dictionaries: Record<Locale, Translations> = { en, fr };
 

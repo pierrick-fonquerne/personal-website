@@ -75,19 +75,49 @@ const t = useTranslations(locale);
 
     <ClientRouter />
 
-    {/* Restore saved theme before paint, avoids FOUC on initial render */}
+    {/* First-visit language detection: redirect non-FR browsers from / to /en/.
+        After redirect or first FR visit, the choice is persisted in localStorage
+        so this block is a no-op on later loads (and the manual switcher always wins). */}
     <script is:inline>
       (() => {
         try {
-          const stored = localStorage.getItem('theme');
-          const preferred = window.matchMedia('(prefers-color-scheme: light)').matches
-            ? 'light'
-            : 'dark';
-          const theme = stored ?? preferred;
-          document.documentElement.setAttribute('data-theme', theme);
+          if (localStorage.getItem('lang')) return;
+          const onEn = location.pathname.startsWith('/en');
+          const browserFr = (navigator.language || 'fr').toLowerCase().startsWith('fr');
+          if (browserFr) {
+            localStorage.setItem('lang', 'fr');
+            return;
+          }
+          localStorage.setItem('lang', 'en');
+          if (!onEn) {
+            const sub = location.pathname === '/' ? '/' : location.pathname;
+            location.replace('/en' + (sub === '/' ? '/' : sub));
+          }
         } catch {
-          /* localStorage unavailable */
+          /* navigator or localStorage unavailable, do nothing */
         }
+      })();
+    </script>
+
+    {/* Apply the stored theme before paint and on every view-transition swap.
+        Without astro:before-swap, ClientRouter resets <html data-theme> back to
+        the SSR default whenever the user navigates (e.g. switches language). */}
+    <script is:inline>
+      (() => {
+        const apply = (doc) => {
+          try {
+            const stored = localStorage.getItem('theme');
+            const preferred = window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark';
+            const theme = stored ?? preferred;
+            (doc || document).documentElement.setAttribute('data-theme', theme);
+          } catch {
+            /* localStorage unavailable */
+          }
+        };
+        apply();
+        document.addEventListener('astro:before-swap', (event) => apply(event.newDocument));
       })();
     </script>
   </head>

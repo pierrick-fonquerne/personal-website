@@ -8,8 +8,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://pierrick.fonquerne.dev',
   i18n: {
-    defaultLocale: 'en',
-    locales: ['en', 'fr'],
+    defaultLocale: 'fr',
+    locales: ['fr', 'en'],
     routing: {
       prefixDefaultLocale: false,
     },
