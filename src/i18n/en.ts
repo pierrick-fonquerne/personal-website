@@ -57,8 +57,6 @@ export interface Translations {
     title: string;
     count: string;
     nowLabel: string;
-    photoAlt: string;
-    photoYear: string;
     volunteering: CareerItem[];
     interestsLabel: string;
     interests: string[];
@@ -208,8 +206,6 @@ const en: Translations = {
     title: '// Beyond work',
     count: '02 / commitments',
     nowLabel: 'NOW',
-    photoAlt: 'Pierrick on duty as a volunteer firefighter',
-    photoYear: '2024',
     volunteering: [
       {
         period: '2019 - NOW',

@@ -111,8 +111,6 @@ const fr: Translations = {
     title: '// Hors travail',
     count: '02 / engagements',
     nowLabel: 'AUJ.',
-    photoAlt: 'Pierrick en intervention en tant que sapeur-pompier volontaire',
-    photoYear: '2024',
     volunteering: [
       {
         period: '2019 - AUJ.',
