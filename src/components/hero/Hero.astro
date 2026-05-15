@@ -16,6 +16,7 @@ const cells = [
   { label: m.focus, value: m.values.focus, accent: true },
   { label: m.based, value: m.values.based },
   { label: m.status, value: m.values.status, status: true },
+  { label: m.languages, value: m.values.languages },
 ];
 ---
 
@@ -36,7 +37,7 @@ const cells = [
   </p>
 
   <div
-    class="fade-up grid-info mt-[72px] grid grid-cols-1 gap-6 border-t border-[var(--color-line)] pt-7 sm:grid-cols-2 md:grid-cols-4"
+    class="fade-up grid-info mt-[72px] grid grid-cols-1 gap-6 border-t border-[var(--color-line)] pt-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
   >
     {
       cells.map((cell) => (

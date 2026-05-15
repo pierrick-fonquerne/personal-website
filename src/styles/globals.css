@@ -61,7 +61,7 @@ body::before {
   outline: none;
 }
 
-/* Skip-to-content link — visually-hidden by default, revealed on focus.
+/* Skip-to-content link, visually-hidden by default, revealed on focus.
    Uses the A11y Project's bulletproof pattern (clip-path + absolute 1x1px)
    so a stray reset or cascade order cannot reveal it accidentally. */
 .skip-link {

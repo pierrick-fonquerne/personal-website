@@ -22,7 +22,7 @@ interface Props {
 
 const {
   title,
-  description = 'Pierrick Fonquerne — passionate developer. Projects, writing and research.',
+  description = 'Pierrick Fonquerne, passionate developer. Projects, writing and research.',
   ogImage = '/og-default.png',
   current,
   locale = getLocaleFromUrl(Astro.url),
@@ -75,7 +75,7 @@ const t = useTranslations(locale);
 
     <ClientRouter />
 
-    {/* Restore saved theme before paint — avoids FOUC on initial render */}
+    {/* Restore saved theme before paint, avoids FOUC on initial render */}
     <script is:inline>
       (() => {
         try {

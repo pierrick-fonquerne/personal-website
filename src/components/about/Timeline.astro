@@ -1,0 +1,118 @@
+---
+import type { CareerItem } from '../../i18n/en';
+
+interface Props {
+  items: readonly CareerItem[];
+  /** When set, the first item shows a highlighted dot and a small accent badge with this text. */
+  nowLabel?: string;
+}
+
+const { items, nowLabel } = Astro.props;
+---
+
+<ol class="timeline relative m-0 list-none pl-7">
+  {
+    items.map((item, idx) => {
+      const isCurrent = idx === 0 && Boolean(nowLabel);
+      return (
+        <li
+          class="timeline-row reveal relative grid grid-cols-1 gap-3 border-t border-[var(--color-line)] py-7 md:grid-cols-[220px_1fr]"
+          data-current={isCurrent ? 'true' : undefined}
+        >
+          <div class="flex items-center gap-3 font-mono text-[12px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase">
+            <span>{item.period}</span>
+            {isCurrent && (
+              <span class="inline-flex items-center rounded-full bg-[var(--color-accent)] px-2 py-[2px] text-[10px] tracking-[0.16em] text-[var(--color-bg)]">
+                {nowLabel}
+              </span>
+            )}
+          </div>
+          <div>
+            <h3 class="text-[22px] font-semibold tracking-[-0.01em] text-[var(--color-fg)]">
+              {item.role}
+            </h3>
+            <div class="mt-1 font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-muted)]">
+              {item.place}
+            </div>
+            <p class="mt-3 max-w-[68ch] text-[15px] leading-[1.55] text-[var(--color-fg-muted)]">
+              {item.summary}
+            </p>
+          </div>
+        </li>
+      );
+    })
+  }
+  <li class="border-t border-[var(--color-line)]" aria-hidden="true"></li>
+</ol>
+
+<style>
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 11px;
+    width: 1px;
+    background: var(--color-line-strong);
+  }
+  .timeline-row::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 36px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--color-bg);
+    border: 1px solid var(--color-line-strong);
+    transition:
+      background 0.2s,
+      border-color 0.2s,
+      box-shadow 0.2s;
+  }
+  .timeline-row[data-current='true']::before {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 22%, transparent);
+  }
+  .timeline-row {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.7s ease-out,
+      transform 0.7s ease-out;
+  }
+  .timeline-row.in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .timeline-row {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const reveal = () => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => entry.target.classList.add('in'), i * 80);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 },
+    );
+    document
+      .querySelectorAll<HTMLElement>('.timeline-row:not(.in)')
+      .forEach((el) => observer.observe(el));
+  };
+
+  reveal();
+  document.addEventListener('astro:page-load', reveal);
+</script>

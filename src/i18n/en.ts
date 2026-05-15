@@ -32,11 +32,13 @@ export interface Translations {
       focus: string;
       based: string;
       status: string;
+      languages: string;
       values: {
         role: string;
         focus: string;
         based: string;
         status: string;
+        languages: string;
       };
     };
   };
@@ -45,6 +47,21 @@ export interface Translations {
     count: string;
     nowLabel: string;
     items: CareerItem[];
+  };
+  education: {
+    title: string;
+    count: string;
+    items: CareerItem[];
+  };
+  beyondWork: {
+    title: string;
+    count: string;
+    nowLabel: string;
+    photoAlt: string;
+    photoYear: string;
+    volunteering: CareerItem[];
+    interestsLabel: string;
+    interests: string[];
   };
   a11y: {
     skipToContent: string;
@@ -63,10 +80,10 @@ export interface Translations {
     stats: {
       xpLabel: string;
       xpValue: string;
+      ageLabel: string;
+      ageUnit: string;
       basedLabel: string;
       basedValue: string;
-      offHoursLabel: string;
-      offHoursValue: string;
     };
   };
   footer: {
@@ -104,11 +121,13 @@ const en: Translations = {
       focus: 'Focus',
       based: 'Based',
       status: 'Status',
+      languages: 'Languages',
       values: {
         role: 'Full-stack developer',
         focus: '.NET · Angular · Rust',
         based: 'Limoux · Aude · France',
         status: 'Currently in a role',
+        languages: 'FR (native) · EN B2',
       },
     },
   },
@@ -118,14 +137,14 @@ const en: Translations = {
     nowLabel: 'NOW',
     items: [
       {
-        period: '2021 — NOW',
+        period: '2021 - NOW',
         role: 'Full-stack developer',
         place: 'Coperlab / Groupe AGEO Assurances · Bordeaux',
         summary:
           'Built an Angular + .NET 10 platform for AGEO and Howden life-insurance contracts. Led the migration to Clean Architecture, CQRS, DDD and Event Sourcing with Marten. Integration tests with Testcontainers and Docker.',
       },
       {
-        period: '2020 — 2021',
+        period: '2020 - 2021',
         role: 'Software consultant',
         place: 'Davidson Consulting · Toulouse',
         summary:
@@ -138,21 +157,21 @@ const en: Translations = {
         summary: 'Custom e-commerce sites and Prestashop installs for small local businesses.',
       },
       {
-        period: '2014 — 2019',
+        period: '2014 - 2019',
         role: 'Lead web developer',
         place: 'Saceo SAS · Toulouse',
         summary:
           'Owned Opisto.fr and Opisto.pro end-to-end. Designed a public REST API, led a small dev team and ran the technical relationship with clients.',
       },
       {
-        period: '2013 — 2014',
+        period: '2013 - 2014',
         role: 'Web developer (apprentice)',
         place: 'Saceo SAS · Toulouse',
         summary:
           'Two days a week on Opisto.fr during my third year of studies. Performance work that helped 5× the site’s revenue. Side projects in WPF.',
       },
       {
-        period: '2013 — 2014',
+        period: '2013 - 2014',
         role: 'Freelance developer',
         place: 'Autoentrepreneur',
         summary: 'Custom websites and CMS installs for individual clients.',
@@ -161,9 +180,53 @@ const en: Translations = {
         period: '2012',
         role: 'Web developer intern',
         place: 'Saceo SAS',
-        summary: 'First internship — built two e-commerce sites for automotive parts.',
+        summary: 'First internship: built two e-commerce sites for automotive parts.',
       },
     ],
+  },
+  education: {
+    title: '// Education',
+    count: '02 / schools',
+    items: [
+      {
+        period: '2011 - 2014',
+        role: 'Software engineering',
+        place: 'Epitech · Toulouse',
+        summary:
+          'Three-year programming and software engineering curriculum focused on hands-on projects.',
+      },
+      {
+        period: '2010 - 2011',
+        role: 'AES, first year of bachelor',
+        place: 'Université Toulouse Capitole · Toulouse',
+        summary:
+          'Economics & social sciences for one year before pivoting to software engineering.',
+      },
+    ],
+  },
+  beyondWork: {
+    title: '// Beyond work',
+    count: '02 / commitments',
+    nowLabel: 'NOW',
+    photoAlt: 'Pierrick on duty as a volunteer firefighter',
+    photoYear: '2024',
+    volunteering: [
+      {
+        period: '2019 - NOW',
+        role: 'Volunteer firefighter',
+        place: 'SDIS de l’Aude · Limoux',
+        summary:
+          'Caporal-chef. Fire team leader, vehicle driver, first responder for road rescue and emergency medical care.',
+      },
+      {
+        period: '2019 - 2020',
+        role: 'Volunteer first-aider',
+        place: 'Protection Civile française',
+        summary: 'On-site safety at public events.',
+      },
+    ],
+    interestsLabel: '// Interests',
+    interests: ['Trail running', 'Rugby league', 'Climbing'],
   },
   stack: {
     title: '// Stack',
@@ -183,16 +246,16 @@ const en: Translations = {
   about: {
     title: '// About',
     greeting: 'Hi, I’m Pierrick.',
-    lead: 'A passionate full-stack developer building software since 2012, from a small village in southern France.',
+    lead: 'A passionate full-stack developer since 2012, from a small village in southern France.',
     photoYear: '2025',
     contactLabel: '// Find me elsewhere',
     stats: {
       xpLabel: 'XP',
       xpValue: '12+ years',
+      ageLabel: 'Age',
+      ageUnit: 'years',
       basedLabel: 'Based',
       basedValue: 'Limoux · Aude · FR',
-      offHoursLabel: 'Off-hours',
-      offHoursValue: 'Volunteer firefighter',
     },
   },
   footer: {

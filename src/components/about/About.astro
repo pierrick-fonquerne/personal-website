@@ -6,6 +6,7 @@ import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
 import { SOCIAL_LINKS } from '../../lib/links';
+import { computeAge } from '../../lib/age';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -14,10 +15,11 @@ interface Props {
 
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+const age = computeAge(new Date('1991-03-26'));
 const stats = [
   { label: t.about.stats.xpLabel, value: t.about.stats.xpValue },
+  { label: t.about.stats.ageLabel, value: `${age} ${t.about.stats.ageUnit}` },
   { label: t.about.stats.basedLabel, value: t.about.stats.basedValue },
-  { label: t.about.stats.offHoursLabel, value: t.about.stats.offHoursValue },
 ];
 ---
 
@@ -34,7 +36,8 @@ const stats = [
     <figure class="portrait-wrap relative w-full max-w-[420px]">
       <div
         class="portrait-frame pointer-events-none absolute -inset-2 rounded-md border border-[var(--color-line)]"
-      ></div>
+      >
+      </div>
       <div
         class="portrait relative overflow-hidden rounded-sm border border-[var(--color-line-strong)]"
         style="aspect-ratio: 4 / 5;"
