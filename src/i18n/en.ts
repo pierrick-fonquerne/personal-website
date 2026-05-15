@@ -94,7 +94,7 @@ const en: Translations = {
         role: 'Full-stack developer',
         focus: '.NET · Angular · Rust',
         based: 'Limoux · Aude · France',
-        status: 'Curious & shipping',
+        status: 'Currently in a role',
       },
     },
   },

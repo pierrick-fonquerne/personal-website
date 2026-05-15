@@ -27,7 +27,7 @@ const fr: Translations = {
         role: 'Développeur full-stack',
         focus: '.NET · Angular · Rust',
         based: 'Limoux · Aude · France',
-        status: 'Curieux & en production',
+        status: 'En poste',
       },
     },
   },
