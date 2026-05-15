@@ -2,18 +2,22 @@
 import { Image } from 'astro:assets';
 import profile from '../../assets/profile.jpeg';
 import { NAV_LINKS, SOCIAL_LINKS, SITE } from '../../lib/links';
+import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import IconLink from '../ui/IconLink.astro';
 import PulseDot from '../ui/PulseDot.astro';
 import ThemeToggle from './ThemeToggle.astro';
+import LanguageSwitch from './LanguageSwitch.astro';
 import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
 
 interface Props {
+  locale: Locale;
   current?: string;
 }
 
-const { current = '/' } = Astro.props;
+const { locale, current = '/' } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <nav
@@ -22,13 +26,13 @@ const { current = '/' } = Astro.props;
   <!-- Avatar + Logo -->
   <div class="flex items-center gap-3.5">
     <a
-      href="/about"
+      href={localizedPath('/about', locale)}
       class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-all duration-200 hover:border-[var(--color-accent)]"
-      aria-label="About Pierrick"
+      aria-label={t.aboutAvatarAria}
     >
       <Image
         src={profile}
-        alt="Pierrick Fonquerne"
+        alt={SITE.name}
         width={64}
         height={64}
         loading="eager"
@@ -36,7 +40,7 @@ const { current = '/' } = Astro.props;
       />
     </a>
     <a
-      href="/"
+      href={localizedPath('/', locale)}
       class="flex items-baseline gap-[5px] text-[18px] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       <span>{SITE.shortName}</span>
@@ -49,34 +53,41 @@ const { current = '/' } = Astro.props;
   <!-- Nav links -->
   <ul class="flex gap-[2px] font-mono text-[13px] text-[var(--color-fg-dim)]">
     {
-      NAV_LINKS.map((link) => (
-        <li>
-          <a
-            href={link.href}
-            class:list={[
-              'rounded-md px-3.5 py-1.5 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
-              current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
-            ]}
-          >
-            {link.label}
-          </a>
-        </li>
-      ))
+      NAV_LINKS.map((link) => {
+        const href = localizedPath(link.href, locale);
+        return (
+          <li>
+            <a
+              href={href}
+              class:list={[
+                'rounded-md px-3.5 py-1.5 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
+                current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
+              ]}
+            >
+              {t.nav[link.key]}
+            </a>
+          </li>
+        );
+      })
     }
   </ul>
 
-  <!-- Status + socials + theme toggle -->
+  <!-- Status + socials + language + theme toggle -->
   <div class="flex items-center gap-3.5">
     <div
       class="hidden items-center gap-2 font-mono text-xs text-[var(--color-fg-muted)] md:inline-flex"
     >
       <PulseDot color="success" />
-      <span>{SITE.status}</span>
+      <span>{t.status}</span>
     </div>
     <div class="flex gap-1 border-l border-[var(--color-line)] pl-3">
       {
         SOCIAL_LINKS.map((s) => (
-          <IconLink href={s.href} label={s.label} external={s.href.startsWith('http')}>
+          <IconLink
+            href={s.href}
+            label={t.socials[s.labelKey]}
+            external={s.href.startsWith('http')}
+          >
             {s.icon === 'github' && <Github />}
             {s.icon === 'linkedin' && <LinkedIn />}
             {s.icon === 'mail' && <Mail />}
@@ -84,7 +95,8 @@ const { current = '/' } = Astro.props;
         ))
       }
     </div>
-    <ThemeToggle />
+    <LanguageSwitch locale={locale} ariaLabel={t.languageSwitchAria} />
+    <ThemeToggle ariaLabel={t.toggleThemeAria} />
   </div>
 </nav>
 
