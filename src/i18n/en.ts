@@ -1,8 +1,8 @@
 export interface Translations {
   nav: {
-    index: string;
-    work: string;
-    writing: string;
+    home: string;
+    projects: string;
+    blog: string;
     research: string;
     about: string;
   };
@@ -29,11 +29,11 @@ export interface Translations {
 
 const en: Translations = {
   nav: {
-    index: 'index',
-    work: 'work',
-    writing: 'writing',
-    research: 'research',
-    about: 'about',
+    home: 'Home',
+    projects: 'Projects',
+    blog: 'Blog',
+    research: 'Research',
+    about: 'About',
   },
   status: 'Currently learning Rust & Deep learning',
   aboutAvatarAria: 'About Pierrick',
