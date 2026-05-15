@@ -229,10 +229,10 @@ const en: Translations = {
     count: '10 / topics',
     groups: [
       { category: 'Architecture', techs: 'CQRS · Event Sourcing' },
-      { category: 'Frontend', techs: 'Angular · React' },
-      { category: 'Languages', techs: 'C# .NET · TypeScript · Rust' },
       { category: 'Design', techs: 'Domain-Driven Design' },
       { category: 'Principles', techs: 'Clean Architecture · SOLID' },
+      { category: 'Languages', techs: 'C# .NET · TypeScript · Rust' },
+      { category: 'Frontend', techs: 'Angular · React' },
       { category: 'Databases', techs: 'SQL Server · Postgres (Marten) · MongoDB' },
       { category: 'Tests', techs: 'xUnit · Testcontainers' },
       { category: 'Cloud', techs: 'Azure' },
