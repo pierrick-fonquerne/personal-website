@@ -1,0 +1,43 @@
+---
+interface Props {
+  label: string;
+  roles: string[];
+  /** Total animation duration in seconds. */
+  duration?: number;
+}
+
+const { label, roles, duration = 14 } = Astro.props;
+// Duplicate the first role so the vertical scroll loops seamlessly.
+const items = [...roles, roles[0]];
+const slotHeight = 24;
+const totalShift = roles.length * slotHeight;
+const stepCount = roles.length;
+---
+
+<div
+  class="role-rotator mt-6 flex h-6 items-center gap-3 font-mono text-[14px] tracking-[0.18em] text-[var(--color-fg-muted)] uppercase"
+  style={`--slot-h: ${slotHeight}px; --shift: -${totalShift}px; --steps: ${stepCount}; --dur: ${duration}s;`}
+>
+  <span class="text-[var(--color-fg-dim)]">{label}</span>
+  <div class="slot relative h-6 min-w-[240px] overflow-hidden">
+    <ul class="absolute inset-x-0 top-0 m-0 list-none p-0">
+      {items.map((r) => <li class="h-6 leading-6 text-[var(--color-accent)]">{r}</li>)}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .role-rotator .slot ul {
+    animation: role-roll var(--dur) steps(var(--steps)) infinite;
+  }
+  @keyframes role-roll {
+    to {
+      transform: translateY(var(--shift));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .role-rotator .slot ul {
+      animation: none;
+    }
+  }
+</style>

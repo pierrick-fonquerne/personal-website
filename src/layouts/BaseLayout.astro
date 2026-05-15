@@ -4,7 +4,13 @@ import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
-import { getLocaleFromUrl, LOCALES, switchLocalePath, type Locale } from '../lib/i18n';
+import {
+  getLocaleFromUrl,
+  LOCALES,
+  switchLocalePath,
+  useTranslations,
+  type Locale,
+} from '../lib/i18n';
 
 interface Props {
   title: string;
@@ -16,13 +22,14 @@ interface Props {
 
 const {
   title,
-  description = 'Pierrick Fonquerne — passionate developer. Projects, writing and research.',
+  description = 'Pierrick Fonquerne, passionate developer. Projects, writing and research.',
   ogImage = '/og-default.png',
   current,
   locale = getLocaleFromUrl(Astro.url),
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
+const t = useTranslations(locale);
 ---
 
 <!doctype html>
@@ -68,7 +75,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 
     <ClientRouter />
 
-    {/* Restore saved theme before paint — avoids FOUC on initial render */}
+    {/* Restore saved theme before paint, avoids FOUC on initial render */}
     <script is:inline>
       (() => {
         try {
@@ -85,9 +92,12 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
     </script>
   </head>
   <body class="relative">
+    <a href="#main-content" class="skip-link">{t.a11y.skipToContent}</a>
     <ScrollProgress />
-    <Nav locale={locale} current={current} />
-    <main class="relative z-[3]">
+    <header>
+      <Nav locale={locale} current={current} />
+    </header>
+    <main id="main-content" tabindex="-1" class="relative z-[3]">
       <slot />
     </main>
     <Footer locale={locale} />

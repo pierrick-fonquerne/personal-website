@@ -1,0 +1,39 @@
+---
+import SectionHead from '../ui/SectionHead.astro';
+import Timeline from './Timeline.astro';
+import { useTranslations, type Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<section
+  id="beyond-work"
+  aria-labelledby="beyond-work-heading"
+  class="mx-auto mt-20 max-w-[1280px] px-14 pb-12"
+>
+  <SectionHead id="beyond-work-heading" title={t.beyondWork.title} count={t.beyondWork.count} />
+
+  <Timeline items={t.beyondWork.volunteering} nowLabel={t.beyondWork.nowLabel} />
+
+  <div class="mt-12 border-t border-[var(--color-line)] pt-8">
+    <div
+      class="mb-3 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase"
+    >
+      {t.beyondWork.interestsLabel}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {
+        t.beyondWork.interests.map((interest) => (
+          <span class="inline-flex items-center rounded-full border border-[var(--color-line-strong)] px-3.5 py-1.5 font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg)] uppercase">
+            {interest}
+          </span>
+        ))
+      }
+    </div>
+  </div>
+</section>

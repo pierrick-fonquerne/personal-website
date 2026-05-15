@@ -43,7 +43,7 @@ const { ariaLabel = 'Toggle theme' } = Astro.props;
     try {
       localStorage.setItem('theme', next);
     } catch {
-      // localStorage unavailable — no-op
+      // localStorage unavailable, no-op
     }
   });
 </script>

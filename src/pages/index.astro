@@ -1,8 +1,18 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import HomePlaceholder from '../components/hero/HomePlaceholder.astro';
+import Hero from '../components/hero/Hero.astro';
+import About from '../components/about/About.astro';
+import Career from '../components/about/Career.astro';
+import Education from '../components/about/Education.astro';
+import Stack from '../components/about/Stack.astro';
+import BeyondWork from '../components/about/BeyondWork.astro';
 ---
 
-<BaseLayout title="Pierrick Fonquerne — Portfolio" current="/" locale="en">
-  <HomePlaceholder locale="en" />
+<BaseLayout title="Pierrick Fonquerne, Portfolio" current="/" locale="en">
+  <Hero locale="en" />
+  <About locale="en" />
+  <Career locale="en" />
+  <Education locale="en" />
+  <Stack locale="en" />
+  <BeyondWork locale="en" />
 </BaseLayout>
