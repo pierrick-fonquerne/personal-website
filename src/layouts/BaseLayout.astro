@@ -1,5 +1,6 @@
 ---
 import '../styles/globals.css';
+import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
@@ -64,6 +65,8 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#fafaf7" media="(prefers-color-scheme: light)" />
+
+    <ClientRouter />
 
     {/* Restore saved theme before paint — avoids FOUC on initial render */}
     <script is:inline>
