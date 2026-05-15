@@ -1,1 +1,57 @@
-/* Design tokens — filled at étape 2 (palette, spacing, radius, fonts) */
+/**
+ * Design tokens — dark default, light alternative.
+ * Switched via [data-theme] attribute on <html>.
+ */
+
+:root,
+[data-theme='dark'] {
+  --color-bg: #0a0a0a;
+  --color-bg-elevated: #111111;
+  --color-fg: #fafafa;
+  --color-fg-muted: #a1a1aa;
+  --color-fg-dim: #71717a;
+  --color-line: rgba(255, 255, 255, 0.1);
+  --color-line-strong: rgba(255, 255, 255, 0.18);
+  --color-accent: #ff6b35;
+  --color-accent-soft: rgba(255, 107, 53, 0.4);
+  --color-success: #22c55e;
+  --color-hover: rgba(255, 255, 255, 0.04);
+  --color-row-hover: rgba(255, 255, 255, 0.015);
+
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --color-bg: #fafaf7;
+  --color-bg-elevated: #f0efea;
+  --color-fg: #0a0a0a;
+  --color-fg-muted: #52525b;
+  --color-fg-dim: #71717a;
+  --color-line: rgba(0, 0, 0, 0.1);
+  --color-line-strong: rgba(0, 0, 0, 0.18);
+  --color-accent: #d94e1f;
+  --color-accent-soft: rgba(217, 78, 31, 0.4);
+  --color-success: #16a34a;
+  --color-hover: rgba(0, 0, 0, 0.03);
+  --color-row-hover: rgba(0, 0, 0, 0.015);
+
+  color-scheme: light;
+}
+
+/* Expose tokens to Tailwind 4 utilities (bg-bg, text-fg, font-display, etc.) */
+@theme {
+  --color-bg: var(--color-bg);
+  --color-bg-elevated: var(--color-bg-elevated);
+  --color-fg: var(--color-fg);
+  --color-fg-muted: var(--color-fg-muted);
+  --color-fg-dim: var(--color-fg-dim);
+  --color-line: var(--color-line);
+  --color-line-strong: var(--color-line-strong);
+  --color-accent: var(--color-accent);
+  --color-success: var(--color-success);
+  --color-hover: var(--color-hover);
+
+  --font-display: 'Geist Variable', 'Inter Variable', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}

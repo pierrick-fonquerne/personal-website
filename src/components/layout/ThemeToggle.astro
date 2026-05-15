@@ -1,0 +1,39 @@
+---
+import Sun from '../ui/icons/Sun.astro';
+import Moon from '../ui/icons/Moon.astro';
+---
+
+<button
+  id="theme-toggle"
+  type="button"
+  class="inline-flex h-[34px] w-[34px] items-center justify-center rounded-lg border border-[var(--color-line-strong)] bg-transparent text-[var(--color-fg)] transition-colors duration-200 hover:bg-[var(--color-hover)]"
+  aria-label="Toggle theme"
+>
+  <span class="icon-light"><Sun /></span>
+  <span class="icon-dark hidden"><Moon /></span>
+</button>
+
+<style>
+  :global([data-theme='light']) #theme-toggle .icon-light {
+    display: none;
+  }
+  :global([data-theme='light']) #theme-toggle .icon-dark {
+    display: inline-flex;
+  }
+</style>
+
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  const html = document.documentElement;
+
+  toggle?.addEventListener('click', () => {
+    const current = html.getAttribute('data-theme') ?? 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    try {
+      localStorage.setItem('theme', next);
+    } catch {
+      // localStorage unavailable — no-op
+    }
+  });
+</script>
