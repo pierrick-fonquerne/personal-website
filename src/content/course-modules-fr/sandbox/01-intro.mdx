@@ -1,0 +1,45 @@
+---
+course: sandbox
+order: 1
+title: Lorem ipsum dolor sit amet
+subtitle: Premier module — texte, callouts, formule.
+estimatedMinutes: 5
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+
+Bienvenue dans le **module pilote**. Ce contenu n'a aucune valeur pédagogique : il sert
+uniquement à vérifier que la chaîne MDX → composants Astro → composants React → KaTeX
+fonctionne de bout en bout.
+
+## Une section avec texte
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+
+<Callout kind="tip" title="Astuce de test">
+Ce bloc est un composant Astro intégré dans du MDX. Si tu le vois, le wiring
+fonctionne.
+</Callout>
+
+## Une formule mathématique
+
+L'équation classique du perceptron, rendue via KaTeX :
+
+$$
+y = f\left(\sum_{i=1}^{n} w_i x_i + b\right)
+$$
+
+Et la même version, posée à la main dans un composant `Formula` :
+
+<Formula caption="Forme générique">
+sortie = f( x₁·w₁ + x₂·w₂ + ... + xₙ·wₙ + biais )
+</Formula>
+
+<Callout kind="warn">
+Le contenu de ce module est volontairement absurde. Ne perds pas de temps à le
+relire.
+</Callout>

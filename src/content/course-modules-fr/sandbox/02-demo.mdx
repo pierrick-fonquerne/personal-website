@@ -1,0 +1,66 @@
+---
+course: sandbox
+order: 2
+title: Composants interactifs
+subtitle: Quiz, slider, diagramme Mermaid — les îlots React s'hydratent ici.
+estimatedMinutes: 5
+published: true
+---
+
+import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractiveSlider from '../../../components/learning/InteractiveSlider.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Callout from '../../../components/learning/Callout.astro';
+
+Trois îlots interactifs s'hydratent côté client. Le reste de la page reste statique.
+
+## Un slider
+
+<InteractiveSlider
+  client:visible
+  label="Poids du neurone"
+  min={-2}
+  max={2}
+  step={0.1}
+  defaultValue={0.5}
+/>
+
+## Un diagramme Mermaid
+
+<MermaidDiagram
+  client:visible
+  caption="Flux d'information générique"
+  definition={`graph LR
+  A[entrée x₁] --> N((Σ))
+  B[entrée x₂] --> N
+  C[entrée x₃] --> N
+  N --> F[activation f]
+  F --> Y[sortie y]`}
+/>
+
+## Un quiz
+
+<Quiz
+  client:load
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Pour un test, quelle est la bonne réponse ?",
+      options: ["A", "B (la bonne)", "C", "D"],
+      answer: 1,
+      explain: "C'était évidemment B."
+    },
+    {
+      q: "Combien font 2 + 2 ?",
+      options: ["3", "4", "5", "22"],
+      answer: 1,
+      explain: "Calcul de niveau CE1 : 4."
+    }
+  ]}
+/>
+
+<Callout kind="note">
+Fin du sandbox. Si tu vois cette page, l'archi est verte.
+</Callout>

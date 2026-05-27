@@ -1,0 +1,84 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Eyebrow from '../../../components/ui/Eyebrow.astro';
+import { listCourses } from '../../../lib/courses';
+import { localizedPath, useTranslations } from '../../../lib/i18n';
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const courses = await listCourses(locale);
+---
+
+<BaseLayout
+  title={`${t.courses.indexTitle} · Pierrick Fonquerne`}
+  description={t.courses.indexLead}
+  current="/interactive-courses"
+  locale={locale}
+>
+  <section class="mx-auto max-w-[900px] px-6 py-16">
+    <Eyebrow text={t.courses.eyebrow} />
+    <h1
+      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {t.courses.indexTitle}
+    </h1>
+    <p class="mt-4 max-w-[640px] text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+      {t.courses.indexLead}
+    </p>
+
+    {
+      courses.length === 0 ? (
+        <p class="mt-12 font-mono text-[13px] text-[var(--color-fg-dim)]">
+          {t.courses.emptyState}
+        </p>
+      ) : (
+        <ul class="mt-12 grid gap-5 sm:grid-cols-2">
+          {courses.map((course) => {
+            const href = localizedPath(
+              `/interactive-courses/${course.data.slug}`,
+              locale,
+            );
+            return (
+              <li>
+                <a
+                  href={href}
+                  class="group flex h-full flex-col rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-5 transition-colors hover:border-[var(--color-line-strong)]"
+                >
+                  <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
+                    <span>{course.data.level}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {course.data.modules.length} {t.courses.modulesUnit}
+                    </span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      {course.data.estimatedMinutes} {t.courses.minutesUnit}
+                    </span>
+                  </div>
+                  <h2 class="mt-3 font-display text-[20px] font-bold tracking-[-0.01em] text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
+                    {course.data.title}
+                  </h2>
+                  <p class="mt-2 text-[14px] leading-relaxed text-[var(--color-fg-muted)]">
+                    {course.data.summary}
+                  </p>
+                  {course.data.tags.length > 0 && (
+                    <ul class="mt-4 flex flex-wrap gap-1.5">
+                      {course.data.tags.map((tag) => (
+                        <li class="rounded border border-[var(--color-line)] px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-[var(--color-fg-dim)] uppercase">
+                          {tag}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <span class="mt-5 font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase opacity-0 transition-opacity group-hover:opacity-100">
+                    {t.courses.cardCta} →
+                  </span>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      )
+    }
+  </section>
+</BaseLayout>

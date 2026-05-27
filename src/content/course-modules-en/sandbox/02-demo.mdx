@@ -1,0 +1,66 @@
+---
+course: sandbox
+order: 2
+title: Interactive components
+subtitle: Quiz, slider, Mermaid diagram — React islands hydrate here.
+estimatedMinutes: 5
+published: true
+---
+
+import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractiveSlider from '../../../components/learning/InteractiveSlider.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Callout from '../../../components/learning/Callout.astro';
+
+Three interactive islands hydrate on the client. The rest of the page stays static.
+
+## A slider
+
+<InteractiveSlider
+  client:visible
+  label="Neuron weight"
+  min={-2}
+  max={2}
+  step={0.1}
+  defaultValue={0.5}
+/>
+
+## A Mermaid diagram
+
+<MermaidDiagram
+  client:visible
+  caption="Generic information flow"
+  definition={`graph LR
+  A[input x₁] --> N((Σ))
+  B[input x₂] --> N
+  C[input x₃] --> N
+  N --> F[activation f]
+  F --> Y[output y]`}
+/>
+
+## A quiz
+
+<Quiz
+  client:load
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "For a test, what's the right answer?",
+      options: ["A", "B (the correct one)", "C", "D"],
+      answer: 1,
+      explain: "Obviously B."
+    },
+    {
+      q: "What is 2 + 2?",
+      options: ["3", "4", "5", "22"],
+      answer: 1,
+      explain: "Elementary maths: 4."
+    }
+  ]}
+/>
+
+<Callout kind="note">
+End of the sandbox. If you can see this page, the architecture is green.
+</Callout>
