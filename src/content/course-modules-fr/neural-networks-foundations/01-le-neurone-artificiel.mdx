@@ -4,7 +4,7 @@ order: 1
 title: Le neurone artificiel
 subtitle: "Du biologique au mathématique, ce qui se passe vraiment dans la brique élémentaire d'un réseau."
 estimatedMinutes: 18
-published: true
+published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -68,6 +68,7 @@ Place de la pratique avant la théorie. Bouge les curseurs ci-dessous. La sortie
     ]}
     bias={{ defaultValue: -0.5 }}
     activation="sigmoid"
+    activationToggle={['sigmoid', 'step']}
   />
 </InteractivePrint>
 
@@ -79,6 +80,8 @@ Trois choses à remarquer en jouant :
 
 <Callout kind="note" title="Note historique : du seuil binaire à la sigmoïde">
 Le NeuronDiagram ci-dessus utilise une fonction d'activation **sigmoïde** par défaut, qui rend la sortie continue entre 0 et 1. Mais les neurones originaux de McCulloch et Pitts (1943) et le perceptron de Rosenblatt (1958) utilisaient une **fonction seuil binaire** $H(z) = \mathbb{1}[z \geq 0]$ : sortie 1 si la somme dépasse 0, sortie 0 sinon. Pas de nuance.
+
+Bascule le sélecteur **f =** au-dessus du diagramme entre `σ (sigmoid)` et `H (Heaviside)` pour comparer en direct les deux activations. Avec la configuration de départ, la sigmoïde donne $y \approx 0{,}77$ et le seuil binaire bascule directement à $y = 1$. Joue avec les curseurs pour trouver les zones où le seuil change de sortie : tu y verras l'effet « tout ou rien » du neurone historique.
 
 Le passage à la sigmoïde, puis plus tard à ReLU, est historiquement lié à la backpropagation (1986) qui exige une fonction d'activation **dérivable** pour propager le gradient. Sujet du chapitre 3. La sigmoïde te donne une intuition plus douce ici, mais ne perds pas de vue que le neurone le plus simple, mathématiquement, est celui à seuil.
 </Callout>
@@ -179,7 +182,9 @@ Un ensemble de points étiquetés $\{(\mathbf{x}_i, y_i)\}$ avec $y_i \in \{0, 1
 
 ### Pourquoi XOR n'est pas linéairement séparable
 
-Ce résultat n'est pas seulement visuel, il se démontre en quelques lignes par l'absurde. On utilise ici la fonction seuil $\mathbb{1}[\cdot]$, qui est celle du perceptron historique. La même impossibilité reste vraie avec une sigmoïde : on perd seulement la simplicité de l'inégalité stricte.
+Ce résultat n'est pas seulement visuel, il se démontre en quelques lignes par l'absurde. On utilise ici la fonction seuil, qui est celle du perceptron historique. La même impossibilité reste vraie avec une sigmoïde : on perd seulement la simplicité de l'inégalité stricte.
+
+Avant d'attaquer la démonstration, fixons une notation utile pour la suite. Pour une condition logique $P$, on note $\mathbb{1}[P]$ la **fonction indicatrice** de $P$ : elle vaut $1$ si $P$ est vraie, $0$ sinon. En particulier $\mathbb{1}[z \geq 0]$ est la fonction de Heaviside, parfois notée $H(z)$, qu'on a déjà croisée au début de ce chapitre.
 
 <Callout kind="tip" title="Démonstration : XOR n'admet pas de séparateur linéaire">
 On note les quatre points de XOR : $(0,0) \to 0$, $(1,0) \to 1$, $(0,1) \to 1$, $(1,1) \to 0$.

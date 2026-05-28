@@ -1,6 +1,6 @@
 import { useMemo, useState, type JSX } from 'react';
 
-type ActivationKind = 'identity' | 'sigmoid' | 'relu' | 'tanh';
+type ActivationKind = 'identity' | 'sigmoid' | 'relu' | 'tanh' | 'step';
 
 interface NeuronInput {
   label: string;
@@ -27,6 +27,7 @@ interface Props {
   weights: NeuronWeight[];
   bias?: BiasConfig;
   activation?: ActivationKind;
+  activationToggle?: ActivationKind[];
   showCalculation?: boolean;
 }
 
@@ -35,6 +36,7 @@ const ACTIVATION_FN: Record<ActivationKind, (x: number) => number> = {
   sigmoid: (x) => 1 / (1 + Math.exp(-x)),
   relu: (x) => Math.max(0, x),
   tanh: (x) => Math.tanh(x),
+  step: (x) => (x >= 0 ? 1 : 0),
 };
 
 const ACTIVATION_LABEL: Record<ActivationKind, string> = {
@@ -42,6 +44,15 @@ const ACTIVATION_LABEL: Record<ActivationKind, string> = {
   sigmoid: 'σ',
   relu: 'ReLU',
   tanh: 'tanh',
+  step: 'H',
+};
+
+const ACTIVATION_FULL_NAME: Record<ActivationKind, string> = {
+  identity: 'identity',
+  sigmoid: 'sigmoid',
+  relu: 'ReLU',
+  tanh: 'tanh',
+  step: 'Heaviside',
 };
 
 function clampRange(min: number | undefined, max: number | undefined): [number, number] {
@@ -57,6 +68,7 @@ export default function NeuronDiagram({
   weights,
   bias,
   activation = 'sigmoid',
+  activationToggle,
   showCalculation = true,
 }: Props): JSX.Element {
   const [inputValues, setInputValues] = useState<number[]>(() =>
@@ -66,13 +78,14 @@ export default function NeuronDiagram({
     weights.map((w) => w.defaultValue),
   );
   const [biasValue, setBiasValue] = useState<number>(bias?.defaultValue ?? 0);
+  const [currentActivation, setCurrentActivation] = useState<ActivationKind>(activation);
 
   const z = useMemo(
     () =>
       inputValues.reduce((acc, x, i) => acc + x * (weightValues[i] ?? 0), 0) + biasValue,
     [inputValues, weightValues, biasValue],
   );
-  const y = useMemo(() => ACTIVATION_FN[activation](z), [activation, z]);
+  const y = useMemo(() => ACTIVATION_FN[currentActivation](z), [currentActivation, z]);
 
   const setInputAt = (idx: number, value: number): void => {
     setInputValues((prev) => prev.map((v, i) => (i === idx ? value : v)));
@@ -88,8 +101,38 @@ export default function NeuronDiagram({
   const outX = 440;
   const centerY = svgHeight / 2;
 
+  const showToggle = activationToggle && activationToggle.length >= 2;
+
   return (
     <figure className="my-6 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-5">
+      {showToggle && (
+        <div
+          role="radiogroup"
+          aria-label="Activation function"
+          className="mb-4 flex flex-wrap items-center gap-2 text-[11px] tracking-[0.12em] uppercase"
+        >
+          <span className="font-mono text-[var(--color-fg-muted)]">f =</span>
+          {activationToggle.map((kind) => {
+            const selected = currentActivation === kind;
+            return (
+              <button
+                key={kind}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => setCurrentActivation(kind)}
+                className={
+                  selected
+                    ? 'rounded border border-[var(--color-accent)] bg-[var(--color-accent)] px-2 py-1 font-mono text-[var(--color-bg)]'
+                    : 'rounded border border-[var(--color-line)] bg-[var(--color-bg)] px-2 py-1 font-mono text-[var(--color-fg-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'
+                }
+              >
+                {ACTIVATION_LABEL[kind]} ({ACTIVATION_FULL_NAME[kind]})
+              </button>
+            );
+          })}
+        </div>
+      )}
       <svg
         viewBox={`0 0 480 ${svgHeight}`}
         className="mx-auto block w-full max-w-[480px]"
@@ -169,7 +212,7 @@ export default function NeuronDiagram({
 
         <circle cx={actX} cy={centerY} r="22" fill="var(--color-bg)" stroke="var(--color-accent)" strokeWidth="1.5" />
         <text x={actX} y={centerY + 5} fill="var(--color-accent)" fontSize="13" fontFamily="var(--font-mono)" textAnchor="middle">
-          {ACTIVATION_LABEL[activation]}
+          {ACTIVATION_LABEL[currentActivation]}
         </text>
 
         <line x1={actX + 22} y1={centerY} x2={outX} y2={centerY} stroke="var(--color-fg)" strokeWidth="1.5" />
@@ -251,7 +294,7 @@ export default function NeuronDiagram({
             <span className="text-[var(--color-fg)]">= {formatNumber(z)}</span>
           </div>
           <div>
-            y = {ACTIVATION_LABEL[activation]}(z) ={' '}
+            y = {ACTIVATION_LABEL[currentActivation]}(z) ={' '}
             <span className="text-[var(--color-accent)]">{formatNumber(y)}</span>
           </div>
         </div>
