@@ -147,6 +147,11 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
+# Voxtral-generated audio assets (regenerated locally via `npm run audio:generate`).
+# The manifest.json is kept under version control as the canonical inventory.
+public/audio/**/*.mp3
+public/audio/**/*.mp3.hash
+
 # Vite files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
