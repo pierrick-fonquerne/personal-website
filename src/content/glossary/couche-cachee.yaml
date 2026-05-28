@@ -1,0 +1,9 @@
+slug: couche-cachee
+fr:
+  term: Couche cachée
+  definition: Couche intermédiaire d'un réseau de neurones, située entre la couche d'entrée et la couche de sortie. Ses neurones ne reçoivent ni les données brutes ni ne produisent la prédiction finale, ils calculent des représentations intermédiaires. Un réseau « profond » a plusieurs couches cachées.
+en:
+  term: Hidden layer
+  definition: An intermediate layer in a neural network, sitting between the input layer and the output layer. Its neurons neither receive raw data nor produce the final prediction, they compute intermediate representations. A "deep" network has several hidden layers.
+seeAlso:
+  - fonction-activation

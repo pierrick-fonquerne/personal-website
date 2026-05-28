@@ -1,0 +1,9 @@
+slug: vecteur
+fr:
+  term: Vecteur
+  definition: Objet mathématique représenté comme une liste ordonnée de nombres. Un vecteur de dimension n encode n valeurs. En machine learning, les entrées d'un neurone et ses poids sont chacun un vecteur de même dimension.
+en:
+  term: Vector
+  definition: A mathematical object represented as an ordered list of numbers. A vector of dimension n encodes n values. In machine learning, a neuron's inputs and weights are each a vector of the same dimension.
+seeAlso:
+  - produit-scalaire

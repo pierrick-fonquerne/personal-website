@@ -9,7 +9,7 @@ export interface NavLink {
 
 export interface SocialLink {
   href: string;
-  icon: 'github' | 'linkedin' | 'mail' | 'rss';
+  icon: 'github' | 'linkedin' | 'mail' | 'rss' | 'crates';
   /** Key into translations.socials for the accessible label. */
   labelKey: keyof Translations['socials'];
 }
@@ -21,8 +21,10 @@ export const SITE = {
   email: 'pierrick.fonquerne@gmail.com',
   github: 'https://github.com/pierrick-fonquerne',
   linkedin: 'https://www.linkedin.com/in/pierrickfonquerne/',
+  crates: 'https://crates.io/users/pierrick-fonquerne',
   githubHandle: 'github.com/pierrick-fonquerne',
   linkedinHandle: 'linkedin.com/in/pierrickfonquerne',
+  cratesHandle: 'crates.io/users/pierrick-fonquerne',
 } as const;
 
 export const NAV_LINKS: readonly NavLink[] = [
@@ -36,5 +38,6 @@ export const NAV_LINKS: readonly NavLink[] = [
 export const SOCIAL_LINKS: readonly SocialLink[] = [
   { href: SITE.github, icon: 'github', labelKey: 'github' },
   { href: SITE.linkedin, icon: 'linkedin', labelKey: 'linkedin' },
+  { href: SITE.crates, icon: 'crates', labelKey: 'crates' },
   { href: `mailto:${SITE.email}`, icon: 'mail', labelKey: 'email' },
 ];

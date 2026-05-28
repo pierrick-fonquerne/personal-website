@@ -1,0 +1,9 @@
+slug: taux-apprentissage
+fr:
+  term: Taux d'apprentissage
+  definition: Scalaire positif qui contrôle la taille du pas effectué par la descente de gradient à chaque itération. Trop petit, l'apprentissage est lent ; trop grand, il oscille ou diverge. Souvent noté η (eta) ou α (alpha). C'est le premier hyperparamètre à régler dans tout entraînement.
+en:
+  term: Learning rate
+  definition: A positive scalar controlling the step size taken by gradient descent at each iteration. Too small, training is slow; too large, it oscillates or diverges. Often denoted η (eta) or α (alpha). The first hyperparameter to tune in any training run.
+seeAlso:
+  - descente-de-gradient

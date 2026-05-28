@@ -1,0 +1,10 @@
+slug: produit-scalaire
+fr:
+  term: Produit scalaire
+  definition: Opération qui prend deux vecteurs de même dimension et retourne un seul nombre, calculé comme la somme des produits coordonnée par coordonnée. C'est exactement le calcul effectué par un neurone entre ses entrées et ses poids.
+en:
+  term: Dot product
+  definition: An operation taking two vectors of equal dimension and returning a single number, computed as the sum of element-wise products. It is exactly the computation a neuron performs between its inputs and weights.
+seeAlso:
+  - vecteur
+  - somme-ponderee

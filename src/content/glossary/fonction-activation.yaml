@@ -1,0 +1,10 @@
+slug: fonction-activation
+fr:
+  term: Fonction d'activation
+  definition: Fonction non-linéaire appliquée à la sortie de la somme pondérée d'un neurone. Sans elle, un réseau de neurones se réduirait à une simple combinaison linéaire, peu importe sa profondeur. Les classiques sont sigmoïde, ReLU, tanh.
+en:
+  term: Activation function
+  definition: A non-linear function applied to the output of a neuron's weighted sum. Without it, a neural network would collapse to a linear combination, no matter how deep. The classics are sigmoid, ReLU, tanh.
+seeAlso:
+  - sigmoide
+  - relu

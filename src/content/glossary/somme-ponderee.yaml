@@ -1,0 +1,10 @@
+slug: somme-ponderee
+fr:
+  term: Somme pondérée
+  definition: Addition de plusieurs valeurs, chacune multipliée par un coefficient appelé poids. Formule générale Σ wᵢ xᵢ. C'est le cœur du calcul du neurone artificiel, avant l'ajout du biais et l'application de la fonction d'activation.
+en:
+  term: Weighted sum
+  definition: The addition of several values, each multiplied by a coefficient called weight. General formula Σ wᵢ xᵢ. It is the core of the artificial neuron's computation, before adding the bias and applying the activation function.
+seeAlso:
+  - biais
+  - fonction-activation

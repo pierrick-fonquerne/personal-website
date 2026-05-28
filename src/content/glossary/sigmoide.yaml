@@ -1,0 +1,10 @@
+slug: sigmoide
+fr:
+  term: Sigmoïde
+  definition: Fonction d'activation en forme de S qui prend n'importe quel nombre réel et le compresse dans l'intervalle ]0, 1[. Sa formule est σ(x) = 1 / (1 + e⁻ˣ). Historiquement la plus utilisée, elle est aujourd'hui souvent remplacée par ReLU dans les couches cachées.
+en:
+  term: Sigmoid
+  definition: An S-shaped activation function that takes any real number and squashes it into the open interval (0, 1). Its formula is σ(x) = 1 / (1 + e⁻ˣ). Historically the most used, it is today often replaced by ReLU in hidden layers.
+seeAlso:
+  - fonction-activation
+  - relu

@@ -1,0 +1,13 @@
+slug: descente-de-gradient
+fr:
+  term: Descente de gradient
+  definition: Algorithme d'optimisation qui ajuste itérativement les paramètres d'un modèle pour minimiser une fonction de coût. À chaque étape, il déplace les paramètres dans la direction opposée au gradient, d'une distance proportionnelle au taux d'apprentissage. Méthode dominante pour entraîner les réseaux de neurones.
+  source: Cauchy, 1847
+en:
+  term: Gradient descent
+  definition: An optimisation algorithm that iteratively adjusts the parameters of a model to minimise a loss function. At each step, it moves the parameters in the direction opposite the gradient, by a distance proportional to the learning rate. The dominant method for training neural networks.
+  source: Cauchy, 1847
+seeAlso:
+  - gradient
+  - taux-apprentissage
+  - fonction-cout

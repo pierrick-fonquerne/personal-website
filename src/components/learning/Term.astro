@@ -1,0 +1,108 @@
+---
+import { getEntry } from 'astro:content';
+
+interface Props {
+  slug: string;
+  locale?: 'fr' | 'en';
+}
+
+const { slug, locale: explicitLocale } = Astro.props;
+const locale: 'fr' | 'en' = explicitLocale ?? (Astro.url.pathname.startsWith('/en/') ? 'en' : 'fr');
+
+const entry = await getEntry('glossary', slug);
+const localized = entry?.data?.[locale];
+const term = localized?.term ?? slug;
+const definition = localized?.definition;
+const source = localized?.source;
+
+const missing = !entry || !localized;
+const basePath = locale === 'en' ? '/en' : '';
+const sourceLabel = locale === 'en' ? 'Source' : 'Source';
+---
+
+<a
+  href={`${basePath}/glossary#${slug}`}
+  class:list={['term', { 'term-missing': missing }]}
+  aria-describedby={`term-${slug}`}
+>
+  <slot />
+  {!missing && (
+    <span class="term-tooltip" role="tooltip" id={`term-${slug}`}>
+      <span class="term-tooltip-head">{term}</span>
+      <span class="term-tooltip-body">{definition}</span>
+      {source && <span class="term-tooltip-source">{sourceLabel} : {source}</span>}
+    </span>
+  )}
+</a>
+
+<style>
+  .term {
+    position: relative;
+    border-bottom: 1px dotted var(--color-accent);
+    cursor: help;
+    color: var(--color-fg);
+    text-decoration: none;
+    transition: color 0.12s ease;
+  }
+  .term:hover,
+  .term:focus-visible {
+    color: var(--color-accent);
+  }
+  .term-missing {
+    border-bottom-color: var(--color-fg-dim);
+  }
+  .term-tooltip {
+    position: absolute;
+    z-index: 50;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 320px;
+    padding: 12px 14px;
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    display: none;
+    pointer-events: none;
+    text-align: left;
+    line-height: 1.5;
+    white-space: normal;
+  }
+  .term:hover .term-tooltip,
+  .term:focus-visible .term-tooltip {
+    display: block;
+  }
+  .term-tooltip-head {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 6px;
+  }
+  .term-tooltip-body {
+    display: block;
+    font-size: 13px;
+    color: var(--color-fg);
+  }
+  .term-tooltip-source {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--color-fg-dim);
+    font-style: italic;
+  }
+  .term-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 6px 0 6px;
+    border-style: solid;
+    border-color: var(--color-line-strong) transparent transparent transparent;
+  }
+</style>

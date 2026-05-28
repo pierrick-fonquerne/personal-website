@@ -1,0 +1,12 @@
+slug: relu
+fr:
+  term: ReLU
+  definition: Fonction d'activation définie par ReLU(x) = max(0, x). Linéaire pour les valeurs positives, nulle pour les négatives. Simple, rapide à calculer, et résout en grande partie le problème du gradient qui disparaît. Standard de fait dans les couches cachées des réseaux profonds depuis 2012.
+  source: Nair et Hinton, 2010
+en:
+  term: ReLU
+  definition: An activation function defined as ReLU(x) = max(0, x). Linear for positive values, zero for negative ones. Simple, fast to compute, and largely solves the vanishing gradient problem. The de facto standard in hidden layers of deep networks since 2012.
+  source: Nair and Hinton, 2010
+seeAlso:
+  - fonction-activation
+  - sigmoide

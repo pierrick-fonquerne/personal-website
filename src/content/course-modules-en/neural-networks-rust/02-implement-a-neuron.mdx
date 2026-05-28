@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 2
+title: Implementing a neuron
+subtitle: "One struct, weights, a bias, an activation. The simplest neuron in Rust."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+This chapter is still empty. The skeleton is in place; content will follow soon.
+</Callout>
+
+## What you will learn
+
+- Defining a `struct Neuron` with `weights: Vec<f64>`, `bias: f64`, `activation`
+- Writing a `forward(&self, inputs: &[f64]) -> f64` method
+- Testing it on a hand-verifiable case
+
+We start from $y = f(\sum w_i x_i + b)$ and translate it line by line into Rust. No abstraction, no dependency: just the language's primitives.

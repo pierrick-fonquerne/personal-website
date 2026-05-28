@@ -1,6 +1,9 @@
 # Brainstorming visual companion
 .superpowers/
 
+# Local drafts and working notes (not versioned)
+.drafts/
+
 # Astro
 dist/
 .astro/

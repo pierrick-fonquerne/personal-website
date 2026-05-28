@@ -1,0 +1,25 @@
+slug: neural-networks-rust
+title: "Neural networks in Rust: hands-on implementation"
+summary: From the formal neuron to event-sourced evolving networks, implemented in Rust. The course assumes the foundations course read and dives into the code.
+tags:
+  - neural-networks
+  - rust
+  - event-sourcing
+  - dynamic-topologies
+theme: ai
+subtheme: neural-nets
+level: intermediate
+estimatedMinutes: 150
+modules:
+  - 01-rust-for-ml
+  - 02-implement-a-neuron
+  - 03-implement-a-perceptron
+  - 04-activation-trait
+  - 05-network-forward-pass
+  - 06-mutation-vs-gradient
+  - 07-dynamic-topology
+  - 08-runtime-mutation
+  - 09-event-sourcing-ai
+  - 10-curiosity-exploration
+published: false
+publishedAt: 2026-05-28

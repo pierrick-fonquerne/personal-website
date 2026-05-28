@@ -1,0 +1,9 @@
+slug: biais
+fr:
+  term: Biais
+  definition: Terme constant ajouté à la somme pondérée d'un neurone, indépendant des entrées. Géométriquement, il translate la frontière de décision dans l'espace des entrées. Sans biais, cette frontière passerait obligatoirement par l'origine.
+en:
+  term: Bias
+  definition: A constant term added to the weighted sum of a neuron, independent of the inputs. Geometrically, it translates the decision boundary in input space. Without bias, that boundary would necessarily pass through the origin.
+seeAlso:
+  - somme-ponderee

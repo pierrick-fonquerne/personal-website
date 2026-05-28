@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 6
+title: Du gradient à la mutation aléatoire
+subtitle: "Pourquoi AEI-Framework n'a pas de backpropagation : décision de design assumée."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- Pourquoi le gradient n'est pas toujours la bonne réponse
+- Mutation aléatoire + sélection : le retour des algorithmes évolutionnaires
+- Curiosity-driven : laisser l'agent décider quoi explorer
+
+Tous les frameworks ML font de la descente de gradient. AEI fait délibérément autre chose. Ce chapitre explique pourquoi : c'est moins efficace en théorie sur des problèmes connus, mais plus robuste sur des problèmes mal posés où le gradient n'existe pas.

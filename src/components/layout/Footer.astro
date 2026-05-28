@@ -4,6 +4,7 @@ import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
+import Crates from '../ui/icons/Crates.astro';
 
 interface Props {
   locale: Locale;
@@ -67,6 +68,17 @@ const siteVersion = 'v2026.05';
           >
             <LinkedIn class="h-[14px] w-[14px] opacity-70" />
             {SITE.linkedinHandle}
+          </a>
+        </li>
+        <li>
+          <a
+            href={SITE.crates}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            <Crates class="h-[14px] w-[14px] opacity-70" />
+            {SITE.cratesHandle}
           </a>
         </li>
       </ul>

@@ -1,0 +1,10 @@
+slug: tanh
+fr:
+  term: Tanh
+  definition: Tangente hyperbolique, fonction d'activation similaire à la sigmoïde mais compressant les valeurs dans ]-1, 1[ au lieu de ]0, 1[. Souvent utilisée quand on veut une sortie centrée sur zéro. Sa formule est tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ).
+en:
+  term: Tanh
+  definition: Hyperbolic tangent, an activation function similar to sigmoid but compressing values into (-1, 1) instead of (0, 1). Often used when a zero-centered output is desired. Its formula is tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ).
+seeAlso:
+  - fonction-activation
+  - sigmoide

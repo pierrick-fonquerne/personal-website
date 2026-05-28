@@ -28,14 +28,14 @@ const modules = await listModulesOf(locale, courseSlug!);
   current="/interactive-courses"
   locale={locale}
 >
-  <section class="mx-auto max-w-[760px] px-6 py-16">
+  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
     <Eyebrow text={t.courses.eyebrow} />
     <h1
       class="mt-4 font-display text-[40px] leading-[1.08] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       {course.data.title}
     </h1>
-    <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+    <p class="mt-4 max-w-[720px] text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
       {course.data.summary}
     </p>
 

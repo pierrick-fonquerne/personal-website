@@ -1,0 +1,25 @@
+slug: neural-networks-rust
+title: "Réseaux de neurones en Rust : implémentation pratique"
+summary: Du neurone formel au réseau évolutif event-sourced, implémenté en Rust. Le cours suppose le cours de fondations lu et entre dans le code.
+tags:
+  - réseaux-de-neurones
+  - rust
+  - event-sourcing
+  - topologies-dynamiques
+theme: ai
+subtheme: neural-nets
+level: intermediate
+estimatedMinutes: 150
+modules:
+  - 01-rust-pour-le-ml
+  - 02-implementer-un-neurone
+  - 03-implementer-un-perceptron
+  - 04-trait-activation
+  - 05-forward-pass-reseau
+  - 06-mutation-vs-gradient
+  - 07-topologie-dynamique
+  - 08-mutation-runtime
+  - 09-event-sourcing-ia
+  - 10-curiosity-exploration
+published: false
+publishedAt: 2026-05-28

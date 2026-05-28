@@ -26,7 +26,22 @@ export interface Translations {
     cardCta: string;
     modulesUnit: string;
     minutesUnit: string;
+    comingSoon: string;
+    glossaryLink: string;
   };
+  themes: Record<
+    | 'architecture'
+    | 'math'
+    | 'ai'
+    | 'systems'
+    | 'data'
+    | 'security'
+    | 'network'
+    | 'quant'
+    | 'tooling',
+    string
+  >;
+  subthemes: Record<string, string>;
   module: {
     prev: string;
     next: string;
@@ -106,6 +121,7 @@ export interface Translations {
   socials: {
     github: string;
     linkedin: string;
+    crates: string;
     email: string;
   };
 }
@@ -122,11 +138,59 @@ const en: Translations = {
     eyebrow: 'INTERACTIVE COURSES',
     indexTitle: 'Interactive courses',
     indexLead:
-      'Hands-on courses on the topics I explore — software craft, neural networks, distributed systems and more. Read the prose, then tinker with the components.',
+      'A lifelong learner, I now lean on AI to draft courses on the broad range of topics I explore: a way to anchor each concept and pass it along.',
     emptyState: 'No course published yet. Come back soon.',
     cardCta: 'Open the course',
     modulesUnit: 'modules',
     minutesUnit: 'min',
+    comingSoon: 'Coming soon',
+    glossaryLink: 'Glossary →',
+  },
+  themes: {
+    architecture: 'Architecture',
+    math: 'Math',
+    ai: 'AI',
+    systems: 'Systems',
+    data: 'Data',
+    security: 'Security',
+    network: 'Network',
+    quant: 'Trading',
+    tooling: 'Tooling',
+  },
+  subthemes: {
+    'clean-architecture': 'Clean Architecture',
+    ddd: 'Domain-Driven Design',
+    'mediator-sagas': 'Mediator and sagas',
+    'event-sourcing-cqrs': 'Event Sourcing and CQRS',
+    'linear-algebra': 'Linear algebra',
+    'differential-calculus': 'Differential calculus',
+    probabilities: 'Probability and statistics',
+    optimization: 'Optimization',
+    'information-theory': 'Information theory',
+    'neural-nets': 'Neural networks',
+    'autonomous-agents': 'Autonomous agents',
+    'llm-mcp': 'LLM and MCP',
+    'async-perf': 'Async and performance',
+    'embedded-rust': 'Embedded Rust',
+    'kernel-no-std': 'Kernel and no_std',
+    'storage-engines': 'Embedded storage engines',
+    'event-stores': 'Event stores',
+    rebac: 'ReBAC authorization',
+    ledgers: 'Cryptographic ledgers',
+    'applied-crypto': 'Applied cryptography',
+    auth: 'Authentication',
+    audit: 'Audit and traceability',
+    'http-api': 'HTTP and API design',
+    grpc: 'gRPC and contracts',
+    'email-systems': 'Email systems',
+    indicators: 'Technical indicators',
+    strategies: 'Systematic strategies',
+    backtesting: 'Backtesting',
+    'cli-rust': 'Robust Rust CLIs',
+    iac: 'Infrastructure as Code',
+    'ci-self-hosted': 'Self-hosted CI',
+    'polyglot-orchestration': 'Polyglot orchestration',
+    'mcp-servers': 'MCP servers',
   },
   module: {
     prev: 'Previous',
@@ -292,6 +356,7 @@ const en: Translations = {
   socials: {
     github: 'GitHub',
     linkedin: 'LinkedIn',
+    crates: 'crates.io',
     email: 'Email',
   },
   a11y: {
