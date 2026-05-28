@@ -1,0 +1,10 @@
+slug: orthogonalite
+fr:
+  term: Orthogonalité
+  definition: Deux vecteurs sont orthogonaux quand leur produit scalaire est nul. Géométriquement, cela correspond à un angle de 90 degrés entre eux. En machine learning, des entrées orthogonales contribuent indépendamment au calcul du neurone.
+en:
+  term: Orthogonality
+  definition: Two vectors are orthogonal when their dot product is zero. Geometrically, this matches a 90-degree angle between them. In machine learning, orthogonal inputs contribute independently to a neuron's computation.
+seeAlso:
+  - produit-scalaire
+  - vecteur

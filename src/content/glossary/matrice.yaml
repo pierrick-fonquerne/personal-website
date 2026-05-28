@@ -1,0 +1,10 @@
+slug: matrice
+fr:
+  term: Matrice
+  definition: Tableau rectangulaire de nombres organisés en lignes et colonnes. Une matrice de taille m×n possède m lignes et n colonnes. Dans un réseau de neurones, une couche de m neurones avec n entrées chacun se résume à une matrice de poids m×n.
+en:
+  term: Matrix
+  definition: A rectangular array of numbers organised in rows and columns. An m×n matrix has m rows and n columns. In a neural network, a layer of m neurons each having n inputs collapses into an m×n weight matrix.
+seeAlso:
+  - vecteur
+  - produit-scalaire

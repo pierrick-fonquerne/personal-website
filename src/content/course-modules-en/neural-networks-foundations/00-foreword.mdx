@@ -1,0 +1,153 @@
+---
+course: neural-networks-foundations
+order: 0
+title: Foreword
+subtitle: "Why neural networks, which problems they actually solve, and how to read this course."
+estimatedMinutes: 8
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+In 2012, a program named AlexNet halved the error rate of the best image recognition system in the world. Since then, neural networks have infiltrated translation, vision, driver assistance, medical prediction, image and text generation. This course teaches you what happens inside a technology that has transformed so many fields.
+
+Thirteen chapters, roughly three and a half hours of reading. No programming language required. The only prerequisite: being comfortable reading a simple equation without panicking.
+
+## What neural networks can do today
+
+Without claiming to be exhaustive, here are the uses where they have genuinely changed the game, with rough numbers:
+
+- **Computer vision**: recognising a cat, segmenting a tumour on an MRI, driving a car. Error rate on ImageNet went from 26 % in 2011 to under 4 % in 2020.
+- **Machine translation**: DeepL, Google Translate, modernised by *transformers* since 2017. Indistinguishable from human quality on major language pairs.
+- **Text understanding and generation**: conversational assistants (<Term slug="foundation-model">foundation models</Term> like GPT, Claude, Gemini, Mistral), summarisation, coding assistants. All built on the <Term slug="transformer">transformer</Term> architecture (2017).
+- **Image and audio generation**: Stable Diffusion, Midjourney, DALL-E, text-to-speech models. Photorealism indistinguishable from real photos on some domains.
+- **Games and planning**: AlphaGo (2016), which defeated the world champion of Go; AlphaFold (2021), which predicts 3D protein structures.
+
+The common thread: all those systems are assemblies, sometimes massive (up to billions of parameters), of the elementary brick you will study in chapter 1.
+
+## What they cannot (yet) do
+
+Important to avoid selling a dream. Current limitations at the time of writing:
+
+- **Formal reasoning**: a network can solve a quadratic equation with training, but does not "understand" why the formula is what it is. It interpolates, it does not deduce.
+- **Learning from few examples**: a human recognises a cat after seeing three. A classical network needs thousands. *Few-shot* learning is improving but is still far from human.
+- **Out-of-distribution generalisation**: a network trained on daytime images stumbles on the same objects shot at night. It learns what you show it, nothing more.
+- **Hallucinations**: language models sometimes state false claims with confidence. It is a structural flaw of their training, not a bug.
+- **Explainability**: a deep network classifies correctly, but explaining *why* it classified that way remains an open research problem.
+
+<Callout kind="warn" title="AI is not magic">
+Marketing around "artificial intelligence" often exaggerates capabilities. Understanding the mathematical foundations this course gives you is the best antidote to commercial discourse. You will see that a neural network is essentially stacked linear combinations and non-linear functions, not a form of consciousness.
+</Callout>
+
+## Three phases in an 80-year story
+
+To place what we study in time:
+
+1. **The initial dream (1940-1960)**: McCulloch and Pitts model the neuron (1943). Rosenblatt makes the perceptron learn (1958). Artificial thought feels close.
+2. **The two winters (1969-1986, then 1995-2010)**: Minsky proves the limits (1969), the Lighthill report (1973) collapses funding. Brief revival in the 1980s with backpropagation (1986). New slowdown facing support-vector machines (1995-2010).
+3. **The renaissance (2012-today)**: ImageNet + GPUs + big data ignite the explosion. AlexNet (2012), <Term slug="transformer">transformers</Term> (2017), <Term slug="foundation-model">foundation models</Term> (2020+).
+
+Chapter 1 recaps these milestones in a more detailed timeline. Just remember: the theory we study here is old; what is new are the computers and the data.
+
+### Timeline of key milestones
+
+| Year | Actors | Contribution |
+|---|---|---|
+| 1943 | McCulloch and Pitts | Formal neuron model |
+| 1958 | Rosenblatt | Perceptron that learns |
+| 1969 | Minsky and Papert | XOR limitation, first alarm bell |
+| 1973 | Lighthill report (UK) | First AI winter |
+| 1986 | Rumelhart, Hinton, Williams | Backpropagation |
+| 1998 | LeCun | LeNet and convolutional vision |
+| 2012 | Krizhevsky, Sutskever, Hinton | AlexNet and the GPU explosion |
+| 2017 | Vaswani et al. | Transformer and attention mechanism |
+| 2020+ | OpenAI, Anthropic, Google, Mistral | Very-large-scale foundation models |
+
+## The course in thirteen chapters
+
+The course unfolds in four progressive blocks:
+
+### Block 1 - Conceptual foundations (chapters 1 to 4)
+The artificial neuron, vector algebra, activation functions, the perceptron. Everything needed to understand a single brick.
+
+### Block 2 - From brick to network (chapters 5 to 6)
+Stacking neurons in layers. Forward pass, loss functions, classification vs regression.
+
+### Block 3 - Learning (chapters 7 to 9)
+Derivatives and the chain rule, backpropagation, gradient descent. The mathematical core of the field.
+
+### Block 4 - Optimisation and generalisation (chapters 10 to 12)
+Regularisation, initialisation and batch normalisation, advanced optimisers. The difference between a network that works in theory and one that works in practice.
+
+### Chapter dependency map
+
+<MermaidDiagram
+  client:visible
+  caption="Logical dependencies grouped by block"
+  definition={`flowchart TB
+    subgraph B1["Block 1: foundations"]
+      direction LR
+      ch1[1. Neuron] --> ch2[2. Algebra] --> ch3[3. Activation] --> ch4[4. Perceptron]
+    end
+    subgraph B2["Block 2: network"]
+      direction LR
+      ch5[5. Multi-layer] --> ch6[6. Forward + loss]
+    end
+    subgraph B3["Block 3: learning"]
+      direction LR
+      ch7[7. Derivatives] --> ch8[8. Backprop] --> ch9[9. Gradient descent]
+    end
+    subgraph B4["Block 4: optimisation"]
+      direction LR
+      ch10[10. Regularisation]
+      ch11[11. Initialisation] --> ch12[12. Optimisers]
+      ch10 --> ch12
+    end
+    B1 --> B2 --> B3 --> B4`}
+/>
+
+## Who this course is for
+
+Several profiles can benefit from this course, each in their own way:
+
+- **High-school science student** with curiosity: you have the basics (functions, simple derivatives, geometry) and want to know how the AI everyone talks about actually works. Read in order, do every paper-and-pencil exercise.
+- **First or second-year undergraduate (L1-L2)**: you already master linear algebra and differential calculus. You can skim chapters 2 and 7 and focus on the ML-specific ones.
+- **Professional developer** without recent theory: you have forgotten partial derivatives. The course refreshes them while avoiding pointless academic formalism.
+- **Curious mind from outside STEM**: you will need to slow down on equations and read every proof twice. Aim for comfort over speed; there is no final exam.
+
+This course is **not**: a PyTorch or TensorFlow training (use the dedicated course in the sub-theme), a research state of the art (the field moves too fast), nor a general programming primer.
+
+## How to read this course
+
+Three suggestions:
+
+- **First read, linear order**: read 1 → 12, in order. Each chapter builds on the previous one.
+- **If you already know linear algebra**: you can skim chapter 2 and read chapter 3 in detail.
+- **If you only want to understand backpropagation**: make sure chapters 1, 2, 5, 6, 7 are solid before tackling chapter 8.
+
+Every chapter offers a self-graded quiz at the end and at least two paper-and-pencil exercises with solutions. Play the game: putting pencil on paper radically changes what stays in mind.
+
+<Callout kind="tip" title="The interactive blocks">
+Several chapters contain interactive components: neurons with sliders, manipulable 2D planes, function plotters. **They are not decoration.** Play with the parameters for three minutes before reading on; you will learn faster than from prose alone.
+</Callout>
+
+## In one sentence
+
+Modern neural networks are massive assemblies of an old elementary brick; this course gives you the exact mathematical mechanics, hiding no proof and assuming no background you do not have.
+
+## On to chapter 1
+
+It all starts with the brick. How a biological neuron inspired an equation. Why that equation alone suffices for simple problems, and why it fails on XOR. That is the focus of the next chapter.
+
+## Sources
+
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). "ImageNet Classification with Deep Convolutional Neural Networks." *NeurIPS* 25. [NeurIPS link](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Russakovsky, O. et al. (2015). "ImageNet Large Scale Visual Recognition Challenge." *IJCV* 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
+
+### Further reading before chapter 1
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 1: *Introduction*. Excellent global overview, free online. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- LeCun, Y. (online course at Collège de France). "Why deep learning?" [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
+- Karpathy, A. (YouTube video, 2022). *The spelled-out intro to neural networks and backpropagation: building micrograd*. The best practical explanation in the field. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)

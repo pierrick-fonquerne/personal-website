@@ -1,0 +1,10 @@
+slug: norme
+fr:
+  term: Norme
+  definition: Longueur d'un vecteur, mesurée par la racine carrée de la somme de ses carrés. Pour un vecteur x = (x₁, ..., xₙ), la norme ‖x‖ = √(x₁² + ... + xₙ²). C'est la généralisation du théorème de Pythagore à n dimensions.
+en:
+  term: Norm
+  definition: The length of a vector, measured as the square root of the sum of its squares. For a vector x = (x₁, ..., xₙ), the norm ‖x‖ = √(x₁² + ... + xₙ²). It is the generalisation of the Pythagorean theorem to n dimensions.
+seeAlso:
+  - vecteur
+  - produit-scalaire

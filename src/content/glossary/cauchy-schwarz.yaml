@@ -1,0 +1,12 @@
+slug: cauchy-schwarz
+fr:
+  term: Inégalité de Cauchy-Schwarz
+  definition: "Pour deux vecteurs x et w de Rⁿ, |x · w| ≤ ‖x‖ · ‖w‖. L'égalité n'a lieu que si les deux vecteurs sont colinéaires. C'est l'inégalité fondamentale de l'algèbre linéaire, elle garantit la cohérence entre la formulation algébrique et géométrique du produit scalaire."
+  source: Cauchy 1821, Schwarz 1888
+en:
+  term: Cauchy-Schwarz inequality
+  definition: "For any two vectors x and w in Rⁿ, |x · w| ≤ ‖x‖ · ‖w‖. Equality holds only if the two vectors are colinear. It is the fundamental inequality of linear algebra, ensuring consistency between the algebraic and geometric formulations of the dot product."
+  source: Cauchy 1821, Schwarz 1888
+seeAlso:
+  - produit-scalaire
+  - norme

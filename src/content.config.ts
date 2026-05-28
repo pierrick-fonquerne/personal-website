@@ -23,13 +23,14 @@ const courseSchema = z.object({
   level: z.enum(['intro', 'intermediate', 'advanced']),
   estimatedMinutes: z.number().int().positive(),
   modules: z.array(z.string()),
+  personalNote: z.string().optional(),
   published: z.boolean().default(false),
   publishedAt: z.coerce.date().optional(),
 });
 
 const moduleSchema = z.object({
   course: z.string(),
-  order: z.number().int().positive(),
+  order: z.number().int().nonnegative(),
   title: z.string(),
   subtitle: z.string().optional(),
   estimatedMinutes: z.number().int().positive().optional(),
@@ -74,10 +75,43 @@ const glossary = defineCollection({
   schema: glossarySchema,
 });
 
+const projectLocaleSchema = z.object({
+  title: z.string(),
+  tagline: z.string(),
+  summary: z.string(),
+});
+
+const projectLinkSchema = z.object({
+  label: z.string(),
+  href: z.string().url(),
+  type: z.enum(['site', 'repo', 'crates', 'docs', 'demo']),
+});
+
+const projectSchema = z.object({
+  slug: z.string(),
+  category: z.enum(['entrepreneurship', 'opensource', 'games', 'poc', 'web']),
+  status: z.enum(['active', 'maintained', 'archived', 'dormant']),
+  period: z.string(),
+  featured: z.boolean().default(false),
+  cover: z.string().optional(),
+  stack: z.array(z.string()).default([]),
+  links: z.array(projectLinkSchema).default([]),
+  fr: projectLocaleSchema,
+  en: projectLocaleSchema,
+  published: z.boolean().default(true),
+  publishedAt: z.coerce.date().optional(),
+});
+
+const projects = defineCollection({
+  loader: glob({ base: './src/content/projects', pattern: '**/*.{yaml,yml}' }),
+  schema: projectSchema,
+});
+
 export const collections = {
   'courses-fr': coursesFr,
   'courses-en': coursesEn,
   'course-modules-fr': courseModulesFr,
   'course-modules-en': courseModulesEn,
   glossary,
+  projects,
 };

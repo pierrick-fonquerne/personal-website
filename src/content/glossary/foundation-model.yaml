@@ -1,0 +1,12 @@
+slug: foundation-model
+fr:
+  term: Modèle de fondation
+  definition: "Réseau de neurones de très grande taille entraîné sur une quantité massive de données généralistes, qui peut ensuite être adapté à de nombreuses tâches spécifiques. Le terme a été popularisé par Bommasani et al. en 2021. Exemples typiques en 2026 : GPT-4, Claude, Gemini."
+  source: Bommasani et al., 2021
+en:
+  term: Foundation model
+  definition: A very large neural network trained on a massive amount of general-purpose data, which can then be adapted to many specific tasks. The term was coined by Bommasani et al. in 2021. Typical 2026 examples include GPT-4, Claude and Gemini.
+  source: Bommasani et al., 2021
+seeAlso:
+  - transformer
+  - llm-mcp

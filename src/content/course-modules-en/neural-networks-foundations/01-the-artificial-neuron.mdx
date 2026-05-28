@@ -137,7 +137,7 @@ Each input goes through a multiplication by its weight, all contributions sum wi
 | Axon | Carries the output | Output $y$ |
 
 <Callout kind="note">
-The artificial neuron is a caricature of the biological neuron. A real neuron is dynamic over time, communicates with discrete spikes, and has a complex internal chemistry. We revisit those differences in chapter 99 on stateful neurons.
+The artificial neuron is a caricature of the biological neuron. A real neuron is dynamic over time, communicates with discrete spikes, and has a complex internal chemistry. Those differences fall outside this course, which focuses on the models that dominate practice. They are an active research topic in neuromorphic computing and spiking neural networks.
 </Callout>
 
 ## An idea born in 1943
@@ -159,7 +159,7 @@ The artificial neuron has a 80+ year history made of breakthroughs and long wint
 
 ### Formal definition: hyperplane and linear separability
 
-A clean treatment demands a precise definition. Let $\mathbf{x} \in \mathbb{R}^n$ be an input vector, $\mathbf{w} \in \mathbb{R}^n$ a weight vector, $b \in \mathbb{R}$ a bias. The set of points that zero the weighted sum
+A clean treatment demands a precise definition. Let $\mathbf{x} \in \mathbb{R}^n$ be an input vector, $\mathbf{w} \in \mathbb{R}^n$ a weight vector, $b \in \mathbb{R}$ a bias. We use $\mathbb{R}^n$ here to denote the set of ordered lists of $n$ real numbers (chapter 2 formalises this notion). The set of points that zero the weighted sum
 
 $$
 \{\mathbf{x} \in \mathbb{R}^n \mid \mathbf{w} \cdot \mathbf{x} + b = 0\}
@@ -173,7 +173,7 @@ A set of labelled points $\{(\mathbf{x}_i, y_i)\}$ with $y_i \in \{0, 1\}$ is sa
 
 ### Why XOR is not linearly separable
 
-This result is not only visual, it can be proved in a few lines by contradiction.
+This result is not only visual, it can be proved in a few lines by contradiction. We use here the threshold function $\mathbb{1}[\cdot]$, which is that of the historical perceptron. The same impossibility holds with a sigmoid; we lose only the simplicity of the strict inequality.
 
 <Callout kind="tip" title="Proof: XOR admits no linear separator">
 We note the four points of XOR: $(0,0) \to 0$, $(1,0) \to 1$, $(0,1) \to 1$, $(1,1) \to 0$.
@@ -251,6 +251,10 @@ Another way to feel the bias: go back to the NeuronDiagram above, set every inpu
 ## In one sentence
 
 An artificial neuron computes a linear combination of its inputs, adds a bias, and passes everything through a non-linear function. That's it. The power comes from what we do with them once we stack them and train them.
+
+## On to chapter 2
+
+You saw in the last section that the neuron formula also reads in the compact form $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. That vector notation is everywhere in deep learning, but we never really defined it: what is a vector exactly? What does the central dot between $\mathbf{w}$ and $\mathbf{x}$ mean? Chapter 2 lays down those linear-algebra foundations, staying strictly useful for the rest of the course.
 
 ## Exercises
 

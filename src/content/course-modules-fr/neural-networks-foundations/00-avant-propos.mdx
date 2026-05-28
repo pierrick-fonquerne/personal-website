@@ -1,0 +1,153 @@
+---
+course: neural-networks-foundations
+order: 0
+title: Avant-propos
+subtitle: "Pourquoi des réseaux de neurones, à quels problèmes ils répondent, et comment lire ce cours."
+estimatedMinutes: 8
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+En 2012, un programme appelé AlexNet a divisé par deux le taux d'erreur du meilleur système de reconnaissance d'images au monde. Depuis, les réseaux de neurones ont infiltré la traduction, la vision, la conduite assistée, la prédiction médicale et la génération d'image et de texte. Ce cours t'apprend ce qui se passe à l'intérieur de cette technologie qui transforme tant de domaines.
+
+Treize chapitres, environ trois heures et demi de lecture. Aucun langage de programmation requis. Le seul prérequis : savoir lire une équation simple sans paniquer.
+
+## Ce que les réseaux de neurones savent faire aujourd'hui
+
+Sans prétendre être exhaustif, voici les usages où ils ont réellement changé la donne, avec des ordres de grandeur :
+
+- **Vision par ordinateur** : reconnaître un chat, segmenter une tumeur sur une IRM, conduire une voiture. Erreur sur ImageNet passée de 26 % en 2011 à moins de 4 % en 2020.
+- **Traduction automatique** : DeepL, Google Translate, modernisés par les *transformers* depuis 2017. Qualité indistinguable de l'humain sur les paires de langues majoritaires.
+- **Compréhension et génération de texte** : assistants conversationnels (<Term slug="foundation-model">modèles de fondation</Term> comme GPT, Claude, Gemini, Mistral), résumé automatique, programmation assistée. Tous reposent sur l'architecture <Term slug="transformer">transformer</Term> (2017).
+- **Génération d'image et de son** : Stable Diffusion, Midjourney, DALL-E, models text-to-speech. Photoréalisme indistinguable sur certains domaines.
+- **Jeux et planification** : AlphaGo (2016) qui a battu le champion du monde de go, AlphaFold (2021) qui prédit la structure 3D des protéines.
+
+Le point commun : tous ces systèmes sont des assemblages, parfois immenses (jusqu'à des milliards de paramètres), de la brique élémentaire que tu vas étudier dans le chapitre 1.
+
+## Ce qu'ils ne savent pas (encore) faire
+
+Important pour ne pas vendre du rêve. Les limites actuelles, à l'heure où ces lignes sont écrites :
+
+- **Raisonnement formel** : un réseau peut résoudre une équation du second degré avec entraînement, mais ne « comprend » pas pourquoi la formule est ce qu'elle est. Il interpole, il ne déduit pas.
+- **Apprentissage avec peu de données** : un humain reconnaît un chat après en avoir vu trois. Un réseau classique en demande des milliers. L'apprentissage *few-shot* progresse mais reste loin de l'humain.
+- **Généralisation hors distribution** : un réseau entraîné sur des images de jour bute sur les mêmes objets photographiés de nuit. Il apprend ce qu'on lui montre, pas plus.
+- **Hallucinations** : les modèles de langage produisent parfois des affirmations fausses avec aplomb. C'est un défaut structurel de leur entraînement, pas un bug.
+- **Explicabilité** : un réseau profond classe correctement, mais expliquer *pourquoi* il a classé ainsi reste un problème de recherche ouvert.
+
+<Callout kind="warn" title="L'IA n'est pas magique">
+Le marketing autour des « intelligences artificielles » exagère souvent leurs capacités. Comprendre les fondations mathématiques que ce cours te donne, c'est le meilleur antidote au discours commercial. Tu verras qu'un réseau de neurones, c'est essentiellement des combinaisons linéaires empilées et des fonctions non-linéaires, pas une forme de conscience.
+</Callout>
+
+## Trois phases dans une histoire de 80 ans
+
+Pour situer ce qu'on étudie dans le temps :
+
+1. **Le rêve initial (1940-1960)** : McCulloch et Pitts modélisent le neurone (1943). Rosenblatt fait apprendre le perceptron (1958). On pense la pensée artificielle proche.
+2. **Les deux hivers (1969-1986, puis 1995-2010)** : Minsky démontre les limites (1969), le rapport Lighthill démolit les financements (1973). Court répit dans les années 1980 avec la rétropropagation (1986). Nouveau ralentissement face aux machines à vecteurs de support (1995-2010).
+3. **La renaissance (2012-aujourd'hui)** : ImageNet + GPU + grandes données déclenchent l'explosion. AlexNet (2012), <Term slug="transformer">transformers</Term> (2017), <Term slug="foundation-model">modèles de fondation</Term> (2020+).
+
+Le chapitre 1 récapitule ces jalons dans une frise plus précise. Garde simplement en tête que la théorie qu'on étudie ici est ancienne ; ce sont les ordinateurs et les données qui sont nouveaux.
+
+### Frise des jalons clés
+
+| Année | Acteurs | Apport |
+|---|---|---|
+| 1943 | McCulloch et Pitts | Modèle du neurone formel |
+| 1958 | Rosenblatt | Perceptron qui apprend |
+| 1969 | Minsky et Papert | Limites de XOR, premier signal d'arrêt |
+| 1973 | Rapport Lighthill (Royaume-Uni) | Premier hiver de l'IA |
+| 1986 | Rumelhart, Hinton, Williams | Backpropagation |
+| 1998 | LeCun | LeNet et la vision convolutionnelle |
+| 2012 | Krizhevsky, Sutskever, Hinton | AlexNet et l'explosion GPU |
+| 2017 | Vaswani et al. | Transformer et mécanisme d'attention |
+| 2020+ | OpenAI, Anthropic, Google, Mistral | Modèles de fondation à très grande échelle |
+
+## Le parcours en treize chapitres
+
+Le cours s'organise en quatre blocs progressifs :
+
+### Bloc 1 : fondations conceptuelles (chapitres 1 à 4)
+Le neurone artificiel, l'algèbre vectorielle, les fonctions d'activation, le perceptron. Tout ce qu'il faut pour comprendre une brique unique.
+
+### Bloc 2 : de la brique au réseau (chapitres 5 à 6)
+Empiler les neurones en couches. Forward pass, fonctions de coût, classification vs régression.
+
+### Bloc 3 : apprentissage (chapitres 7 à 9)
+Dérivées et règle de la chaîne, backpropagation, descente de gradient. Le cœur mathématique du domaine.
+
+### Bloc 4 : optimisation et généralisation (chapitres 10 à 12)
+Régularisation, initialisation et batch normalisation, optimiseurs avancés. Ce qui fait la différence entre un réseau qui marche en théorie et un qui marche en pratique.
+
+### Carte des dépendances entre chapitres
+
+<MermaidDiagram
+  client:visible
+  caption="Dépendances logiques regroupées par bloc"
+  definition={`flowchart TB
+    subgraph B1["Bloc 1 : fondations"]
+      direction LR
+      ch1[1. Neurone] --> ch2[2. Algèbre] --> ch3[3. Activation] --> ch4[4. Perceptron]
+    end
+    subgraph B2["Bloc 2 : réseau"]
+      direction LR
+      ch5[5. Multi-couches] --> ch6[6. Forward + coût]
+    end
+    subgraph B3["Bloc 3 : apprentissage"]
+      direction LR
+      ch7[7. Dérivées] --> ch8[8. Backprop] --> ch9[9. Gradient descent]
+    end
+    subgraph B4["Bloc 4 : optimisation"]
+      direction LR
+      ch10[10. Régularisation]
+      ch11[11. Initialisation] --> ch12[12. Optimiseurs]
+      ch10 --> ch12
+    end
+    B1 --> B2 --> B3 --> B4`}
+/>
+
+## Pour qui ce cours
+
+Plusieurs profils peuvent profiter de ce cours, chacun à sa manière :
+
+- **Lycéen scientifique curieux** : tu as les maths du programme (fonctions, dérivées de base, géométrie) et tu veux savoir comment marche l'IA dont tout le monde parle. Lis dans l'ordre, ne saute aucun exercice papier-crayon.
+- **Étudiant en première ou deuxième année (L1-L2)** : tu maîtrises l'algèbre linéaire et le calcul différentiel. Tu peux survoler les chapitres 2 et 7 et te concentrer sur les chapitres « ML-specific ».
+- **Développeur professionnel** sans bagage théorique récent : tu as oublié les dérivées partielles. Le cours te remet à jour en évitant le formalisme académique inutile.
+- **Personne curieuse hors STEM** : tu vas devoir ralentir sur les équations et lire chaque démo deux fois. Vise le confort plutôt que la vitesse ; il n'y a pas d'examen final.
+
+Ce cours **n'est pas** : une formation à PyTorch ou TensorFlow (utilise le cours dédié dans le sous-thème), un état de l'art de la recherche (l'IA bouge trop vite pour cela), ni une introduction à l'algorithmie générale.
+
+## Comment lire ce cours
+
+Trois suggestions :
+
+- **Première lecture, ordre linéaire** : lis 1 → 12, dans l'ordre. Chaque chapitre construit sur le précédent.
+- **Si tu connais déjà l'algèbre linéaire** : tu peux survoler le chapitre 2 et lire en détail le 3.
+- **Si tu cherches juste à comprendre la backpropagation** : assure-toi que les chapitres 1, 2, 5, 6, 7 sont solides avant d'attaquer le 8.
+
+Chaque chapitre te propose un quiz auto-corrigé en fin de section et au moins deux exercices papier-crayon avec corrigés. Joue le jeu : passer le crayon sur la feuille change radicalement ce qui reste en tête.
+
+<Callout kind="tip" title="Les blocs interactifs">
+Plusieurs chapitres contiennent des composants interactifs : neurones avec curseurs, plans 2D manipulables, traceurs de fonctions. **Ils ne sont pas décoratifs.** Joue avec les paramètres trois minutes avant de continuer la lecture, tu apprendras plus vite que par la prose seule.
+</Callout>
+
+## En une phrase
+
+Les réseaux de neurones modernes sont des assemblages massifs d'une brique élémentaire ancienne ; ce cours t'en livre la mécanique mathématique exacte, sans cacher les démos et sans demander un bagage que tu n'aies pas.
+
+## Place au chapitre 1
+
+Tout commence par la brique. Comment un neurone biologique a inspiré une équation. Pourquoi cette équation seule suffit pour des problèmes simples, et pourquoi elle échoue sur XOR. C'est l'objet du prochain chapitre.
+
+## Sources
+
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). « ImageNet Classification with Deep Convolutional Neural Networks. » *NeurIPS* 25. [Lien NeurIPS](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Russakovsky, O. et al. (2015). « ImageNet Large Scale Visual Recognition Challenge. » *IJCV* 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
+
+### Pour aller plus loin avant d'attaquer le chap 1
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 1 : *Introduction*. Excellent panorama global, gratuit en ligne. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- LeCun, Y. (cours en ligne au Collège de France). « Pourquoi l'apprentissage profond ? ». [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
+- Karpathy, A. (vidéo YouTube, 2022). *The spelled-out intro to neural networks and backpropagation: building micrograd*. La meilleure explication pratique du domaine. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)

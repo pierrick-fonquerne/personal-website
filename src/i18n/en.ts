@@ -11,12 +11,50 @@ export interface StackGroup {
 }
 
 export interface Translations {
+  meta: {
+    description: string;
+  };
   nav: {
     home: string;
     projects: string;
     courses: string;
     research: string;
     about: string;
+  };
+  projects: {
+    title: string;
+    lead: string;
+    soon: string;
+    count: (n: number) => string;
+    emptyCategory: string;
+    backToList: string;
+    categories: {
+      entrepreneurship: string;
+      opensource: string;
+      games: string;
+      poc: string;
+      web: string;
+    };
+    statuses: {
+      active: string;
+      maintained: string;
+      archived: string;
+      dormant: string;
+    };
+    links: {
+      site: string;
+      repo: string;
+      crates: string;
+      docs: string;
+      demo: string;
+    };
+    stackLabel: string;
+    statusLabel: string;
+    periodLabel: string;
+  };
+  research: {
+    title: string;
+    soon: string;
   };
   courses: {
     eyebrow: string;
@@ -28,6 +66,7 @@ export interface Translations {
     minutesUnit: string;
     comingSoon: string;
     glossaryLink: string;
+    personalNoteEyebrow: string;
   };
   themes: Record<
     | 'architecture'
@@ -127,12 +166,50 @@ export interface Translations {
 }
 
 const en: Translations = {
+  meta: {
+    description: 'Pierrick Fonquerne, passionate developer. Projects, writing and research.',
+  },
   nav: {
     home: 'Home',
     projects: 'Projects',
     courses: 'Courses',
     research: 'Research',
     about: 'About',
+  },
+  projects: {
+    title: '// Projects',
+    lead: 'A selection of things I build, maintain or experiment with. Personal, open source and entrepreneurial work.',
+    soon: 'Section under construction.',
+    count: (n) => `${String(n).padStart(2, '0')} / projects`,
+    emptyCategory: 'Nothing to show here yet.',
+    backToList: '← Back to projects',
+    categories: {
+      entrepreneurship: 'Entrepreneurship',
+      opensource: 'Open source',
+      games: 'Games',
+      poc: 'Proofs of concept',
+      web: 'Web',
+    },
+    statuses: {
+      active: 'Active',
+      maintained: 'Maintained',
+      archived: 'Archived',
+      dormant: 'Dormant',
+    },
+    links: {
+      site: 'Site',
+      repo: 'Repository',
+      crates: 'crates.io',
+      docs: 'Docs',
+      demo: 'Demo',
+    },
+    stackLabel: 'Stack',
+    statusLabel: 'Status',
+    periodLabel: 'Period',
+  },
+  research: {
+    title: '// Research',
+    soon: 'Section under construction.',
   },
   courses: {
     eyebrow: 'INTERACTIVE COURSES',
@@ -145,6 +222,7 @@ const en: Translations = {
     minutesUnit: 'min',
     comingSoon: 'Coming soon',
     glossaryLink: 'Glossary →',
+    personalNoteEyebrow: 'Personal note',
   },
   themes: {
     architecture: 'Architecture',
@@ -315,7 +393,7 @@ const en: Translations = {
       },
     ],
     interestsLabel: '// Interests',
-    interests: ['Trail running', 'Rugby league', 'Climbing'],
+    interests: ['Trail running', 'Rugby', 'Climbing'],
   },
   stack: {
     title: '// Stack',
