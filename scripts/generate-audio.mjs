@@ -3,6 +3,11 @@ import { existsSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { createInterface } from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
+
+const COST_PER_1K_CHARS = 0.016;
+const fmtCost = (chars) => `$${((chars * COST_PER_1K_CHARS) / 1000).toFixed(4)}`;
 
 const here = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(here, '..');
@@ -25,11 +30,6 @@ const API_KEY = process.env.MISTRAL_API_KEY;
 const MODEL = process.env.MISTRAL_TTS_MODEL || 'voxtral-mini-tts-2603';
 const VOICE_ID = process.env.MISTRAL_TTS_VOICE_ID || 'Pierrick';
 
-if (!API_KEY) {
-  console.error('Missing MISTRAL_API_KEY. Set it in .env or your shell.');
-  process.exit(1);
-}
-
 const args = process.argv.slice(2);
 const filterCourse = args.find((a) => a.startsWith('--course='))?.split('=')[1];
 const filterLocale = args.find((a) => a.startsWith('--locale='))?.split('=')[1];
@@ -42,7 +42,25 @@ const filterModules = args
 const manifestOnly = args.includes('--manifest-only');
 const dryRun = args.includes('--dry-run');
 const listOnly = args.includes('--list');
+const withScriptOnly = args.includes('--with-script');
 const useMdxFallback = args.includes('--use-mdx-fallback');
+const confirmEach = args.includes('--confirm');
+
+const offlineMode = listOnly || dryRun || manifestOnly;
+if (!offlineMode && !API_KEY) {
+  console.error('Missing MISTRAL_API_KEY. Set it in .env or your shell.');
+  process.exit(1);
+}
+
+async function askYesNo(prompt) {
+  const rl = createInterface({ input, output });
+  try {
+    const answer = (await rl.question(prompt)).trim().toLowerCase();
+    return answer === 'y' || answer === 'yes' || answer === 'o' || answer === 'oui';
+  } finally {
+    rl.close();
+  }
+}
 
 function moduleMatches(name) {
   if (!filterModules || filterModules.length === 0) return true;
@@ -144,7 +162,7 @@ async function callVoxtralSingle(text) {
     },
     body: JSON.stringify({
       model: MODEL,
-      text,
+      input: text,
       voice_id: VOICE_ID,
       response_format: 'mp3',
       stream: false,
@@ -204,9 +222,18 @@ async function main() {
       if (listOnly) {
         const audioScriptPath = mdxPath.replace(/\.mdx$/, '.audio.md');
         const hasScript = existsSync(audioScriptPath);
+        if (withScriptOnly && !hasScript) continue;
         const outFile = resolve(OUT_DIR, locale, course, `${modName}.mp3`);
         const cached = existsSync(outFile);
-        console.log(`  ${key.padEnd(60)} script=${hasScript ? 'yes' : 'no'} mp3=${cached ? 'yes' : 'no'}`);
+        let chars = 0;
+        if (hasScript) {
+          chars = (await readFile(audioScriptPath, 'utf-8')).trim().length;
+        }
+        const costStr = chars > 0 ? ` cost=${fmtCost(chars)}` : '';
+        const charsStr = chars > 0 ? ` chars=${chars}` : '';
+        console.log(
+          `  ${key.padEnd(60)} script=${hasScript ? 'yes' : 'no '} mp3=${cached ? 'yes' : 'no '}${charsStr}${costStr}`,
+        );
         continue;
       }
 
@@ -258,11 +285,22 @@ async function main() {
       }
 
       if (dryRun) {
-        console.log(`would ${key} (${text.length} chars)`);
+        console.log(`would ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})`);
         continue;
       }
 
-      console.log(`gen   ${key} (${text.length} chars, source=${source})…`);
+      if (confirmEach) {
+        const ok = await askYesNo(
+          `Generate ${key}? (${text.length} chars, ~${fmtCost(text.length)}) [y/N]: `,
+        );
+        if (!ok) {
+          console.log(`skip  ${key} (declined)`);
+          skipped += 1;
+          continue;
+        }
+      }
+
+      console.log(`gen   ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})…`);
       const audio = await callVoxtral(text);
       await mkdir(dirname(outFile), { recursive: true });
       await writeFile(outFile, audio);
