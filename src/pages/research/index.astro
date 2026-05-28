@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHead from '../../components/ui/SectionHead.astro';
+import { useTranslations } from '../../lib/i18n';
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
+---
+
+<BaseLayout
+  title="Recherche · Pierrick Fonquerne"
+  description="Travaux de recherche et explorations techniques de Pierrick Fonquerne autour des systèmes, du langage Rust et de l'IA."
+  current="/research"
+  locale={locale}
+>
+  <section
+    id="research"
+    aria-labelledby="research-heading"
+    class="mx-auto mt-8 max-w-[1280px] px-14 pb-24"
+  >
+    <SectionHead id="research-heading" title={t.research.title} />
+    <p
+      class="mt-12 max-w-[60ch] border-t border-[var(--color-line)] pt-12 text-[18px] leading-[1.55] text-[var(--color-fg-muted)]"
+    >
+      {t.research.soon}
+    </p>
+  </section>
+</BaseLayout>
