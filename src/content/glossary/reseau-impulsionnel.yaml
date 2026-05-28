@@ -1,0 +1,9 @@
+slug: reseau-impulsionnel
+fr:
+  term: Réseau de neurones impulsionnel
+  definition: Famille de réseaux de neurones qui communiquent par impulsions discrètes dans le temps (spikes), plus proches du fonctionnement biologique que les réseaux classiques continus. Domaine de recherche actif, peu utilisé en pratique industrielle pour l'instant.
+en:
+  term: Spiking neural network
+  definition: A family of neural networks that communicate through discrete spikes in time, closer to biological operation than classical continuous networks. An active research field, rarely used in industrial practice so far.
+seeAlso:
+  - neuromorphique

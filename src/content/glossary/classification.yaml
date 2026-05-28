@@ -1,0 +1,11 @@
+slug: classification
+fr:
+  term: Classification
+  definition: Tâche d'apprentissage supervisé consistant à prédire une classe parmi un ensemble fini. Binaire si deux classes (chat ou non), multi-classe au-delà (espèce d'oiseau parmi 200). Utilise typiquement sigmoïde ou softmax en sortie.
+en:
+  term: Classification
+  definition: A supervised learning task that predicts a class from a finite set. Binary if two classes (cat or not), multi-class beyond (bird species among 200). Typically uses sigmoid or softmax as output.
+seeAlso:
+  - sigmoide
+  - softmax
+  - fonction-cout

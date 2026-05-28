@@ -1,0 +1,10 @@
+slug: saturation
+fr:
+  term: Saturation
+  definition: Phénomène par lequel une fonction d'activation atteint une valeur quasi-constante (et donc une dérivée quasi-nulle) sur de larges régions de son domaine. La sigmoïde sature pour les valeurs très négatives ou très positives, ce qui provoque le vanishing gradient.
+en:
+  term: Saturation
+  definition: The phenomenon by which an activation function reaches a nearly constant value (and therefore a nearly zero derivative) over large regions of its domain. Sigmoid saturates at very negative or very positive values, causing the vanishing gradient.
+seeAlso:
+  - sigmoide
+  - vanishing-gradient

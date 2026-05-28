@@ -1,0 +1,9 @@
+slug: few-shot
+fr:
+  term: Few-shot learning
+  definition: Capacité d'un modèle à apprendre une nouvelle tâche à partir de très peu d'exemples (typiquement entre 1 et 10). C'est un défi ouvert pour les réseaux classiques qui demandent des milliers d'exemples, mais progresse vite avec les grands modèles de fondation.
+en:
+  term: Few-shot learning
+  definition: A model's ability to learn a new task from very few examples (typically between 1 and 10). An open challenge for classical networks that need thousands of examples, but advancing fast with large foundation models.
+seeAlso:
+  - foundation-model

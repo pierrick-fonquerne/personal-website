@@ -1,0 +1,10 @@
+slug: hallucination
+fr:
+  term: Hallucination
+  definition: Production par un modèle de langage d'une affirmation fausse, énoncée avec aplomb. Défaut structurel issu de l'entraînement par maximisation de vraisemblance, qui pousse le modèle à toujours produire une réponse plausible même quand il devrait dire ne pas savoir.
+en:
+  term: Hallucination
+  definition: Output by a language model of a false statement, asserted with confidence. A structural flaw of training by likelihood maximisation, which pushes the model to always produce a plausible answer even when it should say it does not know.
+seeAlso:
+  - foundation-model
+  - transformer

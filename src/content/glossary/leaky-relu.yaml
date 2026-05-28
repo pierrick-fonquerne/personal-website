@@ -1,0 +1,12 @@
+slug: leaky-relu
+fr:
+  term: Leaky ReLU
+  definition: "Variante de ReLU qui laisse passer une petite pente alpha (typiquement 0.01) sur la partie négative au lieu d'être strictement nulle. Formule : LeakyReLU(x) = x si x > 0, alpha x sinon. Évite le problème du dying ReLU."
+  source: Maas, Hannun et Ng, 2013
+en:
+  term: Leaky ReLU
+  definition: "A ReLU variant that lets a small slope alpha (typically 0.01) pass on the negative side instead of being strictly zero. Formula: LeakyReLU(x) = x if x > 0, alpha x otherwise. Avoids the dying ReLU problem."
+  source: Maas, Hannun and Ng, 2013
+seeAlso:
+  - relu
+  - dying-relu

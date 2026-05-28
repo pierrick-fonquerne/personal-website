@@ -1,0 +1,10 @@
+slug: non-linearite
+fr:
+  term: Non-linéarité
+  definition: Propriété d'une fonction qui n'est pas affine. Une fonction d'activation non-linéaire est obligatoire dans un réseau profond, sans quoi la composition de plusieurs couches se réduit à une seule couche affine équivalente, et la profondeur perd tout intérêt.
+en:
+  term: Non-linearity
+  definition: The property of a function that is not affine. A non-linear activation function is mandatory in a deep network, otherwise the composition of several layers reduces to a single equivalent affine layer and depth loses its point.
+seeAlso:
+  - fonction-activation
+  - couche-cachee

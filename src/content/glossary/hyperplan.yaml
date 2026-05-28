@@ -1,0 +1,11 @@
+slug: hyperplan
+fr:
+  term: Hyperplan
+  definition: Sous-ensemble de Rⁿ défini par une équation linéaire w · x + b = 0. En dimension 2 c'est une droite, en dimension 3 un plan. C'est exactement la frontière de décision tracée par un neurone unique.
+en:
+  term: Hyperplane
+  definition: A subset of Rⁿ defined by a linear equation w · x + b = 0. In two dimensions it is a line, in three a plane. It is exactly the decision boundary drawn by a single neuron.
+seeAlso:
+  - vecteur
+  - produit-scalaire
+  - perceptron

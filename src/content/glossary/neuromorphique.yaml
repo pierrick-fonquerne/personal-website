@@ -1,0 +1,9 @@
+slug: neuromorphique
+fr:
+  term: Calcul neuromorphique
+  definition: Branche de l'informatique qui conçoit des circuits matériels imitant le fonctionnement du cerveau biologique (neurones impulsionnels, mémoire locale, calcul asynchrone). Domaine de recherche actif chez Intel (Loihi), IBM (TrueNorth) et plusieurs laboratoires académiques.
+en:
+  term: Neuromorphic computing
+  definition: A branch of computer science that designs hardware imitating biological brain operation (spiking neurons, local memory, asynchronous computation). An active research field at Intel (Loihi), IBM (TrueNorth) and several academic laboratories.
+seeAlso:
+  - reseau-impulsionnel

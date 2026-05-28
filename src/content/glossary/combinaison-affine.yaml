@@ -1,0 +1,11 @@
+slug: combinaison-affine
+fr:
+  term: Combinaison affine
+  definition: Combinaison linéaire à laquelle on ajoute un terme constant (biais). La somme pondérée d'un neurone avec son biais est une combinaison affine de ses entrées. Composer plusieurs combinaisons affines sans non-linéarité donne une seule combinaison affine équivalente.
+en:
+  term: Affine combination
+  definition: A linear combination to which a constant term (bias) is added. A neuron's weighted sum together with its bias is an affine combination of its inputs. Composing several affine combinations without a non-linearity yields a single equivalent affine combination.
+seeAlso:
+  - combinaison-lineaire
+  - non-linearite
+  - biais
