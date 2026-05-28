@@ -30,6 +30,13 @@ const fr: Translations = {
     nextChapterIn: (seconds) => `Chapitre suivant dans ${seconds}s`,
     playNext: 'Lire maintenant',
     cancel: 'Annuler',
+    shortcuts: 'Raccourcis clavier',
+    shortcutsTitle: 'Raccourcis',
+    shortcutPlayPause: 'Lecture / Pause',
+    shortcutSkipBack: 'Reculer de 15s',
+    shortcutSkipForward: 'Avancer de 15s',
+    shortcutFineSeek: 'Recul/avance fin ±5s (sur la barre)',
+    shortcutJump: 'Aller à 0% / 10% / … / 90%',
   },
   projects: {
     title: '// Projets',

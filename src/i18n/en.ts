@@ -39,6 +39,13 @@ export interface Translations {
     nextChapterIn: (seconds: number) => string;
     playNext: string;
     cancel: string;
+    shortcuts: string;
+    shortcutsTitle: string;
+    shortcutPlayPause: string;
+    shortcutSkipBack: string;
+    shortcutSkipForward: string;
+    shortcutFineSeek: string;
+    shortcutJump: string;
   };
   projects: {
     title: string;
@@ -238,6 +245,13 @@ const en: Translations = {
     nextChapterIn: (seconds) => `Next chapter in ${seconds}s`,
     playNext: 'Play now',
     cancel: 'Cancel',
+    shortcuts: 'Keyboard shortcuts',
+    shortcutsTitle: 'Shortcuts',
+    shortcutPlayPause: 'Play / Pause',
+    shortcutSkipBack: 'Skip back 15s',
+    shortcutSkipForward: 'Skip forward 15s',
+    shortcutFineSeek: 'Fine seek ±5s (progress bar focused)',
+    shortcutJump: 'Jump to 0% / 10% / … / 90%',
   },
   projects: {
     title: '// Projects',

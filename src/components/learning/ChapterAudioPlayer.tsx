@@ -36,6 +36,13 @@ export interface ChapterAudioLabels {
   nextChapterIn: (seconds: number) => string;
   playNext: string;
   cancel: string;
+  shortcuts: string;
+  shortcutsTitle: string;
+  shortcutPlayPause: string;
+  shortcutSkipBack: string;
+  shortcutSkipForward: string;
+  shortcutFineSeek: string;
+  shortcutJump: string;
 }
 
 interface Props {
@@ -158,6 +165,7 @@ export default function ChapterAudioPlayer({
   const [rate, setRate] = useState<number>(() => loadStoredRate());
   const [mp3Url, setMp3Url] = useState<string | null>(null);
   const [nextCountdown, setNextCountdown] = useState<number | null>(null);
+  const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
 
   const initialPositionRef = useRef<number>(loadStoredPosition(locale, courseSlug, moduleSlug));
   const positionRestoredRef = useRef<boolean>(false);
@@ -529,8 +537,8 @@ export default function ChapterAudioPlayer({
               <button
                 type="button"
                 onClick={() => handleSkip(-15)}
-                aria-label="Reculer de 15 secondes"
-                title="-15s"
+                aria-label={labels.skipBack}
+                title={`${labels.skipBack} (J)`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -542,6 +550,7 @@ export default function ChapterAudioPlayer({
                 type="button"
                 onClick={isPlaying ? handlePause : handlePlay}
                 aria-label={isPlaying ? labels.pause : labels.resume}
+                title={`${isPlaying ? labels.pause : labels.resume} (Espace / K)`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)]"
               >
                 {isPlaying ? (
@@ -558,8 +567,8 @@ export default function ChapterAudioPlayer({
               <button
                 type="button"
                 onClick={() => handleSkip(15)}
-                aria-label="Avancer de 15 secondes"
-                title="+15s"
+                aria-label={labels.skipForward}
+                title={`${labels.skipForward} (L)`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -640,6 +649,64 @@ export default function ChapterAudioPlayer({
                 </svg>
               </a>
             )}
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowShortcuts((v) => !v)}
+                aria-label={labels.shortcuts}
+                aria-expanded={showShortcuts}
+                title={labels.shortcuts}
+                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </button>
+              {showShortcuts && (
+                <div
+                  className="absolute right-0 bottom-[calc(100%+8px)] w-72 rounded-md border border-[var(--color-line)] bg-[var(--color-bg)] p-3 shadow-[0_-2px_12px_rgba(0,0,0,0.25)]"
+                  role="dialog"
+                  aria-label={labels.shortcutsTitle}
+                >
+                  <p className="mb-2 font-mono text-[10px] tracking-[0.14em] text-[var(--color-fg-muted)] uppercase">
+                    {labels.shortcutsTitle}
+                  </p>
+                  <ul className="space-y-1.5 text-[12px] leading-tight">
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--color-fg)]">{labels.shortcutPlayPause}</span>
+                      <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">Espace</kbd>{' '}
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">K</kbd>
+                      </span>
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--color-fg)]">{labels.shortcutSkipBack}</span>
+                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">J</kbd>
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--color-fg)]">{labels.shortcutSkipForward}</span>
+                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">L</kbd>
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--color-fg)]">{labels.shortcutFineSeek}</span>
+                      <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">←</kbd>{' '}
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">→</kbd>
+                      </span>
+                    </li>
+                    <li className="flex items-center justify-between gap-3">
+                      <span className="text-[var(--color-fg)]">{labels.shortcutJump}</span>
+                      <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">0</kbd>…<kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">9</kbd>
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
 
             <button
               type="button"
