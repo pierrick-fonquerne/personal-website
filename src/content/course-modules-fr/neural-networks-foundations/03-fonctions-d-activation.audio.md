@@ -1,0 +1,37 @@
+Chapitre trois. Fonctions d'activation. La pièce qui transforme un empilement linéaire en réseau capable d'apprendre vraiment.
+
+Au chapitre un, on a écrit y égal f de z, où z est la somme pondérée plus le biais, et f est la fonction d'activation. On a utilisé la sigmoïde par défaut, sans expliquer pourquoi. Ce chapitre comble ce vide. Tu vas voir quelles fonctions d'activation on utilise en pratique, comment elles se comportent en termes de gradient, et le problème historique du vanishing gradient qui a freiné le deep learning jusqu'en deux mille douze.
+
+Pourquoi une non-linéarité ?
+
+Empiler plusieurs neurones linéaires sans activation, c'est strictement équivalent à un seul neurone linéaire. Démonstration courte : si la couche un calcule z un égal W un x plus b un, et la couche deux calcule z deux égal W deux z un plus b deux, alors en remplaçant, on a z deux égal W deux fois W un x plus W deux fois b un plus b deux. C'est-à-dire une seule combinaison linéaire avec une matrice de poids effective W deux fois W un et un biais effectif. Sans non-linéarité, profondeur égale superficielle. La fonction d'activation est ce qui empêche cet effondrement.
+
+Les trois fonctions d'activation principales.
+
+Première, la sigmoïde. Notation sigma de x. Définition : sigma de x égal un divisé par un plus exponentielle de moins x. Sortie comprise entre zéro et un, exclus. Sa dérivée est sigma prime de x égal sigma de x fois un moins sigma de x. Maximum de la dérivée atteint en x égal zéro, où elle vaut zéro virgule vingt-cinq. La sigmoïde a dominé le deep learning entre quatre-vingt-six et deux mille dix. Sa forme en S compresse n'importe quel réel dans l'intervalle zéro virgule à un, ce qui permet d'interpréter la sortie comme une probabilité. Usage moderne : on la garde sur la couche de sortie pour la classification binaire ou pour les sorties qu'on veut interpréter comme une probabilité.
+
+Deuxième, la fonction ReLU. ReLU veut dire Rectified Linear Unit. Définition : ReLU de x égal maximum entre zéro et x. Si x est négatif, sortie zéro. Si x est positif ou nul, sortie x. Dérivée : zéro pour x négatif, un pour x strictement positif. Pas dérivable en zéro stricto sensu, mais on convient sortie zéro. Avantages : très rapide à calculer, et son gradient vaut un sur la partie active, ce qui résout largement le problème du vanishing gradient sur sigmoïde. Inconvénient : le problème du dying ReLU. Si un neurone reçoit une combinaison qui produit une activation toujours négative sur les données vues, il sort toujours zéro, son gradient est zéro, et il n'apprend plus. C'est mort.
+
+Sur la page, le composant interactif te laisse pousser le biais d'un neurone ReLU vers les valeurs très négatives. Tu verras tous les points basculer en rouge, le neurone meurt. À ce stade, le neurone n'apprendra plus, parce que son gradient est partout nul.
+
+Troisième, la tangente hyperbolique, notée tanh. Définition : tanh de x égal exponentielle de x moins exponentielle de moins x, le tout divisé par exponentielle de x plus exponentielle de moins x. Dérivée : un moins tanh de x au carré. Forme : même courbe en S que la sigmoïde, mais centrée. Sortie entre moins un et un. La tangente hyperbolique est la cousine centrée de la sigmoïde. On la préfère quand on veut une sortie centrée sur zéro, statistiquement préférable pour l'apprentissage. Souvent utilisée dans les RNN classiques.
+
+Joue avec les fonctions.
+
+Sur la page, le composant atelier trace simultanément les quatre fonctions sigmoïde, ReLU, tanh, identité sur le domaine x entre moins cinq et cinq. Tu peux activer ou désactiver chaque fonction et afficher les dérivées en pointillés. Cinq expériences à tenter. À x égal zéro, vérifie que sigma de zéro vaut zéro virgule cinq et que sigma prime de zéro vaut zéro virgule vingt-cinq. À x égal deux, observe que sigma prime de deux est déjà tombée vers zéro virgule un. La sigmoïde sature très vite. À x égal moins trois, ReLU et sa dérivée sont strictement à zéro. Sur cette branche, aucun gradient ne remonte. Compare au centre la pente de la tangente de la sigmoïde, au max zéro virgule vingt-cinq, avec celle de ReLU pour x positif, toujours exactement un. C'est la racine du vanishing gradient.
+
+Le problème du vanishing gradient.
+
+Quand on dérive la sigmoïde, on voit que sigma prime de x égal sigma de x fois un moins sigma de x. Le maximum est atteint pour x égal zéro et vaut zéro virgule vingt-cinq. Donc, à chaque couche traversée, le gradient est multiplié par un facteur au plus égal à zéro virgule vingt-cinq. Pour un réseau de dix couches utilisant sigmoïde, le gradient à la première couche est multiplié au maximum par zéro virgule vingt-cinq puissance dix, soit environ neuf virgule cinq fois dix puissance moins sept. C'est extrêmement faible. La première couche n'apprend plus. C'est le problème du vanishing gradient, identifié rigoureusement par Glorot et Bengio en deux mille dix.
+
+ReLU résout en grande partie ce problème : sur sa partie active, le gradient vaut exactement un. Une multiplication par un ne réduit pas le gradient. C'est l'une des deux raisons, avec sa vitesse de calcul, de sa domination moderne.
+
+Sur la page, le composant simule un réseau profond. Bouge le nombre de couches et change la fonction d'activation. Sur sigmoïde, les barres rétrécissent à vue d'œil. Sur ReLU, elles gardent leur longueur. Pousse à quinze couches avec sigmoïde et regarde le gradient à la première couche : c'est de l'ordre de dix puissance moins neuf, totalement insuffisant pour ajuster un poids. Bascule maintenant sur ReLU et observe que les barres se remettent à toutes mesurer la même chose. C'est exactement la raison technique pour laquelle on a abandonné sigmoïde dans les couches cachées au profit de ReLU à partir de deux mille douze.
+
+Le piège du vanishing gradient en pratique. Si tu entraînes un réseau profond et que la première couche reste muette alors que la dernière converge, c'est très probablement un vanishing gradient. Premiers réflexes : remplace les sigmoïdes par des ReLU, vérifie l'initialisation au chapitre onze, et regarde si la batch normalisation aide, même chapitre.
+
+Comment choisir en pratique. Une heuristique simple qui marche dans quatre-vingt-quinze pour cent des cas. Couches cachées : ReLU par défaut. Couche de sortie pour classification binaire : sigmoïde. Couche de sortie pour classification multi-classe : softmax, qu'on verra plus tard. Couche de sortie pour régression : pas d'activation, on garde la valeur brute. Pour des cas plus exotiques, il y a des variantes comme leaky ReLU, GELU, qui résolvent finement le problème du dying ReLU.
+
+En une phrase. Une fonction d'activation est ce qui transforme un empilement linéaire en réseau apprenant vraiment, et le choix entre sigmoïde, ReLU et tanh dépend du compromis entre saturation et linéarité par morceaux.
+
+Vers le chapitre quatre. Tu connais maintenant le neurone artificiel et les fonctions d'activation. Le chapitre quatre te présente le perceptron de Rosenblatt, l'ancêtre historique de l'apprentissage automatique, et la première règle d'apprentissage qui converge prouvablement quand les données sont linéairement séparables.

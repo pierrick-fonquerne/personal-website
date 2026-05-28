@@ -17,6 +17,7 @@
     "audio:generate": "node scripts/generate-audio.mjs",
     "audio:manifest": "node scripts/generate-audio.mjs --manifest-only",
     "audio:dry": "node scripts/generate-audio.mjs --dry-run",
+    "audio:list": "node scripts/generate-audio.mjs --list",
     "astro": "astro"
   },
   "dependencies": {

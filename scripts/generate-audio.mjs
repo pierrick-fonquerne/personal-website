@@ -33,13 +33,28 @@ if (!API_KEY) {
 const args = process.argv.slice(2);
 const filterCourse = args.find((a) => a.startsWith('--course='))?.split('=')[1];
 const filterLocale = args.find((a) => a.startsWith('--locale='))?.split('=')[1];
+const filterModules = args
+  .find((a) => a.startsWith('--module='))
+  ?.split('=')[1]
+  ?.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 const manifestOnly = args.includes('--manifest-only');
 const dryRun = args.includes('--dry-run');
+const listOnly = args.includes('--list');
+const useMdxFallback = args.includes('--use-mdx-fallback');
+
+function moduleMatches(name) {
+  if (!filterModules || filterModules.length === 0) return true;
+  return filterModules.some((needle) => name.includes(needle));
+}
 
 const SOURCES = [
   { locale: 'fr', dir: resolve(ROOT, 'src', 'content', 'course-modules-fr') },
   { locale: 'en', dir: resolve(ROOT, 'src', 'content', 'course-modules-en') },
 ];
+
+const MAX_CHARS_PER_CHUNK = 3800;
 
 function stripMdx(raw) {
   return raw
@@ -88,7 +103,39 @@ function sha256(input) {
   return createHash('sha256').update(input).digest('hex');
 }
 
-async function callVoxtral(text) {
+function chunkText(text, maxChars = MAX_CHARS_PER_CHUNK) {
+  if (text.length <= maxChars) return [text];
+  const paragraphs = text.split(/\n\s*\n/);
+  const chunks = [];
+  let current = '';
+  for (const para of paragraphs) {
+    const next = current ? `${current}\n\n${para}` : para;
+    if (next.length <= maxChars) {
+      current = next;
+      continue;
+    }
+    if (current) chunks.push(current);
+    if (para.length <= maxChars) {
+      current = para;
+    } else {
+      const sentences = para.split(/(?<=[.!?])\s+/);
+      current = '';
+      for (const sentence of sentences) {
+        const combined = current ? `${current} ${sentence}` : sentence;
+        if (combined.length <= maxChars) {
+          current = combined;
+        } else {
+          if (current) chunks.push(current);
+          current = sentence.slice(0, maxChars);
+        }
+      }
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
+async function callVoxtralSingle(text) {
   const res = await fetch('https://api.mistral.ai/v1/audio/speech', {
     method: 'POST',
     headers: {
@@ -110,6 +157,19 @@ async function callVoxtral(text) {
   const payload = await res.json();
   if (!payload?.audio_data) throw new Error('Voxtral returned no audio_data');
   return Buffer.from(payload.audio_data, 'base64');
+}
+
+async function callVoxtral(text) {
+  const chunks = chunkText(text);
+  if (chunks.length === 1) return callVoxtralSingle(chunks[0]);
+  const buffers = [];
+  for (let i = 0; i < chunks.length; i += 1) {
+    process.stdout.write(`      chunk ${i + 1}/${chunks.length} (${chunks[i].length} chars)…`);
+    const buf = await callVoxtralSingle(chunks[i]);
+    buffers.push(buf);
+    process.stdout.write(` ${buf.length} bytes\n`);
+  }
+  return Buffer.concat(buffers);
 }
 
 async function readManifest() {
@@ -138,10 +198,33 @@ async function main() {
     for await (const mdxPath of walkMdx(dir)) {
       const { course, module: modName } = parseRel(mdxPath, dir);
       if (filterCourse && course !== filterCourse) continue;
+      if (!moduleMatches(modName)) continue;
       const key = `${locale}/${course}/${modName}`;
 
-      const raw = await readFile(mdxPath, 'utf-8');
-      const text = stripMdx(raw);
+      if (listOnly) {
+        const audioScriptPath = mdxPath.replace(/\.mdx$/, '.audio.md');
+        const hasScript = existsSync(audioScriptPath);
+        const outFile = resolve(OUT_DIR, locale, course, `${modName}.mp3`);
+        const cached = existsSync(outFile);
+        console.log(`  ${key.padEnd(60)} script=${hasScript ? 'yes' : 'no'} mp3=${cached ? 'yes' : 'no'}`);
+        continue;
+      }
+
+      const audioScriptPath = mdxPath.replace(/\.mdx$/, '.audio.md');
+      let text;
+      let source;
+      if (existsSync(audioScriptPath)) {
+        text = (await readFile(audioScriptPath, 'utf-8')).trim();
+        source = 'script';
+      } else if (useMdxFallback) {
+        const raw = await readFile(mdxPath, 'utf-8');
+        text = stripMdx(raw);
+        source = 'mdx';
+      } else {
+        console.log(`skip  ${key} — no .audio.md sidecar (pass --use-mdx-fallback to override)`);
+        dropped += 1;
+        continue;
+      }
 
       if (text.length < 50) {
         console.log(`drop  ${key} (text too short: ${text.length} chars)`);
@@ -151,7 +234,7 @@ async function main() {
 
       const outFile = resolve(OUT_DIR, locale, course, `${modName}.mp3`);
       const hashFile = `${outFile}.hash`;
-      const newHash = sha256(`${text}\n${MODEL}\n${VOICE_ID}`);
+      const newHash = sha256(`${text}\n${MODEL}\n${VOICE_ID}\n${source}`);
 
       const upToDate =
         existsSync(hashFile) &&
@@ -179,7 +262,7 @@ async function main() {
         continue;
       }
 
-      console.log(`gen   ${key} (${text.length} chars)…`);
+      console.log(`gen   ${key} (${text.length} chars, source=${source})…`);
       const audio = await callVoxtral(text);
       await mkdir(dirname(outFile), { recursive: true });
       await writeFile(outFile, audio);
