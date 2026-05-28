@@ -84,7 +84,7 @@ Tu peux ignorer cette fonction tant qu'on est dans les couches cachées, mais el
 
 ### Sigmoïde
 
-La <Term slug="sigmoide">sigmoïde</Term> a dominé le deep learning entre 1986 et 2010. Sa forme en S compresse n'importe quel réel dans l'intervalle ouvert $]0, 1[$, ce qui permet d'interpréter sa sortie comme une probabilité.
+La <Term slug="sigmoide">sigmoïde</Term> a dominé les réseaux de neurones entre 1986 et 2010. Sa forme en S compresse n'importe quel réel dans l'intervalle ouvert $]0, 1[$, ce qui permet d'interpréter sa sortie comme une probabilité.
 
 <Formula caption="Sigmoïde">
 σ(x) = 1 / (1 + e⁻ˣ)
@@ -108,7 +108,7 @@ ReLU(x) = max(0, x)
 
 **Allure** : nulle pour les négatifs, identité pour les positifs. Pas bornée vers le haut.
 
-**Usage moderne** : 90 % des réseaux profonds modernes utilisent ReLU ou une de ses variantes (Leaky ReLU, ELU, GELU) dans leurs couches cachées (Nair et Hinton, 2010). Elle calcule en une seule opération, son gradient est exact (1 ou 0), et elle ne sature pas vers le haut. Inconvénient : si l'entrée d'un neurone est constamment négative, son gradient est nul et la backpropagation (chapitre 8) ne peut plus mettre à jour ses poids. Le neurone se fige. C'est le problème du *dying ReLU*, qu'on contourne avec les variantes.
+**Usage moderne** : depuis son introduction pour les RBM par Nair et Hinton (2010), ReLU et ses variantes (Leaky ReLU, ELU, GELU) sont devenues le choix dominant pour les couches cachées des réseaux profonds. Elle calcule en une seule opération, son gradient est exact (1 ou 0), et elle ne sature pas vers le haut. Inconvénient : si l'entrée d'un neurone est constamment négative, son gradient est nul et la backpropagation (chapitre 8) ne peut plus mettre à jour ses poids. Le neurone se fige. C'est le problème du *dying ReLU*, qu'on contourne avec les variantes.
 
 #### Voir un neurone mourir
 
@@ -170,7 +170,7 @@ Cinq expériences à tenter :
 
 Quand on dérive la sigmoïde, on voit que $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. Le maximum est atteint pour $x = 0$ et vaut $0{,}25$. Donc, à chaque couche traversée, le gradient est multiplié par un facteur au plus égal à $0{,}25$.
 
-Pour un réseau de 10 couches utilisant sigmoïde, le gradient à la première couche est multiplié au maximum par $0{,}25^{10} \approx 9{,}5 \times 10^{-7}$. C'est extrêmement faible : la première couche n'apprend plus. C'est le **problème du vanishing gradient**, identifié rigoureusement par Glorot et Bengio en 2010.
+Pour un réseau de 10 couches utilisant sigmoïde, le gradient à la première couche est multiplié au maximum par $0{,}25^{10} \approx 9{,}5 \times 10^{-7}$. C'est extrêmement faible : la première couche n'apprend plus. C'est le **problème du vanishing gradient**, observé pour la première fois par Hochreiter dans sa thèse (1991), analysé pour les réseaux récurrents par Bengio, Simard et Frasconi (1994), puis quantifié et corrigé pour les réseaux feedforward profonds par Glorot et Bengio (2010).
 
 ReLU résout en grande partie ce problème : sur sa partie active, le gradient vaut exactement $1$. Une multiplication par $1$ ne réduit pas le gradient. C'est l'une des deux raisons (avec sa vitesse de calcul) de sa domination moderne.
 
@@ -187,6 +187,11 @@ Le composant ci-dessous simule un réseau profond. Bouge le nombre de couches et
     defaultLayers={8}
     maxLayers={20}
     defaultActivation="sigmoid"
+    labels={{
+      layersLabel: 'Nombre de couches',
+      layerPrefix: 'Couche',
+      helpText: "La couche de sortie reçoit un gradient de référence de 1. Chaque couche traversée vers l'entrée le multiplie par la dérivée maximale de la fonction choisie : sigmoïde 0,25, tanh 1, ReLU 1.",
+    }}
   />
 </InteractivePrint>
 
@@ -217,6 +222,8 @@ La fonction d'activation est ce qui empêche un réseau profond de se réduire �
 ## Vers le chapitre 4
 
 Tu as maintenant tous les ingrédients pour comprendre la **machine qui apprend** : entrées vectorielles (chap. 2), somme pondérée, biais et fonction d'activation (ce chapitre). Le chapitre 4 te présente le perceptron, le premier neurone qui ajuste ses poids tout seul à partir d'exemples. C'est la naissance de l'apprentissage automatique tel qu'on le connaît.
+
+**Subtilité que tu vas explorer** : ce chapitre vient pourtant d'établir qu'une fonction d'activation doit être dérivable pour pouvoir calculer un gradient. Or le perceptron utilise la fonction de Heaviside, presque partout dérivable de dérivée nulle. Comment fait-il pour apprendre alors, sans gradient ? C'est précisément la question qui ouvre le chapitre suivant.
 
 ## Exercices
 

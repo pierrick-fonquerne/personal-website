@@ -33,6 +33,12 @@ export interface Translations {
     error: string;
     webSpeechBadge: string;
     mp3Badge: string;
+    download: string;
+    skipBack: string;
+    skipForward: string;
+    nextChapterIn: (seconds: number) => string;
+    playNext: string;
+    cancel: string;
   };
   projects: {
     title: string;
@@ -226,6 +232,12 @@ const en: Translations = {
     error: 'Audio unavailable',
     webSpeechBadge: 'Web Speech',
     mp3Badge: 'Studio',
+    download: 'Download audio',
+    skipBack: 'Skip back 15s',
+    skipForward: 'Skip forward 15s',
+    nextChapterIn: (seconds) => `Next chapter in ${seconds}s`,
+    playNext: 'Play now',
+    cancel: 'Cancel',
   },
   projects: {
     title: '// Projects',

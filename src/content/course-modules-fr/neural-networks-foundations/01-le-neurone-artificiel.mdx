@@ -30,7 +30,7 @@ Tout réseau de neurones, du plus simple au plus profond, est un assemblage d'un
 
 ## L'inspiration biologique
 
-Ton cerveau contient environ **86 milliards de neurones** (Azevedo et al., 2009). Chaque neurone reçoit des signaux électriques de ses voisins via ses *dendrites*, intègre ces signaux dans son corps cellulaire, et décide selon un seuil interne s'il doit lui-même envoyer un signal le long de son *axone*.
+Ton cerveau contient environ **86 milliards de neurones** (Azevedo et al., 2009). Chaque neurone reçoit des signaux électriques d'autres neurones via ses *dendrites*, intègre ces signaux dans son corps cellulaire, et décide selon un seuil interne s'il doit lui-même envoyer un signal le long de son *axone*.
 
 En 1943, Warren McCulloch et Walter Pitts modélisent ce comportement par une équation (McCulloch & Pitts, 1943), et posent les bases de ce qu'on appellera quelques années plus tard le neurone artificiel. Ce n'est pas une copie fidèle de la biologie, c'est une **simplification mathématique** qui s'avère puissante.
 
@@ -148,7 +148,7 @@ Le neurone artificiel est une caricature du neurone biologique. Un vrai neurone 
 
 ## Une idée née en 1943
 
-Le neurone artificiel a une histoire de plus de 80 ans, faite de percées et de longs hivers.
+Le neurone artificiel a une histoire de 83 ans, faite de percées et de longs hivers.
 
 | Année | Événement |
 |---|---|
@@ -195,11 +195,11 @@ $$
 \end{aligned}
 $$
 
-En additionnant les inégalités $(2)$ et $(3)$ : $w_1 + w_2 + 2b \geq 0$, donc $w_1 + w_2 \geq -2b$.
+En additionnant $(2)$ et $(3)$ : $w_1 + w_2 + 2b \geq 0$, donc $w_1 + w_2 \geq -2b$.
 
-D'après l'inégalité $(1)$, $b < 0$, donc $-2b > 0$, et finalement $w_1 + w_2 > 0$.
+De $(4)$ on a $w_1 + w_2 + b < 0$, donc $w_1 + w_2 < -b$.
 
-Mais l'inégalité $(4)$ donne $w_1 + w_2 < -b$, et puisque $b < 0$, $-b > 0$. Si on essaie de combiner ces deux contraintes en injectant dans $(4)$ : $w_1 + w_2 + b < 0$ et donc $w_1 + w_2 < -b$. Or on a aussi montré $w_1 + w_2 \geq -2b$, donc $-2b \leq w_1 + w_2 < -b$, ce qui impose $-2b < -b$, soit $b > 0$. Contradiction avec $(1)$ qui dit $b < 0$. ∎
+En combinant les deux : $-2b \leq w_1 + w_2 < -b$, donc $-2b < -b$, soit $b > 0$. Contradiction avec $(1)$ qui impose $b < 0$. ∎
 </Callout>
 
 Cette démonstration tient en cinq lignes mais elle clôt définitivement le débat : aucun choix de poids et de biais ne peut résoudre XOR avec un seul neurone à seuil.
@@ -216,7 +216,17 @@ Bouge les curseurs ci-dessous pour orienter et déplacer la droite. Sur AND et O
   label="Figure : séparation linéaire de XOR (interactif)"
   description="Plan 2D avec quatre points correspondant à la table XOR : (0,0) et (1,1) classés négatifs, (1,0) et (0,1) classés positifs. Les curseurs déplacent et orientent une droite. Aucune orientation ni position ne permet de séparer les deux paires positives des deux paires négatives : XOR n'est pas linéairement séparable, ce que Minsky et Papert ont démontré formellement en 1969."
 >
-  <LinearSeparabilityViewer client:visible dataset="xor" />
+  <LinearSeparabilityViewer
+    client:visible
+    dataset="xor"
+    labels={{
+      slope: 'Pente',
+      intercept: 'Ordonnée',
+      classified: 'bien classés',
+      line: 'Droite',
+      impossible: "Sur XOR, aucune droite ne sépare correctement les quatre points. Tu auras beau essayer, tu n'atteindras jamais 4 sur 4.",
+    }}
+  />
 </InteractivePrint>
 
 C'est exactement ce qu'ont démontré Minsky et Papert en 1969. Géométriquement, un neurone correspond à une droite ; XOR demande une frontière qui ne peut pas être linéaire. La solution viendra des réseaux multi-couches, qui peuvent composer plusieurs droites pour dessiner des frontières plus complexes.
@@ -242,6 +252,12 @@ Pour le voir en direct, reprends le composant ci-dessous sur le dataset **OR**. 
     dataset="or"
     initialSlope={-1}
     initialIntercept={0.5}
+    labels={{
+      slope: 'Pente',
+      intercept: 'Ordonnée',
+      classified: 'bien classés',
+      line: 'Droite',
+    }}
   />
 </InteractivePrint>
 
@@ -372,7 +388,7 @@ Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
 
 <InteractivePrint
   label="Quiz : récapitulatif du chapitre 1 (interactif)"
-  description="Quiz à choix multiples qui vérifie les acquis du chapitre : l'opération d'un neurone, le rôle des poids et du biais, et la limite XOR. Sept questions avec explication de la bonne réponse à la validation. À faire en ligne pour le scoring automatique."
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : l'opération d'un neurone, le rôle des poids et du biais, et la limite XOR. Cinq questions avec explication de la bonne réponse à la validation. À faire en ligne pour le scoring automatique."
 >
   <Quiz
     client:load

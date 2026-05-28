@@ -10,9 +10,11 @@ interface Props {
   locale: Locale;
   courseSlug: string;
   moduleSlug: string;
+  nextHref?: string;
+  nextTitle?: string;
 }
 
-const { badge, title, subtitle, locale, courseSlug, moduleSlug } = Astro.props;
+const { badge, title, subtitle, locale, courseSlug, moduleSlug, nextHref, nextTitle } = Astro.props;
 const t = useTranslations(locale);
 
 const audioLabels = {
@@ -26,6 +28,12 @@ const audioLabels = {
   error: t.toolbar.error,
   webSpeechBadge: t.toolbar.webSpeechBadge,
   mp3Badge: t.toolbar.mp3Badge,
+  download: t.toolbar.download,
+  skipBack: t.toolbar.skipBack,
+  skipForward: t.toolbar.skipForward,
+  nextChapterIn: t.toolbar.nextChapterIn,
+  playNext: t.toolbar.playNext,
+  cancel: t.toolbar.cancel,
 };
 ---
 
@@ -59,6 +67,9 @@ const audioLabels = {
       moduleSlug={moduleSlug}
       contentSelector="#chapter-content"
       labels={audioLabels}
+      chapterTitle={title}
+      nextHref={nextHref}
+      nextTitle={nextTitle}
     />
   </div>
   <div id="chapter-content" class="prose-module">

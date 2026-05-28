@@ -30,6 +30,12 @@ export interface ChapterAudioLabels {
   error: string;
   webSpeechBadge: string;
   mp3Badge: string;
+  download: string;
+  skipBack: string;
+  skipForward: string;
+  nextChapterIn: (seconds: number) => string;
+  playNext: string;
+  cancel: string;
 }
 
 interface Props {
@@ -38,6 +44,9 @@ interface Props {
   moduleSlug: string;
   contentSelector: string;
   labels: ChapterAudioLabels;
+  chapterTitle?: string;
+  nextHref?: string;
+  nextTitle?: string;
 }
 
 type Source = 'mp3' | 'speech' | 'unknown';
@@ -80,20 +89,78 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+const RATE_STORAGE_KEY = 'audio-player:rate';
+function positionStorageKey(locale: string, course: string, mod: string): string {
+  return `audio-player:pos:${locale}/${course}/${mod}`;
+}
+
+function loadStoredRate(): number {
+  if (typeof window === 'undefined') return 1;
+  try {
+    const raw = window.localStorage.getItem(RATE_STORAGE_KEY);
+    if (!raw) return 1;
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  } catch {
+    return 1;
+  }
+}
+
+function loadStoredPosition(locale: string, course: string, mod: string): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = window.localStorage.getItem(positionStorageKey(locale, course, mod));
+    if (!raw) return 0;
+    const parsed = Number.parseFloat(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveStoredRate(value: number): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(RATE_STORAGE_KEY, String(value));
+  } catch {
+    /* localStorage unavailable */
+  }
+}
+
+function saveStoredPosition(locale: string, course: string, mod: string, value: number): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (value <= 0.5) {
+      window.localStorage.removeItem(positionStorageKey(locale, course, mod));
+    } else {
+      window.localStorage.setItem(positionStorageKey(locale, course, mod), String(value));
+    }
+  } catch {
+    /* localStorage unavailable */
+  }
+}
+
 export default function ChapterAudioPlayer({
   locale,
   courseSlug,
   moduleSlug,
   contentSelector,
   labels,
+  chapterTitle,
+  nextHref,
+  nextTitle,
 }: Props): JSX.Element {
   const [open, setOpen] = useState<boolean>(false);
   const [status, setStatus] = useState<Status>('idle');
   const [source, setSource] = useState<Source>('unknown');
   const [progress, setProgress] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
-  const [rate, setRate] = useState<number>(1);
+  const [rate, setRate] = useState<number>(() => loadStoredRate());
   const [mp3Url, setMp3Url] = useState<string | null>(null);
+  const [nextCountdown, setNextCountdown] = useState<number | null>(null);
+
+  const initialPositionRef = useRef<number>(loadStoredPosition(locale, courseSlug, moduleSlug));
+  const positionRestoredRef = useRef<boolean>(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -119,6 +186,34 @@ export default function ChapterAudioPlayer({
       window.speechSynthesis.removeEventListener?.('voiceschanged', trigger);
     };
   }, []);
+
+  useEffect(() => {
+    saveStoredRate(rate);
+  }, [rate]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const handleBeforeSwap = (): void => {
+      if (audioRef.current) audioRef.current.pause();
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+    document.addEventListener('astro:before-swap', handleBeforeSwap);
+    window.addEventListener('beforeunload', handleBeforeSwap);
+    return () => {
+      document.removeEventListener('astro:before-swap', handleBeforeSwap);
+      window.removeEventListener('beforeunload', handleBeforeSwap);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (status !== 'playing') return undefined;
+    const id = window.setInterval(() => {
+      saveStoredPosition(locale, courseSlug, moduleSlug, progress);
+    }, 5000);
+    return () => window.clearInterval(id);
+  }, [courseSlug, locale, moduleSlug, progress, status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -290,6 +385,7 @@ export default function ChapterAudioPlayer({
   const handleRateChange = useCallback(
     (newRate: number): void => {
       setRate(newRate);
+      saveStoredRate(newRate);
       if (source === 'mp3' && audioRef.current) {
         audioRef.current.playbackRate = newRate;
       } else if (source === 'speech' && status === 'playing') {
@@ -298,6 +394,17 @@ export default function ChapterAudioPlayer({
     },
     [playSpeech, source, status],
   );
+
+  const onAudioLoadedMetadata = (): void => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (Number.isFinite(el.duration) && el.duration > 0) setDuration(el.duration);
+    if (!positionRestoredRef.current && initialPositionRef.current > 0) {
+      el.currentTime = Math.min(initialPositionRef.current, el.duration - 1);
+      setProgress(el.currentTime);
+      positionRestoredRef.current = true;
+    }
+  };
 
   const onAudioTimeUpdate = (): void => {
     const el = audioRef.current;
@@ -309,7 +416,49 @@ export default function ChapterAudioPlayer({
   const onAudioEnded = (): void => {
     setStatus('idle');
     setProgress(0);
+    saveStoredPosition(locale, courseSlug, moduleSlug, 0);
+    if (nextHref) {
+      setNextCountdown(5);
+    }
   };
+
+  useEffect(() => {
+    if (nextCountdown === null) return undefined;
+    if (nextCountdown <= 0) {
+      if (typeof window !== 'undefined' && nextHref) {
+        window.location.assign(nextHref);
+      }
+      return undefined;
+    }
+    const id = window.setTimeout(() => setNextCountdown((n) => (n === null ? null : n - 1)), 1000);
+    return () => window.clearTimeout(id);
+  }, [nextCountdown, nextHref]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onKey = (ev: KeyboardEvent): void => {
+      const target = ev.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return;
+      if (ev.key === ' ' || ev.code === 'Space' || ev.key.toLowerCase() === 'k') {
+        ev.preventDefault();
+        if (isPlaying) handlePause();
+        else handlePlay();
+      } else if (ev.key.toLowerCase() === 'j') {
+        ev.preventDefault();
+        handleSkip(-15);
+      } else if (ev.key.toLowerCase() === 'l') {
+        ev.preventDefault();
+        handleSkip(15);
+      } else if (/^[0-9]$/.test(ev.key) && duration > 0) {
+        ev.preventDefault();
+        const fraction = Number.parseInt(ev.key, 10) / 10;
+        handleSeek(fraction * duration);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [duration, handlePause, handlePlay, handleSeek, handleSkip, status, open]);
 
   const isPlaying = status === 'playing';
   const isLoadingSource = source === 'unknown';
@@ -349,6 +498,32 @@ export default function ChapterAudioPlayer({
           aria-label={labels.listen}
           data-print="hide"
         >
+          {chapterTitle && (
+            <div className="mx-auto mb-2 flex max-w-[1280px] items-center justify-between gap-3 font-mono text-[10px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
+              <span className="truncate">{chapterTitle}</span>
+              {nextCountdown !== null && nextTitle && (
+                <span className="flex items-center gap-2">
+                  <span>{labels.nextChapterIn(nextCountdown)} — {nextTitle}</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (nextHref && typeof window !== 'undefined') window.location.assign(nextHref);
+                    }}
+                    className="cursor-pointer rounded border border-[var(--color-fg)] px-2 py-0.5 text-[var(--color-fg)] hover:opacity-80"
+                  >
+                    {labels.playNext}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setNextCountdown(null)}
+                    className="cursor-pointer rounded border border-[var(--color-line)] px-2 py-0.5 hover:border-[var(--color-line-strong)]"
+                  >
+                    {labels.cancel}
+                  </button>
+                </span>
+              )}
+            </div>
+          )}
           <div className="mx-auto flex max-w-[1280px] items-center gap-4">
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -450,6 +625,22 @@ export default function ChapterAudioPlayer({
               ))}
             </div>
 
+            {mp3Url && (
+              <a
+                href={mp3Url}
+                download
+                aria-label={labels.download}
+                title={labels.download}
+                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </a>
+            )}
+
             <button
               type="button"
               onClick={handleClose}
@@ -470,7 +661,7 @@ export default function ChapterAudioPlayer({
               preload="metadata"
               onTimeUpdate={onAudioTimeUpdate}
               onEnded={onAudioEnded}
-              onLoadedMetadata={onAudioTimeUpdate}
+              onLoadedMetadata={onAudioLoadedMetadata}
               className="hidden"
             />
           )}

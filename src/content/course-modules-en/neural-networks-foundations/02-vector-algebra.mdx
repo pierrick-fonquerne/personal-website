@@ -182,6 +182,10 @@ $$
 
 The entry $w_{ji}$ reads "row $j$, column $i$". Each row, taken as a vector of dimension $n$, is itself a vector in $\mathbb{R}^n$.
 
+<Callout kind="tip" title="Indexing convention">
+In this chapter we pick: $j$ = neuron index (the row), $i$ = input index (the column). The entry $w_{ji}$ is therefore the weight applied by the $j$-th neuron to the $i$-th input. This convention makes $\mathbf{w}_j \cdot \mathbf{x}$ read naturally as the output of neuron $j$.
+</Callout>
+
 ### Stacking neurons
 
 A single layer of $m$ neurons, each receiving $n$ inputs, can be written using a matrix of weights $W \in \mathbb{R}^{m \times n}$. Each row $\mathbf{w}_j$ of $W$ holds the weights of the $j$-th neuron.

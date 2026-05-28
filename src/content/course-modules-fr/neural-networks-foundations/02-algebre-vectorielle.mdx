@@ -68,7 +68,7 @@ C'est une opération qui prend deux vecteurs et retourne un seul nombre. On la l
 Reprenons l'exemple de l'arbitre de foot :
 
 $$
-\mathbf{x} = (1, 0, 1), \quad \mathbf{w} = (0{,}8\ ;\ 0{,}5\ ;\ 0{,}9)
+\mathbf{x} = (1, 0, 1), \quad \mathbf{w} = (0{,}8,\ 0{,}5,\ 0{,}9)
 $$
 
 Le produit scalaire vaut :
@@ -171,6 +171,10 @@ w_{m1} & w_{m2} & \cdots & w_{mn}
 $$
 
 L'élément $w_{ji}$ se lit « ligne $j$, colonne $i$ ». Chaque ligne, prise comme un vecteur de dimension $n$, est elle-même un vecteur de $\mathbb{R}^n$.
+
+<Callout kind="tip" title="Convention d'indexation">
+Dans ce chapitre on choisit : $j$ = indice du neurone (la ligne), $i$ = indice de l'entrée (la colonne). L'élément $w_{ji}$ est donc le poids appliqué par le $j$-ième neurone sur la $i$-ième entrée. Cette convention rend l'écriture $\mathbf{w}_j \cdot \mathbf{x}$ naturelle pour la sortie du neurone $j$.
+</Callout>
 
 ### Empiler les neurones
 

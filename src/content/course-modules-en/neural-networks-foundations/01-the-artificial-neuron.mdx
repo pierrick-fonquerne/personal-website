@@ -30,7 +30,7 @@ By the end of this chapter you will be able to answer three questions: what exac
 
 ## The biological inspiration
 
-Your brain contains roughly **86 billion neurons** (Azevedo et al., 2009). Each neuron receives electrical signals from its neighbours through its *dendrites*, integrates them in its cell body, and decides, based on an internal threshold, whether to fire a signal along its *axon*.
+Your brain contains roughly **86 billion neurons** (Azevedo et al., 2009). Each neuron receives electrical signals from other neurons through its *dendrites*, integrates them in its cell body, and decides, based on an internal threshold, whether to fire a signal along its *axon*.
 
 In 1943, Warren McCulloch and Walter Pitts model that behaviour with an equation (McCulloch & Pitts, 1943), laying the foundations of what will later be called the artificial neuron. It is not a faithful copy of biology, but a **mathematical simplification** that turns out to be powerful.
 
@@ -148,7 +148,7 @@ The artificial neuron is a caricature of the biological neuron. A real neuron is
 
 ## An idea born in 1943
 
-The artificial neuron has a 80+ year history made of breakthroughs and long winters.
+The artificial neuron has an 83-year history made of breakthroughs and long winters.
 
 | Year | Event |
 |---|---|
@@ -197,9 +197,9 @@ $$
 
 Adding $(2)$ and $(3)$: $w_1 + w_2 + 2b \geq 0$, so $w_1 + w_2 \geq -2b$.
 
-From $(1)$, $b < 0$, so $-2b > 0$, and therefore $w_1 + w_2 > 0$.
+From $(4)$ we have $w_1 + w_2 + b < 0$, so $w_1 + w_2 < -b$.
 
-But $(4)$ gives $w_1 + w_2 < -b$, and since $b < 0$, $-b > 0$. Combining: $-2b \leq w_1 + w_2 < -b$, which forces $-2b < -b$, i.e. $b > 0$. Contradiction with $(1)$ which requires $b < 0$. ∎
+Combining the two: $-2b \leq w_1 + w_2 < -b$, so $-2b < -b$, i.e. $b > 0$. Contradiction with $(1)$ which requires $b < 0$. ∎
 </Callout>
 
 This proof fits in five lines but it closes the debate definitively: no choice of weights and bias can solve XOR with a single threshold neuron.
@@ -253,12 +253,11 @@ To see it live, switch the component below to the **OR** dataset. Keep the slope
     initialSlope={-1}
     initialIntercept={0.5}
     labels={{
-    slope: 'Slope',
-    intercept: 'Intercept',
-    classified: 'correctly classified',
-    line: 'Line',
-    impossible: "On XOR, no straight line correctly separates the four points. Try as much as you want, you will never hit 4 out of 4.",
-  }}
+      slope: 'Slope',
+      intercept: 'Intercept',
+      classified: 'correctly classified',
+      line: 'Line',
+    }}
   />
 </InteractivePrint>
 
@@ -389,7 +388,7 @@ Since $z \geq 0$, the output is $1$. Expected: $1$ ✓
 
 <InteractivePrint
   label="Quiz: chapter 1 recap (interactive)"
-  description="Multiple-choice quiz checking the chapter's takeaways: what a neuron computes, the role of weights and bias, and the XOR limit. Seven questions with an explanation for the correct answer upon submission. To be taken online for automatic scoring."
+  description="Multiple-choice quiz checking the chapter's takeaways: what a neuron computes, the role of weights and bias, and the XOR limit. Five questions with an explanation for the correct answer upon submission. To be taken online for automatic scoring."
 >
   <Quiz
     client:load

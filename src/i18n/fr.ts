@@ -24,6 +24,12 @@ const fr: Translations = {
     error: 'Audio indisponible',
     webSpeechBadge: 'Voix navigateur',
     mp3Badge: 'Studio',
+    download: "Télécharger l'audio",
+    skipBack: 'Reculer de 15s',
+    skipForward: 'Avancer de 15s',
+    nextChapterIn: (seconds) => `Chapitre suivant dans ${seconds}s`,
+    playNext: 'Lire maintenant',
+    cancel: 'Annuler',
   },
   projects: {
     title: '// Projets',
