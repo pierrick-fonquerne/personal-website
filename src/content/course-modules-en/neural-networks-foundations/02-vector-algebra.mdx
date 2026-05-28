@@ -10,6 +10,7 @@ published: true
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
 import InteractiveSlider from '../../../components/learning/InteractiveSlider.tsx';
+import DotProductViewer from '../../../components/learning/DotProductViewer.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 
@@ -77,21 +78,26 @@ $$
 
 That is the neuron's weighted sum, without the bias. Adding $b = -0.5$ gives $z = 1.7 - 0.5 = 1.2$, exactly as in the previous chapter.
 
-### Play with a single variable coordinate
+### See two vectors interacting
 
-Move the first coordinate of $\mathbf{x}$ and watch how the dot product evolves. The matching weight $w_1 = 0.8$ controls how sensitive the product is to that coordinate.
+The component below draws two vectors $\mathbf{x}$ and $\mathbf{w}$ in the plane. Move the sliders and watch three things at once: the dot product changes, but so do the <Term slug="norme">norm</Term> and the angle between them. When the angle gets close to $90°$, the dot product drops to zero: the vectors become <Term slug="orthogonalite">orthogonal</Term>.
 
-<InteractiveSlider
+<DotProductViewer
   client:visible
-  label="x₁"
-  min={-1}
-  max={1}
-  step={0.05}
-  defaultValue={1}
-  formatValue={(v) => `${v.toFixed(2)} → product = ${(v * 0.8 + 0 * 0.5 + 1 * 0.9).toFixed(2)}`}
+  initialX={[1.2, 0.6]}
+  initialW={[0.6, 1.2]}
+  labels={{
+    dotLabel: 'Dot product',
+    normLabel: 'Norm',
+    angleLabel: 'Angle',
+    helpText: 'Play with the coordinates. When the arrows point in the same direction the dot product is maximal. When they are perpendicular it is zero.',
+  }}
 />
 
-Variation of the dot product as a function of a single input coordinate, with weights and other coordinates held constant.
+Three experiments to try:
+- Align the two vectors on the same direction (say $\mathbf{x} = \mathbf{w}$). The dot product hits its maximum, equal to $\|\mathbf{x}\| \cdot \|\mathbf{w}\|$.
+- Place them perpendicularly (e.g. $\mathbf{x} = (1, 0)$ and $\mathbf{w} = (0, 1)$). The dot product is exactly zero.
+- Flip the direction of $\mathbf{w}$ (negative $w_1$ and $w_2$). The dot product becomes negative, because the arrows point in opposite directions.
 
 ### Geometric intuition
 
@@ -109,6 +115,16 @@ where $\|\mathbf{x}\|$ and $\|\mathbf{w}\|$ are the **lengths** (or norms) of th
 
 Geometrically, the dot product measures **how much two vectors point in the same direction**, weighted by their lengths. That is precisely what a neuron wants to know: *"do my inputs look like my weights?"*
 
+### The Cauchy-Schwarz inequality
+
+Because $\cos(\theta)$ always lies between $-1$ and $1$, the geometric formulation imposes a bound on the dot product. This is the <Term slug="cauchy-schwarz">Cauchy-Schwarz inequality</Term>, one of the most-used results in linear algebra:
+
+$$
+|\mathbf{x} \cdot \mathbf{w}| \leq \|\mathbf{x}\| \cdot \|\mathbf{w}\|
+$$
+
+Equality holds only when the two vectors are colinear (one is a multiple of the other). In machine learning, this inequality guarantees that you can always **normalise** a dot product by the lengths to get a measure in $[-1, 1]$, called *cosine similarity*. It is the basic tool to compare two vector representations, for example two word or sentence embeddings.
+
 ## Norm and distance
 
 The **norm** (or length) of a vector $\mathbf{x} \in \mathbb{R}^n$ is defined by the dot product with itself:
@@ -121,9 +137,48 @@ It generalises the Pythagorean theorem to $n$ dimensions. In 2D, $\|(x_1, x_2)\|
 
 The **distance** between two vectors $\mathbf{u}$ and $\mathbf{v}$ is the norm of their difference: $\|\mathbf{u} - \mathbf{v}\|$. That is how you measure "how similar two images are" when each image is represented as a vector.
 
+### A useful proof: the parallelogram identity
+
+One property comes back constantly in machine learning. We establish it once and for all, straight from the definitions:
+
+$$
+\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2
+$$
+
+<Callout kind="tip" title="Proof in four lines">
+By definition, $\|\mathbf{x} + \mathbf{w}\|^2 = (\mathbf{x} + \mathbf{w}) \cdot (\mathbf{x} + \mathbf{w})$.
+
+Distributing: $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \mathbf{w} \cdot \mathbf{x} + \mathbf{w} \cdot \mathbf{w}$.
+
+The dot product is commutative ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), so the two cross-terms combine into $2\,\mathbf{x} \cdot \mathbf{w}$.
+
+Hence $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
+</Callout>
+
+This identity is exactly the generalised Pythagorean theorem. Immediate consequence: if $\mathbf{x}$ and $\mathbf{w}$ are orthogonal ($\mathbf{x} \cdot \mathbf{w} = 0$), then $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagoras at its purest, without a triangle or an explicit right angle.
+
 ## Towards matrices: stacking neurons
 
-A single layer of $m$ neurons, each receiving $n$ inputs, can be written using a *matrix* of weights $W \in \mathbb{R}^{m \times n}$. Each row $\mathbf{w}_j$ of $W$ holds the weights of the $j$-th neuron.
+### What is a matrix
+
+A <Term slug="matrice">matrix</Term> of size $m \times n$ is a rectangular table of numbers arranged in $m$ rows and $n$ columns:
+
+$$
+W =
+\begin{pmatrix}
+w_{11} & w_{12} & \cdots & w_{1n} \\
+w_{21} & w_{22} & \cdots & w_{2n} \\
+\vdots & \vdots & \ddots & \vdots \\
+w_{m1} & w_{m2} & \cdots & w_{mn}
+\end{pmatrix}
+\in \mathbb{R}^{m \times n}
+$$
+
+The entry $w_{ji}$ reads "row $j$, column $i$". Each row, taken as a vector of dimension $n$, is itself a vector in $\mathbb{R}^n$.
+
+### Stacking neurons
+
+A single layer of $m$ neurons, each receiving $n$ inputs, can be written using a matrix of weights $W \in \mathbb{R}^{m \times n}$. Each row $\mathbf{w}_j$ of $W$ holds the weights of the $j$-th neuron.
 
 To compute all the layer's outputs at once, we use **matrix-vector multiplication**:
 

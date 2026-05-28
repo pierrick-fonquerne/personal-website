@@ -1,0 +1,11 @@
+slug: transformer
+fr:
+  term: Transformer
+  definition: Architecture de réseau de neurones introduite en 2017 par Vaswani et al. dans l'article "Attention is all you need". Basée sur le mécanisme d'attention, elle domine aujourd'hui le traitement du langage et s'étend à la vision et au son. C'est la fondation des modèles comme GPT, Claude, Gemini.
+  source: Vaswani et al., 2017
+en:
+  term: Transformer
+  definition: A neural network architecture introduced in 2017 by Vaswani et al. in "Attention is all you need". Built on the attention mechanism, it now dominates natural language processing and extends to vision and audio. It is the foundation of models like GPT, Claude, Gemini.
+  source: Vaswani et al., 2017
+seeAlso:
+  - llm-mcp

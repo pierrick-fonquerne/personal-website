@@ -8,6 +8,8 @@ published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
 
 In 2012, a program named AlexNet halved the error rate of the best image recognition system in the world. Since then, neural networks have infiltrated translation, vision, driver assistance, medical prediction, image and text generation. This course teaches you what happens inside a technology that has transformed so many fields.
 
@@ -19,7 +21,7 @@ Without claiming to be exhaustive, here are the uses where they have genuinely c
 
 - **Computer vision**: recognising a cat, segmenting a tumour on an MRI, driving a car. Error rate on ImageNet went from 26 % in 2011 to under 4 % in 2020.
 - **Machine translation**: DeepL, Google Translate, modernised by *transformers* since 2017. Indistinguishable from human quality on major language pairs.
-- **Text understanding and generation**: conversational assistants (GPT, Claude, Gemini, Mistral), summarisation, coding assistants.
+- **Text understanding and generation**: conversational assistants (<Term slug="foundation-model">foundation models</Term> like GPT, Claude, Gemini, Mistral), summarisation, coding assistants. All built on the <Term slug="transformer">transformer</Term> architecture (2017).
 - **Image and audio generation**: Stable Diffusion, Midjourney, DALL-E, text-to-speech models. Photorealism indistinguishable from real photos on some domains.
 - **Games and planning**: AlphaGo (2016), which defeated the world champion of Go; AlphaFold (2021), which predicts 3D protein structures.
 
@@ -45,9 +47,34 @@ To place what we study in time:
 
 1. **The initial dream (1940-1960)**: McCulloch and Pitts model the neuron (1943). Rosenblatt makes the perceptron learn (1958). Artificial thought feels close.
 2. **The two winters (1969-1986, then 1995-2010)**: Minsky proves the limits (1969), the Lighthill report (1973) collapses funding. Brief revival in the 1980s with backpropagation (1986). New slowdown facing support-vector machines (1995-2010).
-3. **The renaissance (2012-today)**: ImageNet + GPUs + big data ignite the explosion. AlexNet (2012), transformers (2017), foundation models (2020+).
+3. **The renaissance (2012-today)**: ImageNet + GPUs + big data ignite the explosion. AlexNet (2012), <Term slug="transformer">transformers</Term> (2017), <Term slug="foundation-model">foundation models</Term> (2020+).
 
 Chapter 1 will revisit the historical milestones in detail. Just remember: the theory we study here is old; what is new are the computers and the data.
+
+### Timeline of key milestones
+
+<MermaidDiagram
+  client:visible
+  caption="Eighty years in eight dates"
+  definition={`timeline
+    title Neural network milestones
+    1943 : McCulloch and Pitts
+         : Formal neuron model
+    1958 : Rosenblatt
+         : Perceptron that learns
+    1969 : Minsky and Papert
+         : XOR limitations
+    1986 : Rumelhart, Hinton, Williams
+         : Backpropagation
+    1998 : LeCun
+         : LeNet and convolutional vision
+    2012 : Krizhevsky, Sutskever, Hinton
+         : AlexNet and the GPU explosion
+    2017 : Vaswani et al.
+         : Transformer and attention
+    2020+ : OpenAI, Anthropic, Google
+          : Foundation models`}
+/>
 
 ## The course in thirteen chapters
 
@@ -64,6 +91,49 @@ Derivatives and the chain rule, backpropagation, gradient descent. The mathemati
 
 ### Block 4 - Optimisation and generalisation (chapters 10 to 12)
 Regularisation, initialisation and batch normalisation, advanced optimisers. The difference between a network that works in theory and one that works in practice.
+
+### Chapter dependency map
+
+<MermaidDiagram
+  client:visible
+  caption="Logical dependencies: who builds on whom"
+  definition={`flowchart LR
+    ch1[1. Neuron]
+    ch2[2. Algebra]
+    ch3[3. Activation]
+    ch4[4. Perceptron]
+    ch5[5. Multi-layer]
+    ch6[6. Forward + loss]
+    ch7[7. Derivatives]
+    ch8[8. Backpropagation]
+    ch9[9. Gradient descent]
+    ch10[10. Regularisation]
+    ch11[11. Initialisation]
+    ch12[12. Optimisers]
+    ch1 --> ch2
+    ch2 --> ch3
+    ch3 --> ch4
+    ch4 --> ch5
+    ch5 --> ch6
+    ch6 --> ch7
+    ch7 --> ch8
+    ch8 --> ch9
+    ch9 --> ch10
+    ch9 --> ch11
+    ch11 --> ch12
+    ch10 --> ch12`}
+/>
+
+## Who this course is for
+
+Several profiles can benefit from this course, each in their own way:
+
+- **High-school science student** with curiosity: you have the basics (functions, simple derivatives, geometry) and want to know how the AI everyone talks about actually works. Read in order, do every paper-and-pencil exercise.
+- **First or second-year undergraduate (L1-L2)**: you already master linear algebra and differential calculus. You can skim chapters 2 and 7 and focus on the ML-specific ones.
+- **Professional developer** without recent theory: you have forgotten partial derivatives. The course refreshes them while avoiding pointless academic formalism.
+- **Curious mind from outside STEM**: you will need to slow down on equations and read every proof twice. Aim for comfort over speed; there is no final exam.
+
+This course is **not**: a PyTorch or TensorFlow training (use the dedicated course in the sub-theme), a research state of the art (the field moves too fast), nor a general programming primer.
 
 ## How to read this course
 

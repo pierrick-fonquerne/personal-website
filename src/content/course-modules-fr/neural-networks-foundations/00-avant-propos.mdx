@@ -8,6 +8,8 @@ published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
 
 En 2012, un programme appelé AlexNet a divisé par deux le taux d'erreur du meilleur système de reconnaissance d'images au monde. Depuis, les réseaux de neurones ont infiltré la traduction, la vision, la conduite assistée, la prédiction médicale et la génération d'image et de texte. Ce cours t'apprend ce qui se passe à l'intérieur de cette technologie qui transforme tant de domaines.
 
@@ -19,7 +21,7 @@ Sans prétendre être exhaustif, voici les usages où ils ont réellement chang�
 
 - **Vision par ordinateur** : reconnaître un chat, segmenter une tumeur sur une IRM, conduire une voiture. Erreur sur ImageNet passée de 26 % en 2011 à moins de 4 % en 2020.
 - **Traduction automatique** : DeepL, Google Translate, modernisés par les *transformers* depuis 2017. Qualité indistinguable de l'humain sur les paires de langues majoritaires.
-- **Compréhension et génération de texte** : assistants conversationnels (GPT, Claude, Gemini, Mistral), résumé automatique, programmation assistée.
+- **Compréhension et génération de texte** : assistants conversationnels (<Term slug="foundation-model">modèles de fondation</Term> comme GPT, Claude, Gemini, Mistral), résumé automatique, programmation assistée. Tous reposent sur l'architecture <Term slug="transformer">transformer</Term> (2017).
 - **Génération d'image et de son** : Stable Diffusion, Midjourney, DALL-E, models text-to-speech. Photoréalisme indistinguable sur certains domaines.
 - **Jeux et planification** : AlphaGo (2016) qui a battu le champion du monde de go, AlphaFold (2021) qui prédit la structure 3D des protéines.
 
@@ -45,9 +47,34 @@ Pour situer ce qu'on étudie dans le temps :
 
 1. **Le rêve initial (1940-1960)** : McCulloch et Pitts modélisent le neurone (1943). Rosenblatt fait apprendre le perceptron (1958). On pense la pensée artificielle proche.
 2. **Les deux hivers (1969-1986, puis 1995-2010)** : Minsky démontre les limites (1969), le rapport Lighthill démolit les financements (1973). Court répit dans les années 1980 avec la rétropropagation (1986). Nouveau ralentissement face aux machines à vecteurs de support (1995-2010).
-3. **La renaissance (2012-aujourd'hui)** : ImageNet + GPU + grandes données déclenchent l'explosion. AlexNet (2012), transformers (2017), modèles de fondation (2020+).
+3. **La renaissance (2012-aujourd'hui)** : ImageNet + GPU + grandes données déclenchent l'explosion. AlexNet (2012), <Term slug="transformer">transformers</Term> (2017), <Term slug="foundation-model">modèles de fondation</Term> (2020+).
 
 Le chapitre 1 reviendra plus en détail sur les jalons historiques. Garde simplement en tête que la théorie qu'on étudie ici est ancienne ; ce sont les ordinateurs et les données qui sont nouveaux.
+
+### Frise des jalons clés
+
+<MermaidDiagram
+  client:visible
+  caption="Quatre-vingts ans en huit dates"
+  definition={`timeline
+    title Jalons des réseaux de neurones
+    1943 : McCulloch et Pitts
+         : Modèle du neurone formel
+    1958 : Rosenblatt
+         : Perceptron qui apprend
+    1969 : Minsky et Papert
+         : Limites de XOR
+    1986 : Rumelhart, Hinton, Williams
+         : Backpropagation
+    1998 : LeCun
+         : LeNet et la vision convolutionnelle
+    2012 : Krizhevsky, Sutskever, Hinton
+         : AlexNet et l'explosion GPU
+    2017 : Vaswani et al.
+         : Transformer et attention
+    2020+ : OpenAI, Anthropic, Google
+          : Modèles de fondation`}
+/>
 
 ## Le parcours en treize chapitres
 
@@ -64,6 +91,49 @@ Dérivées et règle de la chaîne, backpropagation, descente de gradient. Le c�
 
 ### Bloc 4 : optimisation et généralisation (chapitres 10 à 12)
 Régularisation, initialisation et batch normalisation, optimiseurs avancés. Ce qui fait la différence entre un réseau qui marche en théorie et un qui marche en pratique.
+
+### Carte des dépendances entre chapitres
+
+<MermaidDiagram
+  client:visible
+  caption="Dépendances logiques : qui suppose qui"
+  definition={`flowchart LR
+    ch1[1. Neurone]
+    ch2[2. Algèbre]
+    ch3[3. Activation]
+    ch4[4. Perceptron]
+    ch5[5. Multi-couches]
+    ch6[6. Forward + coût]
+    ch7[7. Dérivées]
+    ch8[8. Backpropagation]
+    ch9[9. Gradient descent]
+    ch10[10. Régularisation]
+    ch11[11. Initialisation]
+    ch12[12. Optimiseurs]
+    ch1 --> ch2
+    ch2 --> ch3
+    ch3 --> ch4
+    ch4 --> ch5
+    ch5 --> ch6
+    ch6 --> ch7
+    ch7 --> ch8
+    ch8 --> ch9
+    ch9 --> ch10
+    ch9 --> ch11
+    ch11 --> ch12
+    ch10 --> ch12`}
+/>
+
+## Pour qui ce cours
+
+Plusieurs profils peuvent profiter de ce cours, chacun à sa manière :
+
+- **Lycéen scientifique curieux** : tu as les maths du programme (fonctions, dérivées de base, géométrie) et tu veux savoir comment marche l'IA dont tout le monde parle. Lis dans l'ordre, ne saute aucun exercice papier-crayon.
+- **Étudiant en première ou deuxième année (L1-L2)** : tu maîtrises l'algèbre linéaire et le calcul différentiel. Tu peux survoler les chapitres 2 et 7 et te concentrer sur les chapitres « ML-specific ».
+- **Développeur professionnel** sans bagage théorique récent : tu as oublié les dérivées partielles. Le cours te remet à jour en évitant le formalisme académique inutile.
+- **Personne curieuse hors STEM** : tu vas devoir ralentir sur les équations et lire chaque démo deux fois. Vise le confort plutôt que la vitesse ; il n'y a pas d'examen final.
+
+Ce cours **n'est pas** : une formation à PyTorch ou TensorFlow (utilise le cours dédié dans le sous-thème), un état de l'art de la recherche (l'IA bouge trop vite pour cela), ni une introduction à l'algorithmie générale.
 
 ## Comment lire ce cours
 
