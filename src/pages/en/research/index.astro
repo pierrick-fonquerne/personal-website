@@ -1,28 +1,39 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import SectionHead from '../../../components/ui/SectionHead.astro';
+import Eyebrow from '../../../components/ui/Eyebrow.astro';
+import ResearchIntro from '../../../components/research/ResearchIntro.astro';
+import ResearchList from '../../../components/research/ResearchList.astro';
 import { useTranslations } from '../../../lib/i18n';
 
 const locale = 'en' as const;
 const t = useTranslations(locale);
+const entries = (await getCollection('research')).filter((e) => e.data.published);
 ---
 
 <BaseLayout
-  title="Research · Pierrick Fonquerne"
-  description="Research notes and technical explorations by Pierrick Fonquerne around systems, the Rust language and AI."
+  title={`${t.research.indexTitle} · Pierrick Fonquerne`}
+  description="Field notebook by Pierrick Fonquerne: deep dives, paper syntheses and technical explorations."
   current="/research"
   locale={locale}
 >
-  <section
-    id="research"
-    aria-labelledby="research-heading"
-    class="mx-auto mt-8 max-w-[1280px] px-14 pb-24"
-  >
-    <SectionHead id="research-heading" title={t.research.title} />
-    <p
-      class="mt-12 max-w-[60ch] border-t border-[var(--color-line)] pt-12 text-[18px] leading-[1.55] text-[var(--color-fg-muted)]"
+  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+    <Eyebrow text={t.research.eyebrow} />
+    <h1
+      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
-      {t.research.soon}
+      {t.research.indexTitle}
+    </h1>
+    <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+      {t.research.lead}
     </p>
+
+    <div class="mt-12">
+      <ResearchIntro locale={locale} />
+    </div>
+
+    <div class="mt-20">
+      <ResearchList entries={entries} locale={locale} />
+    </div>
   </section>
 </BaseLayout>

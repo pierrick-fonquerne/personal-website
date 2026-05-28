@@ -107,6 +107,63 @@ const projects = defineCollection({
   schema: projectSchema,
 });
 
+const researchLocaleSchema = z.object({
+  title: z.string(),
+  tagline: z.string(),
+  summary: z.string(),
+});
+
+const researchPaperSchema = z.object({
+  title: z.string(),
+  authors: z.string(),
+  href: z.string().url(),
+});
+
+const researchSchema = z.object({
+  slug: z.string(),
+  type: z.enum(['deep-dive', 'paper-synthesis', 'exploration']),
+  theme: z.enum([
+    'architecture',
+    'math',
+    'ai',
+    'systems',
+    'data',
+    'security',
+    'network',
+    'quant',
+    'tooling',
+  ]),
+  subtheme: z.string().optional(),
+  status: z.enum(['draft', 'wip', 'published', 'archived']),
+  publishedAt: z.coerce.date(),
+  updatedAt: z.coerce.date().optional(),
+  tags: z.array(z.string()).default([]),
+  papers: z.array(researchPaperSchema).default([]),
+  external: z.string().url().optional(),
+  fr: researchLocaleSchema,
+  en: researchLocaleSchema,
+  published: z.boolean().default(true),
+});
+
+const researchBodySchema = z.object({
+  slug: z.string(),
+});
+
+const research = defineCollection({
+  loader: glob({ base: './src/content/research', pattern: '**/*.{yaml,yml}' }),
+  schema: researchSchema,
+});
+
+const researchFr = defineCollection({
+  loader: glob({ base: './src/content/research-fr', pattern: '**/*.mdx' }),
+  schema: researchBodySchema,
+});
+
+const researchEn = defineCollection({
+  loader: glob({ base: './src/content/research-en', pattern: '**/*.mdx' }),
+  schema: researchBodySchema,
+});
+
 export const collections = {
   'courses-fr': coursesFr,
   'courses-en': coursesEn,
@@ -114,4 +171,7 @@ export const collections = {
   'course-modules-en': courseModulesEn,
   glossary,
   projects,
+  research,
+  'research-fr': researchFr,
+  'research-en': researchEn,
 };

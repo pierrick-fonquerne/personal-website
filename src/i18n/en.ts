@@ -26,6 +26,8 @@ export interface Translations {
   };
   projects: {
     title: string;
+    eyebrow: string;
+    indexTitle: string;
     lead: string;
     soon: string;
     count: (n: number) => string;
@@ -57,7 +59,28 @@ export interface Translations {
   };
   research: {
     title: string;
+    eyebrow: string;
+    indexTitle: string;
     soon: string;
+    lead: string;
+    disclaimer: string;
+    count: (n: number) => string;
+    emptyState: string;
+    backToList: string;
+    types: {
+      'deep-dive': string;
+      'paper-synthesis': string;
+      'exploration': string;
+    };
+    statuses: {
+      draft: string;
+      wip: string;
+      published: string;
+      archived: string;
+    };
+    papersLabel: string;
+    publishedAtLabel: string;
+    updatedAtLabel: string;
   };
   courses: {
     eyebrow: string;
@@ -142,6 +165,8 @@ export interface Translations {
   };
   about: {
     title: string;
+    eyebrow: string;
+    indexTitle: string;
     greeting: string;
     lead: string;
     photoYear: string;
@@ -184,6 +209,8 @@ const en: Translations = {
   },
   projects: {
     title: '// Projects',
+    eyebrow: 'PROJECTS',
+    indexTitle: 'Projects',
     lead: 'A selection of things I build, maintain or experiment with. Personal, open source and entrepreneurial work.',
     soon: 'Section under construction.',
     count: (n) => `${String(n).padStart(2, '0')} / projects`,
@@ -215,7 +242,28 @@ const en: Translations = {
   },
   research: {
     title: '// Research',
+    eyebrow: 'RESEARCH',
+    indexTitle: 'Research',
     soon: 'Section under construction.',
+    lead: 'A field notebook: deep dives, paper syntheses and explorations on the topics I care about.',
+    disclaimer: "I am not an academic researcher. No PhD, no claim to legitimacy or to publishing peer-reviewed work. Just curious, hands-on and stubborn. Today AI lets me explore and prototype ideas fast. Some are probably wrong. That's research: being wrong on the way to being a little less wrong.",
+    count: (n) => `${String(n).padStart(2, '0')} / notes`,
+    emptyState: 'No note published yet. Come back soon.',
+    backToList: '← Back to notes',
+    types: {
+      'deep-dive': 'Deep dive',
+      'paper-synthesis': 'Paper synthesis',
+      'exploration': 'Exploration',
+    },
+    statuses: {
+      draft: 'Draft',
+      wip: 'Work in progress',
+      published: 'Published',
+      archived: 'Archived',
+    },
+    papersLabel: 'Sources',
+    publishedAtLabel: 'Published',
+    updatedAtLabel: 'Updated',
   },
   courses: {
     eyebrow: 'INTERACTIVE COURSES',
@@ -419,6 +467,8 @@ const en: Translations = {
   },
   about: {
     title: '// About',
+    eyebrow: 'ABOUT',
+    indexTitle: 'About',
     greeting: 'Hi, I’m Pierrick.',
     lead: 'Hooked on code since childhood, professional full-stack developer since 2014. Based in a small village in southern France.',
     photoYear: '2025',

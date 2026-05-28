@@ -1,0 +1,145 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection, getEntry, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { localizedPath, useTranslations } from '../../lib/i18n';
+import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
+
+export const getStaticPaths = (async () => {
+  const entries = (await getCollection('research'))
+    .filter((e) => e.data.published)
+    .filter((e) => !e.data.external);
+  return entries.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { entry },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { entry } = Astro.props as Props;
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
+const content = entry.data.fr;
+
+const body = await getEntry('research-fr', entry.data.slug);
+const Body = body ? (await render(body)).Content : null;
+
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+const publishedAtLabel = dateFormatter.format(entry.data.publishedAt);
+const updatedAtLabel = entry.data.updatedAt ? dateFormatter.format(entry.data.updatedAt) : null;
+---
+
+<BaseLayout
+  title={`${content.title} · Pierrick Fonquerne`}
+  description={content.tagline}
+  current="/research"
+  locale={locale}
+>
+  <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
+    <a
+      href={localizedPath('/research', locale)}
+      class="inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.research.backToList}
+    </a>
+
+    <header class="mt-10 border-t border-[var(--color-line)] pt-10">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <span
+          class:list={[
+            'font-mono text-[11px] tracking-[0.16em] uppercase',
+            entry.data.status === 'published'
+              ? 'text-[var(--color-accent)]'
+              : 'text-[var(--color-fg-dim)]',
+          ]}
+        >
+          {t.research.types[entry.data.type]}
+        </span>
+        <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          {t.themes[entry.data.theme]}
+        </span>
+        <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          {t.research.statuses[entry.data.status]}
+        </span>
+        <span class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]">
+          {t.research.publishedAtLabel} {publishedAtLabel}
+        </span>
+        {
+          updatedAtLabel && (
+            <span class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]">
+              · {t.research.updatedAtLabel} {updatedAtLabel}
+            </span>
+          )
+        }
+      </div>
+
+      <h1
+        class="font-display mt-5 text-[clamp(40px,6vw,72px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[var(--color-fg)]"
+      >
+        {content.title}
+      </h1>
+      <p class="mt-5 text-[22px] leading-[1.45] text-[var(--color-fg-muted)]">
+        {content.tagline}
+      </p>
+    </header>
+
+    <p class="mt-12 text-[18px] leading-[1.6] text-[var(--color-fg)]">
+      {content.summary}
+    </p>
+
+    {
+      entry.data.tags.length > 0 && (
+        <section class="mt-8">
+          <ul class="flex flex-wrap gap-2">
+            {entry.data.tags.map((tag) => (
+              <li class="rounded-sm border border-[var(--color-line)] px-3 py-1.5 font-mono text-[12px] tracking-[0.05em] text-[var(--color-fg-dim)]">
+                #{tag}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      Body && (
+        <section class="prose-research mt-16 border-t border-[var(--color-line)] pt-12 text-[17px] leading-[1.7] text-[var(--color-fg)]">
+          <Body />
+        </section>
+      )
+    }
+
+    {
+      entry.data.papers.length > 0 && (
+        <section class="mt-16 border-t border-[var(--color-line)] pt-8">
+          <h2 class="mb-4 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+            {t.research.papersLabel}
+          </h2>
+          <ul class="flex flex-col gap-3">
+            {entry.data.papers.map((paper) => (
+              <li class="flex flex-col gap-1">
+                <a
+                  href={paper.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="inline-flex items-center gap-2 text-[16px] leading-[1.4] text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)]"
+                >
+                  {paper.title}
+                  <ExternalLink class="h-[12px] w-[12px] opacity-70" />
+                </a>
+                <span class="font-mono text-[12px] text-[var(--color-fg-dim)]">
+                  {paper.authors}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>
