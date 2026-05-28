@@ -1,0 +1,10 @@
+slug: distance-euclidienne
+fr:
+  term: Distance euclidienne
+  definition: "Distance entre deux vecteurs u et v dans Rⁿ, définie comme la norme de leur différence : d(u, v) = ‖u - v‖. C'est la généralisation à n dimensions de la distance entre deux points du plan. Sert à mesurer la similarité entre deux représentations vectorielles."
+en:
+  term: Euclidean distance
+  definition: "The distance between two vectors u and v in Rⁿ, defined as the norm of their difference: d(u, v) = ‖u - v‖. It generalises the distance between two points of the plane to n dimensions. Used to measure similarity between two vector representations."
+seeAlso:
+  - norme
+  - vecteur

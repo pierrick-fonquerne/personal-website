@@ -1,0 +1,10 @@
+slug: dying-relu
+fr:
+  term: Dying ReLU
+  definition: Phénomène par lequel un neurone à activation ReLU dont l'entrée reste constamment négative voit sa sortie et son gradient à zéro. Le neurone se fige, ne se met plus à jour, et reste mort jusqu'à la fin de l'entraînement. Contourné par les variantes Leaky ReLU, ELU, GELU.
+en:
+  term: Dying ReLU
+  definition: The phenomenon where a ReLU neuron whose input stays negative ends up with both zero output and zero gradient. The neuron freezes, stops updating, and remains dead until the end of training. Mitigated by Leaky ReLU, ELU, GELU variants.
+seeAlso:
+  - relu
+  - leaky-relu

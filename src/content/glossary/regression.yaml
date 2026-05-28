@@ -1,0 +1,10 @@
+slug: regression
+fr:
+  term: Régression
+  definition: Tâche d'apprentissage supervisé consistant à prédire une valeur continue (un prix, une température, une probabilité). Utilise typiquement l'identité comme activation de sortie et MSE comme fonction de coût.
+en:
+  term: Regression
+  definition: A supervised learning task that predicts a continuous value (a price, a temperature, a probability). Typically uses the identity as output activation and MSE as the loss function.
+seeAlso:
+  - fonction-cout
+  - fonction-activation

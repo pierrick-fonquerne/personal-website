@@ -1,0 +1,10 @@
+slug: fonction-seuil
+fr:
+  term: Fonction seuil
+  definition: "Fonction d'activation binaire H(z) qui vaut 1 si z >= 0 et 0 sinon. Aussi appelée fonction de Heaviside. C'est l'activation originale de McCulloch-Pitts (1943) et du perceptron de Rosenblatt (1958), abandonnée plus tard parce qu'elle n'est pas dérivable."
+en:
+  term: Threshold function
+  definition: "Binary activation function H(z) equal to 1 if z >= 0 and 0 otherwise. Also called the Heaviside function. It is the original activation of McCulloch-Pitts (1943) and Rosenblatt's perceptron (1958), later dropped because it is not differentiable."
+seeAlso:
+  - fonction-activation
+  - perceptron

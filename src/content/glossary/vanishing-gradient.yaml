@@ -1,0 +1,13 @@
+slug: vanishing-gradient
+fr:
+  term: Vanishing gradient
+  definition: Disparition du gradient dans les couches profondes d'un réseau. Quand la dérivée maximale d'une fonction d'activation est inférieure à 1, le gradient se multiplie à chaque couche traversée et s'écrase exponentiellement. Identifié par Glorot et Bengio (2010), c'est l'une des raisons du passage à ReLU.
+  source: Glorot et Bengio, 2010
+en:
+  term: Vanishing gradient
+  definition: The disappearance of the gradient in deep network layers. When the maximum derivative of an activation function is below 1, the gradient multiplies at each layer crossed and collapses exponentially. Identified by Glorot and Bengio (2010), it is one of the reasons for the shift to ReLU.
+  source: Glorot and Bengio, 2010
+seeAlso:
+  - sigmoide
+  - relu
+  - saturation

@@ -1,0 +1,11 @@
+slug: similarite-cosinus
+fr:
+  term: Similarité cosinus
+  definition: "Mesure de proximité entre deux vecteurs, définie comme cos(θ) = (x · w) / (‖x‖ ‖w‖), valeur dans [-1, 1]. Égale à 1 quand les vecteurs sont alignés, 0 quand orthogonaux, -1 opposés. Outil standard pour comparer des embeddings (mots, phrases, images)."
+en:
+  term: Cosine similarity
+  definition: "A measure of proximity between two vectors, defined as cos(θ) = (x · w) / (‖x‖ ‖w‖), a value in [-1, 1]. Equal to 1 when the vectors are aligned, 0 when orthogonal, -1 when opposite. A standard tool for comparing embeddings (words, sentences, images)."
+seeAlso:
+  - produit-scalaire
+  - norme
+  - cauchy-schwarz

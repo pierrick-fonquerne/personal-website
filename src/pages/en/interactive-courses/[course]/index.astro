@@ -35,13 +35,13 @@ const modules = await listModulesOf(locale, courseSlug!);
     >
       {course.data.title}
     </h1>
-    <p class="mt-4 max-w-[720px] text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+    <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
       {course.data.summary}
     </p>
 
     {
       course.data.personalNote && (
-        <aside class="mt-10 max-w-[820px] border-l-2 border-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-5 pl-6">
+        <aside class="mt-10 border-l-2 border-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-5 pl-6">
           <header class="mb-3 font-mono text-[11px] tracking-[0.18em] text-[var(--color-accent)] uppercase">
             {t.courses.personalNoteEyebrow}
           </header>

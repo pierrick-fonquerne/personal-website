@@ -1,0 +1,10 @@
+slug: softmax
+fr:
+  term: Softmax
+  definition: "Fonction qui prend un vecteur de réels et le transforme en distribution de probabilités. Pour un vecteur z, softmax(z)_i = exp(z_i) / somme(exp(z_j)). Utilisée comme activation de sortie pour la classification multi-classe."
+en:
+  term: Softmax
+  definition: "A function that turns a vector of reals into a probability distribution. For a vector z, softmax(z)_i = exp(z_i) / sum(exp(z_j)). Used as the output activation in multi-class classification."
+seeAlso:
+  - sigmoide
+  - fonction-activation

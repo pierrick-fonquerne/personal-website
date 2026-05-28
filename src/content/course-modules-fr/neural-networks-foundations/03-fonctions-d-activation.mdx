@@ -2,21 +2,417 @@
 course: neural-networks-foundations
 order: 3
 title: Fonctions d'activation
-subtitle: "Identity, Sigmoid, ReLU, Tanh : pourquoi elles existent et quand les choisir."
-estimatedMinutes: 12
-published: false
+subtitle: "Identity, sigmoïde, ReLU, tanh : pourquoi elles existent, ce qu'elles donnent, et comment choisir."
+estimatedMinutes: 16
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import ActivationPlotter from '../../../components/learning/ActivationPlotter.tsx';
+import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
+import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Aux chapitres 1 et 2 tu as croisé la <Term slug="fonction-activation">fonction d'activation</Term> $f$ dans la formule $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ sans qu'on lui consacre vraiment de temps. C'est l'objet de ce chapitre. On va voir pourquoi elle est mathématiquement indispensable, comparer les quatre classiques (Identity, sigmoïde, ReLU, tanh) et apprendre à les choisir.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : les concepts du chapitre 1 (neurone), la notation $f(z)$ d'une fonction réelle d'une variable, et le sens intuitif d'une dérivée. La dérivée apparaît dès la section sur le tracé interactif, mais on ne demande pas de la *calculer* à la main avant le chapitre 7 ; il suffit de comprendre qu'elle mesure une pente.
+
+**Ce qu'il n'est pas nécessaire de connaître** : calcul différentiel avancé, théorie de l'approximation, optimisation numérique.
+
+**Niveau de rigueur** : on définit chaque fonction par son équation, on donne sa dérivée et son comportement aux limites. La démonstration centrale (sans non-linéarité, profondeur inutile) est explicite.
 </Callout>
 
-## Ce que tu vas apprendre
+## Pourquoi a-t-on besoin d'une fonction non-linéaire
 
-- Pourquoi une non-linéarité est obligatoire dans un réseau
-- Les 4 grandes classiques : équations, dérivées, allure
-- Critères de choix : vanishing gradient, sparsité, vitesse de calcul
+### La démonstration qui justifie tout le reste
 
-Sans non-linéarité, empiler des couches ne sert à rien : tout se réduit à une combinaison linéaire. La fonction d'activation est ce qui donne au réseau sa puissance expressive.
+Imaginons un réseau à deux couches sans fonction d'activation, donc avec $f$ remplacée par l'identité. La sortie de la première couche est :
+
+$$
+\mathbf{h} = W_1 \mathbf{x} + \mathbf{b}_1
+$$
+
+La sortie de la seconde couche, appliquée à $\mathbf{h}$, donne :
+
+$$
+\mathbf{y} = W_2 \mathbf{h} + \mathbf{b}_2 = W_2 (W_1 \mathbf{x} + \mathbf{b}_1) + \mathbf{b}_2 = (W_2 W_1) \mathbf{x} + (W_2 \mathbf{b}_1 + \mathbf{b}_2)
+$$
+
+En posant $W' = W_2 W_1$ et $\mathbf{b}' = W_2 \mathbf{b}_1 + \mathbf{b}_2$, on retrouve :
+
+$$
+\mathbf{y} = W' \mathbf{x} + \mathbf{b}'
+$$
+
+**C'est une simple couche affine.** Ajouter des couches sans non-linéarité ne sert mathématiquement à rien : on peut toujours réduire le tout à une seule couche équivalente. C'est la **raison d'être** de la fonction d'activation.
+
+Cet argument se reproduit à chaque transition entre couches. C'est pourquoi on insère $f$ **après chaque couche cachée**, et pas seulement à la sortie : si une seule paire de couches contiguës n'a pas de non-linéarité entre elles, ces deux couches collapsent en une seule, et la profondeur perd à nouveau de l'intérêt.
+
+<Callout kind="tip" title="Le théorème en une phrase">
+*Sans non-linéarité, la profondeur d'un réseau est une illusion.* C'est pour ça qu'à chaque sortie de neurone, on insère une fonction $f$ qui « casse » la linéarité. Sans elle, tu n'as pas un réseau profond, tu as une régression linéaire avec une notation compliquée.
+</Callout>
+
+### Ce qu'on demande à une fonction d'activation
+
+Pour être utilisable en pratique, une fonction $f$ doit cocher plusieurs cases :
+
+1. **Non-linéaire** (pour la raison qu'on vient de voir).
+2. **Dérivable** presque partout, pour que la <Term slug="backpropagation">backpropagation</Term> puisse calculer un gradient (sujet du chapitre 8).
+3. **Calculable rapidement**, parce qu'on l'évalue des millions de fois par seconde en entraînement.
+4. **Bornée** (idéalement), pour éviter que la sortie ne diverge.
+5. **De gradient non-nul** sur un intervalle large, sinon l'apprentissage stagne.
+
+Les quatre classiques qu'on va étudier cochent ces cases à des degrés différents.
+
+## Les quatre fonctions classiques
+
+### Identity
+
+L'identité est la fonction qui ne fait rien. On l'inclut pour la complétude et parce qu'on l'utilise sur la **couche de sortie** des problèmes de régression.
+
+<Formula caption="Identity">
+f(x) = x
+</Formula>
+
+**Équation** : $f(x) = x$. **Dérivée** : $f'(x) = 1$.
+
+Tu peux ignorer cette fonction tant qu'on est dans les couches cachées, mais elle réapparaîtra au chapitre 6 quand on parlera de fonctions de coût pour la régression.
+
+### Sigmoïde
+
+La <Term slug="sigmoide">sigmoïde</Term> a dominé le deep learning entre 1986 et 2010. Sa forme en S compresse n'importe quel réel dans l'intervalle ouvert $]0, 1[$, ce qui permet d'interpréter sa sortie comme une probabilité.
+
+<Formula caption="Sigmoïde">
+σ(x) = 1 / (1 + e⁻ˣ)
+</Formula>
+
+**Équation** : $\sigma(x) = \dfrac{1}{1 + e^{-x}}$. **Dérivée** : $\sigma'(x) = \sigma(x)(1 - \sigma(x))$, propriété élégante qui simplifie la backpropagation.
+
+**Allure** : courbe en S, $\sigma(0) = 0{,}5$, $\sigma(-\infty) \to 0$, $\sigma(+\infty) \to 1$.
+
+**Usage moderne** : couche de sortie des classifications binaires (où la sortie probabilité a un sens). Plus utilisée pour les couches cachées profondes à cause du *vanishing gradient* (on y revient juste après).
+
+### ReLU
+
+La <Term slug="relu">ReLU</Term> est aujourd'hui le choix par défaut pour les couches cachées. Sa simplicité brutale est précisément ce qui la rend efficace.
+
+<Formula caption="ReLU">
+ReLU(x) = max(0, x)
+</Formula>
+
+**Équation** : $\text{ReLU}(x) = \max(0, x)$. **Dérivée** : $\text{ReLU}'(x) = \mathbb{1}[x > 0]$, soit $1$ si $x > 0$ et $0$ sinon. Indéfinie strictement en $x = 0$, mais on convient d'y mettre $0$ ou $1$ sans conséquence pratique.
+
+**Allure** : nulle pour les négatifs, identité pour les positifs. Pas bornée vers le haut.
+
+**Usage moderne** : 90 % des réseaux profonds modernes utilisent ReLU ou une de ses variantes (Leaky ReLU, ELU, GELU) dans leurs couches cachées (Nair et Hinton, 2010). Elle calcule en une seule opération, son gradient est exact (1 ou 0), et elle ne sature pas vers le haut. Inconvénient : si l'entrée d'un neurone est constamment négative, son gradient est nul et la backpropagation (chapitre 8) ne peut plus mettre à jour ses poids. Le neurone se fige. C'est le problème du *dying ReLU*, qu'on contourne avec les variantes.
+
+#### Voir un neurone mourir
+
+Le composant ci-dessous est un neurone ReLU à une entrée. Sa sortie est $\text{ReLU}(w \cdot x + b)$, tracée en orange. Douze points d'un dataset uniforme sont marqués sur cette courbe : vert si le neurone s'active sur eux, rouge sinon. Pousse le biais vers les valeurs très négatives : tu verras tous les points basculer en rouge. À ce stade, le neurone n'apprendra plus, parce que son gradient est partout nul.
+
+<DyingReLUSimulator client:visible initialW={1.2} initialB={0.4} />
+
+Trois choses à essayer :
+
+- Place le biais à $-2$ avec un poids positif modéré. Le neurone meurt complètement sur tout le dataset.
+- Remets le biais à $0$ et inverse le signe du poids. Tu vois que la frontière d'activation pivote autour de l'origine.
+- Cherche une configuration où exactement la moitié des points sont actifs. C'est typiquement un bon point de départ pour l'apprentissage.
+
+### Tanh
+
+La tangente hyperbolique est la cousine centrée de la sigmoïde. Même allure en S, mais compresse dans $]-1, 1[$ au lieu de $]0, 1[$.
+
+<Formula caption="Tanh">
+tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
+</Formula>
+
+**Équation** : $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$. **Dérivée** : $\tanh'(x) = 1 - \tanh^2(x)$.
+
+**Allure** : courbe en S, $\tanh(0) = 0$, $\tanh(-\infty) \to -1$, $\tanh(+\infty) \to +1$.
+
+**Usage moderne** : prisée quand on veut une sortie centrée sur zéro (statistiquement préférable pour l'apprentissage). Souvent utilisée dans les RNN classiques (LSTM, GRU) et dans certaines couches d'attention.
+
+## Joue avec les fonctions
+
+L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous est un atelier complet : tu peux activer ou désactiver chaque fonction individuellement (cliquer sur son label), afficher les **dérivées** en pointillés, activer un **curseur** qui place une ligne verticale et fait apparaître la **tangente locale** au point survolé pour chaque courbe (la pente de cette tangente, c'est exactement $f'(x)$). Un panneau dépliable en bas te permet aussi d'ajuster le domaine de $x$ si tu veux zoomer ou dézoomer.
+
+<ActivationPlotter
+  client:visible
+  functions={["sigmoid", "relu", "tanh", "identity"]}
+  showDerivative={true}
+  showCursor={true}
+  range={[-5, 5]}
+/>
+
+Cinq expériences à tenter :
+
+- À $x = 0$, vérifie que $\sigma(0) = 0{,}5$ et $\sigma'(0) = 0{,}25$. La tangente de la sigmoïde est nette.
+- À $x = 2$, observe que $\sigma'(2)$ est déjà tombée vers $0{,}1$. La sigmoïde sature très vite, sa tangente est presque plate.
+- À $x = -3$, ReLU et sa dérivée sont strictement à zéro. Sur cette branche, aucun gradient ne remonte.
+- Désactive Identity et Tanh pour comparer seulement sigmoïde et ReLU : on voit le contraste entre saturation et linéarité par morceaux.
+- Compare au centre la pente de la tangente de la sigmoïde (au max $0{,}25$) avec celle de ReLU pour $x > 0$ (toujours exactement $1$). C'est la racine du vanishing gradient.
+
+## Le problème du vanishing gradient
+
+Quand on dérive la sigmoïde, on voit que $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. Le maximum est atteint pour $x = 0$ et vaut $0{,}25$. Donc, à chaque couche traversée, le gradient est multiplié par un facteur au plus égal à $0{,}25$.
+
+Pour un réseau de 10 couches utilisant sigmoïde, le gradient à la première couche est multiplié au maximum par $0{,}25^{10} \approx 9{,}5 \times 10^{-7}$. C'est extrêmement faible : la première couche n'apprend plus. C'est le **problème du vanishing gradient**, identifié rigoureusement par Glorot et Bengio en 2010.
+
+ReLU résout en grande partie ce problème : sur sa partie active, le gradient vaut exactement $1$. Une multiplication par $1$ ne réduit pas le gradient. C'est l'une des deux raisons (avec sa vitesse de calcul) de sa domination moderne.
+
+#### Voir le gradient s'écraser
+
+Le composant ci-dessous simule un réseau profond. Bouge le nombre de couches et change la fonction d'activation. Chaque barre représente le gradient effectif à une couche donnée, en partant de la sortie en haut vers l'entrée en bas. Sur sigmoïde tu vois les barres rétrécir à vue d'œil à mesure que la profondeur monte. Sur ReLU elles gardent leur longueur.
+
+<VanishingGradientSimulator
+  client:visible
+  defaultLayers={8}
+  maxLayers={20}
+  defaultActivation="sigmoid"
+/>
+
+L'expérience clé : passe à $15$ couches avec sigmoïde et regarde le gradient à la première couche. C'est de l'ordre de $10^{-9}$, totalement insuffisant pour ajuster un poids. Bascule maintenant sur ReLU et observe que les barres se remettent à toutes mesurer la même chose. C'est exactement la raison technique pour laquelle on a abandonné sigmoïde dans les couches cachées au profit de ReLU à partir de 2012.
+
+<Callout kind="warn" title="Le piège du vanishing gradient">
+Si tu entraînes un réseau profond et que la première couche reste muette alors que la dernière converge, c'est très probablement un vanishing gradient. Premiers réflexes : remplace les sigmoïdes par des ReLU, vérifie l'initialisation (chapitre 11), et regarde si la batch normalisation aide (même chapitre).
+</Callout>
+
+## Comment choisir en pratique
+
+Une heuristique simple qui marche dans 95 % des cas :
+
+| Couche | Choix par défaut | Variantes |
+|---|---|---|
+| Couches cachées | **ReLU** | Leaky ReLU, ELU, GELU pour les cas de *dying ReLU* |
+| Sortie de classification binaire | **Sigmoïde** | (aucune) |
+| Sortie de classification multi-classe | **Softmax** (chapitre 6) | (aucune) |
+| Sortie de régression | **Identity** | (aucune) |
+| Couches récurrentes (RNN, LSTM, GRU) | **Tanh** + sigmoïde sur les portes | (aucune) |
+
+Cette table est une heuristique, pas un dogme. Sur des architectures spécifiques (transformers, GANs, diffusion models), d'autres fonctions sont utilisées (GELU, Swish, Mish). Mais pour un réseau standard, ReLU partout sauf en sortie est un excellent point de départ.
+
+## En une phrase
+
+La fonction d'activation est ce qui empêche un réseau profond de se réduire à une régression linéaire. Sigmoïde et tanh ont régné jusqu'à 2010, ReLU domine depuis. Le choix dépend du contexte mais reste rarement délicat en pratique.
+
+## Vers le chapitre 4
+
+Tu as maintenant tous les ingrédients pour comprendre la **machine qui apprend** : entrées vectorielles (chap. 2), somme pondérée, biais et fonction d'activation (ce chapitre). Le chapitre 4 te présente le perceptron, le premier neurone qui ajuste ses poids tout seul à partir d'exemples. C'est la naissance de l'apprentissage automatique tel qu'on le connaît.
+
+## Exercices
+
+### Exercice 1 : dériver la sigmoïde
+
+À partir de la définition $\sigma(x) = \dfrac{1}{1 + e^{-x}}$, démontrer que $\sigma'(x) = \sigma(x)(1 - \sigma(x))$.
+
+### Exercice 2 : calculer une dérivée à une valeur précise
+
+Calculer $\sigma'(0)$, puis $\sigma'(2)$. Comparer ces deux valeurs. Que peux-tu en déduire sur le comportement du gradient pour des entrées éloignées de zéro ?
+
+### Exercice 3 : comparer la vitesse
+
+Soit un neurone qui prend en entrée 1000 valeurs. Combien d'opérations arithmétiques élémentaires (additions, multiplications, exponentielles) sont nécessaires pour calculer la sortie d'un neurone avec activation ReLU ? Avec activation sigmoïde ? La différence te paraît-elle marginale ou significative quand tu multiplies par des millions d'évaluations ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : dériver la sigmoïde">
+On a $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ et on cherche $\sigma'(x)$. On utilise la **règle de la chaîne**.
+
+**Étape 1.** Posons $u(x) = 1 + e^{-x}$. Alors :
+
+$$
+\sigma(x) = \dfrac{1}{u(x)}
+$$
+
+**Étape 2.** La dérivée d'une fonction de la forme $1/u$ est $-u'/u^2$ :
+
+$$
+\sigma'(x) = -\dfrac{u'(x)}{u(x)^2}
+$$
+
+**Étape 3.** Calcul de $u'(x)$. La dérivée de $1$ est nulle, et la dérivée de $e^{-x}$ est $-e^{-x}$ (règle de la chaîne sur l'exponentielle) :
+
+$$
+u'(x) = 0 + (-e^{-x}) = -e^{-x}
+$$
+
+**Étape 4.** On substitue $u'$ et $u$ dans l'expression de $\sigma'$ :
+
+$$
+\sigma'(x) = -\dfrac{-e^{-x}}{(1 + e^{-x})^2} = \dfrac{e^{-x}}{(1 + e^{-x})^2}
+$$
+
+**Étape 5.** On reconnaît deux blocs. Le premier est $\sigma(x)$ :
+
+$$
+\dfrac{1}{1 + e^{-x}} = \sigma(x)
+$$
+
+Le second se réécrit en factorisant :
+
+$$
+\dfrac{e^{-x}}{1 + e^{-x}} = \dfrac{(1 + e^{-x}) - 1}{1 + e^{-x}} = 1 - \dfrac{1}{1 + e^{-x}} = 1 - \sigma(x)
+$$
+
+**Étape 6.** En remettant ensemble :
+
+$$
+\sigma'(x) = \sigma(x) \cdot (1 - \sigma(x)) \qquad \square
+$$
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : calcul à deux valeurs">
+On utilise la formule prouvée à l'exercice 1 : $\sigma'(x) = \sigma(x)(1 - \sigma(x))$.
+
+**Calcul de $\sigma'(0)$.**
+
+D'abord $\sigma(0)$ :
+
+$$
+\sigma(0) = \dfrac{1}{1 + e^{0}} = \dfrac{1}{1 + 1} = \dfrac{1}{2}
+$$
+
+Donc :
+
+$$
+\sigma'(0) = \dfrac{1}{2} \times \left(1 - \dfrac{1}{2}\right) = \dfrac{1}{2} \times \dfrac{1}{2} = \dfrac{1}{4} = 0{,}25
+$$
+
+C'est le maximum de la dérivée de la sigmoïde.
+
+**Calcul de $\sigma'(2)$.**
+
+D'abord $\sigma(2)$ :
+
+$$
+\sigma(2) = \dfrac{1}{1 + e^{-2}} \approx \dfrac{1}{1 + 0{,}135} \approx \dfrac{1}{1{,}135} \approx 0{,}881
+$$
+
+Donc :
+
+$$
+\sigma'(2) \approx 0{,}881 \times (1 - 0{,}881) \approx 0{,}881 \times 0{,}119 \approx 0{,}105
+$$
+
+**Comparaison et interprétation.**
+
+Le gradient est divisé par environ $2{,}4$ entre $x = 0$ et $x = 2$. Pour des entrées encore plus grandes, le gradient s'écroule très vite : c'est la **saturation** de la sigmoïde et la source du problème du vanishing gradient.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : comparer les coûts de calcul">
+On compte les opérations pour un seul neurone avec 1000 entrées.
+
+**Tronc commun : la somme pondérée.**
+
+Pour les deux activations, on calcule d'abord $z = \sum_{i=1}^{1000} w_i x_i + b$. Cela demande :
+
+- 1000 multiplications $w_i \times x_i$
+- 999 additions pour faire la somme
+- 1 addition pour le biais
+
+Soit environ **2000 opérations élémentaires** pour la somme pondérée.
+
+**Avec ReLU.**
+
+Une seule opération supplémentaire : la comparaison de $z$ avec 0.
+
+Total : environ **2000 opérations** (en valeur brute, négligeable l'ajout d'une comparaison).
+
+**Avec sigmoïde.**
+
+On doit calculer $1/(1 + e^{-z})$, ce qui demande :
+
+- 1 négation : $-z$
+- 1 exponentielle : $e^{-z}$
+- 1 addition : $1 + e^{-z}$
+- 1 division : $1/(1 + e^{-z})$
+
+Soit 4 opérations supplémentaires.
+
+Total : environ **2003 opérations**.
+
+**Le piège : toutes les opérations ne coûtent pas pareil.**
+
+L'exponentielle est très chère sur du matériel courant : environ **20 à 50 cycles processeur**, contre **1 cycle** pour une comparaison.
+
+Sur des milliards d'évaluations par seconde dans un réseau profond, ce facteur 20-50 sur l'activation devient un facteur 5 à 10 sur le débit total.
+
+C'est significatif, et c'est la deuxième raison (avec le gradient préservé) de la domination de ReLU.
+</Callout>
+
+## Sources
+
+- Nair, V. & Hinton, G. E. (2010). « Rectified Linear Units Improve Restricted Boltzmann Machines. » *ICML* 27. [Lien ICML](https://icml.cc/Conferences/2010/papers/432.pdf)
+- Glorot, X. & Bengio, Y. (2010). « Understanding the difficulty of training deep feedforward neural networks. » *AISTATS* 9, 249-256. [Lien AISTATS](https://proceedings.mlr.press/v9/glorot10a.html)
+- Cox, D. R. (1958). « The Regression Analysis of Binary Sequences. » *Journal of the Royal Statistical Society* 20(2), 215-242. (Origine historique de la fonction logistique). [DOI 10.1111/j.2517-6161.1958.tb00292.x](https://doi.org/10.1111/j.2517-6161.1958.tb00292.x)
+
+### Pour aller plus loin
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Section 6.3 sur les fonctions d'activation et leurs variantes. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Maas, A. L., Hannun, A. Y. & Ng, A. Y. (2013). « Rectifier Nonlinearities Improve Neural Network Acoustic Models. » *ICML* 30, Workshop on Deep Learning for Audio, Speech and Language Processing. (Introduction de la Leaky ReLU). [Lien Stanford](https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf)
+- Hendrycks, D. & Gimpel, K. (2016). « Gaussian Error Linear Units (GELUs). » *arXiv*. [arXiv 1606.08415](https://arxiv.org/abs/1606.08415)
+
+<Quiz
+  client:load
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Pourquoi une fonction d'activation non-linéaire est-elle indispensable dans un réseau profond ?",
+      options: [
+        "Pour rendre les calculs plus rapides",
+        "Pour empêcher le réseau de se réduire à une seule couche affine équivalente",
+        "Pour normaliser les sorties entre 0 et 1",
+        "Pour réduire la mémoire utilisée par les GPU",
+      ],
+      answer: 1,
+      explain: "Sans non-linéarité, une composition de couches affines reste affine : y = W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂). La profondeur du réseau n'apporte rien mathématiquement.",
+    },
+    {
+      q: "Quelle est la dérivée de la sigmoïde σ(x) ?",
+      options: [
+        "σ(x)",
+        "1 - σ(x)",
+        "σ(x)(1 - σ(x))",
+        "1 / (1 + e⁻ˣ)",
+      ],
+      answer: 2,
+      explain: "Propriété élégante de la sigmoïde : sa dérivée s'exprime directement à partir de sa valeur. Cela simplifie la backpropagation puisqu'on n'a pas à recalculer l'exponentielle.",
+    },
+    {
+      q: "Pourquoi ReLU domine-t-elle les couches cachées des réseaux profonds depuis 2012 ?",
+      options: [
+        "Elle est bornée, ce qui évite la divergence",
+        "Elle est calculable en une opération et son gradient sur les positifs vaut 1, ce qui évite le vanishing gradient",
+        "Elle produit une sortie probabiliste",
+        "Elle est dérivable partout sans exception",
+      ],
+      answer: 1,
+      explain: "Calcul ultra-rapide (max avec 0) et gradient exact de 1 sur la partie active. ReLU n'est pas bornée vers le haut, n'est pas probabiliste, et n'est pas strictement dérivable en 0, mais ces points sont négligeables en pratique.",
+    },
+    {
+      q: "Sur une classification binaire, quelle fonction d'activation utilise-t-on typiquement en sortie ?",
+      options: [
+        "ReLU",
+        "Tanh",
+        "Sigmoïde",
+        "Identity",
+      ],
+      answer: 2,
+      explain: "La sigmoïde compresse la sortie dans ]0, 1[, ce qui donne une probabilité directement interprétable. Pour de la classification multi-classe, on utiliserait softmax (chapitre 6).",
+    },
+    {
+      q: "Pour un réseau profond de 10 couches utilisant la sigmoïde partout, que peut-il arriver lors de l'entraînement ?",
+      options: [
+        "Le réseau converge rapidement grâce au gradient élevé",
+        "Le gradient à la première couche devient quasiment nul à cause de la saturation (vanishing gradient)",
+        "Le réseau diverge à cause de gradients explosifs",
+        "Les couches du milieu apprennent plus vite que les autres",
+      ],
+      answer: 1,
+      explain: "La dérivée de sigmoïde a un maximum de 0,25. Multiplié 10 fois, on obtient 0,25^10 ≈ 9,5×10⁻⁷. Le gradient à l'entrée s'écroule, la première couche n'apprend plus. C'est pour ça qu'on utilise ReLU sur les couches cachées profondes.",
+    },
+  ]}
+/>

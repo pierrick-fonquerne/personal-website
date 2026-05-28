@@ -1,0 +1,11 @@
+slug: lineairement-separable
+fr:
+  term: Linéairement séparable
+  definition: Un jeu de données étiquetées est dit linéairement séparable s'il existe un hyperplan qui sépare correctement les points de label 1 des points de label 0. XOR est l'exemple historique d'un problème non linéairement séparable.
+en:
+  term: Linearly separable
+  definition: A labelled dataset is linearly separable if there exists a hyperplane that correctly separates the label-1 points from the label-0 points. XOR is the historical example of a non linearly separable problem.
+seeAlso:
+  - hyperplan
+  - xor
+  - perceptron

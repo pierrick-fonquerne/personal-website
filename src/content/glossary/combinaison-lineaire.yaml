@@ -1,0 +1,10 @@
+slug: combinaison-lineaire
+fr:
+  term: Combinaison linéaire
+  definition: "Expression de la forme a₁ v₁ + a₂ v₂ + ... + aₙ vₙ où les aᵢ sont des scalaires et les vᵢ des vecteurs. La somme pondérée d'un neurone est une combinaison linéaire des entrées avec les poids comme coefficients."
+en:
+  term: Linear combination
+  definition: "An expression of the form a₁ v₁ + a₂ v₂ + ... + aₙ vₙ where the aᵢ are scalars and the vᵢ are vectors. A neuron's weighted sum is a linear combination of the inputs with the weights as coefficients."
+seeAlso:
+  - somme-ponderee
+  - produit-scalaire
