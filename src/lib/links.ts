@@ -18,7 +18,7 @@ export const SITE = {
   name: 'Pierrick Fonquerne',
   shortName: 'PF',
   location: 'Limoux · Aude · France',
-  email: 'pierrick.fonquerne@gmail.com',
+  email: 'contact@pierrickfonquerne.com',
   github: 'https://github.com/pierrick-fonquerne',
   linkedin: 'https://www.linkedin.com/in/pierrickfonquerne/',
   crates: 'https://crates.io/users/pierrick-fonquerne',
