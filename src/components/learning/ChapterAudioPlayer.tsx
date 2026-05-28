@@ -49,6 +49,30 @@ function manifestKey(locale: string, course: string, mod: string): string {
   return `${locale}/${course}/${mod}`;
 }
 
+function pickBestVoice(lang: string): SpeechSynthesisVoice | undefined {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined;
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length === 0) return undefined;
+  const langPrefix = lang.split('-')[0].toLowerCase();
+  const matches = voices.filter((v) => v.lang.toLowerCase().startsWith(langPrefix));
+  if (matches.length === 0) return undefined;
+  const scored = matches.map((voice) => {
+    const name = voice.name.toLowerCase();
+    let score = 0;
+    if (name.includes('google')) score += 100;
+    if (name.includes('natural') || name.includes('neural')) score += 60;
+    if (name.includes('online') || name.includes('cloud')) score += 40;
+    if (!voice.localService) score += 30;
+    if (voice.lang.toLowerCase() === lang.toLowerCase()) score += 20;
+    if (voice.default) score += 10;
+    if (name.includes('microsoft david') || name.includes('microsoft zira')) score -= 50;
+    if (name.includes('eloquence') || name.includes('compact')) score -= 30;
+    return { voice, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].voice;
+}
+
 function formatTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
   const m = Math.floor(seconds / 60);
@@ -83,6 +107,18 @@ export default function ChapterAudioPlayer({
     () => manifestKey(locale, courseSlug, moduleSlug),
     [locale, courseSlug, moduleSlug],
   );
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const trigger = (): void => {
+      window.speechSynthesis.getVoices();
+    };
+    trigger();
+    window.speechSynthesis.addEventListener?.('voiceschanged', trigger);
+    return () => {
+      window.speechSynthesis.removeEventListener?.('voiceschanged', trigger);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +180,10 @@ export default function ChapterAudioPlayer({
       const clampedStart = Math.max(0, Math.min(startChar, text.length - 1));
       const remaining = text.slice(clampedStart);
       const utterance = new SpeechSynthesisUtterance(remaining);
-      utterance.lang = locale === 'fr' ? 'fr-FR' : 'en-US';
+      const langTag = locale === 'fr' ? 'fr-FR' : 'en-US';
+      utterance.lang = langTag;
+      const bestVoice = pickBestVoice(langTag);
+      if (bestVoice) utterance.voice = bestVoice;
       utterance.rate = rate;
       speechCharsRef.current = text.length;
       speechTextRef.current = text;
