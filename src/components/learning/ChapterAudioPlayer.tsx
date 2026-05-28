@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { extractReadableText } from '../../lib/audio-text-extractor';
 
 interface ManifestEntry {
@@ -67,6 +75,9 @@ export default function ChapterAudioPlayer({
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const speechStartRef = useRef<number>(0);
   const speechCharsRef = useRef<number>(0);
+  const speechTextRef = useRef<string>('');
+  const speechCharsPerSecondRef = useRef<number>(15);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
 
   const key = useMemo(
     () => manifestKey(locale, courseSlug, moduleSlug),
@@ -123,42 +134,54 @@ export default function ChapterAudioPlayer({
     setStatus('playing');
   }, [rate]);
 
+  const speakFromChar = useCallback(
+    (text: string, startChar: number): void => {
+      if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+        setStatus('error');
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const clampedStart = Math.max(0, Math.min(startChar, text.length - 1));
+      const remaining = text.slice(clampedStart);
+      const utterance = new SpeechSynthesisUtterance(remaining);
+      utterance.lang = locale === 'fr' ? 'fr-FR' : 'en-US';
+      utterance.rate = rate;
+      speechCharsRef.current = text.length;
+      speechTextRef.current = text;
+      speechStartRef.current = Date.now();
+      const totalDuration = text.length / (speechCharsPerSecondRef.current * rate);
+      setDuration(totalDuration);
+      setProgress(clampedStart / speechCharsPerSecondRef.current / rate);
+
+      utterance.onboundary = (ev) => {
+        if (typeof ev.charIndex === 'number' && speechCharsRef.current > 0) {
+          const absoluteChar = clampedStart + ev.charIndex;
+          setProgress(absoluteChar / speechCharsPerSecondRef.current / rate);
+        }
+      };
+      utterance.onend = () => {
+        setStatus('idle');
+        setProgress(0);
+      };
+      utterance.onerror = () => {
+        setStatus('error');
+      };
+
+      utteranceRef.current = utterance;
+      window.speechSynthesis.speak(utterance);
+      setStatus('playing');
+    },
+    [locale, rate],
+  );
+
   const playSpeech = useCallback((): void => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      setStatus('error');
-      return;
-    }
     const text = extractReadableText(contentSelector);
     if (!text) {
       setStatus('error');
       return;
     }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = locale === 'fr' ? 'fr-FR' : 'en-US';
-    utterance.rate = rate;
-    speechCharsRef.current = text.length;
-    speechStartRef.current = Date.now();
-    setDuration(text.length / (15 * rate));
-    setProgress(0);
-
-    utterance.onboundary = (ev) => {
-      if (typeof ev.charIndex === 'number' && speechCharsRef.current > 0) {
-        setProgress((ev.charIndex / speechCharsRef.current) * (text.length / (15 * rate)));
-      }
-    };
-    utterance.onend = () => {
-      setStatus('idle');
-      setProgress(0);
-    };
-    utterance.onerror = () => {
-      setStatus('error');
-    };
-
-    utteranceRef.current = utterance;
-    window.speechSynthesis.speak(utterance);
-    setStatus('playing');
-  }, [contentSelector, locale, rate]);
+    speakFromChar(text, 0);
+  }, [contentSelector, speakFromChar]);
 
   const handlePlay = useCallback((): void => {
     setOpen(true);
@@ -192,6 +215,38 @@ export default function ChapterAudioPlayer({
     stopAll();
     setOpen(false);
   }, [stopAll]);
+
+  const handleSeek = useCallback(
+    (targetSeconds: number): void => {
+      const clamped = Math.max(0, Math.min(targetSeconds, duration || targetSeconds));
+      if (source === 'mp3' && audioRef.current) {
+        audioRef.current.currentTime = clamped;
+        setProgress(clamped);
+      } else if (source === 'speech' && speechTextRef.current) {
+        const charIndex = Math.floor(clamped * speechCharsPerSecondRef.current * rate);
+        speakFromChar(speechTextRef.current, charIndex);
+      }
+    },
+    [duration, rate, source, speakFromChar],
+  );
+
+  const handleSkip = useCallback(
+    (delta: number): void => {
+      handleSeek(progress + delta);
+    },
+    [handleSeek, progress],
+  );
+
+  const handleProgressBarClick = useCallback(
+    (ev: ReactMouseEvent<HTMLDivElement>): void => {
+      const bar = progressBarRef.current;
+      if (!bar || duration <= 0) return;
+      const rect = bar.getBoundingClientRect();
+      const fraction = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width));
+      handleSeek(fraction * duration);
+    },
+    [duration, handleSeek],
+  );
 
   const handleRateChange = useCallback(
     (newRate: number): void => {
@@ -256,34 +311,68 @@ export default function ChapterAudioPlayer({
           data-print="hide"
         >
           <div className="mx-auto flex max-w-[1280px] items-center gap-4">
-            <button
-              type="button"
-              onClick={isPlaying ? handlePause : handlePlay}
-              aria-label={isPlaying ? labels.pause : labels.resume}
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)]"
-            >
-              {isPlaying ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <rect x="6" y="5" width="4" height="14" />
-                  <rect x="14" y="5" width="4" height="14" />
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleSkip(-15)}
+                aria-label="Reculer de 15 secondes"
+                title="-15s"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
                 </svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path d="M8 5v14l11-7z" />
+              </button>
+              <button
+                type="button"
+                onClick={isPlaying ? handlePause : handlePlay}
+                aria-label={isPlaying ? labels.pause : labels.resume}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)]"
+              >
+                {isPlaying ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <rect x="6" y="5" width="4" height="14" />
+                    <rect x="14" y="5" width="4" height="14" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSkip(15)}
+                aria-label="Avancer de 15 secondes"
+                title="+15s"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polyline points="13 17 18 12 13 7" />
+                  <polyline points="6 17 11 12 6 7" />
                 </svg>
-              )}
-            </button>
+              </button>
+            </div>
 
             <div className="min-w-0 flex-1">
               <div
-                className="h-1 w-full overflow-hidden rounded-full bg-[var(--color-line)]"
-                role="progressbar"
+                ref={progressBarRef}
+                onClick={handleProgressBarClick}
+                className="group h-2 w-full cursor-pointer overflow-hidden rounded-full bg-[var(--color-line)]"
+                role="slider"
+                tabIndex={0}
+                aria-label={`${labels.listen} — progress`}
                 aria-valuemin={0}
                 aria-valuemax={duration || 1}
                 aria-valuenow={progress}
+                onKeyDown={(ev) => {
+                  if (ev.key === 'ArrowLeft') handleSkip(-5);
+                  else if (ev.key === 'ArrowRight') handleSkip(5);
+                }}
               >
                 <div
-                  className="h-full bg-[var(--color-fg)]"
+                  className="h-full bg-[var(--color-fg)] transition-all duration-100"
                   style={{
                     width:
                       duration > 0
