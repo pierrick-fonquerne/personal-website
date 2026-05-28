@@ -1,27 +1,246 @@
 ---
 course: neural-networks-foundations
 order: 2
-title: Algèbre vectorielle et produit scalaire
-subtitle: "Pourquoi les neurones raisonnent en dimensions multiples : vecteurs, produits scalaires, géométrie de l'apprentissage."
-estimatedMinutes: 12
-published: false
+title: Algèbre linéaire essentielle
+subtitle: "Vecteurs, produits scalaires et matrices, exactement ce qu'il faut pour parler aux réseaux de neurones dans leur langue."
+estimatedMinutes: 15
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
+import InteractiveSlider from '../../../components/learning/InteractiveSlider.tsx';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Tu viens de voir au chapitre précédent que la formule du neurone s'écrit en notation vectorielle $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. Ce chapitre installe les briques mathématiques cachées derrière cette notation. L'objectif : que tu lises $\mathbf{w} \cdot \mathbf{x}$ sans buter, et que tu comprennes ce que ça raconte géométriquement.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : opérations arithmétiques de base, intuition d'un point dans un plan, addition et multiplication de nombres réels.
+
+**Ce qu'il n'est pas nécessaire de connaître** : algèbre linéaire abstraite (espaces vectoriels axiomatiques, dimension infinie, applications linéaires). On reste résolument dans $\mathbb{R}^n$ et concret.
+
+**Niveau de rigueur** : on définit chaque objet formellement et on démontre les propriétés utilisées plus tard, mais sans s'aventurer dans le formalisme académique complet (corps, bases duales, etc.).
 </Callout>
 
-## Ce que tu vas apprendre
+## Le vecteur, une liste ordonnée de nombres
 
-- Représenter les entrées d'un neurone comme un vecteur
-- Le produit scalaire : la "combinaison pondérée" en une seule notation
-- Norme, distance et ce que ça veut dire géométriquement
+### Définition
 
-<Formula caption="Produit scalaire">
-x · w = x₁·w₁ + x₂·w₂ + ... + xₙ·wₙ
-</Formula>
+Un <Term slug="vecteur">vecteur</Term> de dimension $n$ est une liste ordonnée de $n$ nombres réels. On le note typiquement avec une lettre en gras et entre parenthèses ou crochets :
 
-Tout réseau de neurones repose sur cette opération. La comprendre géométriquement, c'est comprendre ce que "apprendre" veut dire dans l'espace des poids.
+$$
+\mathbf{x} = (x_1, x_2, \dots, x_n) \in \mathbb{R}^n
+$$
+
+Le symbole $\mathbb{R}^n$ se lit « R puissance n » et désigne l'ensemble de toutes les listes ordonnées de $n$ nombres réels. Chaque $x_i$ est appelée la $i$-ième **coordonnée** ou **composante** du vecteur.
+
+### Pourquoi des vecteurs en machine learning
+
+Tout ce que tu peux décrire par une liste de nombres est un vecteur. Quelques exemples :
+
+- L'image d'un chiffre manuscrit de 28×28 pixels en niveau de gris : un vecteur de dimension $784$ (chaque pixel donne une valeur entre 0 et 1).
+- Un patient médical caractérisé par âge, tension, glycémie, cholestérol : un vecteur de dimension 4.
+- Les entrées d'un neurone $x_1, x_2, x_3$ que tu as vues au chapitre 1 : un vecteur de dimension 3.
+
+Les poids d'un neurone forment eux aussi un vecteur, de la **même dimension** que les entrées. C'est cette correspondance qui rend le produit scalaire possible.
+
+## Le produit scalaire
+
+### Définition
+
+Le <Term slug="produit-scalaire">produit scalaire</Term> de deux vecteurs $\mathbf{x}, \mathbf{w} \in \mathbb{R}^n$ est le nombre réel :
+
+$$
+\mathbf{x} \cdot \mathbf{w} = \sum_{i=1}^{n} x_i w_i = x_1 w_1 + x_2 w_2 + \dots + x_n w_n
+$$
+
+C'est une opération qui prend deux vecteurs et retourne un seul nombre. On la lit « x point w » ou « produit scalaire de x et w ».
+
+<Callout kind="tip" title="Lis l'opération à voix haute">
+*« On multiplie chaque coordonnée de x par la coordonnée de même indice de w, puis on additionne tous les produits obtenus. »* En français : c'est exactement la somme pondérée du chapitre 1.
+</Callout>
+
+### Exemple chiffré
+
+Reprenons l'exemple de l'arbitre de foot :
+
+$$
+\mathbf{x} = (1, 0, 1), \quad \mathbf{w} = (0{,}8\ ;\ 0{,}5\ ;\ 0{,}9)
+$$
+
+Le produit scalaire vaut :
+
+$$
+\mathbf{x} \cdot \mathbf{w} = 1 \times 0{,}8 + 0 \times 0{,}5 + 1 \times 0{,}9 = 1{,}7
+$$
+
+C'est la somme pondérée du neurone, sans le biais. En ajoutant $b = -0{,}5$, on obtient bien $z = 1{,}7 - 0{,}5 = 1{,}2$ comme au chapitre précédent.
+
+### Joue avec une seule coordonnée variable
+
+Fais bouger la première coordonnée de $\mathbf{x}$ et observe comment le produit scalaire évolue. Le poids correspondant $w_1 = 0{,}8$ détermine la sensibilité du produit à cette coordonnée.
+
+<InteractiveSlider
+  client:visible
+  label="x₁"
+  min={-1}
+  max={1}
+  step={0.05}
+  defaultValue={1}
+  formatValue={(v) => `${v.toFixed(2)} → produit = ${(v * 0.8 + 0 * 0.5 + 1 * 0.9).toFixed(2)}`}
+/>
+
+Variation du produit scalaire en fonction d'une seule coordonnée d'entrée, à poids et autres coordonnées fixés.
+
+### Intuition géométrique
+
+Le produit scalaire admet une seconde formulation, géométrique :
+
+$$
+\mathbf{x} \cdot \mathbf{w} = \|\mathbf{x}\| \, \|\mathbf{w}\| \cos(\theta)
+$$
+
+où $\|\mathbf{x}\|$ et $\|\mathbf{w}\|$ sont les **longueurs** (ou normes) des deux vecteurs, et $\theta$ l'angle entre eux. Conséquences :
+
+- Si $\theta = 0$ (vecteurs alignés dans le même sens), $\cos(\theta) = 1$ : produit scalaire maximal.
+- Si $\theta = 90°$ (vecteurs perpendiculaires), $\cos(\theta) = 0$ : produit scalaire nul.
+- Si $\theta = 180°$ (vecteurs opposés), $\cos(\theta) = -1$ : produit scalaire minimal.
+
+Géométriquement, le produit scalaire mesure **à quel point deux vecteurs pointent dans la même direction**, pondéré par leurs longueurs. C'est exactement ce que veut savoir un neurone : *« mes entrées ressemblent-elles à mes poids ? »*
+
+## Norme et distance
+
+La **norme** (ou longueur) d'un vecteur $\mathbf{x} \in \mathbb{R}^n$ est définie par le produit scalaire avec lui-même :
+
+$$
+\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
+$$
+
+C'est la généralisation du théorème de Pythagore en $n$ dimensions. En 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, soit la longueur de l'hypoténuse d'un triangle rectangle.
+
+La **distance** entre deux vecteurs $\mathbf{u}$ et $\mathbf{v}$ est la norme de leur différence : $\|\mathbf{u} - \mathbf{v}\|$. C'est ce qui te permet de mesurer « à quel point deux images se ressemblent » quand chaque image est représentée comme un vecteur.
+
+## Vers les matrices : empiler des neurones
+
+Une seule couche de $m$ neurones, chacun ayant $n$ entrées, peut s'écrire en utilisant une <em>matrice</em> de poids $W \in \mathbb{R}^{m \times n}$. Chaque ligne $\mathbf{w}_j$ de $W$ contient les poids du $j$-ième neurone.
+
+Pour calculer toutes les sorties de la couche d'un coup, on utilise la **multiplication matrice-vecteur** :
+
+$$
+W \mathbf{x} =
+\begin{pmatrix}
+\mathbf{w}_1 \cdot \mathbf{x} \\
+\mathbf{w}_2 \cdot \mathbf{x} \\
+\vdots \\
+\mathbf{w}_m \cdot \mathbf{x}
+\end{pmatrix}
+$$
+
+C'est une opération qui prend un vecteur et en retourne un autre, où chaque coordonnée du résultat est un produit scalaire. On en reparlera en détail au chapitre 5 quand on construira un réseau multi-couches.
+
+<Callout kind="note" title="Pourquoi cette notation est partout">
+La quasi-totalité du deep learning moderne est exprimée en algèbre linéaire : un réseau profond, c'est une succession de multiplications matrice-vecteur et d'applications de fonctions d'activation. C'est cette représentation compacte qui permet aux bibliothèques comme PyTorch ou TensorFlow d'exploiter le calcul matriciel parallèle des GPU. La maîtrise de la notation vectorielle n'est pas un luxe, c'est la langue de tout le domaine.
+</Callout>
+
+## En une phrase
+
+Un vecteur est une liste ordonnée de $n$ nombres. Le produit scalaire de deux vecteurs est la somme de leurs produits coordonnée par coordonnée. Et un neurone calcule exactement ce produit scalaire entre ses entrées et ses poids, avec un biais ajouté.
+
+## Exercices
+
+### Exercice 1 : calculer un produit scalaire
+
+Soit $\mathbf{x} = (2, -1, 3)$ et $\mathbf{w} = (1, 4, -2)$. Calculer $\mathbf{x} \cdot \mathbf{w}$.
+
+### Exercice 2 : norme d'un vecteur
+
+Calculer la norme du vecteur $\mathbf{u} = (3, 4)$ en utilisant la définition.
+
+### Exercice 3 : produit scalaire et orthogonalité
+
+Trouver une valeur de $a$ telle que les vecteurs $\mathbf{x} = (a, 1)$ et $\mathbf{w} = (2, 1)$ soient orthogonaux (produit scalaire nul).
+
+<Callout kind="tip" title="Corrigés">
+**Exercice 1.** $\mathbf{x} \cdot \mathbf{w} = 2 \times 1 + (-1) \times 4 + 3 \times (-2) = 2 - 4 - 6 = -8$.
+
+**Exercice 2.** $\|\mathbf{u}\| = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$. C'est le triangle 3-4-5, classique.
+
+**Exercice 3.** On veut $\mathbf{x} \cdot \mathbf{w} = 2a + 1 = 0$, donc $a = -\frac{1}{2}$. Vérification : $(-\frac{1}{2}) \times 2 + 1 \times 1 = -1 + 1 = 0$. ✓
+</Callout>
+
+## Sources
+
+- Anton, H. & Rorres, C. (2010). *Elementary Linear Algebra*, 10e édition. Wiley. Chapitres 1 à 3 pour la base.
+- Strang, G. (2016). *Introduction to Linear Algebra*, 5e édition. Wellesley-Cambridge Press. [Cours en ligne MIT OCW](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) gratuit et excellent.
+- Wikipedia (consulté 2026). « Produit scalaire ». [fr.wikipedia.org/wiki/Produit_scalaire](https://fr.wikipedia.org/wiki/Produit_scalaire)
+
+### Pour aller plus loin
+
+- Strang, G. (cours en ligne MIT 18.06 *Linear Algebra*). Vidéos accessibles à tout niveau, le standard de l'enseignement de l'algèbre linéaire dans les grandes écoles. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
+- 3Blue1Brown, série *Essence of Linear Algebra*. Visualisations remarquables des concepts clés, francophone via les sous-titres. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 2 sur l'algèbre linéaire spécifique au ML. [deeplearningbook.org](https://www.deeplearningbook.org/)
+
+<Quiz
+  client:load
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Que représente le produit scalaire de deux vecteurs ?",
+      options: [
+        "Un vecteur de même dimension que les opérandes",
+        "Un seul nombre réel, la somme des produits coordonnée par coordonnée",
+        "Une matrice carrée",
+        "L'angle géométrique entre les deux vecteurs",
+      ],
+      answer: 1,
+      explain: "Le produit scalaire retourne UN scalaire, calculé comme Σ xᵢ wᵢ. La formulation géométrique (longueurs et angle) est une seconde lecture du même nombre, pas un autre résultat.",
+    },
+    {
+      q: "Si deux vecteurs sont orthogonaux, leur produit scalaire vaut :",
+      options: [
+        "1",
+        "-1",
+        "0",
+        "ça dépend de leurs longueurs",
+      ],
+      answer: 2,
+      explain: "Orthogonal signifie angle de 90°. Comme cos(90°) = 0, la formulation géométrique x·w = ‖x‖ ‖w‖ cos(θ) donne 0, peu importe les normes.",
+    },
+    {
+      q: "La norme d'un vecteur x = (x₁, x₂, ..., xₙ) est :",
+      options: [
+        "La somme x₁ + x₂ + ... + xₙ",
+        "Le maximum des xᵢ",
+        "La racine carrée de la somme des carrés Σ xᵢ²",
+        "Le produit x₁ · x₂ · ... · xₙ",
+      ],
+      answer: 2,
+      explain: "C'est la généralisation du théorème de Pythagore : ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).",
+    },
+    {
+      q: "Pourquoi les poids d'un neurone ont-ils la même dimension que ses entrées ?",
+      options: [
+        "C'est une convention arbitraire",
+        "Pour que le produit scalaire wᵢ xᵢ soit défini, il faut une coordonnée de poids par coordonnée d'entrée",
+        "Pour économiser de la mémoire",
+        "Pour respecter le théorème de Pythagore",
+      ],
+      answer: 1,
+      explain: "Le produit scalaire n'est défini que pour deux vecteurs de même dimension. Sinon il manque ou il y a un appariement coordonnée-coordonnée. Pas d'appariement = pas de somme pondérée.",
+    },
+    {
+      q: "Que calcule l'opération matrice-vecteur W·x où W est de taille m×n et x de dimension n ?",
+      options: [
+        "Un scalaire",
+        "Une matrice de taille n×m",
+        "Un vecteur de dimension m, où chaque coordonnée est un produit scalaire entre une ligne de W et x",
+        "Une matrice diagonale",
+      ],
+      answer: 2,
+      explain: "Chaque ligne wⱼ de W est un vecteur de dimension n. Le produit Wx prend en parallèle m produits scalaires wⱼ · x, donc le résultat est un vecteur de m coordonnées. C'est la base d'une couche de m neurones.",
+    },
+  ]}
+/>

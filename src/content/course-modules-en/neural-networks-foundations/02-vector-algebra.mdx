@@ -1,27 +1,246 @@
 ---
 course: neural-networks-foundations
 order: 2
-title: Vector algebra and dot products
-subtitle: "Why neurons think in multiple dimensions: vectors, dot products, and the geometry of learning."
-estimatedMinutes: 12
-published: false
+title: Essential linear algebra
+subtitle: "Vectors, dot products and matrices: exactly what you need to speak neural-network language."
+estimatedMinutes: 15
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
+import InteractiveSlider from '../../../components/learning/InteractiveSlider.tsx';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-This chapter is still empty. The skeleton is in place; content will follow soon.
+You saw in the previous chapter that the neuron formula reads in vector notation as $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. This chapter sets up the mathematical bricks hiding behind that notation. The goal: that you read $\mathbf{w} \cdot \mathbf{x}$ without flinching and that you understand what it says geometrically.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: basic arithmetic, intuition of a point in a plane, addition and multiplication of real numbers.
+
+**What is not required**: abstract linear algebra (axiomatic vector spaces, infinite dimensions, linear maps). We stay firmly in $\mathbb{R}^n$ and concrete.
+
+**Level of rigour**: we define every object formally and prove the properties used later, without venturing into the full academic formalism (fields, dual bases, etc.).
 </Callout>
 
-## What you will learn
+## The vector, an ordered list of numbers
 
-- Representing a neuron's inputs as a vector
-- The dot product: "weighted combination" in one notation
-- Norms, distances, and what they mean geometrically
+### Definition
 
-<Formula caption="Dot product">
-x · w = x₁·w₁ + x₂·w₂ + ... + xₙ·wₙ
-</Formula>
+A <Term slug="vecteur">vector</Term> of dimension $n$ is an ordered list of $n$ real numbers. We typically write it with a bold letter, in parentheses or square brackets:
 
-Every neural network is built on this operation. Understanding it geometrically is understanding what "learning" actually means in weight space.
+$$
+\mathbf{x} = (x_1, x_2, \dots, x_n) \in \mathbb{R}^n
+$$
+
+The symbol $\mathbb{R}^n$ reads "R to the n" and denotes the set of all ordered lists of $n$ real numbers. Each $x_i$ is called the $i$-th **coordinate** or **component** of the vector.
+
+### Why vectors in machine learning
+
+Anything you can describe as a list of numbers is a vector. A few examples:
+
+- A 28×28 greyscale image of a handwritten digit: a vector of dimension $784$ (each pixel becomes a value between 0 and 1).
+- A medical patient described by age, blood pressure, glycemia, cholesterol: a vector of dimension 4.
+- The inputs of a neuron $x_1, x_2, x_3$ seen in chapter 1: a vector of dimension 3.
+
+A neuron's weights also form a vector, of the **same dimension** as its inputs. That correspondence is what makes the dot product possible.
+
+## The dot product
+
+### Definition
+
+The <Term slug="produit-scalaire">dot product</Term> of two vectors $\mathbf{x}, \mathbf{w} \in \mathbb{R}^n$ is the real number:
+
+$$
+\mathbf{x} \cdot \mathbf{w} = \sum_{i=1}^{n} x_i w_i = x_1 w_1 + x_2 w_2 + \dots + x_n w_n
+$$
+
+It is an operation that takes two vectors and returns a single number. Read it "x dot w" or "dot product of x and w".
+
+<Callout kind="tip" title="Read the operation out loud">
+*"We multiply each coordinate of x by the coordinate of the same index of w, then we add up all the products."* In plain English: this is exactly the weighted sum of chapter 1.
+</Callout>
+
+### Worked example
+
+Reusing the referee example:
+
+$$
+\mathbf{x} = (1, 0, 1), \quad \mathbf{w} = (0.8, 0.5, 0.9)
+$$
+
+The dot product reads:
+
+$$
+\mathbf{x} \cdot \mathbf{w} = 1 \times 0.8 + 0 \times 0.5 + 1 \times 0.9 = 1.7
+$$
+
+That is the neuron's weighted sum, without the bias. Adding $b = -0.5$ gives $z = 1.7 - 0.5 = 1.2$, exactly as in the previous chapter.
+
+### Play with a single variable coordinate
+
+Move the first coordinate of $\mathbf{x}$ and watch how the dot product evolves. The matching weight $w_1 = 0.8$ controls how sensitive the product is to that coordinate.
+
+<InteractiveSlider
+  client:visible
+  label="x₁"
+  min={-1}
+  max={1}
+  step={0.05}
+  defaultValue={1}
+  formatValue={(v) => `${v.toFixed(2)} → product = ${(v * 0.8 + 0 * 0.5 + 1 * 0.9).toFixed(2)}`}
+/>
+
+Variation of the dot product as a function of a single input coordinate, with weights and other coordinates held constant.
+
+### Geometric intuition
+
+The dot product admits a second, geometric, formulation:
+
+$$
+\mathbf{x} \cdot \mathbf{w} = \|\mathbf{x}\| \, \|\mathbf{w}\| \cos(\theta)
+$$
+
+where $\|\mathbf{x}\|$ and $\|\mathbf{w}\|$ are the **lengths** (or norms) of the two vectors, and $\theta$ the angle between them. Consequences:
+
+- If $\theta = 0$ (vectors aligned, same direction), $\cos(\theta) = 1$: maximum dot product.
+- If $\theta = 90°$ (vectors perpendicular), $\cos(\theta) = 0$: zero dot product.
+- If $\theta = 180°$ (vectors opposite), $\cos(\theta) = -1$: minimum dot product.
+
+Geometrically, the dot product measures **how much two vectors point in the same direction**, weighted by their lengths. That is precisely what a neuron wants to know: *"do my inputs look like my weights?"*
+
+## Norm and distance
+
+The **norm** (or length) of a vector $\mathbf{x} \in \mathbb{R}^n$ is defined by the dot product with itself:
+
+$$
+\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
+$$
+
+It generalises the Pythagorean theorem to $n$ dimensions. In 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, the length of the hypotenuse of a right triangle.
+
+The **distance** between two vectors $\mathbf{u}$ and $\mathbf{v}$ is the norm of their difference: $\|\mathbf{u} - \mathbf{v}\|$. That is how you measure "how similar two images are" when each image is represented as a vector.
+
+## Towards matrices: stacking neurons
+
+A single layer of $m$ neurons, each receiving $n$ inputs, can be written using a *matrix* of weights $W \in \mathbb{R}^{m \times n}$. Each row $\mathbf{w}_j$ of $W$ holds the weights of the $j$-th neuron.
+
+To compute all the layer's outputs at once, we use **matrix-vector multiplication**:
+
+$$
+W \mathbf{x} =
+\begin{pmatrix}
+\mathbf{w}_1 \cdot \mathbf{x} \\
+\mathbf{w}_2 \cdot \mathbf{x} \\
+\vdots \\
+\mathbf{w}_m \cdot \mathbf{x}
+\end{pmatrix}
+$$
+
+It is an operation that takes a vector and returns another vector, where each coordinate of the result is a dot product. We will dig into this at chapter 5 when we build a multi-layer network.
+
+<Callout kind="note" title="Why this notation is everywhere">
+Virtually all modern deep learning is expressed in linear algebra: a deep network is a sequence of matrix-vector multiplications interleaved with activation functions. This compact representation is what lets libraries like PyTorch or TensorFlow exploit GPUs' parallel matrix arithmetic. Mastering vector notation is not a luxury, it is the language of the entire field.
+</Callout>
+
+## In one sentence
+
+A vector is an ordered list of $n$ numbers. The dot product of two vectors is the sum of their coordinate-wise products. And a neuron computes exactly that dot product between its inputs and its weights, plus a bias.
+
+## Exercises
+
+### Exercise 1: compute a dot product
+
+Let $\mathbf{x} = (2, -1, 3)$ and $\mathbf{w} = (1, 4, -2)$. Compute $\mathbf{x} \cdot \mathbf{w}$.
+
+### Exercise 2: norm of a vector
+
+Compute the norm of the vector $\mathbf{u} = (3, 4)$ using the definition.
+
+### Exercise 3: dot product and orthogonality
+
+Find a value of $a$ such that the vectors $\mathbf{x} = (a, 1)$ and $\mathbf{w} = (2, 1)$ are orthogonal (zero dot product).
+
+<Callout kind="tip" title="Solutions">
+**Exercise 1.** $\mathbf{x} \cdot \mathbf{w} = 2 \times 1 + (-1) \times 4 + 3 \times (-2) = 2 - 4 - 6 = -8$.
+
+**Exercise 2.** $\|\mathbf{u}\| = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5$. The classic 3-4-5 triangle.
+
+**Exercise 3.** We want $\mathbf{x} \cdot \mathbf{w} = 2a + 1 = 0$, so $a = -\frac{1}{2}$. Check: $(-\frac{1}{2}) \times 2 + 1 \times 1 = -1 + 1 = 0$. ✓
+</Callout>
+
+## Sources
+
+- Anton, H. & Rorres, C. (2010). *Elementary Linear Algebra*, 10th edition. Wiley. Chapters 1 to 3 for the basics.
+- Strang, G. (2016). *Introduction to Linear Algebra*, 5th edition. Wellesley-Cambridge Press. [MIT OCW companion course](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) is free and excellent.
+- Wikipedia (retrieved 2026). "Dot product". [en.wikipedia.org/wiki/Dot_product](https://en.wikipedia.org/wiki/Dot_product)
+
+### Further reading
+
+- Strang, G. (online course MIT 18.06 *Linear Algebra*). The reference course on linear algebra in major universities, freely available. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
+- 3Blue1Brown, series *Essence of Linear Algebra*. Remarkable visualisations of the key concepts. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 2 on ML-specific linear algebra. [deeplearningbook.org](https://www.deeplearningbook.org/)
+
+<Quiz
+  client:load
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "What does the dot product of two vectors return?",
+      options: [
+        "A vector of the same dimension as the operands",
+        "A single real number, the sum of coordinate-wise products",
+        "A square matrix",
+        "The geometric angle between the two vectors",
+      ],
+      answer: 1,
+      explain: "The dot product returns ONE scalar, computed as Σ xᵢ wᵢ. The geometric formulation (lengths and angle) is a second reading of that same number, not a different output.",
+    },
+    {
+      q: "If two vectors are orthogonal, their dot product equals:",
+      options: [
+        "1",
+        "-1",
+        "0",
+        "it depends on their lengths",
+      ],
+      answer: 2,
+      explain: "Orthogonal means a 90° angle. Since cos(90°) = 0, the geometric formulation x·w = ‖x‖ ‖w‖ cos(θ) gives 0, regardless of the norms.",
+    },
+    {
+      q: "The norm of a vector x = (x₁, x₂, ..., xₙ) is:",
+      options: [
+        "The sum x₁ + x₂ + ... + xₙ",
+        "The maximum of the xᵢ",
+        "The square root of the sum of squares Σ xᵢ²",
+        "The product x₁ · x₂ · ... · xₙ",
+      ],
+      answer: 2,
+      explain: "It is the generalisation of the Pythagorean theorem: ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).",
+    },
+    {
+      q: "Why do a neuron's weights share the dimension of its inputs?",
+      options: [
+        "It is an arbitrary convention",
+        "For the dot product wᵢ xᵢ to be defined, you need one weight coordinate per input coordinate",
+        "To save memory",
+        "To respect the Pythagorean theorem",
+      ],
+      answer: 1,
+      explain: "The dot product is only defined for two vectors of equal dimension. Without that pairing, there is no coordinate-wise multiplication, and no weighted sum.",
+    },
+    {
+      q: "What does the matrix-vector operation W·x compute, where W is m×n and x has dimension n?",
+      options: [
+        "A scalar",
+        "A matrix of size n×m",
+        "A vector of dimension m, each coordinate being a dot product between a row of W and x",
+        "A diagonal matrix",
+      ],
+      answer: 2,
+      explain: "Each row wⱼ of W is a vector of dimension n. The product Wx runs m dot products wⱼ · x in parallel, so the result is a vector of m coordinates. This is the basis of a layer of m neurons.",
+    },
+  ]}
+/>
