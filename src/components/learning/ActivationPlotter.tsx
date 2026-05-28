@@ -5,8 +5,13 @@ type ActivationKind = 'identity' | 'sigmoid' | 'relu' | 'tanh';
 interface Props {
   functions: ActivationKind[];
   showDerivative?: boolean;
+  showCursor?: boolean;
   range?: [number, number];
   height?: number;
+  labels?: {
+    derivativeLabel?: string;
+    cursorLabel?: string;
+  };
 }
 
 const ACTIVATION_FN: Record<ActivationKind, (x: number) => number> = {
@@ -46,14 +51,23 @@ function readCssVar(name: string, fallback: string): string {
   return value || fallback;
 }
 
+function formatNumber(n: number): string {
+  if (Math.abs(n) < 0.001 && n !== 0) return n.toExponential(2);
+  return n.toFixed(3);
+}
+
 export default function ActivationPlotter({
   functions,
   showDerivative: showDerivativeInit = false,
+  showCursor: showCursorInit = false,
   range = [-5, 5],
   height = 240,
+  labels = {},
 }: Props): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [showDerivative, setShowDerivative] = useState<boolean>(showDerivativeInit);
+  const [showCursor, setShowCursor] = useState<boolean>(showCursorInit);
+  const [cursorX, setCursorX] = useState<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -72,6 +86,7 @@ export default function ActivationPlotter({
 
     const lineColor = readCssVar('--color-line', '#2a2a2a');
     const fgDim = readCssVar('--color-fg-dim', '#7c7c7c');
+    const accent = readCssVar('--color-accent', '#fb923c');
 
     const [xMin, xMax] = range;
     const yMin = -1.5;
@@ -162,7 +177,34 @@ export default function ActivationPlotter({
         ctx.setLineDash([]);
       }
     });
-  }, [functions, range, height, showDerivative]);
+
+    if (showCursor) {
+      const cx = xToPx(cursorX);
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(cx, padTop);
+      ctx.lineTo(cx, padTop + plotH);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      functions.forEach((kind) => {
+        const y = ACTIVATION_FN[kind](cursorX);
+        const yClamped = Math.max(yMin, Math.min(yMax, y));
+        ctx.fillStyle = ACTIVATION_COLOR[kind];
+        ctx.beginPath();
+        ctx.arc(cx, yToPx(yClamped), 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = readCssVar('--color-bg', '#0b0b0b');
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+    }
+  }, [functions, range, height, showDerivative, showCursor, cursorX]);
+
+  const derivativeLabel = labels.derivativeLabel ?? 'Dérivée';
+  const cursorLabel = labels.cursorLabel ?? 'Curseur';
 
   return (
     <figure className="my-6 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-4">
@@ -179,17 +221,62 @@ export default function ActivationPlotter({
             </li>
           ))}
         </ul>
-        <label className="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-          <input
-            type="checkbox"
-            checked={showDerivative}
-            onChange={(e) => setShowDerivative(e.target.checked)}
-            className="accent-[var(--color-accent)]"
-          />
-          Dérivée
-        </label>
+        <div className="flex flex-wrap gap-3">
+          <label className="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
+            <input
+              type="checkbox"
+              checked={showDerivative}
+              onChange={(e) => setShowDerivative(e.target.checked)}
+              className="accent-[var(--color-accent)]"
+            />
+            {derivativeLabel}
+          </label>
+          <label className="flex items-center gap-2 font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
+            <input
+              type="checkbox"
+              checked={showCursor}
+              onChange={(e) => setShowCursor(e.target.checked)}
+              className="accent-[var(--color-accent)]"
+            />
+            {cursorLabel}
+          </label>
+        </div>
       </div>
       <canvas ref={canvasRef} style={{ width: '100%', height: `${height}px` }} />
+
+      {showCursor && (
+        <div className="mt-3 space-y-2">
+          <label className="block">
+            <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
+              x = <span className="text-[var(--color-accent)]">{cursorX.toFixed(2)}</span>
+            </span>
+            <input
+              type="range"
+              min={range[0]}
+              max={range[1]}
+              step={0.05}
+              value={cursorX}
+              onChange={(e) => setCursorX(Number(e.target.value))}
+              className="learning-slider"
+            />
+          </label>
+          <ul className="grid grid-cols-2 gap-1 font-mono text-[11px] sm:grid-cols-4">
+            {functions.map((kind) => (
+              <li key={kind} className="flex items-baseline gap-2">
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-[8px] w-[8px] rounded-sm"
+                  style={{ backgroundColor: ACTIVATION_COLOR[kind] }}
+                />
+                <span className="text-[var(--color-fg-muted)]">{ACTIVATION_LABEL[kind]} :</span>
+                <span className="text-[var(--color-fg)] tabular-nums">
+                  {formatNumber(ACTIVATION_FN[kind](cursorX))}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </figure>
   );
 }

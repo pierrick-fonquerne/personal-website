@@ -10,6 +10,9 @@ published: true
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
 import ActivationPlotter from '../../../components/learning/ActivationPlotter.tsx';
+import ActivationValueProbe from '../../../components/learning/ActivationValueProbe.tsx';
+import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
+import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 
@@ -107,6 +110,18 @@ ReLU(x) = max(0, x)
 
 **Usage moderne** : 90 % des réseaux profonds modernes utilisent ReLU ou une de ses variantes (Leaky ReLU, ELU, GELU) dans leurs couches cachées (Nair et Hinton, 2010). Elle calcule en une seule opération, son gradient est exact (1 ou 0), et elle ne sature pas vers le haut. Inconvénient : si l'entrée d'un neurone est constamment négative, son gradient est nul et la backpropagation (chapitre 8) ne peut plus mettre à jour ses poids. Le neurone se fige. C'est le problème du *dying ReLU*, qu'on contourne avec les variantes.
 
+#### Voir un neurone mourir
+
+Le composant ci-dessous est un neurone ReLU à une entrée. Sa sortie est $\text{ReLU}(w \cdot x + b)$, tracée en orange. Douze points d'un dataset uniforme sont marqués sur cette courbe : vert si le neurone s'active sur eux, rouge sinon. Pousse le biais vers les valeurs très négatives : tu verras tous les points basculer en rouge. À ce stade, le neurone n'apprendra plus, parce que son gradient est partout nul.
+
+<DyingReLUSimulator client:visible initialW={1.2} initialB={0.4} />
+
+Trois choses à essayer :
+
+- Place le biais à $-2$ avec un poids positif modéré. Le neurone meurt complètement sur tout le dataset.
+- Remets le biais à $0$ et inverse le signe du poids. Tu vois que la frontière d'activation pivote autour de l'origine.
+- Cherche une configuration où exactement la moitié des points sont actifs. C'est typiquement un bon point de départ pour l'apprentissage.
+
 ### Tanh
 
 La tangente hyperbolique est la cousine centrée de la sigmoïde. Même allure en S, mais compresse dans $]-1, 1[$ au lieu de $]0, 1[$.
@@ -123,14 +138,31 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 ## Joue avec les fonctions
 
-L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous trace les quatre fonctions sur un même graphe, et tu peux activer leurs dérivées pour voir comment elles se comportent. Compare la dérivée de la sigmoïde (toujours faible, max à $0{,}25$) avec celle de ReLU (1 partout où elle s'active, 0 ailleurs). Cette différence explique beaucoup.
+L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous trace les quatre fonctions sur un même graphe. Active la case **Dérivée** pour voir comment chaque pente évolue, et la case **Curseur** pour placer une ligne verticale et lire les valeurs exactes à un point précis. Compare la dérivée de la sigmoïde (toujours faible, max à $0{,}25$) avec celle de ReLU (1 partout où elle s'active, 0 ailleurs). Cette différence explique beaucoup.
 
 <ActivationPlotter
   client:visible
   functions={["sigmoid", "relu", "tanh", "identity"]}
   showDerivative={true}
+  showCursor={true}
   range={[-5, 5]}
 />
+
+#### Lire des valeurs précises
+
+Le composant suivant complète le précédent. Il affiche, pour une valeur de $x$ que tu choisis, la sortie et la dérivée des quatre fonctions sous forme tabulaire. C'est utile quand l'œil ne suffit plus et qu'on veut le chiffre exact.
+
+<ActivationValueProbe
+  client:visible
+  initialX={0}
+  range={[-5, 5]}
+/>
+
+Trois lectures à confirmer toi-même :
+
+- À $x = 0$, vérifie que $\sigma(0) = 0{,}5$ et $\sigma'(0) = 0{,}25$.
+- À $x = 2$, observe que $\sigma'(2)$ est déjà tombée vers $0{,}1$. La sigmoïde sature très vite.
+- À $x = -3$, ReLU et sa dérivée sont strictement à zéro. Sur cette branche, aucun gradient ne remonte.
 
 Trois expériences à faire :
 
@@ -145,6 +177,19 @@ Quand on dérive la sigmoïde, on voit que $\sigma'(x) = \sigma(x)(1 - \sigma(x)
 Pour un réseau de 10 couches utilisant sigmoïde, le gradient à la première couche est multiplié au maximum par $0{,}25^{10} \approx 9{,}5 \times 10^{-7}$. C'est extrêmement faible : la première couche n'apprend plus. C'est le **problème du vanishing gradient**, identifié rigoureusement par Glorot et Bengio en 2010.
 
 ReLU résout en grande partie ce problème : sur sa partie active, le gradient vaut exactement $1$. Une multiplication par $1$ ne réduit pas le gradient. C'est l'une des deux raisons (avec sa vitesse de calcul) de sa domination moderne.
+
+#### Voir le gradient s'écraser
+
+Le composant ci-dessous simule un réseau profond. Bouge le nombre de couches et change la fonction d'activation. Chaque barre représente le gradient effectif à une couche donnée, en partant de la sortie en haut vers l'entrée en bas. Sur sigmoïde tu vois les barres rétrécir à vue d'œil à mesure que la profondeur monte. Sur ReLU elles gardent leur longueur.
+
+<VanishingGradientSimulator
+  client:visible
+  defaultLayers={8}
+  maxLayers={20}
+  defaultActivation="sigmoid"
+/>
+
+L'expérience clé : passe à $15$ couches avec sigmoïde et regarde le gradient à la première couche. C'est de l'ordre de $10^{-9}$, totalement insuffisant pour ajuster un poids. Bascule maintenant sur ReLU et observe que les barres se remettent à toutes mesurer la même chose. C'est exactement la raison technique pour laquelle on a abandonné sigmoïde dans les couches cachées au profit de ReLU à partir de 2012.
 
 <Callout kind="warn" title="Le piège du vanishing gradient">
 Si tu entraînes un réseau profond et que la première couche reste muette alors que la dernière converge, c'est très probablement un vanishing gradient. Premiers réflexes : remplace les sigmoïdes par des ReLU, vérifie l'initialisation (chapitre 11), et regarde si la batch normalisation aide (même chapitre).

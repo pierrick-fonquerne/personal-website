@@ -10,6 +10,9 @@ published: true
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
 import ActivationPlotter from '../../../components/learning/ActivationPlotter.tsx';
+import ActivationValueProbe from '../../../components/learning/ActivationValueProbe.tsx';
+import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
+import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 
@@ -107,6 +110,29 @@ ReLU(x) = max(0, x)
 
 **Modern usage**: 90 % of modern deep networks use ReLU or one of its variants (Leaky ReLU, ELU, GELU) in their hidden layers (Nair and Hinton, 2010). It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the *dying ReLU* problem, mitigated by the variants.
 
+#### Watch a neuron die
+
+The component below is a single-input ReLU neuron. Its output $\text{ReLU}(w \cdot x + b)$ is drawn in orange. Twelve dataset points are placed on the curve: green if the neuron fires on them, red if not. Push the bias toward very negative values: all points flip red. At that stage the neuron stops learning, because its gradient is zero everywhere.
+
+<DyingReLUSimulator
+  client:visible
+  initialW={1.2}
+  initialB={0.4}
+  labels={{
+    weightLabel: 'Weight w',
+    biasLabel: 'Bias b',
+    activeLabel: 'active',
+    deadLabel: 'dead',
+    helpText: "Push the bias down to drive the neuron to death. When the ReLU output is zero on every sample, so is its gradient, and the neuron stops learning.",
+  }}
+/>
+
+Three things to try:
+
+- Set the bias to $-2$ with a moderate positive weight. The neuron dies completely on the dataset.
+- Reset the bias to $0$ and flip the sign of the weight. The activation boundary pivots around the origin.
+- Find a configuration where exactly half of the points are active. That is typically a good starting point for training.
+
 ### Tanh
 
 The hyperbolic tangent is the centred cousin of the sigmoid. Same S-shape, but squashes into $]-1, 1[$ instead of $]0, 1[$.
@@ -123,14 +149,38 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 ## Play with the functions
 
-The idea of an activation function is easier to see than to describe. The component below traces the four functions on the same chart, and you can toggle their derivatives to see how they behave. Compare the sigmoid derivative (always small, max at $0.25$) with the ReLU derivative ($1$ wherever it fires, $0$ elsewhere). This difference explains a lot.
+The idea of an activation function is easier to see than to describe. The component below traces the four functions on the same chart. Toggle **Derivative** to watch each slope evolve, and **Cursor** to drop a vertical line and read exact values at a given point. Compare the sigmoid derivative (always small, max at $0.25$) with the ReLU derivative ($1$ wherever it fires, $0$ elsewhere). This difference explains a lot.
 
 <ActivationPlotter
   client:visible
   functions={["sigmoid", "relu", "tanh", "identity"]}
   showDerivative={true}
+  showCursor={true}
   range={[-5, 5]}
+  labels={{
+    derivativeLabel: 'Derivative',
+    cursorLabel: 'Cursor',
+  }}
 />
+
+#### Read exact values
+
+The next component complements the previous one. For a value of $x$ you choose, it shows the output and the derivative of all four functions in a table. Useful when the eye is no longer enough and you want the precise number.
+
+<ActivationValueProbe
+  client:visible
+  initialX={0}
+  range={[-5, 5]}
+  labels={{
+    helpText: "Move the slider to see how each function and its derivative react to the same input.",
+  }}
+/>
+
+Three readings to confirm yourself:
+
+- At $x = 0$, check that $\sigma(0) = 0.5$ and $\sigma'(0) = 0.25$.
+- At $x = 2$, see that $\sigma'(2)$ already fell toward $0.1$. The sigmoid saturates fast.
+- At $x = -3$, ReLU and its derivative are strictly zero. On that branch no gradient flows back.
 
 Three experiments to run:
 
@@ -145,6 +195,24 @@ When we differentiate the sigmoid, we get $\sigma'(x) = \sigma(x)(1 - \sigma(x))
 For a 10-layer network using sigmoid, the gradient at the first layer is multiplied by at most $0.25^{10} \approx 9.5 \times 10^{-7}$. That is extremely small: the first layer no longer learns. This is the **vanishing gradient problem**, identified rigorously by Glorot and Bengio in 2010.
 
 ReLU largely solves this problem: on its active part, the gradient is exactly $1$. Multiplying by $1$ does not shrink the gradient. This is one of the two reasons (with its computational speed) for its modern dominance.
+
+#### Watch the gradient collapse
+
+The component below simulates a deep network. Change the number of layers and switch the activation. Each bar represents the effective gradient at a given layer, top to bottom from output to input. On sigmoid you see the bars shrink visibly as depth grows. On ReLU they keep their length.
+
+<VanishingGradientSimulator
+  client:visible
+  defaultLayers={8}
+  maxLayers={20}
+  defaultActivation="sigmoid"
+  labels={{
+    layersLabel: 'Number of layers',
+    layerPrefix: 'Layer',
+    helpText: "The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh about 0.4, ReLU 1.",
+  }}
+/>
+
+The key experiment: push to $15$ layers with sigmoid and look at the first-layer gradient. It is on the order of $10^{-9}$, totally insufficient to update a weight. Now switch to ReLU and watch the bars all match again. That is the exact technical reason why sigmoid was dropped from hidden layers in favour of ReLU starting in 2012.
 
 <Callout kind="warn" title="The vanishing-gradient trap">
 If you train a deep network and the first layer stays mute while the last one converges, you almost certainly have a vanishing gradient. First reflexes: swap sigmoids for ReLUs, check the initialisation (chapter 11), and try batch normalisation (same chapter).
