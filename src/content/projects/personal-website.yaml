@@ -1,0 +1,28 @@
+slug: personal-website
+category: web
+status: active
+period: "2026 — aujourd'hui"
+stack:
+  - Astro
+  - TypeScript
+  - Tailwind CSS
+  - MDX
+links:
+  - label: Code source
+    href: https://github.com/pierrick-fonquerne/personal-website
+    type: repo
+fr:
+  title: personal-website
+  tagline: Ce site. Portfolio, cours interactifs et notes.
+  summary: >-
+    Site bilingue (FR/EN) construit en Astro. Architecture en îlots, contenu
+    typé via Zod, cours interactifs avec sandbox React et MDX. Le code que tu
+    es en train de lire est ouvert.
+en:
+  title: personal-website
+  tagline: This very site. Portfolio, interactive courses and notes.
+  summary: >-
+    Bilingual (FR/EN) site built with Astro. Island architecture, typed content
+    via Zod, interactive courses with React sandbox and MDX. The code you are
+    reading is open source.
+published: true

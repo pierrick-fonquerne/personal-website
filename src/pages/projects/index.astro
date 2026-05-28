@@ -1,0 +1,38 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SectionHead from '../../components/ui/SectionHead.astro';
+import ProjectsList from '../../components/projects/ProjectsList.astro';
+import { useTranslations } from '../../lib/i18n';
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
+const projects = (await getCollection('projects')).filter((p) => p.data.published);
+---
+
+<BaseLayout
+  title="Projets · Pierrick Fonquerne"
+  description="Sélection de projets logiciels de Pierrick Fonquerne : entrepreneuriat, open source, jeu vidéo, expérimentations."
+  current="/projects"
+  locale={locale}
+>
+  <section
+    id="projects"
+    aria-labelledby="projects-heading"
+    class="mx-auto mt-8 max-w-[1280px] px-14 pb-24"
+  >
+    <SectionHead
+      id="projects-heading"
+      title={t.projects.title}
+      count={t.projects.count(projects.length)}
+    />
+    <p
+      class="mt-8 max-w-[60ch] border-t border-[var(--color-line)] pt-8 text-[18px] leading-[1.55] text-[var(--color-fg-muted)]"
+    >
+      {t.projects.lead}
+    </p>
+    <div class="mt-16">
+      <ProjectsList projects={projects} locale={locale} />
+    </div>
+  </section>
+</BaseLayout>
