@@ -47,9 +47,39 @@
   nav,
   footer,
   .chapter-toolbar,
-  astro-island,
+  .interactive-only,
   [data-print='hide'] {
     display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-fallback {
+    margin: 1.4rem 0 !important;
+    padding: 0.9rem 1.1rem !important;
+    border: 1px solid #cccccc !important;
+    background: #f7f7f7 !important;
+    background-color: #f7f7f7 !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-fallback-label {
+    margin: 0 0 0.4rem 0 !important;
+    font-family: ui-monospace, Menlo, Consolas, monospace !important;
+    font-size: 11px !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: #555555 !important;
+  }
+
+  .print-fallback-description {
+    margin: 0 !important;
+    font-size: 14px !important;
+    line-height: 1.55 !important;
+    color: #000000 !important;
   }
 
   main,

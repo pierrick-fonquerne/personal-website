@@ -14,6 +14,7 @@ import VanishingGradientSimulator from '../../../components/learning/VanishingGr
 import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
 Aux chapitres 1 et 2 tu as croisé la <Term slug="fonction-activation">fonction d'activation</Term> $f$ dans la formule $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ sans qu'on lui consacre vraiment de temps. C'est l'objet de ce chapitre. On va voir pourquoi elle est mathématiquement indispensable, comparer les quatre classiques (Identity, sigmoïde, ReLU, tanh) et apprendre à les choisir.
 
@@ -113,7 +114,12 @@ ReLU(x) = max(0, x)
 
 Le composant ci-dessous est un neurone ReLU à une entrée. Sa sortie est $\text{ReLU}(w \cdot x + b)$, tracée en orange. Douze points d'un dataset uniforme sont marqués sur cette courbe : vert si le neurone s'active sur eux, rouge sinon. Pousse le biais vers les valeurs très négatives : tu verras tous les points basculer en rouge. À ce stade, le neurone n'apprendra plus, parce que son gradient est partout nul.
 
-<DyingReLUSimulator client:visible initialW={1.2} initialB={0.4} />
+<InteractivePrint
+  label="Simulateur : neurone ReLU qui meurt (interactif)"
+  description="Neurone ReLU à une entrée avec sortie ReLU(w·x + b), poids initial w=1,2 et biais b=0,4. La courbe orange représente la sortie en fonction de l'entrée. Douze points d'un dataset uniforme sont marqués sur cette courbe : verts si le neurone s'active dessus, rouges sinon. En poussant le biais vers les valeurs très négatives (b=-2 par exemple), tous les points passent en rouge : le neurone est mort, son gradient est partout nul, il n'apprendra plus rien."
+>
+  <DyingReLUSimulator client:visible initialW={1.2} initialB={0.4} />
+</InteractivePrint>
 
 Trois choses à essayer :
 
@@ -139,13 +145,18 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous est un atelier complet : tu peux activer ou désactiver chaque fonction individuellement (cliquer sur son label), afficher les **dérivées** en pointillés, activer un **curseur** qui place une ligne verticale et fait apparaître la **tangente locale** au point survolé pour chaque courbe (la pente de cette tangente, c'est exactement $f'(x)$). Un panneau dépliable en bas te permet aussi d'ajuster le domaine de $x$ si tu veux zoomer ou dézoomer.
 
-<ActivationPlotter
-  client:visible
-  functions={["sigmoid", "relu", "tanh", "identity"]}
-  showDerivative={true}
-  showCursor={true}
-  range={[-5, 5]}
-/>
+<InteractivePrint
+  label="Atelier : tracer les fonctions d'activation (interactif)"
+  description="Atelier qui trace simultanément quatre fonctions d'activation (sigmoïde, ReLU, tanh, identité) sur le domaine x ∈ [-5, 5]. Les dérivées sont affichées en pointillés. Un curseur déclenche une ligne verticale qui fait apparaître la tangente locale à chaque courbe au point survolé. À x=0, σ'(0) = 0,25 ; à x=2, σ'(2) tombe vers 0,1 (saturation). Sur la partie active de ReLU (x>0), la dérivée vaut exactement 1, indépendante de x. C'est la racine du vanishing gradient sur sigmoïde et de la robustesse de ReLU."
+>
+  <ActivationPlotter
+    client:visible
+    functions={["sigmoid", "relu", "tanh", "identity"]}
+    showDerivative={true}
+    showCursor={true}
+    range={[-5, 5]}
+  />
+</InteractivePrint>
 
 Cinq expériences à tenter :
 
@@ -167,12 +178,17 @@ ReLU résout en grande partie ce problème : sur sa partie active, le gradient v
 
 Le composant ci-dessous simule un réseau profond. Bouge le nombre de couches et change la fonction d'activation. Chaque barre représente le gradient effectif à une couche donnée, en partant de la sortie en haut vers l'entrée en bas. Sur sigmoïde tu vois les barres rétrécir à vue d'œil à mesure que la profondeur monte. Sur ReLU elles gardent leur longueur.
 
-<VanishingGradientSimulator
-  client:visible
-  defaultLayers={8}
-  maxLayers={20}
-  defaultActivation="sigmoid"
-/>
+<InteractivePrint
+  label="Simulateur : disparition du gradient en profondeur (interactif)"
+  description="Simulateur d'un réseau profond avec 8 couches (jusqu'à 20). Chaque barre représente le gradient effectif à une couche donnée, de la sortie en haut vers l'entrée en bas. Sur sigmoïde, les barres rétrécissent à vue d'œil : à 15 couches, le gradient à la première couche est de l'ordre de 10⁻⁹. Sur ReLU, toutes les barres gardent la même longueur, parce que la dérivée vaut 1 sur la partie active. C'est la raison technique de l'abandon de sigmoïde au profit de ReLU dans les couches cachées à partir de 2012."
+>
+  <VanishingGradientSimulator
+    client:visible
+    defaultLayers={8}
+    maxLayers={20}
+    defaultActivation="sigmoid"
+  />
+</InteractivePrint>
 
 L'expérience clé : passe à $15$ couches avec sigmoïde et regarde le gradient à la première couche. C'est de l'ordre de $10^{-9}$, totalement insuffisant pour ajuster un poids. Bascule maintenant sur ReLU et observe que les barres se remettent à toutes mesurer la même chose. C'est exactement la raison technique pour laquelle on a abandonné sigmoïde dans les couches cachées au profit de ReLU à partir de 2012.
 
@@ -353,7 +369,11 @@ C'est significatif, et c'est la deuxième raison (avec le gradient préservé) d
 - Maas, A. L., Hannun, A. Y. & Ng, A. Y. (2013). « Rectifier Nonlinearities Improve Neural Network Acoustic Models. » *ICML* 30, Workshop on Deep Learning for Audio, Speech and Language Processing. (Introduction de la Leaky ReLU). [Lien Stanford](https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf)
 - Hendrycks, D. & Gimpel, K. (2016). « Gaussian Error Linear Units (GELUs). » *arXiv*. [arXiv 1606.08415](https://arxiv.org/abs/1606.08415)
 
-<Quiz
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 3 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : sigmoïde et tanh, ReLU et son problème du dying ReLU, dérivées et vanishing gradient. À faire en ligne pour le scoring automatique."
+>
+  <Quiz
   client:load
   submitLabel="Vérifier"
   resetLabel="Recommencer"
@@ -415,4 +435,5 @@ C'est significatif, et c'est la deuxième raison (avec le gradient préservé) d
       explain: "La dérivée de sigmoïde a un maximum de 0,25. Multiplié 10 fois, on obtient 0,25^10 ≈ 9,5×10⁻⁷. Le gradient à l'entrée s'écroule, la première couche n'apprend plus. C'est pour ça qu'on utilise ReLU sur les couches cachées profondes.",
     },
   ]}
-/>
+  />
+</InteractivePrint>

@@ -1,0 +1,15 @@
+slug: distance-signee
+fr:
+  term: Distance signée
+  definition: >-
+    Distance perpendiculaire d'un point à un hyperplan, affectée d'un signe selon le côté où se trouve le point. Pour l'hyperplan $w \cdot x + b = 0$, elle vaut $d(x) = (w \cdot x + b) / \|w\|$ : positive d'un côté, négative de l'autre, nulle sur l'hyperplan lui-même.
+  source: Hastie, Tibshirani, Friedman, ESL, ch. 4
+en:
+  term: Signed distance
+  definition: >-
+    Perpendicular distance from a point to a hyperplane, carrying a sign that depends on which side of the hyperplane the point lies on. For the hyperplane $w \cdot x + b = 0$, it equals $d(x) = (w \cdot x + b) / \|w\|$: positive on one side, negative on the other, zero on the hyperplane itself.
+  source: Hastie, Tibshirani, Friedman, ESL, ch. 4
+seeAlso:
+  - hyperplan
+  - vecteur-normal
+  - distance-euclidienne

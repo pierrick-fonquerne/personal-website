@@ -13,6 +13,7 @@ import InteractiveSlider from '../../../components/learning/InteractiveSlider.ts
 import DotProductViewer from '../../../components/learning/DotProductViewer.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
 You saw in the previous chapter that the neuron formula reads in vector notation as $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. This chapter sets up the mathematical bricks hiding behind that notation. The goal: that you read $\mathbf{w} \cdot \mathbf{x}$ without flinching and that you understand what it says geometrically.
 
@@ -82,17 +83,22 @@ That is the neuron's weighted sum, without the bias. Adding $b = -0.5$ gives $z 
 
 The component below draws two vectors $\mathbf{x}$ and $\mathbf{w}$ in the plane. Move the sliders and watch three things at once: the dot product changes, but so do the <Term slug="norme">norm</Term> and the angle between them. When the angle gets close to $90°$, the dot product drops to zero: the vectors become <Term slug="orthogonalite">orthogonal</Term>.
 
-<DotProductViewer
-  client:visible
-  initialX={[1.2, 0.6]}
-  initialW={[0.6, 1.2]}
-  labels={{
+<InteractivePrint
+  label="Figure: two vectors and their dot product (interactive)"
+  description="2D plot drawing two vectors x=(1.2, 0.6) and w=(0.6, 1.2) from the origin. Sliders move the tips of both vectors and display three quantities simultaneously: the dot product x·w, the norms ‖x‖ and ‖w‖, and the angle between them. When the angle approaches 90°, the dot product drops to zero: the vectors become orthogonal."
+>
+  <DotProductViewer
+    client:visible
+    initialX={[1.2, 0.6]}
+    initialW={[0.6, 1.2]}
+    labels={{
     dotLabel: 'Dot product',
     normLabel: 'Norm',
     angleLabel: 'Angle',
     helpText: 'Play with the coordinates. When the arrows point in the same direction the dot product is maximal. When they are perpendicular it is zero.',
   }}
-/>
+  />
+</InteractivePrint>
 
 Three experiments to try:
 - Align the two vectors on the same direction (say $\mathbf{x} = \mathbf{w}$). The dot product hits its maximum, equal to $\|\mathbf{x}\| \cdot \|\mathbf{w}\|$.
@@ -344,11 +350,15 @@ $$
 - 3Blue1Brown, series *Essence of Linear Algebra*. Remarkable visualisations of the key concepts. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 2 on ML-specific linear algebra. [deeplearningbook.org](https://www.deeplearningbook.org/)
 
-<Quiz
-  client:load
-  submitLabel="Check"
-  resetLabel="Reset"
-  scoreLabel="Score"
+<InteractivePrint
+  label="Quiz: chapter 2 recap (interactive)"
+  description="Multiple-choice quiz checking the chapter's takeaways: the vector dot product, the geometric formulation x·w = ‖x‖ ‖w‖ cos(θ), orthogonality, and the matrix-vector product. To be taken online for automatic scoring."
+>
+  <Quiz
+    client:load
+    submitLabel="Check"
+    resetLabel="Reset"
+    scoreLabel="Score"
   questions={[
     {
       q: "What does the dot product of two vectors return?",
@@ -406,4 +416,5 @@ $$
       explain: "Each row wⱼ of W is a vector of dimension n. The product Wx runs m dot products wⱼ · x in parallel, so the result is a vector of m coordinates. This is the basis of a layer of m neurons.",
     },
   ]}
-/>
+  />
+</InteractivePrint>

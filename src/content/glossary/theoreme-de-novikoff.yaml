@@ -1,0 +1,16 @@
+slug: theoreme-de-novikoff
+fr:
+  term: Théorème de Novikoff
+  definition: >-
+    Si un jeu de données est linéairement séparable avec marge géométrique $\gamma > 0$ et rayon $R = \max_i \|x_i\|$, alors l'algorithme du perceptron initialisé à zéro converge en au plus $T \leq (R / \gamma)^2$ corrections, quelle que soit la valeur du taux d'apprentissage.
+  source: Novikoff, 1962
+en:
+  term: Novikoff's theorem
+  definition: >-
+    If a dataset is linearly separable with geometric margin $\gamma > 0$ and radius $R = \max_i \|x_i\|$, then the perceptron algorithm initialised at zero converges in at most $T \leq (R / \gamma)^2$ corrections, regardless of the learning rate.
+  source: Novikoff, 1962
+seeAlso:
+  - perceptron
+  - lineairement-separable
+  - marge-geometrique
+  - cauchy-schwarz
