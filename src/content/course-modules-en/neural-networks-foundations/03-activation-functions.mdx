@@ -84,7 +84,7 @@ You can safely ignore this function as long as we are inside hidden layers, but 
 
 ### Sigmoid
 
-The <Term slug="sigmoide">sigmoid</Term> dominated deep learning between 1986 and 2010. Its S-shape squashes any real number into the open interval $]0, 1[$, which lets us read its output as a probability.
+The <Term slug="sigmoide">sigmoid</Term> dominated neural networks between 1986 and 2010. Its S-shape squashes any real number into the open interval $]0, 1[$, which lets us read its output as a probability.
 
 <Formula caption="Sigmoid">
 σ(x) = 1 / (1 + e⁻ˣ)
@@ -108,7 +108,7 @@ ReLU(x) = max(0, x)
 
 **Shape**: zero on negatives, identity on positives. Not bounded above.
 
-**Modern usage**: 90 % of modern deep networks use ReLU or one of its variants (Leaky ReLU, ELU, GELU) in their hidden layers (Nair and Hinton, 2010). It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the *dying ReLU* problem, mitigated by the variants.
+**Modern usage**: since its introduction for RBMs by Nair and Hinton (2010), ReLU and its variants (Leaky ReLU, ELU, GELU) have become the dominant choice for hidden layers in deep networks. It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the *dying ReLU* problem, mitigated by the variants.
 
 #### Watch a neuron die
 
@@ -188,7 +188,7 @@ Five experiments to try:
 
 When we differentiate the sigmoid, we get $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. The maximum is reached at $x = 0$ and equals $0.25$. So at every layer crossed, the gradient is multiplied by a factor of at most $0.25$.
 
-For a 10-layer network using sigmoid, the gradient at the first layer is multiplied by at most $0.25^{10} \approx 9.5 \times 10^{-7}$. That is extremely small: the first layer no longer learns. This is the **vanishing gradient problem**, identified rigorously by Glorot and Bengio in 2010.
+For a 10-layer network using sigmoid, the gradient at the first layer is multiplied by at most $0.25^{10} \approx 9.5 \times 10^{-7}$. That is extremely small: the first layer no longer learns. This is the **vanishing gradient problem**, first observed by Hochreiter in his thesis (1991), analysed for recurrent networks by Bengio, Simard and Frasconi (1994), then quantified and addressed for deep feedforward networks by Glorot and Bengio (2010).
 
 ReLU largely solves this problem: on its active part, the gradient is exactly $1$. Multiplying by $1$ does not shrink the gradient. This is one of the two reasons (with its computational speed) for its modern dominance.
 
@@ -208,7 +208,7 @@ The component below simulates a deep network. Change the number of layers and sw
     labels={{
     layersLabel: 'Number of layers',
     layerPrefix: 'Layer',
-    helpText: "The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh about 0.4, ReLU 1.",
+    helpText: "The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh 1, ReLU 1.",
   }}
   />
 </InteractivePrint>
@@ -240,6 +240,8 @@ The activation function is what stops a deep network from collapsing into a line
 ## On to chapter 4
 
 You now have every ingredient to understand the **learning machine**: vector inputs (chap. 2), weighted sum, bias and activation function (this chapter). Chapter 4 introduces the perceptron, the first neuron that adjusts its weights on its own from examples. It is the birth of machine learning as we know it.
+
+**A subtlety you will explore**: this chapter has just established that an activation function must be differentiable to compute a gradient. Yet the perceptron uses the Heaviside step function, which is almost everywhere differentiable with derivative zero. How does it learn at all, without a gradient? That is precisely the question opening the next chapter.
 
 ## Exercises
 

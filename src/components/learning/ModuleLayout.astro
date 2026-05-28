@@ -1,5 +1,6 @@
 ---
 import ChapterToolbar from './ChapterToolbar';
+import ChapterAudioPlayer from './ChapterAudioPlayer';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -7,10 +8,40 @@ interface Props {
   title: string;
   subtitle?: string;
   locale: Locale;
+  courseSlug: string;
+  moduleSlug: string;
+  nextHref?: string;
+  nextTitle?: string;
 }
 
-const { badge, title, subtitle, locale } = Astro.props;
+const { badge, title, subtitle, locale, courseSlug, moduleSlug, nextHref, nextTitle } = Astro.props;
 const t = useTranslations(locale);
+
+const audioLabels = {
+  listen: t.toolbar.listen,
+  pause: t.toolbar.pause,
+  resume: t.toolbar.resume,
+  stop: t.toolbar.stop,
+  close: t.toolbar.close,
+  speed: t.toolbar.speed,
+  loading: t.toolbar.loading,
+  error: t.toolbar.error,
+  webSpeechBadge: t.toolbar.webSpeechBadge,
+  mp3Badge: t.toolbar.mp3Badge,
+  download: t.toolbar.download,
+  skipBack: t.toolbar.skipBack,
+  skipForward: t.toolbar.skipForward,
+  nextChapterIn: t.toolbar.nextChapterIn,
+  playNext: t.toolbar.playNext,
+  cancel: t.toolbar.cancel,
+  shortcuts: t.toolbar.shortcuts,
+  shortcutsTitle: t.toolbar.shortcutsTitle,
+  shortcutPlayPause: t.toolbar.shortcutPlayPause,
+  shortcutSkipBack: t.toolbar.shortcutSkipBack,
+  shortcutSkipForward: t.toolbar.shortcutSkipForward,
+  shortcutFineSeek: t.toolbar.shortcutFineSeek,
+  shortcutJump: t.toolbar.shortcutJump,
+};
 ---
 
 <article class="min-w-0 py-12">
@@ -31,8 +62,24 @@ const t = useTranslations(locale);
       )
     }
   </header>
-  <ChapterToolbar client:idle labels={{ print: t.toolbar.print }} />
-  <div class="prose-module">
+  <div
+    class="sticky top-4 z-20 mb-8 flex items-center justify-end gap-2"
+    data-print="hide"
+  >
+    <ChapterToolbar client:idle labels={{ print: t.toolbar.print }} />
+    <ChapterAudioPlayer
+      client:idle
+      locale={locale}
+      courseSlug={courseSlug}
+      moduleSlug={moduleSlug}
+      contentSelector="#chapter-content"
+      labels={audioLabels}
+      chapterTitle={title}
+      nextHref={nextHref}
+      nextTitle={nextTitle}
+    />
+  </div>
+  <div id="chapter-content" class="prose-module">
     <slot />
   </div>
 </article>

@@ -48,6 +48,20 @@ const groups = THEMES.map((theme) => ({
       {t.courses.glossaryLink}
     </a>
 
+    <aside
+      class="mt-8 rounded-md border border-[var(--color-line)] border-l-4 border-l-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-4 text-[13px] leading-relaxed text-[var(--color-fg-muted)]"
+    >
+      <p>
+        <strong class="text-[var(--color-fg)]">À propos de ces cours.</strong>{' '}
+        Ces cours, bien que relus avec soin, sont issus de notes prises au fil de discussions avec divers modèles d'IA. Des erreurs subtiles ont pu y glisser malgré la relecture. Si tu en repères une, signale-la moi : <a
+          href="mailto:contact@pierrickfonquerne.com"
+          class="underline hover:text-[var(--color-accent)]">contact@pierrickfonquerne.com</a>.
+      </p>
+      <p class="mt-3">
+        Les audios qui accompagnent les chapitres sont générés à partir d'un échantillon de ma propre voix, via Voxtral (Mistral AI).
+      </p>
+    </aside>
+
     <div class="mt-20 space-y-24">
       {
         groups.map(({ theme, themeLabel, subthemes }) => (

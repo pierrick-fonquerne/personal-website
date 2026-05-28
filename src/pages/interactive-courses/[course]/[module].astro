@@ -71,6 +71,10 @@ const sidebarModules = modules.map((m) => ({
           title={current.data.title}
           subtitle={current.data.subtitle}
           locale={locale}
+          courseSlug={courseSlug!}
+          moduleSlug={moduleSlug!}
+          nextHref={next ? `/interactive-courses/${courseSlug}/${moduleSlugOf(next)}` : undefined}
+          nextTitle={next ? next.data.title : undefined}
         >
           <Content />
         </ModuleLayout>
