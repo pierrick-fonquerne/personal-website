@@ -17,6 +17,8 @@ const fr: Translations = {
   },
   projects: {
     title: '// Projets',
+    eyebrow: 'PROJETS',
+    indexTitle: 'Projets',
     lead: "Une sélection de ce que je construis, maintiens ou explore. Perso, open source et entrepreneurial.",
     soon: 'Section en construction.',
     count: (n) => `${String(n).padStart(2, '0')} / projets`,
@@ -48,7 +50,28 @@ const fr: Translations = {
   },
   research: {
     title: '// Recherche',
+    eyebrow: 'RECHERCHE',
+    indexTitle: 'Recherche',
     soon: 'Section en construction.',
+    lead: "Un carnet de bord : deep dives, synthèses de papers et explorations sur les sujets qui me tiennent à cœur.",
+    disclaimer: "Je ne suis pas chercheur académique. Aucun doctorat, aucune prétention à publier des travaux à comité de lecture. Juste curieux, motivé et têtu. L'IA me permet aujourd'hui d'explorer et de prototyper des idées vite. Certaines sont probablement fausses. C'est aussi ça la recherche : se tromper en chemin pour se tromper un peu moins ensuite.",
+    count: (n) => `${String(n).padStart(2, '0')} / notes`,
+    emptyState: 'Aucune note publiée pour le moment. Reviens bientôt.',
+    backToList: '← Retour aux notes',
+    types: {
+      'deep-dive': 'Deep dive',
+      'paper-synthesis': 'Synthèse de paper',
+      'exploration': 'Exploration',
+    },
+    statuses: {
+      draft: 'Brouillon',
+      wip: 'En cours',
+      published: 'Publié',
+      archived: 'Archivé',
+    },
+    papersLabel: 'Sources',
+    publishedAtLabel: 'Publié le',
+    updatedAtLabel: 'Mis à jour',
   },
   courses: {
     eyebrow: 'COURS INTERACTIFS',
