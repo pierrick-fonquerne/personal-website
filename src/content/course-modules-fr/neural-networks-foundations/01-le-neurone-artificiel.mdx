@@ -137,7 +137,7 @@ Chaque entrée passe par une multiplication par son poids, toutes les contributi
 | Axone | Transmet la sortie | Sortie $y$ |
 
 <Callout kind="note">
-Le neurone artificiel est une caricature du neurone biologique. Un vrai neurone est dynamique dans le temps, communique par impulsions discrètes, et possède une chimie interne complexe. On rediscute de ces différences dans le chapitre 99 sur les neurones stateful.
+Le neurone artificiel est une caricature du neurone biologique. Un vrai neurone est dynamique dans le temps, communique par impulsions discrètes, et possède une chimie interne complexe. Ces différences sortent du périmètre de ce cours, qui se concentre sur les modèles dominants en pratique. Elles font l'objet d'une recherche active autour du calcul neuromorphique et des réseaux de neurones impulsionnels.
 </Callout>
 
 ## Une idée née en 1943
@@ -159,7 +159,7 @@ Le neurone artificiel a une histoire de plus de 80 ans, faite de percées et de 
 
 ### Définition formelle : hyperplan et linéaire séparabilité
 
-Travailler proprement demande une définition précise. Soit $\mathbf{x} \in \mathbb{R}^n$ un vecteur d'entrée, $\mathbf{w} \in \mathbb{R}^n$ un vecteur de poids, $b \in \mathbb{R}$ un biais. L'ensemble des points qui annulent la somme pondérée
+Travailler proprement demande une définition précise. Soit $\mathbf{x} \in \mathbb{R}^n$ un vecteur d'entrée, $\mathbf{w} \in \mathbb{R}^n$ un vecteur de poids, $b \in \mathbb{R}$ un biais. On note ici $\mathbb{R}^n$ l'ensemble des listes ordonnées de $n$ nombres réels (le chapitre 2 formalisera cette notion). L'ensemble des points qui annulent la somme pondérée
 
 $$
 \{\mathbf{x} \in \mathbb{R}^n \mid \mathbf{w} \cdot \mathbf{x} + b = 0\}
@@ -173,7 +173,7 @@ Un ensemble de points étiquetés $\{(\mathbf{x}_i, y_i)\}$ avec $y_i \in \{0, 1
 
 ### Pourquoi XOR n'est pas linéairement séparable
 
-Ce résultat n'est pas seulement visuel, il se démontre en quelques lignes par l'absurde.
+Ce résultat n'est pas seulement visuel, il se démontre en quelques lignes par l'absurde. On utilise ici la fonction seuil $\mathbb{1}[\cdot]$, qui est celle du perceptron historique. La même impossibilité reste vraie avec une sigmoïde : on perd seulement la simplicité de l'inégalité stricte.
 
 <Callout kind="tip" title="Démonstration : XOR n'admet pas de séparateur linéaire">
 On note les quatre points de XOR : $(0,0) \to 0$, $(1,0) \to 1$, $(0,1) \to 1$, $(1,1) \to 0$.
