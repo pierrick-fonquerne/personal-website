@@ -12,9 +12,10 @@ import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
   locale: Locale;
+  standalone?: boolean;
 }
 
-const { locale } = Astro.props;
+const { locale, standalone = false } = Astro.props;
 const t = useTranslations(locale);
 const age = computeAge(new Date('1991-03-26'));
 const stats = [
@@ -27,7 +28,10 @@ const stats = [
 <section
   id="about"
   aria-labelledby="about-heading"
-  class="mx-auto mt-20 max-w-[1280px] px-14 pb-24"
+  class:list={[
+    'mx-auto max-w-[1280px] px-14 pb-24',
+    standalone ? 'mt-8' : 'mt-20',
+  ]}
 >
   <SectionHead id="about-heading" title={t.about.title} />
 

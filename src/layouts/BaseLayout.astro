@@ -22,7 +22,7 @@ interface Props {
 
 const {
   title,
-  description = 'Pierrick Fonquerne, passionate developer. Projects, writing and research.',
+  description,
   ogImage = '/og-default.png',
   current,
   locale = getLocaleFromUrl(Astro.url),
@@ -30,6 +30,7 @@ const {
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 const t = useTranslations(locale);
+const resolvedDescription = description ?? t.meta.description;
 ---
 
 <!doctype html>
@@ -40,7 +41,7 @@ const t = useTranslations(locale);
     <meta name="generator" content={Astro.generator} />
 
     <title>{title}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={resolvedDescription} />
     <link rel="canonical" href={canonicalURL} />
 
     {
@@ -60,14 +61,14 @@ const t = useTranslations(locale);
 
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={resolvedDescription} />
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={new URL(ogImage, Astro.site).toString()} />
     <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_US'} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:description" content={resolvedDescription} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
