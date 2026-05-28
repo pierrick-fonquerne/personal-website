@@ -71,6 +71,8 @@ const sidebarModules = modules.map((m) => ({
           title={current.data.title}
           subtitle={current.data.subtitle}
           locale={locale}
+          courseSlug={courseSlug!}
+          moduleSlug={moduleSlug!}
         >
           <Content />
         </ModuleLayout>

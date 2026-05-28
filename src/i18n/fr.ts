@@ -14,6 +14,16 @@ const fr: Translations = {
   },
   toolbar: {
     print: 'Imprimer le chapitre',
+    listen: 'Écouter',
+    pause: 'Pause',
+    resume: 'Reprendre',
+    stop: 'Arrêter',
+    close: 'Fermer',
+    speed: 'Vitesse',
+    loading: 'Chargement…',
+    error: 'Audio indisponible',
+    webSpeechBadge: 'Voix navigateur',
+    mp3Badge: 'Studio',
   },
   projects: {
     title: '// Projets',

@@ -14,6 +14,9 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "audio:generate": "node scripts/generate-audio.mjs",
+    "audio:manifest": "node scripts/generate-audio.mjs --manifest-only",
+    "audio:dry": "node scripts/generate-audio.mjs --dry-run",
     "astro": "astro"
   },
   "dependencies": {

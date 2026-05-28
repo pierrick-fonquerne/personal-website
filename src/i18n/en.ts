@@ -23,6 +23,16 @@ export interface Translations {
   };
   toolbar: {
     print: string;
+    listen: string;
+    pause: string;
+    resume: string;
+    stop: string;
+    close: string;
+    speed: string;
+    loading: string;
+    error: string;
+    webSpeechBadge: string;
+    mp3Badge: string;
   };
   projects: {
     title: string;
@@ -206,6 +216,16 @@ const en: Translations = {
   },
   toolbar: {
     print: 'Print chapter',
+    listen: 'Listen',
+    pause: 'Pause',
+    resume: 'Resume',
+    stop: 'Stop',
+    close: 'Close',
+    speed: 'Speed',
+    loading: 'Loading…',
+    error: 'Audio unavailable',
+    webSpeechBadge: 'Web Speech',
+    mp3Badge: 'Studio',
   },
   projects: {
     title: '// Projects',
