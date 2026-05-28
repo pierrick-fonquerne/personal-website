@@ -1,0 +1,11 @@
+slug: backpropagation
+fr:
+  term: Backpropagation
+  definition: Algorithme permettant de calculer le gradient de la fonction de coût par rapport à chaque poids d'un réseau de neurones. Il propage l'erreur de la sortie vers les couches précédentes en appliquant la règle de la chaîne. C'est le cœur de l'apprentissage des réseaux multi-couches.
+  source: Rumelhart, Hinton et Williams, 1986
+en:
+  term: Backpropagation
+  definition: An algorithm that computes the gradient of the loss function with respect to every weight in a neural network. It propagates the error from the output back through earlier layers using the chain rule. It is the core of multi-layer network training.
+  source: Rumelhart, Hinton and Williams, 1986
+seeAlso:
+  - fonction-activation

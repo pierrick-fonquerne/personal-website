@@ -1,0 +1,12 @@
+slug: perceptron
+fr:
+  term: Perceptron
+  definition: Premier neurone artificiel capable d'apprendre, inventé par Frank Rosenblatt en 1958. Il combine une somme pondérée des entrées avec une fonction seuil pour produire une décision binaire 0 ou 1.
+  source: Rosenblatt, 1958
+en:
+  term: Perceptron
+  definition: The first artificial neuron able to learn, invented by Frank Rosenblatt in 1958. It combines a weighted sum of the inputs with a threshold function to produce a binary 0 or 1 decision.
+  source: Rosenblatt, 1958
+seeAlso:
+  - somme-ponderee
+  - biais

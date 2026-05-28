@@ -8,6 +8,18 @@ const courseSchema = z.object({
   summary: z.string(),
   cover: z.string().optional(),
   tags: z.array(z.string()).default([]),
+  theme: z.enum([
+    'architecture',
+    'math',
+    'ai',
+    'systems',
+    'data',
+    'security',
+    'network',
+    'quant',
+    'tooling',
+  ]),
+  subtheme: z.string(),
   level: z.enum(['intro', 'intermediate', 'advanced']),
   estimatedMinutes: z.number().int().positive(),
   modules: z.array(z.string()),
@@ -44,9 +56,28 @@ const courseModulesEn = defineCollection({
   schema: moduleSchema,
 });
 
+const glossaryLocaleSchema = z.object({
+  term: z.string(),
+  definition: z.string(),
+  source: z.string().optional(),
+});
+
+const glossarySchema = z.object({
+  slug: z.string(),
+  fr: glossaryLocaleSchema,
+  en: glossaryLocaleSchema,
+  seeAlso: z.array(z.string()).default([]),
+});
+
+const glossary = defineCollection({
+  loader: glob({ base: './src/content/glossary', pattern: '**/*.{yaml,yml}' }),
+  schema: glossarySchema,
+});
+
 export const collections = {
   'courses-fr': coursesFr,
   'courses-en': coursesEn,
   'course-modules-fr': courseModulesFr,
   'course-modules-en': courseModulesEn,
+  glossary,
 };

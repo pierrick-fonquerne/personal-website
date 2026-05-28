@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 6
+title: From gradient to random mutation
+subtitle: "Why AEI-Framework has no backpropagation: a deliberate design choice."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+This chapter is still empty. The skeleton is in place; content will follow soon.
+</Callout>
+
+## What you will learn
+
+- Why the gradient isn't always the right answer
+- Random mutation + selection: evolutionary algorithms striking back
+- Curiosity-driven learning: letting the agent decide what to explore
+
+Every ML framework runs gradient descent. AEI deliberately does something else. This chapter explains why: less efficient on well-defined problems in theory, more robust on ill-posed ones where the gradient does not even exist.

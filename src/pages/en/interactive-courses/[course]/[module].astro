@@ -1,6 +1,7 @@
 ---
 import { render } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import CourseSidebar from '../../../../components/learning/CourseSidebar.astro';
 import ModuleLayout from '../../../../components/learning/ModuleLayout.astro';
 import ModuleNav from '../../../../components/learning/ModuleNav.astro';
 import {
@@ -42,6 +43,11 @@ const { Content } = await render(current);
 const { prev, next } = neighbors(modules, current.id);
 const total = modules.length;
 const badge = `${course.data.title} · ${String(current.data.order).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+const sidebarModules = modules.map((m) => ({
+  slug: moduleSlugOf(m),
+  title: m.data.title,
+  order: m.data.order,
+}));
 ---
 
 <BaseLayout
@@ -50,20 +56,33 @@ const badge = `${course.data.title} · ${String(current.data.order).padStart(2, 
   current="/interactive-courses"
   locale={locale}
 >
-  <ModuleLayout
-    badge={badge}
-    title={current.data.title}
-    subtitle={current.data.subtitle}
-  >
-    <Content />
-  </ModuleLayout>
-  <ModuleNav
-    courseSlug={courseSlug!}
-    locale={locale}
-    prev={prev ? { slug: moduleSlugOf(prev), title: prev.data.title } : undefined}
-    next={next ? { slug: moduleSlugOf(next), title: next.data.title } : undefined}
-    backToCourseLabel={t.module.backToCourse}
-    prevLabel={t.module.prev}
-    nextLabel={t.module.next}
-  />
+  <div class="mx-auto max-w-[1280px] px-6 lg:px-14">
+    <div class="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
+      <CourseSidebar
+        courseSlug={courseSlug!}
+        courseTitle={course.data.title}
+        locale={locale}
+        modules={sidebarModules}
+        activeSlug={moduleSlug}
+      />
+      <div class="min-w-0">
+        <ModuleLayout
+          badge={badge}
+          title={current.data.title}
+          subtitle={current.data.subtitle}
+        >
+          <Content />
+        </ModuleLayout>
+        <ModuleNav
+          courseSlug={courseSlug!}
+          locale={locale}
+          prev={prev ? { slug: moduleSlugOf(prev), title: prev.data.title } : undefined}
+          next={next ? { slug: moduleSlugOf(next), title: next.data.title } : undefined}
+          backToCourseLabel={t.module.backToCourse}
+          prevLabel={t.module.prev}
+          nextLabel={t.module.next}
+        />
+      </div>
+    </div>
+  </div>
 </BaseLayout>

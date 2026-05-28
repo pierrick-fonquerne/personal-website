@@ -1,0 +1,10 @@
+slug: fonction-cout
+fr:
+  term: Fonction de coût
+  definition: "Mesure de l'erreur entre la prédiction d'un réseau et la vérité attendue. Aussi appelée fonction de perte ou loss. Plus elle est élevée, plus le réseau se trompe. L'apprentissage cherche à la minimiser. Exemples courants : MSE pour la régression, cross-entropy pour la classification."
+en:
+  term: Loss function
+  definition: "A measure of the error between a network's prediction and the expected truth. Also called cost function. The higher it is, the more wrong the network. Training seeks to minimise it. Common examples: MSE for regression, cross-entropy for classification."
+seeAlso:
+  - descente-de-gradient
+  - gradient

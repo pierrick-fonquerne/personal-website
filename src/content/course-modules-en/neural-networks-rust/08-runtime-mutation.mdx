@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 8
+title: Runtime mutation of weights and activations
+subtitle: "Tweaking a network without retraining: Gaussian noise on weights, swapping activations."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+This chapter is still empty. The skeleton is in place; content will follow soon.
+</Callout>
+
+## What you will learn
+
+- `MutateRandomSynapseWeight`: adding Gaussian noise to an existing weight
+- `MutateRandomNeuronActivation`: swapping one activation for another
+- Combining mutations and natural selection (evolutionary algorithms)
+
+Gradient descent moves weights in a computed direction. Mutation moves them in a random one. Surprisingly, on some problem classes, that is competitive. We will see why and when.

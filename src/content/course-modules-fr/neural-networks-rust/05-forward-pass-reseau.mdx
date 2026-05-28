@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 5
+title: Forward pass d'un réseau
+subtitle: "Quand le réseau n'est plus une suite de couches mais un graphe : HashMap, UUID, propagation topologique."
+estimatedMinutes: 18
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- Représenter un réseau comme `HashMap<Uuid, Neuron>` + `HashMap<Uuid, Synapse>`
+- Trier topologiquement les neurones pour la propagation
+- Gérer les cycles (ou les interdire) selon la topologie choisie
+
+Avec AEI-Framework on quitte le modèle "couches" pour entrer dans le modèle "graphe". C'est plus souple, plus proche du biologique, et ça pose des questions de propagation qu'on n'avait pas avant.

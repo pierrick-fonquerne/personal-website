@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 9
+title: Event sourcing pour IA
+subtitle: "Tracer chaque mutation comme un événement immuable, rejouer l'historique, persister l'agent."
+estimatedMinutes: 20
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- Le pattern Event Sourcing appliqué à un réseau de neurones
+- `FileEventStore` : un log JSON Lines append-only
+- Hydrater un réseau depuis son historique d'événements
+
+Un réseau classique se sérialise comme un tenseur. Un réseau event-sourced se sérialise comme une suite de commandes. La différence : rejeu, debugging, audit, et la possibilité de bifurquer une historique pour explorer des branches alternatives.

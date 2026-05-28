@@ -1,0 +1,10 @@
+slug: gradient
+fr:
+  term: Gradient
+  definition: Vecteur de toutes les dérivées partielles d'une fonction. Il indique la direction de plus forte augmentation de la fonction au point considéré, et sa norme mesure la pente. En apprentissage, on suit l'opposé du gradient pour faire baisser la fonction de coût.
+en:
+  term: Gradient
+  definition: The vector of all partial derivatives of a function. It points in the direction of steepest increase of the function at a given point, and its norm measures the slope. In training, we follow the opposite of the gradient to drive the loss down.
+seeAlso:
+  - descente-de-gradient
+  - backpropagation

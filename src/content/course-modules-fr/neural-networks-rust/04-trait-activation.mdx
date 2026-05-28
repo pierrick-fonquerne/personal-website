@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 4
+title: Le trait `Activation`
+subtitle: "Encoder Identity, Sigmoid, ReLU, Tanh comme des variantes d'un enum, avec leurs dérivées."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- Définir un `enum Activation` avec Identity, Sigmoid, ReLU, Tanh
+- Implémenter `apply(&self, x: f64) -> f64` et `derivative(&self, x: f64) -> f64`
+- Comparer `enum` vs `trait object` : quand préférer quoi
+
+C'est un design choice typique de Rust : l'`enum` est plus simple, plus rapide, plus prévisible. Le `trait object` ouvre l'extensibilité au prix du dynamic dispatch. On va voir comment AEI-Framework a tranché.

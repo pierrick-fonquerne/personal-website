@@ -1,0 +1,11 @@
+slug: forward-pass
+fr:
+  term: Forward pass
+  definition: Propagation avant. Phase de calcul où une donnée d'entrée traverse le réseau couche par couche, des entrées vers la sortie, en appliquant à chaque neurone sa somme pondérée et sa fonction d'activation. Produit la prédiction finale.
+en:
+  term: Forward pass
+  definition: The forward propagation. A computation phase where an input traverses the network layer by layer, from inputs to output, applying at each neuron its weighted sum and activation function. Produces the final prediction.
+seeAlso:
+  - somme-ponderee
+  - fonction-activation
+  - backpropagation

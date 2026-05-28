@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 3
+title: Implementing a perceptron
+subtitle: "From the passive neuron to a perceptron that actually learns, in a few dozen lines."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+This chapter is still empty. The skeleton is in place; content will follow soon.
+</Callout>
+
+## What you will learn
+
+- Extending the previous struct with a `learning_rate: f64`
+- Implementing `train_step(&mut self, inputs: &[f64], target: f64)`
+- Verifying it learns the logical AND function
+
+Rosenblatt's perceptron in Rust fits in under 50 lines. A good chance to play with controlled mutability and feel out what "learning" actually means in code.

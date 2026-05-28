@@ -5,6 +5,7 @@ import SectionHead from '../ui/SectionHead.astro';
 import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
+import Crates from '../ui/icons/Crates.astro';
 import { SOCIAL_LINKS } from '../../lib/links';
 import { computeAge } from '../../lib/age';
 import { useTranslations, type Locale } from '../../lib/i18n';
@@ -102,6 +103,7 @@ const stats = [
                 >
                   {s.icon === 'github' && <Github class="h-[14px] w-[14px]" />}
                   {s.icon === 'linkedin' && <LinkedIn class="h-[14px] w-[14px]" />}
+                  {s.icon === 'crates' && <Crates class="h-[14px] w-[14px]" />}
                   {s.icon === 'mail' && <Mail class="h-[14px] w-[14px]" />}
                   {t.socials[s.labelKey]}
                 </a>

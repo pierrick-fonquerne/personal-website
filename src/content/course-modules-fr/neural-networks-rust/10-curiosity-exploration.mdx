@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 10
+title: Curiosity-driven exploration
+subtitle: "Quand l'agent décide quoi apprendre : MemoryProjection, scoring, et boucle d'exploration."
+estimatedMinutes: 20
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- `MemoryProjection` : buffer borné d'expériences avec scoring
+- `RecalculateCuriosityScore` : mesurer l'intérêt d'une expérience
+- La boucle : explorer, scorer, garder ce qui surprend, recommencer
+
+Tout ce qui précède portait sur "comment le réseau évolue". Ce chapitre porte sur "qui pilote l'évolution". La réponse d'AEI : la curiosité, mesurée comme un écart à ce qui est déjà connu.

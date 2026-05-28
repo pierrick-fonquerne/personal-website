@@ -1,0 +1,11 @@
+slug: xor
+fr:
+  term: XOR (ou exclusif)
+  definition: Opération logique qui vaut 1 quand exactement une de ses deux entrées vaut 1, et 0 sinon. Ses cas positifs sont en diagonale dans le plan 2D, ce qui les rend non séparables par une seule droite. Cela rend XOR impossible à apprendre pour un perceptron unique.
+  source: Minsky et Papert, 1969
+en:
+  term: XOR (exclusive or)
+  definition: Logical operation that returns 1 when exactly one of its two inputs is 1, and 0 otherwise. Its positive cases lie on a diagonal in 2D space, making them non separable by a single line. This makes XOR impossible to learn for a single perceptron.
+  source: Minsky and Papert, 1969
+seeAlso:
+  - perceptron

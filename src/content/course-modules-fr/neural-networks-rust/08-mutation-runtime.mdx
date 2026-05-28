@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 8
+title: Mutation runtime des poids et activations
+subtitle: "Ajuster un réseau sans le réentraîner : bruit gaussien sur les poids, swap d'activations."
+estimatedMinutes: 15
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- `MutateRandomSynapseWeight` : ajouter du bruit gaussien à un poids existant
+- `MutateRandomNeuronActivation` : remplacer une activation par une autre
+- Combiner mutations et sélection naturelle (algorithmes évolutionnaires)
+
+Le gradient ajuste les poids dans une direction calculée. La mutation les ajuste dans une direction aléatoire. Surprenamment, sur certaines classes de problèmes, c'est compétitif. On va voir pourquoi et quand.

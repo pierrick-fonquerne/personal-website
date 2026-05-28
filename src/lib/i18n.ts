@@ -57,3 +57,55 @@ export function switchLocalePath(currentPath: string, current: Locale, target: L
   }
   return localizedPath(stripped, target);
 }
+
+/**
+ * Resolves the equivalent path in the target locale, with awareness of routes
+ * whose slugs differ between languages (notably interactive course chapters).
+ *
+ * For a path like /interactive-courses/<course>/<module>, the function looks
+ * up the module in the source collection, finds the matching module in the
+ * target collection (same course, same order), and returns the localized
+ * path with the correctly translated slug.
+ *
+ * Falls back to {@link switchLocalePath} when no special handling applies.
+ */
+export async function resolveTranslatedPath(
+  currentPath: string,
+  current: Locale,
+  target: Locale,
+): Promise<string> {
+  if (current === target) return currentPath;
+
+  let stripped = currentPath;
+  if (current !== DEFAULT_LOCALE) {
+    stripped = stripped.replace(new RegExp(`^/${current}(/|$)`), '/');
+  }
+
+  const moduleMatch = stripped.match(/^\/interactive-courses\/([^/]+)\/([^/]+)\/?$/);
+  if (moduleMatch) {
+    const [, courseSlug, moduleSlug] = moduleMatch;
+    const { getCollection } = await import('astro:content');
+    const sourceCollection = `course-modules-${current}` as const;
+    const targetCollection = `course-modules-${target}` as const;
+    const sourceEntries = await getCollection(sourceCollection);
+    const sourceEntry = sourceEntries.find(
+      (e) => e.data.course === courseSlug && e.id.endsWith(`/${moduleSlug}`),
+    );
+    if (sourceEntry) {
+      const targetEntries = await getCollection(targetCollection);
+      const targetEntry = targetEntries.find(
+        (e) => e.data.course === courseSlug && e.data.order === sourceEntry.data.order,
+      );
+      if (targetEntry) {
+        const idSegments = targetEntry.id.split('/');
+        const targetModuleSlug = idSegments[idSegments.length - 1]!.replace(/\.mdx$/, '');
+        return localizedPath(
+          `/interactive-courses/${courseSlug}/${targetModuleSlug}`,
+          target,
+        );
+      }
+    }
+  }
+
+  return localizedPath(stripped, target);
+}

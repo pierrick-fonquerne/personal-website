@@ -1,0 +1,360 @@
+---
+course: neural-networks-foundations
+order: 1
+title: The artificial neuron
+subtitle: "From biological to mathematical, what really happens inside the elementary brick of a network."
+estimatedMinutes: 18
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import NeuronDiagram from '../../../components/learning/NeuronDiagram.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import LinearSeparabilityViewer from '../../../components/learning/LinearSeparabilityViewer.tsx';
+
+Every neural network, from the simplest to the deepest, is an assembly of one elementary brick repeated by the millions. That brick, the **artificial neuron**, has nothing magical about it. It is an equation with three ingredients, inspired by a biological cell hundreds of millions of years old.
+
+By the end of this chapter you will be able to answer three questions: what exactly does an artificial neuron compute, where does the idea come from, and why does a lone neuron carry a limitation that modern networks had to overcome.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know to follow**: basic arithmetic (addition, multiplication), the notion of a function (a single variable is enough), and a bit of 2D geometric intuition (a point in a plane, a line, one side or the other of a line).
+
+**What you do not need**: differential calculus (chapter 7), formal linear algebra (chapter 2), programming (dedicated to Course 2 "Neural networks in Rust").
+
+**Level of rigour**: this chapter makes pedagogical choices (analogies, sliders, accessible prose) without compromising on mathematical precision. Proofs are explicit, definitions formal, sources tracked.
+</Callout>
+
+## The biological inspiration
+
+Your brain contains roughly **86 billion neurons** (Azevedo et al., 2009). Each neuron receives electrical signals from its neighbours through its *dendrites*, integrates them in its cell body, and decides, based on an internal threshold, whether to fire a signal along its *axon*.
+
+In 1943, Warren McCulloch and Walter Pitts model that behaviour with an equation (McCulloch & Pitts, 1943), laying the foundations of what will later be called the artificial neuron. It is not a faithful copy of biology, but a **mathematical simplification** that turns out to be powerful.
+
+## The referee analogy
+
+Picture a football referee deciding whether a foul deserves a penalty. He weighs several pieces of information, each more or less important depending on context.
+
+| Information | Input | Weight |
+|---|---|---|
+| The hand touched the ball | $x_1 = 1$ | $w_1 = 0.8$ |
+| Inside the penalty area | $x_2 = 0$ | $w_2 = 0.5$ |
+| Intentional gesture | $x_3 = 1$ | $w_3 = 0.9$ |
+
+The referee mentally computes a <Term slug="somme-ponderee">weighted sum</Term>: he adds the pieces of information after multiplying each by its importance. If the total clears a threshold, he whistles. That is exactly what an artificial neuron does.
+
+## Play with a neuron
+
+Practice before theory. Drag the sliders below. The output recomputes live. **Your mission**: find a combination where the output $y$ is very close to $1$, then another one where it is very close to $0$. You will feel how each parameter pulls in its own direction.
+
+<NeuronDiagram
+  client:visible
+  inputs={[
+    { label: 'x₁', defaultValue: 1.0, min: 0, max: 1 },
+    { label: 'x₂', defaultValue: 0.0, min: 0, max: 1 },
+    { label: 'x₃', defaultValue: 1.0, min: 0, max: 1 },
+  ]}
+  weights={[
+    { label: 'w₁', defaultValue: 0.8 },
+    { label: 'w₂', defaultValue: 0.5 },
+    { label: 'w₃', defaultValue: 0.9 },
+  ]}
+  bias={{ defaultValue: -0.5 }}
+  activation="sigmoid"
+/>
+
+Three things to notice while playing:
+
+- An input at zero **cancels** the contribution of its weight, no matter the weight's value.
+- Increasing a weight amplifies the influence of its input. Flipping it negative **reverses** the effect.
+- The bias shifts the output independently of the inputs. A very negative bias makes the neuron very hard to activate.
+
+<Callout kind="note" title="Historical note: from binary threshold to sigmoid">
+The NeuronDiagram above uses a **sigmoid** activation by default, producing a continuous output between 0 and 1. But the original neurons of McCulloch and Pitts (1943), and Rosenblatt's perceptron (1958), used a **binary threshold** function $H(z) = \mathbb{1}[z \geq 0]$: output 1 if the sum is at least 0, else 0. No nuance.
+
+The shift to sigmoid, and later to ReLU, is historically tied to backpropagation (1986), which requires a **differentiable** activation function to propagate the gradient. Subject of chapter 4. The sigmoid here gives a smoother intuition, but keep in mind that the simplest neuron, mathematically, is the threshold one.
+</Callout>
+
+## The mathematical formula
+
+The neuron's operation collapses into one equation. The expanded, readable form:
+
+<Formula caption="Expanded form">
+y = f( x₁·w₁ + x₂·w₂ + x₃·w₃ + b )
+</Formula>
+
+The same equation in compact notation with the sum symbol:
+
+$$
+y = f\left(\sum_{i=1}^{n} w_i x_i + b\right)
+$$
+
+And the densest form, in vector notation:
+
+$$
+y = f(\mathbf{w} \cdot \mathbf{x} + b)
+$$
+
+All three forms say the same thing at different abstraction levels. Learn to recognise all three; you will encounter them in every scientific paper.
+
+<Callout kind="tip" title="Read the equation out loud">
+The most useful version for training yourself to read maths: *"y equals f applied to the sum, for i going from one to n, of the products w i times x i, plus b."* That spoken sentence should become a reflex. When you meet a more complex equation later, you will read it the same way, piece by piece.
+</Callout>
+
+### What each symbol means
+
+- $x_i$ : the **inputs**, the information the neuron receives
+- $w_i$ : the **weights**, the importance assigned to each input
+- $b$ : the <Term slug="biais">bias</Term>, a base offset independent of the inputs
+- $f$ : the <Term slug="fonction-activation">activation function</Term>, which turns the raw result into something interpretable (covered in chapter 4)
+
+## Information flow as a graph
+
+<MermaidDiagram
+  client:visible
+  caption="Signal propagation through a single neuron"
+  definition={`graph LR
+    x1["x₁"] -->|"w₁"| sum
+    x2["x₂"] -->|"w₂"| sum
+    x3["x₃"] -->|"w₃"| sum
+    b["b"] --> sum
+    sum["Σ"] --> act["f"]
+    act --> y["y"]`}
+/>
+
+Each input goes through a multiplication by its weight, all contributions sum with the bias, and the result passes through the activation function to produce the output.
+
+## From biological to artificial
+
+| Biological element | Role | Artificial counterpart |
+|---|---|---|
+| Dendrites | Receive incoming signals | Inputs $x_1, x_2, \dots, x_n$ |
+| Synapses | Regulate signal strength | Weights $w_1, w_2, \dots, w_n$ |
+| Cell body | Integrates all signals | Weighted sum $\sum w_i x_i$ |
+| Activation threshold | Triggers (or not) a signal | Bias $b$ + function $f$ |
+| Axon | Carries the output | Output $y$ |
+
+<Callout kind="note">
+The artificial neuron is a caricature of the biological neuron. A real neuron is dynamic over time, communicates with discrete spikes, and has a complex internal chemistry. We revisit those differences in chapter 99 on stateful neurons.
+</Callout>
+
+## An idea born in 1943
+
+The artificial neuron has a 80+ year history made of breakthroughs and long winters.
+
+| Year | Event |
+|---|---|
+| 1943 | **McCulloch & Pitts** model the neuron mathematically. |
+| 1949 | **Donald Hebb** states "neurons that fire together wire together". |
+| 1958 | **Frank Rosenblatt** publishes the founding paper of the <Term slug="perceptron">perceptron</Term>, the first machine learning rule for a single neuron. |
+| 1960 | **Mark I Perceptron**: first hardware realisation (Cornell Aeronautical Laboratory), an electromechanical computer able to recognise simple shapes. |
+| 1969 | **Minsky & Papert** publish *Perceptrons* and prove a single neuron cannot learn <Term slug="xor">XOR</Term>. First major dent in the field's enthusiasm. |
+| 1973 | **Lighthill report** in the UK: AI is judged unable to deliver on its promises. Funding collapses in Europe and the US. The first **AI winter** begins, lasting roughly a decade. |
+| 1986 | **Rumelhart, Hinton & Williams** publish <Term slug="backpropagation">backpropagation</Term>. Research restarts. |
+| 2012 | **AlexNet** (Krizhevsky, Sutskever, Hinton) crushes ImageNet on GPU. Modern deep learning begins. |
+
+## What a single neuron cannot do
+
+### Formal definition: hyperplane and linear separability
+
+A clean treatment demands a precise definition. Let $\mathbf{x} \in \mathbb{R}^n$ be an input vector, $\mathbf{w} \in \mathbb{R}^n$ a weight vector, $b \in \mathbb{R}$ a bias. The set of points that zero the weighted sum
+
+$$
+\{\mathbf{x} \in \mathbb{R}^n \mid \mathbf{w} \cdot \mathbf{x} + b = 0\}
+$$
+
+is called a **hyperplane**. In $\mathbb{R}^2$ it is a line, in $\mathbb{R}^3$ a plane, and in higher dimensions you can no longer draw it but the equation stands.
+
+A hyperplane splits space into two **half-spaces**: one where $\mathbf{w} \cdot \mathbf{x} + b > 0$ (the neuron *fires*) and one where $\mathbf{w} \cdot \mathbf{x} + b < 0$ (it does not). A threshold neuron is exactly this partition operation.
+
+A set of labelled points $\{(\mathbf{x}_i, y_i)\}$ with $y_i \in \{0, 1\}$ is said **linearly separable** if there exists $(\mathbf{w}, b)$ such that the associated hyperplane correctly separates the points of label 1 from those of label 0. Otherwise it is **not linearly separable**.
+
+### Why XOR is not linearly separable
+
+This result is not only visual, it can be proved in a few lines by contradiction.
+
+<Callout kind="tip" title="Proof: XOR admits no linear separator">
+We note the four points of XOR: $(0,0) \to 0$, $(1,0) \to 1$, $(0,1) \to 1$, $(1,1) \to 0$.
+
+Suppose by contradiction that there exists $(w_1, w_2, b) \in \mathbb{R}^3$ such that the classifier $\mathbb{1}[w_1 x_1 + w_2 x_2 + b \geq 0]$ produces the expected output at each point. We obtain four inequalities:
+
+$$
+\begin{aligned}
+(0,0) \to 0 &\quad : \quad b < 0 \\
+(1,0) \to 1 &\quad : \quad w_1 + b \geq 0 \\
+(0,1) \to 1 &\quad : \quad w_2 + b \geq 0 \\
+(1,1) \to 0 &\quad : \quad w_1 + w_2 + b < 0
+\end{aligned}
+$$
+
+Adding $(2)$ and $(3)$: $w_1 + w_2 + 2b \geq 0$, so $w_1 + w_2 \geq -2b$.
+
+From $(1)$, $b < 0$, so $-2b > 0$, and therefore $w_1 + w_2 > 0$.
+
+But $(4)$ gives $w_1 + w_2 < -b$, and since $b < 0$, $-b > 0$. Combining: $-2b \leq w_1 + w_2 < -b$, which forces $-2b < -b$, i.e. $b > 0$. Contradiction with $(1)$ which requires $b < 0$. ∎
+</Callout>
+
+This proof fits in five lines but it closes the debate definitively: no choice of weights and bias can solve XOR with a single threshold neuron.
+
+### Verify it yourself
+
+That is enough for **linearly separable** problems, like the AND gate, where one line isolates the $(1, 1)$ case from the other three. But it is not enough for <Term slug="xor">XOR</Term>, whose positive cases sit diagonally: no line can separate them from the negatives.
+
+### Try to separate XOR yourself
+
+Drag the sliders below to tilt and shift the line. On AND and OR, you can reach 4 out of 4 correctly classified. On XOR, you will never succeed: one point is always on the wrong side.
+
+<LinearSeparabilityViewer
+  client:visible
+  dataset="xor"
+  labels={{
+    slope: 'Slope',
+    intercept: 'Intercept',
+    classified: 'correctly classified',
+    line: 'Line',
+    impossible: "On XOR, no straight line correctly separates the four points. Try as much as you want, you will never hit 4 out of 4.",
+  }}
+/>
+
+That is exactly what Minsky and Papert proved in 1969. Geometrically, a neuron is a line; XOR requires a boundary that cannot be linear. The fix will come from multi-layer networks, which compose several lines to draw more complex boundaries.
+
+<Callout kind="warn" title="The historical trap">
+In 1969, Minsky and Papert prove that limit formally. Many conclude, wrongly, that neural networks are a dead end. Funding collapses. Yet the solution, **multi-layer** networks, already existed in theory. We had to wait until 1986 and backpropagation to train them effectively. Subject of chapters 5 and 7.
+</Callout>
+
+## The role of the bias, visually
+
+Without bias, the line drawn by the neuron must pass through the origin. That is a strong constraint: most real-world problems have a decision boundary that does *not* sit at the origin.
+
+The bias fixes this by **translating** the line anywhere in the plane. Mental image: weights control the **orientation** of the line (its slope); the bias controls its **position**.
+
+To see it live, switch the component below to the **OR** dataset. Keep the slope near $-1$ and move only the intercept (which here plays the bias role). The line slides parallel to itself. Without that translation, you cannot correctly classify the three orange points.
+
+<LinearSeparabilityViewer
+  client:visible
+  dataset="or"
+  initialSlope={-1}
+  initialIntercept={0.5}
+  labels={{
+    slope: 'Slope',
+    intercept: 'Intercept',
+    classified: 'correctly classified',
+    line: 'Line',
+    impossible: "On XOR, no straight line correctly separates the four points. Try as much as you want, you will never hit 4 out of 4.",
+  }}
+/>
+
+Another way to feel the bias: go back to the NeuronDiagram above, set every input to zero. The output now depends only on the bias. That is the neuron's "base level", independent of any input data.
+
+## In one sentence
+
+An artificial neuron computes a linear combination of its inputs, adds a bias, and passes everything through a non-linear function. That's it. The power comes from what we do with them once we stack them and train them.
+
+## Exercises
+
+Take a sheet of paper and a pencil. Solutions are right below, look at them only after trying.
+
+### Exercise 1: direct computation
+
+Given a two-input neuron with $w_1 = 2$, $w_2 = -1$, $b = 0.5$, and ReLU activation $\text{ReLU}(z) = \max(0, z)$. Compute the output for $x_1 = 0.7$ and $x_2 = 0.3$.
+
+### Exercise 2: build an AND neuron
+
+Find a triple $(w_1, w_2, b)$ such that a threshold neuron $H(z) = \mathbb{1}[z \geq 0]$ with two binary inputs $x_1, x_2 \in \{0, 1\}$ implements the logical AND function. Verify on the four cases.
+
+<Callout kind="tip" title="Solutions (read after trying)">
+**Exercise 1.** $z = 2 \cdot 0.7 + (-1) \cdot 0.3 + 0.5 = 1.4 - 0.3 + 0.5 = 1.6$. Since $z > 0$, $y = \text{ReLU}(1.6) = 1.6$.
+
+**Exercise 2.** One solution among many: $w_1 = 1$, $w_2 = 1$, $b = -1.5$. Verification:
+- $(0,0)$: $0 + 0 - 1.5 = -1.5 < 0$, output 0 ✓
+- $(1,0)$: $1 + 0 - 1.5 = -0.5 < 0$, output 0 ✓
+- $(0,1)$: $0 + 1 - 1.5 = -0.5 < 0$, output 0 ✓
+- $(1,1)$: $1 + 1 - 1.5 = 0.5 \geq 0$, output 1 ✓
+
+The triple $(1, 1, -0.5)$ also works. More generally, any triple $(w_1, w_2, b)$ with $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ and $w_1 + w_2 + b \geq 0$ is a solution. Geometrically, the line $w_1 x_1 + w_2 x_2 + b = 0$ must pass between the three negative points and the point $(1,1)$.
+</Callout>
+
+## Sources
+
+- Azevedo, F. A. et al. (2009). "Equal numbers of neuronal and nonneuronal cells make the human brain an isotropically scaled-up primate brain." *Journal of Comparative Neurology* 513(5), 532-541. [DOI 10.1002/cne.21974](https://doi.org/10.1002/cne.21974)
+- McCulloch, W. & Pitts, W. (1943). "A Logical Calculus of Ideas Immanent in Nervous Activity." *Bulletin of Mathematical Biophysics* 5(4), 115-133. [DOI 10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Hebb, D. O. (1949). *The Organization of Behavior*. Wiley. [Archive.org](https://archive.org/details/in.ernet.dli.2015.226341)
+- Rosenblatt, F. (1958). "The Perceptron: a probabilistic model for information storage and organization in the brain." *Psychological Review* 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
+- Minsky, M. & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*. MIT Press.
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). "Learning representations by back-propagating errors." *Nature* 323(6088), 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). "ImageNet Classification with Deep Convolutional Neural Networks." *NeurIPS* 25. [NeurIPS link](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Lighthill, J. (1973). *Artificial Intelligence: A General Survey*. Science Research Council, United Kingdom. [Archive.org](https://archive.org/details/lighthill-report)
+
+### Further reading
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 6 on feed-forward networks. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer. Chapter 5 on neural networks.
+- Hastie, T., Tibshirani, R. & Friedman, J. (2009). *The Elements of Statistical Learning*. Springer. Chapter 11. [Free PDF at Stanford](https://hastie.su.domains/ElemStatLearn/)
+- LeCun, Y. (lecture series at Collège de France, 2016 onwards). "L'apprentissage profond." [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
+- Ng, A. (online course on Coursera, "Deep Learning Specialization"). Excellent complement.
+
+<Quiz
+  client:load
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "What does a neuron compute before the activation function?",
+      options: [
+        "A matrix product",
+        "A weighted sum of the inputs, plus a bias",
+        "A multiplication of the inputs with each other",
+        "An average of the inputs",
+      ],
+      answer: 1,
+      explain: "The neuron computes z = Σ wᵢ xᵢ + b, a linear combination, not a product or an average.",
+    },
+    {
+      q: "Why can a single neuron not learn XOR?",
+      options: [
+        "Because XOR has too many cases",
+        "Because the activation function is too simple",
+        "Because no single line can separate the positive and negative cases",
+        "Because the weights must be integers",
+      ],
+      answer: 2,
+      explain: "A neuron draws a line. XOR's positive cases sit diagonally, so no single line can separate them from the negatives.",
+    },
+    {
+      q: "What is the geometric role of the bias?",
+      options: [
+        "It amplifies the effect of the weights",
+        "It translates the decision boundary in the plane",
+        "It normalises the output between 0 and 1",
+        "It speeds up computation",
+      ],
+      answer: 1,
+      explain: "Weights set the line's orientation, the bias sets its position. Without bias, the line must pass through the origin.",
+    },
+    {
+      q: "What does the activation function f do in y = f(Σ wᵢ xᵢ + b)?",
+      options: [
+        "It adds the inputs together",
+        "It turns the raw result into something interpretable, usually non-linear",
+        "It auto-adjusts the weights",
+        "It replaces the bias when zero",
+      ],
+      answer: 1,
+      explain: "f squashes or reshapes the weighted sum. Without it, stacking neurons collapses to a linear combination, and a deep network loses its expressive power.",
+    },
+    {
+      q: "True or false: the artificial neuron is a faithful copy of the biological neuron.",
+      options: [
+        "True, it reproduces the neuron's internal chemistry",
+        "False, it is a mathematical simplification inspired by biology, not a replica",
+        "True, except for memory",
+        "False, they share nothing in common",
+      ],
+      answer: 1,
+      explain: "The artificial neuron borrows the idea of weighted inputs and a threshold, but ignores the temporal dimension, discrete spikes, and synaptic chemistry. It is a useful caricature, not a replica.",
+    },
+  ]}
+/>

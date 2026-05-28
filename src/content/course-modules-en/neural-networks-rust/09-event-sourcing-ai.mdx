@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 9
+title: Event sourcing for AI
+subtitle: "Tracking every mutation as an immutable event, replaying history, persisting the agent."
+estimatedMinutes: 20
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+This chapter is still empty. The skeleton is in place; content will follow soon.
+</Callout>
+
+## What you will learn
+
+- The Event Sourcing pattern applied to a neural network
+- `FileEventStore`: an append-only JSON Lines log
+- Hydrating a network from its event history
+
+A classical network serialises as a tensor. An event-sourced one serialises as a sequence of commands. The payoff: replay, debugging, audit, and the ability to fork a history to explore alternative branches.

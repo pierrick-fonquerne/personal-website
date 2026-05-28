@@ -1,0 +1,22 @@
+---
+course: neural-networks-rust
+order: 7
+title: Topologie dynamique
+subtitle: "Ajouter, retirer des neurones et des synapses en cours d'exécution, sans tout reconstruire."
+estimatedMinutes: 18
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+
+<Callout kind="note">
+Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+</Callout>
+
+## Ce que tu vas apprendre
+
+- La commande `AddRandomNeuron` : choisir, ajouter, recâbler
+- La commande `RemoveRandomNeuron` : invariants à préserver
+- Idempotence et déterminisme : pourquoi c'est crucial en event sourcing
+
+Un réseau classique a une topologie figée. Un réseau évolutif change de forme pendant qu'il tourne. Ce chapitre montre comment piloter ce changement par des commandes typées plutôt que des mutations sauvages.

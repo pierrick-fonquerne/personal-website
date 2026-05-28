@@ -8,7 +8,7 @@ interface Props {
 const { badge, title, subtitle } = Astro.props;
 ---
 
-<article class="mx-auto max-w-[760px] px-6 py-12">
+<article class="min-w-0 py-12">
   <header class="mb-10">
     <span
       class="inline-block font-mono text-[11px] font-medium tracking-[0.18em] text-[var(--color-accent)] uppercase"
@@ -54,6 +54,7 @@ const { badge, title, subtitle } = Astro.props;
     line-height: 1.7;
     color: var(--color-fg);
     margin: 0.9rem 0;
+    max-width: 72ch;
   }
   .prose-module :global(a) {
     color: var(--color-accent);
@@ -69,10 +70,55 @@ const { badge, title, subtitle } = Astro.props;
     padding-left: 1.4rem;
     margin: 0.9rem 0;
   }
+  .prose-module :global(ul) {
+    list-style: disc;
+  }
+  .prose-module :global(ol) {
+    list-style: decimal;
+  }
   .prose-module :global(li) {
     font-size: 16px;
     line-height: 1.7;
     margin: 0.3rem 0;
+    max-width: 70ch;
+  }
+  .prose-module :global(li::marker) {
+    color: var(--color-fg-dim);
+  }
+  .prose-module :global(table) {
+    width: 100%;
+    margin: 1.4rem 0;
+    border-collapse: collapse;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .prose-module :global(thead) {
+    border-bottom: 1px solid var(--color-line-strong);
+  }
+  .prose-module :global(th) {
+    padding: 0.55rem 0.9rem;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-fg-muted);
+    font-weight: 600;
+  }
+  .prose-module :global(tbody tr) {
+    border-bottom: 1px solid var(--color-line);
+  }
+  .prose-module :global(tbody tr:last-child) {
+    border-bottom: 0;
+  }
+  .prose-module :global(td) {
+    padding: 0.7rem 0.9rem;
+    color: var(--color-fg);
+    vertical-align: top;
+  }
+  .prose-module :global(td:first-child) {
+    color: var(--color-fg);
+    font-weight: 500;
   }
   .prose-module :global(code) {
     font-family: var(--font-mono);
