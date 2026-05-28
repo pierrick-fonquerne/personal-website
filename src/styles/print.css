@@ -1,0 +1,187 @@
+@media print {
+  :root,
+  html,
+  html[data-theme='dark'],
+  html[data-theme='light'],
+  [data-theme='dark'],
+  [data-theme='light'] {
+    --color-bg: #ffffff;
+    --color-bg-elevated: #ffffff;
+    --color-fg: #000000;
+    --color-fg-muted: #222222;
+    --color-fg-dim: #444444;
+    --color-line: #cccccc;
+    --color-line-strong: #888888;
+    --color-accent: #000000;
+    --color-accent-soft: #cccccc;
+    --color-success: #000000;
+    --color-hover: transparent;
+    --color-row-hover: transparent;
+    color-scheme: light !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    filter: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  body::before,
+  body::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  nav,
+  footer,
+  .chapter-toolbar,
+  astro-island,
+  [data-print='hide'] {
+    display: none !important;
+  }
+
+  main,
+  article,
+  section,
+  div,
+  header,
+  aside {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  li,
+  td,
+  th,
+  span,
+  strong,
+  em,
+  blockquote {
+    color: #000000 !important;
+  }
+
+  span,
+  small,
+  .text-fg-muted,
+  .text-fg-dim,
+  [class*='text-[var(--color-fg-muted)]'],
+  [class*='text-[var(--color-fg-dim)]'] {
+    color: #222222 !important;
+  }
+
+  a,
+  a:visited {
+    color: #000000 !important;
+    text-decoration: underline !important;
+  }
+
+  a[href^='http']::after,
+  a[href^='https']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    color: #555555 !important;
+    word-break: break-all;
+  }
+
+  a[href^='#']::after,
+  a[href^='mailto:']::after,
+  a[href^='/']::after {
+    content: '';
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  pre,
+  blockquote,
+  table,
+  figure,
+  .formula,
+  .callout {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  pre,
+  code {
+    background: #f5f5f5 !important;
+    background-color: #f5f5f5 !important;
+    border: 1px solid #cccccc !important;
+    color: #000000 !important;
+  }
+
+  pre *,
+  code * {
+    color: #000000 !important;
+    background: transparent !important;
+  }
+
+  blockquote {
+    border-left: 3px solid #888888 !important;
+  }
+
+  table {
+    border-collapse: collapse !important;
+  }
+
+  th,
+  td {
+    border: 1px solid #cccccc !important;
+  }
+
+  thead {
+    border-bottom: 1px solid #888888 !important;
+  }
+
+  hr {
+    border-top: 1px solid #cccccc !important;
+  }
+
+  img,
+  svg {
+    max-width: 100% !important;
+    height: auto !important;
+    filter: grayscale(100%) !important;
+  }
+
+  /* KaTeX: keep math readable */
+  .katex,
+  .katex * {
+    color: #000000 !important;
+  }
+
+  /* Callout-style blocks: replace accent border with neutral border */
+  [class*='border-l-2'],
+  [class*='border-l-4'],
+  [style*='border-left'] {
+    border-left-color: #888888 !important;
+  }
+
+  @page {
+    margin: 18mm 16mm;
+  }
+}

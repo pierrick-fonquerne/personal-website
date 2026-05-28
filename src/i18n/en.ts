@@ -21,6 +21,9 @@ export interface Translations {
     research: string;
     about: string;
   };
+  toolbar: {
+    print: string;
+  };
   projects: {
     title: string;
     lead: string;
@@ -175,6 +178,9 @@ const en: Translations = {
     courses: 'Courses',
     research: 'Research',
     about: 'About',
+  },
+  toolbar: {
+    print: 'Print chapter',
   },
   projects: {
     title: '// Projects',
