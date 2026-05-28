@@ -17,7 +17,7 @@ const source = localized?.source;
 
 const missing = !entry || !localized;
 const basePath = locale === 'en' ? '/en' : '';
-const sourceLabel = locale === 'en' ? 'Source' : 'Source';
+const sourcePrefix = locale === 'en' ? 'Source: ' : 'Source : ';
 ---
 
 <a
@@ -30,7 +30,7 @@ const sourceLabel = locale === 'en' ? 'Source' : 'Source';
     <span class="term-tooltip" role="tooltip" id={`term-${slug}`}>
       <span class="term-tooltip-head">{term}</span>
       <span class="term-tooltip-body">{definition}</span>
-      {source && <span class="term-tooltip-source">{sourceLabel} : {source}</span>}
+      {source && <span class="term-tooltip-source">{sourcePrefix}{source}</span>}
     </span>
   )}
 </a>

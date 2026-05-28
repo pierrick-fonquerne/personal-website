@@ -1,5 +1,5 @@
 ---
-import { LOCALES, switchLocalePath, type Locale } from '../../lib/i18n';
+import { LOCALES, resolveTranslatedPath, type Locale } from '../../lib/i18n';
 
 interface Props {
   locale: Locale;
@@ -8,6 +8,10 @@ interface Props {
 
 const { locale, ariaLabel = 'Switch language' } = Astro.props;
 const currentPath = Astro.url.pathname;
+
+const localeHrefs = await Promise.all(
+  LOCALES.map(async (l) => ({ locale: l, href: await resolveTranslatedPath(currentPath, locale, l) })),
+);
 ---
 
 <div
@@ -15,9 +19,8 @@ const currentPath = Astro.url.pathname;
   aria-label={ariaLabel}
 >
   {
-    LOCALES.map((l) => {
+    localeHrefs.map(({ locale: l, href }) => {
       const isActive = l === locale;
-      const href = switchLocalePath(currentPath, locale, l);
       return (
         <a
           href={href}
