@@ -1,0 +1,81 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Eyebrow from '../../../../components/ui/Eyebrow.astro';
+import { getCourse, listCourses, listModulesOf, moduleSlugOf } from '../../../../lib/courses';
+import { localizedPath, useTranslations } from '../../../../lib/i18n';
+
+export async function getStaticPaths() {
+  const courses = await listCourses('en');
+  return courses.map((course) => ({
+    params: { course: course.data.slug },
+  }));
+}
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const { course: courseSlug } = Astro.params;
+
+const course = await getCourse(locale, courseSlug!);
+if (!course) {
+  return Astro.redirect(localizedPath('/interactive-courses', locale));
+}
+const modules = await listModulesOf(locale, courseSlug!);
+---
+
+<BaseLayout
+  title={`${course.data.title} · ${t.courses.indexTitle}`}
+  description={course.data.summary}
+  current="/interactive-courses"
+  locale={locale}
+>
+  <section class="mx-auto max-w-[760px] px-6 py-16">
+    <Eyebrow text={t.courses.eyebrow} />
+    <h1
+      class="mt-4 font-display text-[40px] leading-[1.08] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {course.data.title}
+    </h1>
+    <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+      {course.data.summary}
+    </p>
+
+    <ol class="mt-12 space-y-2">
+      {
+        modules.map((mod) => {
+          const slug = moduleSlugOf(mod);
+          const href = localizedPath(
+            `/interactive-courses/${courseSlug}/${slug}`,
+            locale,
+          );
+          return (
+            <li>
+              <a
+                href={href}
+                class="group flex items-baseline gap-4 rounded-md border border-[var(--color-line)] px-4 py-3 transition-colors hover:border-[var(--color-line-strong)] hover:bg-[var(--color-hover)]"
+              >
+                <span class="font-mono text-[12px] text-[var(--color-fg-dim)] tabular-nums">
+                  {String(mod.data.order).padStart(2, '0')}
+                </span>
+                <div class="flex-1">
+                  <div class="font-display text-[16px] font-medium text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
+                    {mod.data.title}
+                  </div>
+                  {mod.data.subtitle && (
+                    <div class="mt-0.5 text-[13px] text-[var(--color-fg-muted)]">
+                      {mod.data.subtitle}
+                    </div>
+                  )}
+                </div>
+                {mod.data.estimatedMinutes && (
+                  <span class="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase">
+                    {mod.data.estimatedMinutes} {t.courses.minutesUnit}
+                  </span>
+                )}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ol>
+  </section>
+</BaseLayout>

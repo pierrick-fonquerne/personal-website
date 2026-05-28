@@ -1,0 +1,69 @@
+---
+import { localizedPath, type Locale } from '../../lib/i18n';
+
+interface NeighborLink {
+  slug: string;
+  title: string;
+}
+
+interface Props {
+  courseSlug: string;
+  locale: Locale;
+  prev?: NeighborLink;
+  next?: NeighborLink;
+  backToCourseLabel: string;
+  prevLabel: string;
+  nextLabel: string;
+}
+
+const { courseSlug, locale, prev, next, backToCourseLabel, prevLabel, nextLabel } = Astro.props;
+
+const courseHref = localizedPath(`/interactive-courses/${courseSlug}`, locale);
+const linkOf = (slug: string) =>
+  localizedPath(`/interactive-courses/${courseSlug}/${slug}`, locale);
+---
+
+<nav
+  class="mx-auto mt-12 flex max-w-[760px] flex-col gap-3 border-t border-[var(--color-line)] px-6 py-8 sm:flex-row sm:items-stretch sm:justify-between"
+>
+  {
+    prev ? (
+      <a
+        href={linkOf(prev.slug)}
+        class="group flex flex-1 flex-col items-start rounded-md border border-[var(--color-line)] px-4 py-3 transition-colors hover:border-[var(--color-line-strong)] hover:bg-[var(--color-hover)]"
+      >
+        <span class="font-mono text-[11px] tracking-[0.18em] text-[var(--color-fg-dim)] uppercase">
+          ← {prevLabel}
+        </span>
+        <span class="mt-1 text-[14px] font-medium text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
+          {prev.title}
+        </span>
+      </a>
+    ) : (
+      <span />
+    )
+  }
+  <a
+    href={courseHref}
+    class="self-center font-mono text-[12px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase hover:text-[var(--color-accent)]"
+  >
+    {backToCourseLabel}
+  </a>
+  {
+    next ? (
+      <a
+        href={linkOf(next.slug)}
+        class="group flex flex-1 flex-col items-end rounded-md border border-[var(--color-line)] px-4 py-3 transition-colors hover:border-[var(--color-line-strong)] hover:bg-[var(--color-hover)]"
+      >
+        <span class="font-mono text-[11px] tracking-[0.18em] text-[var(--color-fg-dim)] uppercase">
+          {nextLabel} →
+        </span>
+        <span class="mt-1 text-right text-[14px] font-medium text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
+          {next.title}
+        </span>
+      </a>
+    ) : (
+      <span />
+    )
+  }
+</nav>

@@ -4,9 +4,24 @@ const fr: Translations = {
   nav: {
     home: 'Accueil',
     projects: 'Projets',
-    blog: 'Blog',
+    courses: 'Cours',
     research: 'Recherche',
     about: 'À propos',
+  },
+  courses: {
+    eyebrow: 'COURS INTERACTIFS',
+    indexTitle: 'Cours interactifs',
+    indexLead:
+      'Cours pratiques sur les sujets que j’explore — artisanat logiciel, réseaux de neurones, systèmes distribués et plus. Lis le texte, puis bidouille les composants.',
+    emptyState: 'Aucun cours publié pour le moment. Reviens bientôt.',
+    cardCta: 'Ouvrir le cours',
+    modulesUnit: 'modules',
+    minutesUnit: 'min',
+  },
+  module: {
+    prev: 'Précédent',
+    next: 'Suivant',
+    backToCourse: 'Retour au cours',
   },
   status: 'J’apprends Rust & le deep learning',
   aboutAvatarAria: 'À propos de Pierrick',

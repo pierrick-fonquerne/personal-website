@@ -1,0 +1,69 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import ModuleLayout from '../../../../components/learning/ModuleLayout.astro';
+import ModuleNav from '../../../../components/learning/ModuleNav.astro';
+import {
+  getCourse,
+  listCourses,
+  listModulesOf,
+  moduleSlugOf,
+  neighbors,
+} from '../../../../lib/courses';
+import { localizedPath, useTranslations } from '../../../../lib/i18n';
+
+export async function getStaticPaths() {
+  const courses = await listCourses('en');
+  const paths = [];
+  for (const course of courses) {
+    const modules = await listModulesOf('en', course.data.slug);
+    for (const mod of modules) {
+      paths.push({
+        params: { course: course.data.slug, module: moduleSlugOf(mod) },
+      });
+    }
+  }
+  return paths;
+}
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const { course: courseSlug, module: moduleSlug } = Astro.params;
+
+const course = await getCourse(locale, courseSlug!);
+const modules = await listModulesOf(locale, courseSlug!);
+const current = modules.find((m) => moduleSlugOf(m) === moduleSlug);
+
+if (!course || !current) {
+  return Astro.redirect(localizedPath('/interactive-courses', locale));
+}
+
+const { Content } = await render(current);
+const { prev, next } = neighbors(modules, current.id);
+const total = modules.length;
+const badge = `${course.data.title} · ${String(current.data.order).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
+---
+
+<BaseLayout
+  title={`${current.data.title} · ${course.data.title}`}
+  description={current.data.subtitle ?? course.data.summary}
+  current="/interactive-courses"
+  locale={locale}
+>
+  <ModuleLayout
+    badge={badge}
+    title={current.data.title}
+    subtitle={current.data.subtitle}
+  >
+    <Content />
+  </ModuleLayout>
+  <ModuleNav
+    courseSlug={courseSlug!}
+    locale={locale}
+    prev={prev ? { slug: moduleSlugOf(prev), title: prev.data.title } : undefined}
+    next={next ? { slug: moduleSlugOf(next), title: next.data.title } : undefined}
+    backToCourseLabel={t.module.backToCourse}
+    prevLabel={t.module.prev}
+    nextLabel={t.module.next}
+  />
+</BaseLayout>

@@ -14,9 +14,23 @@ export interface Translations {
   nav: {
     home: string;
     projects: string;
-    blog: string;
+    courses: string;
     research: string;
     about: string;
+  };
+  courses: {
+    eyebrow: string;
+    indexTitle: string;
+    indexLead: string;
+    emptyState: string;
+    cardCta: string;
+    modulesUnit: string;
+    minutesUnit: string;
+  };
+  module: {
+    prev: string;
+    next: string;
+    backToCourse: string;
   };
   status: string;
   aboutAvatarAria: string;
@@ -100,9 +114,24 @@ const en: Translations = {
   nav: {
     home: 'Home',
     projects: 'Projects',
-    blog: 'Blog',
+    courses: 'Courses',
     research: 'Research',
     about: 'About',
+  },
+  courses: {
+    eyebrow: 'INTERACTIVE COURSES',
+    indexTitle: 'Interactive courses',
+    indexLead:
+      'Hands-on courses on the topics I explore — software craft, neural networks, distributed systems and more. Read the prose, then tinker with the components.',
+    emptyState: 'No course published yet. Come back soon.',
+    cardCta: 'Open the course',
+    modulesUnit: 'modules',
+    minutesUnit: 'min',
+  },
+  module: {
+    prev: 'Previous',
+    next: 'Next',
+    backToCourse: 'Back to course',
   },
   status: 'Currently learning Rust & Deep learning',
   aboutAvatarAria: 'About Pierrick',

@@ -28,7 +28,7 @@ export const SITE = {
 export const NAV_LINKS: readonly NavLink[] = [
   { key: 'home', href: '/' },
   { key: 'projects', href: '/projects' },
-  { key: 'blog', href: '/blog' },
+  { key: 'courses', href: '/interactive-courses' },
   { key: 'research', href: '/research' },
   { key: 'about', href: '/about' },
 ];
