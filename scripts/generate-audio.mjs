@@ -45,8 +45,9 @@ const listOnly = args.includes('--list');
 const withScriptOnly = args.includes('--with-script');
 const useMdxFallback = args.includes('--use-mdx-fallback');
 const confirmEach = args.includes('--confirm');
+const listVoices = args.includes('--voices');
 
-const offlineMode = listOnly || dryRun || manifestOnly;
+const offlineMode = (listOnly || dryRun || manifestOnly) && !listVoices;
 if (!offlineMode && !API_KEY) {
   console.error('Missing MISTRAL_API_KEY. Set it in .env or your shell.');
   process.exit(1);
@@ -199,7 +200,39 @@ async function readManifest() {
   }
 }
 
+async function fetchVoices() {
+  const res = await fetch('https://api.mistral.ai/v1/audio/voices', {
+    headers: { Authorization: `Bearer ${API_KEY}` },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`GET /v1/audio/voices ${res.status}: ${body.slice(0, 400)}`);
+  }
+  return res.json();
+}
+
 async function main() {
+  if (listVoices) {
+    console.log('Fetching your Voxtral voices…');
+    const data = await fetchVoices();
+    const items = data.items ?? data;
+    if (!Array.isArray(items) || items.length === 0) {
+      console.log('No voices found on this account.');
+      return;
+    }
+    console.log('-'.repeat(80));
+    for (const v of items) {
+      const langs = Array.isArray(v.languages) ? v.languages.join(',') : '';
+      const meta = [v.gender, v.age, langs].filter(Boolean).join(' · ');
+      console.log(`  id=${v.id}`);
+      console.log(`     name=${v.name ?? '(unnamed)'}  slug=${v.slug ?? '-'}  ${meta}`);
+    }
+    console.log('-'.repeat(80));
+    console.log(
+      'Set MISTRAL_TTS_VOICE_ID=<id> in your .env, then re-run audio:generate.',
+    );
+    return;
+  }
   const banner = `Voxtral TTS — model=${MODEL}, voice=${VOICE_ID}${dryRun ? ' [DRY RUN]' : ''}`;
   console.log(banner);
   console.log('-'.repeat(banner.length));
