@@ -53,28 +53,17 @@ Chapter 1 will revisit the historical milestones in detail. Just remember: the t
 
 ### Timeline of key milestones
 
-<MermaidDiagram
-  client:visible
-  caption="Eighty years in eight dates"
-  definition={`timeline
-    title Neural network milestones
-    1943 : McCulloch and Pitts
-         : Formal neuron model
-    1958 : Rosenblatt
-         : Perceptron that learns
-    1969 : Minsky and Papert
-         : XOR limitations
-    1986 : Rumelhart, Hinton, Williams
-         : Backpropagation
-    1998 : LeCun
-         : LeNet and convolutional vision
-    2012 : Krizhevsky, Sutskever, Hinton
-         : AlexNet and the GPU explosion
-    2017 : Vaswani et al.
-         : Transformer and attention
-    2020+ : OpenAI, Anthropic, Google
-          : Foundation models`}
-/>
+| Year | Actors | Contribution |
+|---|---|---|
+| 1943 | McCulloch and Pitts | Formal neuron model |
+| 1958 | Rosenblatt | Perceptron that learns |
+| 1969 | Minsky and Papert | XOR limitation, first alarm bell |
+| 1973 | Lighthill report (UK) | First AI winter |
+| 1986 | Rumelhart, Hinton, Williams | Backpropagation |
+| 1998 | LeCun | LeNet and convolutional vision |
+| 2012 | Krizhevsky, Sutskever, Hinton | AlexNet and the GPU explosion |
+| 2017 | Vaswani et al. | Transformer and attention mechanism |
+| 2020+ | OpenAI, Anthropic, Google, Mistral | Very-large-scale foundation models |
 
 ## The course in thirteen chapters
 
@@ -96,32 +85,27 @@ Regularisation, initialisation and batch normalisation, advanced optimisers. The
 
 <MermaidDiagram
   client:visible
-  caption="Logical dependencies: who builds on whom"
-  definition={`flowchart LR
-    ch1[1. Neuron]
-    ch2[2. Algebra]
-    ch3[3. Activation]
-    ch4[4. Perceptron]
-    ch5[5. Multi-layer]
-    ch6[6. Forward + loss]
-    ch7[7. Derivatives]
-    ch8[8. Backpropagation]
-    ch9[9. Gradient descent]
-    ch10[10. Regularisation]
-    ch11[11. Initialisation]
-    ch12[12. Optimisers]
-    ch1 --> ch2
-    ch2 --> ch3
-    ch3 --> ch4
-    ch4 --> ch5
-    ch5 --> ch6
-    ch6 --> ch7
-    ch7 --> ch8
-    ch8 --> ch9
-    ch9 --> ch10
-    ch9 --> ch11
-    ch11 --> ch12
-    ch10 --> ch12`}
+  caption="Logical dependencies grouped by block"
+  definition={`flowchart TB
+    subgraph B1["Block 1: foundations"]
+      direction LR
+      ch1[1. Neuron] --> ch2[2. Algebra] --> ch3[3. Activation] --> ch4[4. Perceptron]
+    end
+    subgraph B2["Block 2: network"]
+      direction LR
+      ch5[5. Multi-layer] --> ch6[6. Forward + loss]
+    end
+    subgraph B3["Block 3: learning"]
+      direction LR
+      ch7[7. Derivatives] --> ch8[8. Backprop] --> ch9[9. Gradient descent]
+    end
+    subgraph B4["Block 4: optimisation"]
+      direction LR
+      ch10[10. Regularisation]
+      ch11[11. Initialisation] --> ch12[12. Optimisers]
+      ch10 --> ch12
+    end
+    B1 --> B2 --> B3 --> B4`}
 />
 
 ## Who this course is for
