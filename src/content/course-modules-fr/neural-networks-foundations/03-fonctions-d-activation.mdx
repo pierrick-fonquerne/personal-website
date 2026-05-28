@@ -10,7 +10,6 @@ published: true
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
 import ActivationPlotter from '../../../components/learning/ActivationPlotter.tsx';
-import ActivationValueProbe from '../../../components/learning/ActivationValueProbe.tsx';
 import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
 import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
@@ -138,7 +137,7 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 ## Joue avec les fonctions
 
-L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous trace les quatre fonctions sur un même graphe. Active la case **Dérivée** pour voir comment chaque pente évolue, et la case **Curseur** pour placer une ligne verticale et lire les valeurs exactes à un point précis. Compare la dérivée de la sigmoïde (toujours faible, max à $0{,}25$) avec celle de ReLU (1 partout où elle s'active, 0 ailleurs). Cette différence explique beaucoup.
+L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le composant ci-dessous est un atelier complet : tu peux activer ou désactiver chaque fonction individuellement (cliquer sur son label), afficher les **dérivées** en pointillés, activer un **curseur** qui place une ligne verticale et fait apparaître la **tangente locale** au point survolé pour chaque courbe (la pente de cette tangente, c'est exactement $f'(x)$). Un panneau dépliable en bas te permet aussi d'ajuster le domaine de $x$ si tu veux zoomer ou dézoomer.
 
 <ActivationPlotter
   client:visible
@@ -148,27 +147,13 @@ L'idée d'une fonction d'activation se voit mieux qu'elle ne se raconte. Le comp
   range={[-5, 5]}
 />
 
-#### Lire des valeurs précises
+Cinq expériences à tenter :
 
-Le composant suivant complète le précédent. Il affiche, pour une valeur de $x$ que tu choisis, la sortie et la dérivée des quatre fonctions sous forme tabulaire. C'est utile quand l'œil ne suffit plus et qu'on veut le chiffre exact.
-
-<ActivationValueProbe
-  client:visible
-  initialX={0}
-  range={[-5, 5]}
-/>
-
-Trois lectures à confirmer toi-même :
-
-- À $x = 0$, vérifie que $\sigma(0) = 0{,}5$ et $\sigma'(0) = 0{,}25$.
-- À $x = 2$, observe que $\sigma'(2)$ est déjà tombée vers $0{,}1$. La sigmoïde sature très vite.
+- À $x = 0$, vérifie que $\sigma(0) = 0{,}5$ et $\sigma'(0) = 0{,}25$. La tangente de la sigmoïde est nette.
+- À $x = 2$, observe que $\sigma'(2)$ est déjà tombée vers $0{,}1$. La sigmoïde sature très vite, sa tangente est presque plate.
 - À $x = -3$, ReLU et sa dérivée sont strictement à zéro. Sur cette branche, aucun gradient ne remonte.
-
-Trois expériences à faire :
-
-- Compare la pente de la sigmoïde au centre ($x \approx 0$) avec celle de ReLU pour $x > 0$ : la sigmoïde sature beaucoup plus vite.
-- Regarde la dérivée de ReLU : c'est une marche à zéro pour les négatifs. Aucun gradient ne remonte, donc aucun apprentissage sur cette branche.
-- Compare tanh et sigmoïde : c'est la même forme, mais tanh est centrée. Conséquence : tanh a un gradient plus élevé au centre ($\tanh'(0) = 1$ vs $\sigma'(0) = 0{,}25$).
+- Désactive Identity et Tanh pour comparer seulement sigmoïde et ReLU : on voit le contraste entre saturation et linéarité par morceaux.
+- Compare au centre la pente de la tangente de la sigmoïde (au max $0{,}25$) avec celle de ReLU pour $x > 0$ (toujours exactement $1$). C'est la racine du vanishing gradient.
 
 ## Le problème du vanishing gradient
 
@@ -231,18 +216,129 @@ Calculer $\sigma'(0)$, puis $\sigma'(2)$. Comparer ces deux valeurs. Que peux-tu
 
 Soit un neurone qui prend en entrée 1000 valeurs. Combien d'opérations arithmétiques élémentaires (additions, multiplications, exponentielles) sont nécessaires pour calculer la sortie d'un neurone avec activation ReLU ? Avec activation sigmoïde ? La différence te paraît-elle marginale ou significative quand tu multiplies par des millions d'évaluations ?
 
-<Callout kind="tip" title="Corrigés">
-**Exercice 1.** On dérive en utilisant la règle de la chaîne. Posons $u(x) = 1 + e^{-x}$, alors $\sigma(x) = 1/u(x)$ et $\sigma'(x) = -u'(x)/u(x)^2$. Or $u'(x) = -e^{-x}$, donc $\sigma'(x) = \dfrac{e^{-x}}{(1 + e^{-x})^2}$.
+<Callout kind="tip" title="Corrigé de l'exercice 1 : dériver la sigmoïde">
+On a $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ et on cherche $\sigma'(x)$. On utilise la **règle de la chaîne**.
 
-On reconnaît $\dfrac{1}{1 + e^{-x}} = \sigma(x)$ et $\dfrac{e^{-x}}{1 + e^{-x}} = 1 - \sigma(x)$ (vérifier en additionnant ces deux fractions, on obtient 1). D'où $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. ∎
+**Étape 1.** Posons $u(x) = 1 + e^{-x}$. Alors :
 
-**Exercice 2.** $\sigma(0) = 1/2$, donc $\sigma'(0) = (1/2)(1/2) = 1/4 = 0{,}25$. C'est le maximum de la dérivée.
+$$
+\sigma(x) = \dfrac{1}{u(x)}
+$$
 
-$\sigma(2) \approx 0{,}881$, donc $\sigma'(2) \approx 0{,}881 \times 0{,}119 \approx 0{,}105$. Le gradient est divisé par environ $2{,}4$ entre 0 et 2. Pour des entrées encore plus grandes, le gradient s'écroule très vite : c'est la **saturation** de la sigmoïde et la source du problème du vanishing gradient.
+**Étape 2.** La dérivée d'une fonction de la forme $1/u$ est $-u'/u^2$ :
 
-**Exercice 3.** Pour ReLU : 1000 multiplications + 999 additions + 1 comparaison avec 0 = environ 2000 opérations.
+$$
+\sigma'(x) = -\dfrac{u'(x)}{u(x)^2}
+$$
 
-Pour sigmoïde : pareil pour la somme pondérée, plus une exponentielle + 1 addition + 1 division = environ 2003 opérations en valeur brute. Mais l'exponentielle coûte en réalité de l'ordre de 20 à 50 cycles processeur sur du matériel courant, contre 1 cycle pour une comparaison. Sur des milliards d'évaluations par seconde dans un réseau profond, ce facteur 20-50 sur l'activation devient un facteur 5 à 10 sur le débit total. C'est significatif, et c'est la deuxième raison de la domination de ReLU.
+**Étape 3.** Calcul de $u'(x)$. La dérivée de $1$ est nulle, et la dérivée de $e^{-x}$ est $-e^{-x}$ (règle de la chaîne sur l'exponentielle) :
+
+$$
+u'(x) = 0 + (-e^{-x}) = -e^{-x}
+$$
+
+**Étape 4.** On substitue $u'$ et $u$ dans l'expression de $\sigma'$ :
+
+$$
+\sigma'(x) = -\dfrac{-e^{-x}}{(1 + e^{-x})^2} = \dfrac{e^{-x}}{(1 + e^{-x})^2}
+$$
+
+**Étape 5.** On reconnaît deux blocs. Le premier est $\sigma(x)$ :
+
+$$
+\dfrac{1}{1 + e^{-x}} = \sigma(x)
+$$
+
+Le second se réécrit en factorisant :
+
+$$
+\dfrac{e^{-x}}{1 + e^{-x}} = \dfrac{(1 + e^{-x}) - 1}{1 + e^{-x}} = 1 - \dfrac{1}{1 + e^{-x}} = 1 - \sigma(x)
+$$
+
+**Étape 6.** En remettant ensemble :
+
+$$
+\sigma'(x) = \sigma(x) \cdot (1 - \sigma(x)) \qquad \square
+$$
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : calcul à deux valeurs">
+On utilise la formule prouvée à l'exercice 1 : $\sigma'(x) = \sigma(x)(1 - \sigma(x))$.
+
+**Calcul de $\sigma'(0)$.**
+
+D'abord $\sigma(0)$ :
+
+$$
+\sigma(0) = \dfrac{1}{1 + e^{0}} = \dfrac{1}{1 + 1} = \dfrac{1}{2}
+$$
+
+Donc :
+
+$$
+\sigma'(0) = \dfrac{1}{2} \times \left(1 - \dfrac{1}{2}\right) = \dfrac{1}{2} \times \dfrac{1}{2} = \dfrac{1}{4} = 0{,}25
+$$
+
+C'est le maximum de la dérivée de la sigmoïde.
+
+**Calcul de $\sigma'(2)$.**
+
+D'abord $\sigma(2)$ :
+
+$$
+\sigma(2) = \dfrac{1}{1 + e^{-2}} \approx \dfrac{1}{1 + 0{,}135} \approx \dfrac{1}{1{,}135} \approx 0{,}881
+$$
+
+Donc :
+
+$$
+\sigma'(2) \approx 0{,}881 \times (1 - 0{,}881) \approx 0{,}881 \times 0{,}119 \approx 0{,}105
+$$
+
+**Comparaison et interprétation.**
+
+Le gradient est divisé par environ $2{,}4$ entre $x = 0$ et $x = 2$. Pour des entrées encore plus grandes, le gradient s'écroule très vite : c'est la **saturation** de la sigmoïde et la source du problème du vanishing gradient.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : comparer les coûts de calcul">
+On compte les opérations pour un seul neurone avec 1000 entrées.
+
+**Tronc commun : la somme pondérée.**
+
+Pour les deux activations, on calcule d'abord $z = \sum_{i=1}^{1000} w_i x_i + b$. Cela demande :
+
+- 1000 multiplications $w_i \times x_i$
+- 999 additions pour faire la somme
+- 1 addition pour le biais
+
+Soit environ **2000 opérations élémentaires** pour la somme pondérée.
+
+**Avec ReLU.**
+
+Une seule opération supplémentaire : la comparaison de $z$ avec 0.
+
+Total : environ **2000 opérations** (en valeur brute, négligeable l'ajout d'une comparaison).
+
+**Avec sigmoïde.**
+
+On doit calculer $1/(1 + e^{-z})$, ce qui demande :
+
+- 1 négation : $-z$
+- 1 exponentielle : $e^{-z}$
+- 1 addition : $1 + e^{-z}$
+- 1 division : $1/(1 + e^{-z})$
+
+Soit 4 opérations supplémentaires.
+
+Total : environ **2003 opérations**.
+
+**Le piège : toutes les opérations ne coûtent pas pareil.**
+
+L'exponentielle est très chère sur du matériel courant : environ **20 à 50 cycles processeur**, contre **1 cycle** pour une comparaison.
+
+Sur des milliards d'évaluations par seconde dans un réseau profond, ce facteur 20-50 sur l'activation devient un facteur 5 à 10 sur le débit total.
+
+C'est significatif, et c'est la deuxième raison (avec le gradient préservé) de la domination de ReLU.
 </Callout>
 
 ## Sources

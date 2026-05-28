@@ -268,16 +268,88 @@ Given a two-input neuron with $w_1 = 2$, $w_2 = -1$, $b = 0.5$, and ReLU activat
 
 Find a triple $(w_1, w_2, b)$ such that a threshold neuron $H(z) = \mathbb{1}[z \geq 0]$ with two binary inputs $x_1, x_2 \in \{0, 1\}$ implements the logical AND function. Verify on the four cases.
 
-<Callout kind="tip" title="Solutions (read after trying)">
-**Exercise 1.** $z = 2 \cdot 0.7 + (-1) \cdot 0.3 + 0.5 = 1.4 - 0.3 + 0.5 = 1.6$. Since $z > 0$, $y = \text{ReLU}(1.6) = 1.6$.
+<Callout kind="tip" title="Solution to exercise 1: direct computation">
+We have $w_1 = 2$, $w_2 = -1$, $b = 0.5$, $x_1 = 0.7$, $x_2 = 0.3$, and the ReLU activation.
 
-**Exercise 2.** One solution among many: $w_1 = 1$, $w_2 = 1$, $b = -1.5$. Verification:
-- $(0,0)$: $0 + 0 - 1.5 = -1.5 < 0$, output 0 ✓
-- $(1,0)$: $1 + 0 - 1.5 = -0.5 < 0$, output 0 ✓
-- $(0,1)$: $0 + 1 - 1.5 = -0.5 < 0$, output 0 ✓
-- $(1,1)$: $1 + 1 - 1.5 = 0.5 \geq 0$, output 1 ✓
+**Step 1.** Write the weighted-sum formula:
 
-The triple $(1, 1, -0.5)$ also works. More generally, any triple $(w_1, w_2, b)$ with $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ and $w_1 + w_2 + b \geq 0$ is a solution. Geometrically, the line $w_1 x_1 + w_2 x_2 + b = 0$ must pass between the three negative points and the point $(1,1)$.
+$$
+z = w_1 x_1 + w_2 x_2 + b
+$$
+
+**Step 2.** Substitute the numerical values:
+
+$$
+z = 2 \cdot 0.7 + (-1) \cdot 0.3 + 0.5
+$$
+
+**Step 3.** Compute each product separately:
+
+$$
+2 \cdot 0.7 = 1.4
+$$
+
+$$
+(-1) \cdot 0.3 = -0.3
+$$
+
+**Step 4.** Add the three terms:
+
+$$
+z = 1.4 + (-0.3) + 0.5 = 1.4 - 0.3 + 0.5 = 1.6
+$$
+
+**Step 5.** Apply the activation. Since $z = 1.6 > 0$:
+
+$$
+y = \text{ReLU}(1.6) = \max(0, 1.6) = 1.6
+$$
+
+**Result.** The neuron's output is $y = 1.6$.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: build an AND neuron">
+We seek $(w_1, w_2, b)$ such that $H(w_1 x_1 + w_2 x_2 + b)$ implements the logical AND on the four cases $(0, 0), (1, 0), (0, 1), (1, 1)$.
+
+**A simple solution.** Take $w_1 = 1$, $w_2 = 1$, $b = -1.5$.
+
+**Case-by-case verification.**
+
+Case $(x_1, x_2) = (0, 0)$:
+
+$$
+z = 1 \cdot 0 + 1 \cdot 0 + (-1.5) = -1.5
+$$
+
+Since $z < 0$, the output is $0$. Expected: $0$ ✓
+
+Case $(x_1, x_2) = (1, 0)$:
+
+$$
+z = 1 \cdot 1 + 1 \cdot 0 + (-1.5) = 1 - 1.5 = -0.5
+$$
+
+Since $z < 0$, the output is $0$. Expected: $0$ ✓
+
+Case $(x_1, x_2) = (0, 1)$:
+
+$$
+z = 1 \cdot 0 + 1 \cdot 1 + (-1.5) = 1 - 1.5 = -0.5
+$$
+
+Since $z < 0$, the output is $0$. Expected: $0$ ✓
+
+Case $(x_1, x_2) = (1, 1)$:
+
+$$
+z = 1 \cdot 1 + 1 \cdot 1 + (-1.5) = 2 - 1.5 = 0.5
+$$
+
+Since $z \geq 0$, the output is $1$. Expected: $1$ ✓
+
+**Other valid solutions.** The triple $(1, 1, -0.5)$ also works (check by repeating the four cases).
+
+**General characterisation.** Any triple $(w_1, w_2, b)$ with $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ and $w_1 + w_2 + b \geq 0$ is a solution. Geometrically, the line $w_1 x_1 + w_2 x_2 + b = 0$ must pass between the three negative points and the point $(1, 1)$.
 </Callout>
 
 ## Sources

@@ -251,16 +251,88 @@ Soit un neurone à deux entrées avec $w_1 = 2$, $w_2 = -1$, $b = 0{,}5$, et fon
 
 Trouver un triplet $(w_1, w_2, b)$ tel qu'un neurone à seuil $H(z) = \mathbb{1}[z \geq 0]$ avec deux entrées binaires $x_1, x_2 \in \{0, 1\}$ implémente la fonction logique ET. Vérifier sur les quatre cas.
 
-<Callout kind="tip" title="Corrigés (à lire après avoir cherché)">
-**Exercice 1.** $z = 2 \cdot 0{,}7 + (-1) \cdot 0{,}3 + 0{,}5 = 1{,}4 - 0{,}3 + 0{,}5 = 1{,}6$. Comme $z > 0$, $y = \text{ReLU}(1{,}6) = 1{,}6$.
+<Callout kind="tip" title="Corrigé de l'exercice 1 : calcul direct">
+On a $w_1 = 2$, $w_2 = -1$, $b = 0{,}5$, $x_1 = 0{,}7$, $x_2 = 0{,}3$, et la fonction d'activation ReLU.
 
-**Exercice 2.** Une solution parmi d'autres : $w_1 = 1$, $w_2 = 1$, $b = -1{,}5$. Vérification :
-- $(0,0)$ : $0 + 0 - 1{,}5 = -1{,}5 < 0$, donc sortie 0 ✓
-- $(1,0)$ : $1 + 0 - 1{,}5 = -0{,}5 < 0$, donc sortie 0 ✓
-- $(0,1)$ : $0 + 1 - 1{,}5 = -0{,}5 < 0$, donc sortie 0 ✓
-- $(1,1)$ : $1 + 1 - 1{,}5 = 0{,}5 \geq 0$, donc sortie 1 ✓
+**Étape 1.** On écrit la formule de la somme pondérée :
 
-Le triplet $(1, 1, -0{,}5)$ marche aussi. Plus généralement, tout triplet $(w_1, w_2, b)$ tel que $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ et $w_1 + w_2 + b \geq 0$ est solution. Géométriquement, la droite $w_1 x_1 + w_2 x_2 + b = 0$ doit passer entre les trois points négatifs et le point $(1,1)$.
+$$
+z = w_1 x_1 + w_2 x_2 + b
+$$
+
+**Étape 2.** On substitue les valeurs numériques :
+
+$$
+z = 2 \cdot 0{,}7 + (-1) \cdot 0{,}3 + 0{,}5
+$$
+
+**Étape 3.** On calcule chaque produit séparément :
+
+$$
+2 \cdot 0{,}7 = 1{,}4
+$$
+
+$$
+(-1) \cdot 0{,}3 = -0{,}3
+$$
+
+**Étape 4.** On additionne les trois termes :
+
+$$
+z = 1{,}4 + (-0{,}3) + 0{,}5 = 1{,}4 - 0{,}3 + 0{,}5 = 1{,}6
+$$
+
+**Étape 5.** On applique l'activation. Comme $z = 1{,}6 > 0$, on a :
+
+$$
+y = \text{ReLU}(1{,}6) = \max(0\ ;\ 1{,}6) = 1{,}6
+$$
+
+**Résultat.** La sortie du neurone est $y = 1{,}6$.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : construire un neurone AND">
+On cherche $(w_1, w_2, b)$ tel que $H(w_1 x_1 + w_2 x_2 + b)$ implémente la fonction logique ET sur les quatre cas $(0, 0), (1, 0), (0, 1), (1, 1)$.
+
+**Une solution simple.** Prenons $w_1 = 1$, $w_2 = 1$, $b = -1{,}5$.
+
+**Vérification cas par cas.**
+
+Cas $(x_1, x_2) = (0, 0)$ :
+
+$$
+z = 1 \cdot 0 + 1 \cdot 0 + (-1{,}5) = -1{,}5
+$$
+
+Comme $z < 0$, la sortie vaut $0$. Attendu : $0$ ✓
+
+Cas $(x_1, x_2) = (1, 0)$ :
+
+$$
+z = 1 \cdot 1 + 1 \cdot 0 + (-1{,}5) = 1 - 1{,}5 = -0{,}5
+$$
+
+Comme $z < 0$, la sortie vaut $0$. Attendu : $0$ ✓
+
+Cas $(x_1, x_2) = (0, 1)$ :
+
+$$
+z = 1 \cdot 0 + 1 \cdot 1 + (-1{,}5) = 1 - 1{,}5 = -0{,}5
+$$
+
+Comme $z < 0$, la sortie vaut $0$. Attendu : $0$ ✓
+
+Cas $(x_1, x_2) = (1, 1)$ :
+
+$$
+z = 1 \cdot 1 + 1 \cdot 1 + (-1{,}5) = 2 - 1{,}5 = 0{,}5
+$$
+
+Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
+
+**Autres solutions valides.** Le triplet $(1, 1, -0{,}5)$ fonctionne aussi (à vérifier en refaisant les quatre cas).
+
+**Caractérisation générale.** Tout triplet $(w_1, w_2, b)$ tel que $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ et $w_1 + w_2 + b \geq 0$ est solution. Géométriquement, la droite $w_1 x_1 + w_2 x_2 + b = 0$ doit passer entre les trois points négatifs et le point $(1, 1)$.
 </Callout>
 
 ## Sources

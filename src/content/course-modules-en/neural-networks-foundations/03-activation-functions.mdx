@@ -10,7 +10,6 @@ published: true
 import Callout from '../../../components/learning/Callout.astro';
 import Formula from '../../../components/learning/Formula.astro';
 import ActivationPlotter from '../../../components/learning/ActivationPlotter.tsx';
-import ActivationValueProbe from '../../../components/learning/ActivationValueProbe.tsx';
 import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
 import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
@@ -149,7 +148,7 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 ## Play with the functions
 
-The idea of an activation function is easier to see than to describe. The component below traces the four functions on the same chart. Toggle **Derivative** to watch each slope evolve, and **Cursor** to drop a vertical line and read exact values at a given point. Compare the sigmoid derivative (always small, max at $0.25$) with the ReLU derivative ($1$ wherever it fires, $0$ elsewhere). This difference explains a lot.
+The idea of an activation function is easier to see than to describe. The component below is a full workshop: you can enable or disable each function individually (click its label), display the **derivatives** as dashed lines, enable a **cursor** that places a vertical line and reveals the **local tangent** at the hovered point for each curve (the slope of that tangent is exactly $f'(x)$). A collapsible panel at the bottom also lets you tune the $x$ domain if you want to zoom in or out.
 
 <ActivationPlotter
   client:visible
@@ -160,33 +159,19 @@ The idea of an activation function is easier to see than to describe. The compon
   labels={{
     derivativeLabel: 'Derivative',
     cursorLabel: 'Cursor',
+    xRangeLabel: 'x domain',
+    minLabel: 'min',
+    maxLabel: 'max',
   }}
 />
 
-#### Read exact values
+Five experiments to try:
 
-The next component complements the previous one. For a value of $x$ you choose, it shows the output and the derivative of all four functions in a table. Useful when the eye is no longer enough and you want the precise number.
-
-<ActivationValueProbe
-  client:visible
-  initialX={0}
-  range={[-5, 5]}
-  labels={{
-    helpText: "Move the slider to see how each function and its derivative react to the same input.",
-  }}
-/>
-
-Three readings to confirm yourself:
-
-- At $x = 0$, check that $\sigma(0) = 0.5$ and $\sigma'(0) = 0.25$.
-- At $x = 2$, see that $\sigma'(2)$ already fell toward $0.1$. The sigmoid saturates fast.
+- At $x = 0$, check that $\sigma(0) = 0.5$ and $\sigma'(0) = 0.25$. The sigmoid tangent is clean.
+- At $x = 2$, see that $\sigma'(2)$ already fell toward $0.1$. The sigmoid saturates fast, its tangent is nearly flat.
 - At $x = -3$, ReLU and its derivative are strictly zero. On that branch no gradient flows back.
-
-Three experiments to run:
-
-- Compare the slope of sigmoid at the centre ($x \approx 0$) with that of ReLU for $x > 0$: sigmoid saturates much faster.
-- Watch the ReLU derivative: a step to zero for negatives. No gradient flows back, so no learning on that branch.
-- Compare tanh and sigmoid: same shape, but tanh is centred. Consequence: tanh has a higher centre-gradient ($\tanh'(0) = 1$ vs $\sigma'(0) = 0.25$).
+- Toggle off Identity and Tanh to compare only sigmoid and ReLU: the contrast between saturation and piecewise linearity becomes obvious.
+- Compare at the centre the tangent slope of sigmoid (max $0.25$) with ReLU's for $x > 0$ (always exactly $1$). That is the root of the vanishing gradient.
 
 ## The vanishing gradient problem
 
@@ -254,18 +239,129 @@ Compute $\sigma'(0)$, then $\sigma'(2)$. Compare those two values. What does thi
 
 Consider a neuron taking 1000 inputs. How many elementary arithmetic operations (additions, multiplications, exponentials) are needed to compute the output of a neuron with ReLU activation? With sigmoid activation? Does the difference look marginal or significant when multiplied by millions of evaluations?
 
-<Callout kind="tip" title="Solutions">
-**Exercise 1.** We differentiate using the chain rule. Let $u(x) = 1 + e^{-x}$, so $\sigma(x) = 1/u(x)$ and $\sigma'(x) = -u'(x)/u(x)^2$. With $u'(x) = -e^{-x}$, we get $\sigma'(x) = \dfrac{e^{-x}}{(1 + e^{-x})^2}$.
+<Callout kind="tip" title="Solution to exercise 1: differentiate the sigmoid">
+We have $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ and we want $\sigma'(x)$. We use the **chain rule**.
 
-We recognise $\dfrac{1}{1 + e^{-x}} = \sigma(x)$ and $\dfrac{e^{-x}}{1 + e^{-x}} = 1 - \sigma(x)$ (check by adding those two fractions, you get 1). Hence $\sigma'(x) = \sigma(x)(1 - \sigma(x))$. ∎
+**Step 1.** Let $u(x) = 1 + e^{-x}$. Then:
 
-**Exercise 2.** $\sigma(0) = 1/2$, so $\sigma'(0) = (1/2)(1/2) = 1/4 = 0.25$. This is the maximum of the derivative.
+$$
+\sigma(x) = \dfrac{1}{u(x)}
+$$
 
-$\sigma(2) \approx 0.881$, so $\sigma'(2) \approx 0.881 \times 0.119 \approx 0.105$. The gradient is divided by about $2.4$ between 0 and 2. For larger inputs the gradient collapses very quickly: this is the **saturation** of the sigmoid and the source of the vanishing-gradient problem.
+**Step 2.** The derivative of a function of the form $1/u$ is $-u'/u^2$:
 
-**Exercise 3.** For ReLU: 1000 multiplications + 999 additions + 1 comparison with 0 = around 2000 operations.
+$$
+\sigma'(x) = -\dfrac{u'(x)}{u(x)^2}
+$$
 
-For sigmoid: same for the weighted sum, plus one exponential + 1 addition + 1 division = around 2003 operations in raw count. But the exponential actually costs in the order of 20 to 50 CPU cycles on commodity hardware, against 1 cycle for a comparison. With billions of evaluations per second in a deep network, this 20-50× factor on the activation becomes a 5 to 10× factor on overall throughput. It is significant, and it is the second reason for ReLU's dominance.
+**Step 3.** Compute $u'(x)$. The derivative of $1$ is zero, and the derivative of $e^{-x}$ is $-e^{-x}$ (chain rule on the exponential):
+
+$$
+u'(x) = 0 + (-e^{-x}) = -e^{-x}
+$$
+
+**Step 4.** Substitute $u'$ and $u$ in the expression of $\sigma'$:
+
+$$
+\sigma'(x) = -\dfrac{-e^{-x}}{(1 + e^{-x})^2} = \dfrac{e^{-x}}{(1 + e^{-x})^2}
+$$
+
+**Step 5.** Recognise two blocks. The first one is $\sigma(x)$:
+
+$$
+\dfrac{1}{1 + e^{-x}} = \sigma(x)
+$$
+
+The second one rewrites by factoring:
+
+$$
+\dfrac{e^{-x}}{1 + e^{-x}} = \dfrac{(1 + e^{-x}) - 1}{1 + e^{-x}} = 1 - \dfrac{1}{1 + e^{-x}} = 1 - \sigma(x)
+$$
+
+**Step 6.** Putting it back together:
+
+$$
+\sigma'(x) = \sigma(x) \cdot (1 - \sigma(x)) \qquad \square
+$$
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: computation at two values">
+We use the formula proven in exercise 1: $\sigma'(x) = \sigma(x)(1 - \sigma(x))$.
+
+**Computing $\sigma'(0)$.**
+
+First $\sigma(0)$:
+
+$$
+\sigma(0) = \dfrac{1}{1 + e^{0}} = \dfrac{1}{1 + 1} = \dfrac{1}{2}
+$$
+
+So:
+
+$$
+\sigma'(0) = \dfrac{1}{2} \times \left(1 - \dfrac{1}{2}\right) = \dfrac{1}{2} \times \dfrac{1}{2} = \dfrac{1}{4} = 0.25
+$$
+
+This is the maximum of the sigmoid derivative.
+
+**Computing $\sigma'(2)$.**
+
+First $\sigma(2)$:
+
+$$
+\sigma(2) = \dfrac{1}{1 + e^{-2}} \approx \dfrac{1}{1 + 0.135} \approx \dfrac{1}{1.135} \approx 0.881
+$$
+
+So:
+
+$$
+\sigma'(2) \approx 0.881 \times (1 - 0.881) \approx 0.881 \times 0.119 \approx 0.105
+$$
+
+**Comparison and interpretation.**
+
+The gradient is divided by about $2.4$ between $x = 0$ and $x = 2$. For larger inputs, it collapses very quickly: this is the **saturation** of the sigmoid and the source of the vanishing-gradient problem.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 3: comparing compute costs">
+We count operations for a single neuron with 1000 inputs.
+
+**Common trunk: the weighted sum.**
+
+For both activations we first compute $z = \sum_{i=1}^{1000} w_i x_i + b$. This requires:
+
+- 1000 multiplications $w_i \times x_i$
+- 999 additions for the sum
+- 1 addition for the bias
+
+That is around **2000 elementary operations** for the weighted sum.
+
+**With ReLU.**
+
+A single extra operation: comparing $z$ with 0.
+
+Total: around **2000 operations** (the added comparison is negligible).
+
+**With sigmoid.**
+
+We must compute $1/(1 + e^{-z})$, which requires:
+
+- 1 negation: $-z$
+- 1 exponential: $e^{-z}$
+- 1 addition: $1 + e^{-z}$
+- 1 division: $1/(1 + e^{-z})$
+
+That is 4 extra operations.
+
+Total: around **2003 operations**.
+
+**The catch: not all operations cost the same.**
+
+The exponential is very expensive on commodity hardware: about **20 to 50 CPU cycles**, against **1 cycle** for a comparison.
+
+With billions of evaluations per second in a deep network, this 20-50× factor on the activation becomes a 5 to 10× factor on overall throughput.
+
+This is significant, and it is the second reason (with the preserved gradient) for ReLU's dominance.
 </Callout>
 
 ## Sources
