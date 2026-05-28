@@ -1,24 +1,29 @@
 slug: neural-networks-foundations
 title: "Neural networks: foundations and mathematics"
-summary: From the formal neuron to gradient descent, a path with no language dependency. The course lays the mathematical groundwork required before any implementation.
+summary: University-grade introductory path to neural networks, from the formal neuron definition all the way to regularisation and advanced optimisers. Language-agnostic, accessible to a motivated high-school reader.
 tags:
   - neural-networks
   - mathematics
   - perceptron
   - backpropagation
+  - regularisation
 theme: ai
 subtheme: neural-nets
 level: intro
-estimatedMinutes: 120
+estimatedMinutes: 210
 modules:
+  - 00-foreword
   - 01-the-artificial-neuron
   - 02-vector-algebra
-  - 03-the-perceptron
-  - 04-activation-functions
+  - 03-activation-functions
+  - 04-the-perceptron
   - 05-multi-layer-network
   - 06-forward-pass-loss
-  - 07-backpropagation
-  - 08-gradient-descent
-  - 99-stateful-neurons-lif
-published: false
+  - 07-derivatives-chain-rule
+  - 08-backpropagation
+  - 09-gradient-descent
+  - 10-regularization
+  - 11-initialization-batch-norm
+  - 12-advanced-optimizers
+published: true
 publishedAt: 2026-05-28

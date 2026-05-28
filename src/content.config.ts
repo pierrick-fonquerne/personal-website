@@ -29,7 +29,7 @@ const courseSchema = z.object({
 
 const moduleSchema = z.object({
   course: z.string(),
-  order: z.number().int().positive(),
+  order: z.number().int().nonnegative(),
   title: z.string(),
   subtitle: z.string().optional(),
   estimatedMinutes: z.number().int().positive().optional(),

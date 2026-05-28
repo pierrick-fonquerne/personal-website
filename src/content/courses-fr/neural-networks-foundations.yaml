@@ -1,24 +1,29 @@
 slug: neural-networks-foundations
 title: "Réseaux de neurones : fondations et mathématiques"
-summary: Du neurone formel à la descente de gradient, un parcours sans dépendance à un langage. Le cours pose les fondations mathématiques nécessaires avant toute implémentation.
+summary: Parcours d'initiation universitaire aux réseaux de neurones, de la définition formelle du neurone à la régularisation et aux optimiseurs avancés. Indépendant du langage de programmation, accessible à un lecteur de niveau lycée scientifique.
 tags:
   - réseaux-de-neurones
   - mathématiques
   - perceptron
   - backpropagation
+  - régularisation
 theme: ai
 subtheme: neural-nets
 level: intro
-estimatedMinutes: 120
+estimatedMinutes: 210
 modules:
+  - 00-avant-propos
   - 01-le-neurone-artificiel
   - 02-algebre-vectorielle
-  - 03-le-perceptron
-  - 04-fonctions-d-activation
+  - 03-fonctions-d-activation
+  - 04-le-perceptron
   - 05-reseau-multi-couches
   - 06-forward-pass-cout
-  - 07-backpropagation
-  - 08-descente-de-gradient
-  - 99-neurones-stateful-lif
-published: false
+  - 07-derivees-regle-chaine
+  - 08-backpropagation
+  - 09-descente-de-gradient
+  - 10-regularisation
+  - 11-initialisation-batch-norm
+  - 12-optimiseurs-avances
+published: true
 publishedAt: 2026-05-28
