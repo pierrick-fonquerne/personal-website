@@ -4,7 +4,7 @@ order: 1
 title: The artificial neuron
 subtitle: "From biological to mathematical, what really happens inside the elementary brick of a network."
 estimatedMinutes: 18
-published: true
+published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -68,6 +68,7 @@ Practice before theory. Drag the sliders below. The output recomputes live. **Yo
     ]}
     bias={{ defaultValue: -0.5 }}
     activation="sigmoid"
+    activationToggle={['sigmoid', 'step']}
   />
 </InteractivePrint>
 
@@ -79,6 +80,8 @@ Three things to notice while playing:
 
 <Callout kind="note" title="Historical note: from binary threshold to sigmoid">
 The NeuronDiagram above uses a **sigmoid** activation by default, producing a continuous output between 0 and 1. But the original neurons of McCulloch and Pitts (1943), and Rosenblatt's perceptron (1958), used a **binary threshold** function $H(z) = \mathbb{1}[z \geq 0]$: output 1 if the sum is at least 0, else 0. No nuance.
+
+Flip the **f =** selector above the diagram between `σ (sigmoid)` and `H (Heaviside)` to compare both activations live. With the starting configuration, the sigmoid gives $y \approx 0.77$ while the binary threshold snaps straight to $y = 1$. Move the sliders to find the zones where the threshold switches: you will see the all-or-nothing behaviour of the historical neuron.
 
 The shift to sigmoid, and later to ReLU, is historically tied to backpropagation (1986), which requires a **differentiable** activation function to propagate the gradient. Subject of chapter 3. The sigmoid here gives a smoother intuition, but keep in mind that the simplest neuron, mathematically, is the threshold one.
 </Callout>
@@ -179,7 +182,9 @@ A set of labelled points $\{(\mathbf{x}_i, y_i)\}$ with $y_i \in \{0, 1\}$ is sa
 
 ### Why XOR is not linearly separable
 
-This result is not only visual, it can be proved in a few lines by contradiction. We use here the threshold function $\mathbb{1}[\cdot]$, which is that of the historical perceptron. The same impossibility holds with a sigmoid; we lose only the simplicity of the strict inequality.
+This result is not only visual, it can be proved in a few lines by contradiction. We use here the threshold function, which is that of the historical perceptron. The same impossibility holds with a sigmoid; we lose only the simplicity of the strict inequality.
+
+Before tackling the proof, let us fix a notation that will be useful later. For a logical condition $P$, we write $\mathbb{1}[P]$ for the **indicator function** of $P$: it equals $1$ if $P$ is true, $0$ otherwise. In particular $\mathbb{1}[z \geq 0]$ is the Heaviside function, sometimes written $H(z)$, which we already met at the start of this chapter.
 
 <Callout kind="tip" title="Proof: XOR admits no linear separator">
 We note the four points of XOR: $(0,0) \to 0$, $(1,0) \to 1$, $(0,1) \to 1$, $(1,1) \to 0$.
