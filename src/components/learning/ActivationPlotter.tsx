@@ -132,7 +132,6 @@ export default function ActivationPlotter({
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    const xStep = (clampedXMax - clampedXMin) / 10;
     for (let i = 0; i <= 10; i += 1) {
       const px = padLeft + (i / 10) * plotW;
       ctx.moveTo(px, padTop);
