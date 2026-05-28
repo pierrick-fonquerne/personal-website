@@ -14,12 +14,15 @@ const coursesCollectionFor = (lang: Locale) =>
 const modulesCollectionFor = (lang: Locale) =>
   lang === 'fr' ? 'course-modules-fr' : 'course-modules-en';
 
-const isPublished = <T extends { data: { published?: boolean } }>(entry: T) =>
+const isCoursePublished = <T extends { data: { published?: boolean } }>(entry: T) =>
+  entry.data.published !== false;
+
+const isModulePublished = <T extends { data: { published?: boolean } }>(entry: T) =>
   !PROD || entry.data.published !== false;
 
 export async function listCourses(lang: Locale): Promise<Course[]> {
   const all = await getCollection(coursesCollectionFor(lang));
-  return all.filter(isPublished).sort((a, b) => {
+  return all.filter(isCoursePublished).sort((a, b) => {
     const aDate = a.data.publishedAt?.getTime() ?? 0;
     const bDate = b.data.publishedAt?.getTime() ?? 0;
     return bDate - aDate;
@@ -28,7 +31,7 @@ export async function listCourses(lang: Locale): Promise<Course[]> {
 
 export async function getCourse(lang: Locale, slug: string): Promise<Course | undefined> {
   const all = await getCollection(coursesCollectionFor(lang));
-  return all.find((c) => c.data.slug === slug && isPublished(c));
+  return all.find((c) => c.data.slug === slug && isCoursePublished(c));
 }
 
 export async function listModulesOf(
@@ -37,7 +40,7 @@ export async function listModulesOf(
 ): Promise<CourseModule[]> {
   const all = await getCollection(modulesCollectionFor(lang));
   return all
-    .filter((m) => m.data.course === courseSlug && isPublished(m))
+    .filter((m) => m.data.course === courseSlug && isModulePublished(m))
     .sort((a, b) => a.data.order - b.data.order);
 }
 
@@ -48,7 +51,7 @@ export async function getModule(
 ): Promise<CourseModule | undefined> {
   const all = await getCollection(modulesCollectionFor(lang));
   return all.find(
-    (m) => m.data.course === courseSlug && m.id.endsWith(`/${moduleSlug}`) && isPublished(m),
+    (m) => m.data.course === courseSlug && m.id.endsWith(`/${moduleSlug}`) && isModulePublished(m),
   );
 }
 
