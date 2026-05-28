@@ -4,7 +4,7 @@ order: 4
 title: Le perceptron
 subtitle: "Comment Rosenblatt a fait apprendre une machine sans gradient (1958)."
 estimatedMinutes: 35
-published: true
+published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -321,6 +321,24 @@ Trois choses à observer en jouant :
 - Éloigne un point isolé du centre : $R$ grossit, la borne aussi, mais le $T$ effectif n'augmente pas forcément autant.
 - Le ratio $T / (R/\gamma)^2$ est généralement bien inférieur à $1$ : la borne est pessimiste, mais elle existe.
 
+## Et si le dataset n'est pas séparable ?
+
+Le théorème de Novikoff fait une hypothèse cruciale : il existe un séparateur linéaire de marge $\gamma > 0$. Que se passe-t-il quand cette hypothèse tombe ?
+
+### Le perceptron oscille
+
+La borne $T \leq R^2 / \gamma^2$ est démontrée sous l'hypothèse $\gamma > 0$. Quand le dataset n'est pas linéairement séparable, $\gamma$ n'est pas défini : il n'existe aucun couple $(w, b)$ qui classe tout correctement. Conséquence : la règle d'apprentissage de Rosenblatt continue à corriger en boucle, sans jamais converger. Le vecteur de poids $w$ oscille indéfiniment, et même les itérations qui passent par un *« presque bon »* $(w, b)$ sont perdues à l'itération suivante quand un autre exemple mal classé déclenche un update qui dégrade ce qu'on avait.
+
+### Le Pocket Algorithm de Gallant
+
+La solution classique est étonnamment simple : on garde **en poche** le meilleur $(w, b)$ jamais rencontré. À chaque mise à jour de la règle de Rosenblatt, on évalue le nouveau $(w, b)$ sur l'ensemble du dataset, on compte le nombre d'exemples bien classés, et si ce nombre dépasse celui du couple « en poche », on remplace. À la fin (après un budget fixé d'itérations, qu'on peut choisir grand), on retourne le contenu de la poche, pas la dernière valeur de $(w, b)$.
+
+Cette procédure, le **Pocket Algorithm**, a été introduite par Gallant (1990). Sur dataset séparable elle se réduit au perceptron classique (la poche finit par contenir un séparateur parfait). Sur dataset non séparable, elle converge en probabilité vers le séparateur qui maximise le nombre d'exemples bien classés. On perd la garantie de Novikoff, mais on récupère une procédure utilisable en pratique.
+
+<Callout kind="note" title="Pourquoi le perceptron pur ne se contente pas de la « moyenne des poids »">
+Une idée naïve : faire converger en moyennant les $w_t$ obtenus à chaque itération. Cette stratégie marche aussi (c'est le *voted perceptron* de Freund et Schapire (1999)), mais elle exige de garder un historique et de pondérer chaque $w_t$ par sa durée de vie. Le Pocket Algorithm est plus simple : un seul $(w, b)$ stocké, mis à jour seulement quand on fait strictement mieux.
+</Callout>
+
 ## L'impossibilité de XOR
 
 ### L'analogie du damier impossible
@@ -627,6 +645,12 @@ C'est exactement ce que le chapitre 5 va formaliser : empiler des perceptrons en
 - Rosenblatt, F. (1958). « The perceptron: A probabilistic model for information storage and organization in the brain ». *Psychological Review* 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
 - Novikoff, A. B. J. (1962). « On convergence proofs on perceptrons ». *Symposium on the Mathematical Theory of Automata* 12, 615-622.
 - Minsky, M. & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*. MIT Press. ISBN 978-0-262-13043-1.
+- Gallant, S. I. (1990). « Perceptron-Based Learning Algorithms ». *IEEE Transactions on Neural Networks* 1(2), 179-191. (Introduction du Pocket Algorithm.) [DOI 10.1109/72.80230](https://doi.org/10.1109/72.80230)
 - Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*, ch. 4. Springer. ISBN 978-0-387-31073-2.
 - Hastie, T., Tibshirani, R. & Friedman, J. (2009). *The Elements of Statistical Learning*, ch. 4. Springer. ISBN 978-0-387-84857-0.
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*, ch. 1. MIT Press. ISBN 978-0-262-03561-3.
+
+### Pour aller plus loin
+
+- Cortes, C. & Vapnik, V. (1995). « Support-Vector Networks ». *Machine Learning* 20(3), 273-297. Les SVM sont précisément le perceptron à **marge maximale** : là où la règle de Rosenblatt accepte n'importe quel séparateur valide, SVM optimise le séparateur dont la marge géométrique $\gamma$ (celle-là même qui apparaît dans Novikoff) est la plus grande possible. C'est l'héritage direct du perceptron, et la pierre angulaire de l'apprentissage supervisé pré-2012. [DOI 10.1007/BF00994018](https://doi.org/10.1007/BF00994018)
+- Freund, Y. & Schapire, R. E. (1999). « Large Margin Classification Using the Perceptron Algorithm ». *Machine Learning* 37(3), 277-296. Introduit le *voted perceptron* qui agrège les hypothèses intermédiaires : sur dataset bruité, performance proche de SVM pour un coût comparable au perceptron. [DOI 10.1023/A:1007662407062](https://doi.org/10.1023/A:1007662407062)
