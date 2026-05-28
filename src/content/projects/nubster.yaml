@@ -1,0 +1,29 @@
+slug: nubster
+category: entrepreneurship
+status: active
+period: "2025 — aujourd'hui"
+featured: true
+stack:
+  - Rust
+links:
+  - label: nubster.com
+    href: https://nubster.com
+    type: site
+  - label: LinkedIn
+    href: https://www.linkedin.com/company/nubster/
+    type: site
+fr:
+  title: Nubster
+  tagline: Projet de startup logicielle en cours de création.
+  summary: >-
+    Projet de startup française que je porte en tant que fondateur et futur
+    Head of Engineering. Société en cours de constitution autour de mes
+    ambitions logicielles à long terme.
+en:
+  title: Nubster
+  tagline: A software startup I am currently founding.
+  summary: >-
+    A French software startup project I am currently founding, where I will
+    act as founder and Head of Engineering. Company in the process of being
+    formed around my long-term software ambitions.
+published: true

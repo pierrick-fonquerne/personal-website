@@ -1,0 +1,29 @@
+slug: lightshuttle
+category: opensource
+status: active
+period: "2026 — aujourd'hui"
+stack:
+  - Rust
+  - Docker
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/lightshuttle
+    type: repo
+  - label: crates.io
+    href: https://crates.io/crates/lightshuttle
+    type: crates
+fr:
+  title: LightShuttle
+  tagline: Orchestrateur Rust léger inspiré de .NET Aspire.
+  summary: >-
+    Successeur typé de docker-compose pour des équipes de développement
+    polyglottes. Dashboard, export production et focus sur l'ergonomie et la
+    performance. Publié sous Nubster Open Sources.
+en:
+  title: LightShuttle
+  tagline: Lightweight Rust orchestrator inspired by .NET Aspire.
+  summary: >-
+    A typed docker-compose successor for polyglot development teams.
+    Dashboard, production export and a focus on ergonomics and performance.
+    Released under Nubster Open Sources.
+published: true

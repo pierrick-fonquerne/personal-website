@@ -1,0 +1,27 @@
+slug: synarion-engine
+category: games
+status: dormant
+period: "2025 — aujourd'hui"
+stack:
+  - Rust
+  - Vulkan
+  - Cargo workspace
+links:
+  - label: Code source
+    href: https://github.com/pierrick-fonquerne/synarion-engine
+    type: repo
+fr:
+  title: Synarion Engine
+  tagline: Moteur de jeu 3D open source en Rust + Vulkan.
+  summary: >-
+    Moteur de jeu 3D écrit en Rust avec rendu Vulkan. Workspace Cargo d'environ
+    55 crates indépendantes réparties entre engine, editor et tools.
+    Exploration des contraintes bas niveau, ECS et pipeline graphique.
+en:
+  title: Synarion Engine
+  tagline: Open source 3D game engine in Rust + Vulkan.
+  summary: >-
+    A 3D game engine written in Rust with Vulkan rendering. Cargo workspace of
+    about 55 independent crates split across engine, editor and tools.
+    Exploration of low-level constraints, ECS and graphics pipeline.
+published: true

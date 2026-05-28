@@ -1,0 +1,23 @@
+---
+interface Props {
+  id: string;
+  title: string;
+  count: string;
+}
+
+const { id, title, count } = Astro.props;
+---
+
+<div
+  class="flex flex-col gap-3 border-b border-[var(--color-line)] pb-4 sm:flex-row sm:items-end sm:justify-between"
+>
+  <h3
+    id={id}
+    class="font-display text-[clamp(20px,2vw,28px)] leading-[1.15] font-bold tracking-[-0.01em] text-[var(--color-fg)]"
+  >
+    {title}
+  </h3>
+  <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+    {count}
+  </span>
+</div>

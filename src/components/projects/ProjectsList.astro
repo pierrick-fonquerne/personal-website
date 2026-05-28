@@ -1,0 +1,64 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { useTranslations, type Locale } from '../../lib/i18n';
+import CategoryHeading from './CategoryHeading.astro';
+import ProjectCard from './ProjectCard.astro';
+
+interface Props {
+  projects: CollectionEntry<'projects'>[];
+  locale: Locale;
+}
+
+const { projects, locale } = Astro.props;
+const t = useTranslations(locale);
+
+const CATEGORY_ORDER = ['entrepreneurship', 'opensource', 'games', 'poc', 'web'] as const;
+type Category = (typeof CATEGORY_ORDER)[number];
+
+const STATUS_WEIGHT: Record<CollectionEntry<'projects'>['data']['status'], number> = {
+  active: 0,
+  maintained: 1,
+  dormant: 2,
+  archived: 3,
+};
+
+function sortProjects(entries: CollectionEntry<'projects'>[]) {
+  return [...entries].sort((a, b) => {
+    if (a.data.featured !== b.data.featured) {
+      return a.data.featured ? -1 : 1;
+    }
+    const statusDelta = STATUS_WEIGHT[a.data.status] - STATUS_WEIGHT[b.data.status];
+    if (statusDelta !== 0) return statusDelta;
+
+    const ad = a.data.publishedAt?.valueOf() ?? 0;
+    const bd = b.data.publishedAt?.valueOf() ?? 0;
+    if (ad !== bd) return bd - ad;
+
+    return a.data.slug.localeCompare(b.data.slug);
+  });
+}
+
+const groups = CATEGORY_ORDER.map((category) => {
+  const items = sortProjects(projects.filter((p) => p.data.category === category));
+  return { category: category as Category, items };
+}).filter((g) => g.items.length > 0);
+---
+
+<div class="flex flex-col gap-20">
+  {
+    groups.map((group) => (
+      <section aria-labelledby={`projects-${group.category}`}>
+        <CategoryHeading
+          id={`projects-${group.category}`}
+          title={t.projects.categories[group.category]}
+          count={t.projects.count(group.items.length)}
+        />
+        <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+          {group.items.map((project) => (
+            <ProjectCard project={project} locale={locale} />
+          ))}
+        </div>
+      </section>
+    ))
+  }
+</div>

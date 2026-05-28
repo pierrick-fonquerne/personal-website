@@ -1,0 +1,35 @@
+slug: stellar-imperiums
+category: games
+status: active
+period: "2025 — aujourd'hui"
+stack:
+  - .NET 10
+  - PostgreSQL
+  - MongoDB
+  - React 19
+  - Tailwind CSS
+links:
+  - label: API (.NET 10)
+    href: https://github.com/pierrick-fonquerne/stellar-imperiums-api
+    type: repo
+  - label: Frontend (React)
+    href: https://github.com/pierrick-fonquerne/stellar-imperiums-frontend
+    type: repo
+  - label: Shared (docs / infra)
+    href: https://github.com/pierrick-fonquerne/stellar-imperiums-shared
+    type: repo
+fr:
+  title: Stellar Imperiums
+  tagline: Jeu spatial multijoueur, projet de mémoire DWWM.
+  summary: >-
+    Univers spatial multijoueur. Backend .NET 10 polyglotte (PostgreSQL pour le
+    relationnel, MongoDB pour les données de partie), frontend React 19 +
+    Tailwind. Projet réalisé dans le cadre du titre DWWM.
+en:
+  title: Stellar Imperiums
+  tagline: Multiplayer space game, DWWM diploma project.
+  summary: >-
+    Multiplayer space universe. Polyglot .NET 10 backend (PostgreSQL for the
+    relational layer, MongoDB for game state), React 19 + Tailwind frontend.
+    Built as part of the DWWM certification.
+published: true

@@ -1,0 +1,119 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { localizedPath, useTranslations } from '../../lib/i18n';
+import Github from '../../components/ui/icons/Github.astro';
+import Crates from '../../components/ui/icons/Crates.astro';
+import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
+
+export const getStaticPaths = (async () => {
+  const projects = (await getCollection('projects')).filter((p) => p.data.published);
+  return projects.map((project) => ({
+    params: { slug: project.data.slug },
+    props: { project },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { project } = Astro.props as Props;
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
+const content = project.data.fr;
+---
+
+<BaseLayout
+  title={`${content.title} · Pierrick Fonquerne`}
+  description={content.tagline}
+  current="/projects"
+  locale={locale}
+>
+  <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
+    <a
+      href={localizedPath('/projects', locale)}
+      class="inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.projects.backToList}
+    </a>
+
+    <header class="mt-10 border-t border-[var(--color-line)] pt-10">
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <span
+          class:list={[
+            'font-mono text-[11px] tracking-[0.16em] uppercase',
+            project.data.status === 'active'
+              ? 'text-[var(--color-accent)]'
+              : 'text-[var(--color-fg-dim)]',
+          ]}
+        >
+          {t.projects.statuses[project.data.status]}
+        </span>
+        <span class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]">
+          {project.data.period}
+        </span>
+        <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          {t.projects.categories[project.data.category]}
+        </span>
+      </div>
+
+      <h1
+        class="font-display mt-5 text-[clamp(40px,6vw,72px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[var(--color-fg)]"
+      >
+        {content.title}
+      </h1>
+      <p
+        class="mt-5 max-w-[60ch] text-[22px] leading-[1.45] text-[var(--color-fg-muted)]"
+      >
+        {content.tagline}
+      </p>
+    </header>
+
+    <p
+      class="mt-12 max-w-[68ch] text-[18px] leading-[1.6] text-[var(--color-fg)]"
+    >
+      {content.summary}
+    </p>
+
+    {
+      project.data.stack.length > 0 && (
+        <section class="mt-12 border-t border-[var(--color-line)] pt-8">
+          <h2 class="mb-4 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+            {t.projects.stackLabel}
+          </h2>
+          <ul class="flex flex-wrap gap-2">
+            {project.data.stack.map((tech) => (
+              <li class="rounded-sm border border-[var(--color-line)] px-3 py-1.5 font-mono text-[12px] tracking-[0.05em] text-[var(--color-fg)]">
+                {tech}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    {
+      project.data.links.length > 0 && (
+        <section class="mt-12 border-t border-[var(--color-line)] pt-8">
+          <div class="flex flex-wrap gap-2">
+            {project.data.links.map((link) => (
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-md border border-[var(--color-line-strong)] px-3.5 py-2 font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg)] uppercase transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              >
+                {link.type === 'repo' && <Github class="h-[14px] w-[14px]" />}
+                {link.type === 'crates' && <Crates class="h-[14px] w-[14px]" />}
+                {(link.type === 'site' || link.type === 'docs' || link.type === 'demo') && (
+                  <ExternalLink class="h-[14px] w-[14px]" />
+                )}
+                {link.label}
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+  </article>
+</BaseLayout>

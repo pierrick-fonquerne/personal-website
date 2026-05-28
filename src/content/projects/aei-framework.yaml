@@ -1,0 +1,28 @@
+slug: aei-framework
+category: poc
+status: archived
+period: "2025"
+stack:
+  - Rust
+  - Event Sourcing
+  - Agents IA
+links:
+  - label: Code source
+    href: https://github.com/pierrick-fonquerne/aei-framework
+    type: repo
+fr:
+  title: AEI Framework
+  tagline: POC Rust d'un framework IA event-sourced.
+  summary: >-
+    Exploration en Rust d'un framework d'agents IA bâti sur Event Sourcing.
+    Les boucles de perception, décision et action sont persistées comme
+    événements, pour pouvoir les rejouer, auditer et faire évoluer le
+    comportement des agents.
+en:
+  title: AEI Framework
+  tagline: Rust proof of concept for an event-sourced AI framework.
+  summary: >-
+    A Rust exploration of an AI agent framework built on Event Sourcing.
+    Perception, decision and action loops are persisted as events, so the
+    agent's behaviour can be replayed, audited and evolved over time.
+published: true

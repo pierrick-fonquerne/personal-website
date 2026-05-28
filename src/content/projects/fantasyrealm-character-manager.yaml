@@ -1,0 +1,29 @@
+slug: fantasyrealm-character-manager
+category: games
+status: archived
+period: "2025 — 2026"
+stack:
+  - C#
+  - .NET
+  - React
+  - Tailwind CSS
+  - PostgreSQL
+  - MongoDB
+  - Docker Compose
+links:
+  - label: Code source
+    href: https://github.com/pierrick-fonquerne/fantasyrealm-character-manager
+    type: repo
+fr:
+  title: FantasyRealm Character Manager
+  tagline: Gestionnaire de personnages pour un MMORPG fictif.
+  summary: >-
+    Application web .NET pour gérer fiches de personnages, compétences et
+    inventaire dans un univers MMORPG. Projet exploratoire désormais archivé.
+en:
+  title: FantasyRealm Character Manager
+  tagline: Character manager for a fictional MMORPG.
+  summary: >-
+    A .NET web app to manage character sheets, skills and inventory in a
+    MMORPG universe. Exploratory project, now archived.
+published: true
