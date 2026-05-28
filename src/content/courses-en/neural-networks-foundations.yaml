@@ -25,5 +25,11 @@ modules:
   - 10-regularization
   - 11-initialization-batch-norm
   - 12-advanced-optimizers
+personalNote: |
+  This is the first course I asked to have written on this site. After watching interviews and lectures of Yann LeCun, I grew interested in artificial intelligence and neural networks in particular, wanting to understand what was actually happening under the hood of the models around me.
+
+  I did not have the chance to study mathematics or artificial intelligence. But I saw in AI a new kind of teacher: a guide that can adapt to the learner's own pace, take the time to explain a concept in depth, and above all illustrate it as much as needed to really make it land.
+
+  The amount of information I absorbed during those months of exploration was such that I needed to centralise it somewhere, in a structured form. And more than anything, I wanted to share it. This course is the result of that double drive: to retain and to pass on.
 published: true
 publishedAt: 2026-05-28

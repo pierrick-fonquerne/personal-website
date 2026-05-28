@@ -25,5 +25,11 @@ modules:
   - 10-regularisation
   - 11-initialisation-batch-norm
   - 12-optimiseurs-avances
+personalNote: |
+  Premier cours que j'ai demandé à voir rédigé sur ce site. Suite à des interviews et des conférences de Yann LeCun, je me suis intéressé au domaine de l'intelligence artificielle et plus particulièrement aux réseaux de neurones, pour comprendre ce qui se passait vraiment sous le capot des modèles qui m'entouraient.
+
+  Je n'ai pas eu l'opportunité de faire des études en mathématiques ni en intelligence artificielle. J'ai cependant vu dans l'IA un professeur d'un genre nouveau : un guide capable de s'adapter à la pédagogie de l'élève, de prendre le temps d'expliquer un concept en détail, et surtout de l'illustrer autant qu'il le faut pour qu'il rentre vraiment.
+
+  La quantité d'informations que j'ai assimilée pendant ces mois d'exploration était telle qu'il me fallait la centraliser quelque part, sous une forme structurée. Et surtout, j'avais envie de la partager. Ce cours est le résultat de cette double envie : retenir et transmettre.
 published: true
 publishedAt: 2026-05-28

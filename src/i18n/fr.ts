@@ -1,12 +1,51 @@
 import type { Translations } from './en';
 
 const fr: Translations = {
+  meta: {
+    description:
+      'Pierrick Fonquerne, développeur passionné. Projets, écrits et recherche.',
+  },
   nav: {
     home: 'Accueil',
     projects: 'Projets',
     courses: 'Cours',
     research: 'Recherche',
     about: 'À propos',
+  },
+  projects: {
+    title: '// Projets',
+    lead: "Une sélection de ce que je construis, maintiens ou explore. Perso, open source et entrepreneurial.",
+    soon: 'Section en construction.',
+    count: (n) => `${String(n).padStart(2, '0')} / projets`,
+    emptyCategory: 'Rien à montrer ici pour le moment.',
+    backToList: '← Retour aux projets',
+    categories: {
+      entrepreneurship: 'Entrepreneuriat',
+      opensource: 'Open source',
+      games: 'Jeu vidéo',
+      poc: 'Preuves de concept',
+      web: 'Web',
+    },
+    statuses: {
+      active: 'Actif',
+      maintained: 'Maintenu',
+      archived: 'Archivé',
+      dormant: 'En pause',
+    },
+    links: {
+      site: 'Site',
+      repo: 'Code source',
+      crates: 'crates.io',
+      docs: 'Docs',
+      demo: 'Démo',
+    },
+    stackLabel: 'Stack',
+    statusLabel: 'Statut',
+    periodLabel: 'Période',
+  },
+  research: {
+    title: '// Recherche',
+    soon: 'Section en construction.',
   },
   courses: {
     eyebrow: 'COURS INTERACTIFS',
@@ -19,6 +58,7 @@ const fr: Translations = {
     minutesUnit: 'min',
     comingSoon: 'À venir',
     glossaryLink: 'Glossaire →',
+    personalNoteEyebrow: 'Note personnelle',
   },
   themes: {
     architecture: 'Architecture',
@@ -190,7 +230,7 @@ const fr: Translations = {
       },
     ],
     interestsLabel: '// Centres d’intérêt',
-    interests: ['Trail', 'Rugby à XIII', 'Escalade'],
+    interests: ['Trail', 'Rugby', 'Escalade'],
   },
   stack: {
     title: '// Stack',
