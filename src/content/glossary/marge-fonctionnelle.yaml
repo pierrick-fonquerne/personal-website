@@ -1,0 +1,15 @@
+slug: marge-fonctionnelle
+fr:
+  term: Marge fonctionnelle
+  definition: >-
+    Pour un exemple $(x, y)$ avec $y \in \{-1, +1\}$, la marge fonctionnelle est la quantité $\hat\gamma = y (w \cdot x + b)$. Elle est strictement positive si et seulement si l'exemple est bien classé. Elle dépend de l'échelle des poids et n'est pas une distance géométrique.
+  source: Bishop, PRML, ch. 7
+en:
+  term: Functional margin
+  definition: >-
+    For a sample $(x, y)$ with $y \in \{-1, +1\}$, the functional margin is the quantity $\hat\gamma = y (w \cdot x + b)$. It is strictly positive if and only if the sample is correctly classified. It depends on the scale of the weights and is not a geometric distance.
+  source: Bishop, PRML, ch. 7
+seeAlso:
+  - marge-geometrique
+  - lineairement-separable
+  - perceptron

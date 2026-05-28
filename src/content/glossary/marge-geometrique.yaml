@@ -1,0 +1,15 @@
+slug: marge-geometrique
+fr:
+  term: Marge géométrique
+  definition: >-
+    Distance perpendiculaire minimale entre un hyperplan séparateur et les points du jeu de données. Définie par $\gamma = \min_i y_i (w \cdot x_i + b) / \|w\|$ avec $y_i \in \{-1, +1\}$. Joue un rôle central dans le théorème de Novikoff et dans la formulation des machines à vecteurs de support.
+  source: Novikoff, 1962
+en:
+  term: Geometric margin
+  definition: >-
+    Minimal perpendicular distance between a separating hyperplane and the points of the dataset. Defined by $\gamma = \min_i y_i (w \cdot x_i + b) / \|w\|$ with $y_i \in \{-1, +1\}$. Plays a central role in Novikoff's theorem and in the formulation of support vector machines.
+  source: Novikoff, 1962
+seeAlso:
+  - marge-fonctionnelle
+  - lineairement-separable
+  - theoreme-de-novikoff

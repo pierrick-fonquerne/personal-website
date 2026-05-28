@@ -1,0 +1,15 @@
+slug: regle-d-apprentissage
+fr:
+  term: Règle d'apprentissage
+  definition: >-
+    Procédure qui met à jour les paramètres (poids, biais) d'un modèle à partir d'exemples observés. Pour le perceptron, la règle est $w \leftarrow w + \eta \cdot y \cdot x$ et $b \leftarrow b + \eta \cdot y$ appliquée seulement quand un exemple est mal classé.
+  source: Rosenblatt, 1958
+en:
+  term: Learning rule
+  definition: >-
+    Procedure that updates the parameters (weights, bias) of a model from observed samples. For the perceptron, the rule is $w \leftarrow w + \eta \cdot y \cdot x$ and $b \leftarrow b + \eta \cdot y$ applied only when a sample is misclassified.
+  source: Rosenblatt, 1958
+seeAlso:
+  - taux-apprentissage
+  - perceptron
+  - descente-de-gradient

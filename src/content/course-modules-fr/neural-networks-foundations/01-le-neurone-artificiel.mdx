@@ -14,6 +14,7 @@ import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import Term from '../../../components/learning/Term.astro';
 import LinearSeparabilityViewer from '../../../components/learning/LinearSeparabilityViewer.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
 Tout réseau de neurones, du plus simple au plus profond, est un assemblage d'une seule brique élémentaire répétée par millions. Cette brique, le **neurone artificiel**, n'a pourtant rien de magique. C'est une équation à trois ingrédients qui s'inspire d'une cellule biologique vieille de plusieurs centaines de millions d'années.
 
@@ -49,21 +50,26 @@ L'arbitre fait dans sa tête une <Term slug="somme-ponderee">somme pondérée</T
 
 Place de la pratique avant la théorie. Bouge les curseurs ci-dessous. La sortie se recalcule en direct. **Ta mission** : trouver une combinaison où la sortie $y$ est très proche de $1$, puis une autre où elle est très proche de $0$. Tu vas sentir comment chaque paramètre tire dans une direction.
 
-<NeuronDiagram
-  client:visible
-  inputs={[
-    { label: 'x₁', defaultValue: 1.0, min: 0, max: 1 },
-    { label: 'x₂', defaultValue: 0.0, min: 0, max: 1 },
-    { label: 'x₃', defaultValue: 1.0, min: 0, max: 1 },
-  ]}
-  weights={[
-    { label: 'w₁', defaultValue: 0.8 },
-    { label: 'w₂', defaultValue: 0.5 },
-    { label: 'w₃', defaultValue: 0.9 },
-  ]}
-  bias={{ defaultValue: -0.5 }}
-  activation="sigmoid"
-/>
+<InteractivePrint
+  label="Figure : neurone à 3 entrées (curseurs interactifs)"
+  description="Diagramme paramétrable d'un neurone à trois entrées x₁, x₂, x₃ avec trois poids w₁=0,8, w₂=0,5, w₃=0,9, un biais b=-0,5 et une activation sigmoïde. Avec la configuration de départ (x₁=1, x₂=0, x₃=1), la somme pondérée vaut z = 1·0,8 + 0·0,5 + 1·0,9 + (-0,5) = 1,2 et la sortie y = σ(1,2) ≈ 0,77. Bouger les curseurs montre comment chaque entrée, poids et biais déplace la sortie."
+>
+  <NeuronDiagram
+    client:visible
+    inputs={[
+      { label: 'x₁', defaultValue: 1.0, min: 0, max: 1 },
+      { label: 'x₂', defaultValue: 0.0, min: 0, max: 1 },
+      { label: 'x₃', defaultValue: 1.0, min: 0, max: 1 },
+    ]}
+    weights={[
+      { label: 'w₁', defaultValue: 0.8 },
+      { label: 'w₂', defaultValue: 0.5 },
+      { label: 'w₃', defaultValue: 0.9 },
+    ]}
+    bias={{ defaultValue: -0.5 }}
+    activation="sigmoid"
+  />
+</InteractivePrint>
 
 Trois choses à remarquer en jouant :
 
@@ -206,7 +212,12 @@ Cela suffit pour des problèmes **linéairement séparables**, comme l'opératio
 
 Bouge les curseurs ci-dessous pour orienter et déplacer la droite. Sur AND et OR, tu peux atteindre 4 points sur 4 correctement classés. Sur XOR, tu n'y arriveras jamais : un point sera toujours du mauvais côté.
 
-<LinearSeparabilityViewer client:visible dataset="xor" />
+<InteractivePrint
+  label="Figure : séparation linéaire de XOR (interactif)"
+  description="Plan 2D avec quatre points correspondant à la table XOR : (0,0) et (1,1) classés négatifs, (1,0) et (0,1) classés positifs. Les curseurs déplacent et orientent une droite. Aucune orientation ni position ne permet de séparer les deux paires positives des deux paires négatives : XOR n'est pas linéairement séparable, ce que Minsky et Papert ont démontré formellement en 1969."
+>
+  <LinearSeparabilityViewer client:visible dataset="xor" />
+</InteractivePrint>
 
 C'est exactement ce qu'ont démontré Minsky et Papert en 1969. Géométriquement, un neurone correspond à une droite ; XOR demande une frontière qui ne peut pas être linéaire. La solution viendra des réseaux multi-couches, qui peuvent composer plusieurs droites pour dessiner des frontières plus complexes.
 
@@ -222,12 +233,17 @@ Le biais résout ça en **translatant** la droite n'importe où dans le plan. Im
 
 Pour le voir en direct, reprends le composant ci-dessous sur le dataset **OR**. Garde la pente proche de $-1$ et ne touche qu'à l'ordonnée à l'origine (qui joue ici le rôle du biais). La droite glisse parallèlement à elle-même. Sans cette translation, impossible de classer correctement les trois points orange.
 
-<LinearSeparabilityViewer
-  client:visible
-  dataset="or"
-  initialSlope={-1}
-  initialIntercept={0.5}
-/>
+<InteractivePrint
+  label="Figure : rôle du biais sur le dataset OR (interactif)"
+  description="Même plan 2D, mais sur la table OR : (0,0) seul négatif, les trois autres positifs. Pente initialisée à -1, ordonnée à 0,5. En ne touchant qu'à l'ordonnée (qui joue le rôle du biais), la droite glisse parallèlement à elle-même. Sans biais (sans la possibilité de translater), la droite passerait forcément par l'origine et ne pourrait pas isoler (0,0) des trois autres."
+>
+  <LinearSeparabilityViewer
+    client:visible
+    dataset="or"
+    initialSlope={-1}
+    initialIntercept={0.5}
+  />
+</InteractivePrint>
 
 Une autre façon d'observer le biais : reviens sur le NeuronDiagram plus haut, mets toutes les entrées à zéro. La sortie ne dépend plus que du biais. C'est le « niveau de base » du neurone, indépendant de toute donnée d'entrée.
 
@@ -354,11 +370,15 @@ Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
 - LeCun, Y. (cours en ligne au Collège de France, 2016 à aujourd'hui). « L'apprentissage profond ». [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
 - Ng, A. (cours en ligne Coursera, « Deep Learning Specialization »). Très bon complément en anglais.
 
-<Quiz
-  client:load
-  submitLabel="Vérifier"
-  resetLabel="Recommencer"
-  scoreLabel="Score"
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 1 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : l'opération d'un neurone, le rôle des poids et du biais, et la limite XOR. Sept questions avec explication de la bonne réponse à la validation. À faire en ligne pour le scoring automatique."
+>
+  <Quiz
+    client:load
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
   questions={[
     {
       q: "Que produit l'opération d'un neurone, avant la fonction d'activation ?",
@@ -416,4 +436,5 @@ Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
       explain: "Le neurone artificiel reprend l'idée des entrées pondérées et du seuil, mais il ignore la dimension temporelle, les impulsions discrètes et la chimie synaptique. C'est une caricature utile, pas une réplique.",
     },
   ]}
-/>
+  />
+</InteractivePrint>

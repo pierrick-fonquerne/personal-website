@@ -14,6 +14,7 @@ import VanishingGradientSimulator from '../../../components/learning/VanishingGr
 import DyingReLUSimulator from '../../../components/learning/DyingReLUSimulator.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
 In chapters 1 and 2 you met the <Term slug="fonction-activation">activation function</Term> $f$ in the formula $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ without really spending time on it. That's the subject of this chapter. We will see why it is mathematically essential, compare the four classics (Identity, sigmoid, ReLU, tanh) and learn how to choose between them.
 
@@ -113,18 +114,23 @@ ReLU(x) = max(0, x)
 
 The component below is a single-input ReLU neuron. Its output $\text{ReLU}(w \cdot x + b)$ is drawn in orange. Twelve dataset points are placed on the curve: green if the neuron fires on them, red if not. Push the bias toward very negative values: all points flip red. At that stage the neuron stops learning, because its gradient is zero everywhere.
 
-<DyingReLUSimulator
-  client:visible
-  initialW={1.2}
-  initialB={0.4}
-  labels={{
+<InteractivePrint
+  label="Simulator: dying ReLU neuron (interactive)"
+  description="Single-input ReLU neuron with output ReLU(w·x + b), initial weight w=1.2 and bias b=0.4. The orange curve is the output as a function of the input. Twelve points from a uniform dataset are placed on this curve: green if the neuron fires on them, red if not. Pushing the bias to very negative values (b=-2 for example) flips all points red: the neuron is dead, its gradient is zero everywhere, it stops learning."
+>
+  <DyingReLUSimulator
+    client:visible
+    initialW={1.2}
+    initialB={0.4}
+    labels={{
     weightLabel: 'Weight w',
     biasLabel: 'Bias b',
     activeLabel: 'active',
     deadLabel: 'dead',
     helpText: "Push the bias down to drive the neuron to death. When the ReLU output is zero on every sample, so is its gradient, and the neuron stops learning.",
   }}
-/>
+  />
+</InteractivePrint>
 
 Three things to try:
 
@@ -150,20 +156,25 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 The idea of an activation function is easier to see than to describe. The component below is a full workshop: you can enable or disable each function individually (click its label), display the **derivatives** as dashed lines, enable a **cursor** that places a vertical line and reveals the **local tangent** at the hovered point for each curve (the slope of that tangent is exactly $f'(x)$). A collapsible panel at the bottom also lets you tune the $x$ domain if you want to zoom in or out.
 
-<ActivationPlotter
-  client:visible
-  functions={["sigmoid", "relu", "tanh", "identity"]}
-  showDerivative={true}
-  showCursor={true}
-  range={[-5, 5]}
-  labels={{
+<InteractivePrint
+  label="Workshop: plotting activation functions (interactive)"
+  description="Workshop that plots four activation functions simultaneously (sigmoid, ReLU, tanh, identity) over x ∈ [-5, 5]. Derivatives shown as dashed lines. A cursor triggers a vertical line that reveals the local tangent at the hovered point on each curve. At x=0, σ'(0) = 0.25; at x=2, σ'(2) drops to about 0.1 (saturation). On ReLU's active part (x>0), the derivative equals exactly 1, independent of x. This is the root cause of the vanishing gradient on sigmoid and the robustness of ReLU."
+>
+  <ActivationPlotter
+    client:visible
+    functions={["sigmoid", "relu", "tanh", "identity"]}
+    showDerivative={true}
+    showCursor={true}
+    range={[-5, 5]}
+    labels={{
     derivativeLabel: 'Derivative',
     cursorLabel: 'Cursor',
     xRangeLabel: 'x domain',
     minLabel: 'min',
     maxLabel: 'max',
   }}
-/>
+  />
+</InteractivePrint>
 
 Five experiments to try:
 
@@ -185,17 +196,22 @@ ReLU largely solves this problem: on its active part, the gradient is exactly $1
 
 The component below simulates a deep network. Change the number of layers and switch the activation. Each bar represents the effective gradient at a given layer, top to bottom from output to input. On sigmoid you see the bars shrink visibly as depth grows. On ReLU they keep their length.
 
-<VanishingGradientSimulator
-  client:visible
-  defaultLayers={8}
-  maxLayers={20}
-  defaultActivation="sigmoid"
-  labels={{
+<InteractivePrint
+  label="Simulator: vanishing gradient in deep networks (interactive)"
+  description="Simulator of a deep network with 8 layers (up to 20). Each bar represents the effective gradient at a given layer, from the output at top to the input at the bottom. On sigmoid, the bars shrink visibly: at 15 layers, the first-layer gradient is on the order of 10⁻⁹. On ReLU, all bars keep the same length, because the derivative equals 1 on the active part. This is the technical reason for dropping sigmoid in hidden layers in favour of ReLU starting in 2012."
+>
+  <VanishingGradientSimulator
+    client:visible
+    defaultLayers={8}
+    maxLayers={20}
+    defaultActivation="sigmoid"
+    labels={{
     layersLabel: 'Number of layers',
     layerPrefix: 'Layer',
     helpText: "The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh about 0.4, ReLU 1.",
   }}
-/>
+  />
+</InteractivePrint>
 
 The key experiment: push to $15$ layers with sigmoid and look at the first-layer gradient. It is on the order of $10^{-9}$, totally insufficient to update a weight. Now switch to ReLU and watch the bars all match again. That is the exact technical reason why sigmoid was dropped from hidden layers in favour of ReLU starting in 2012.
 
@@ -376,7 +392,11 @@ This is significant, and it is the second reason (with the preserved gradient) f
 - Maas, A. L., Hannun, A. Y. & Ng, A. Y. (2013). "Rectifier Nonlinearities Improve Neural Network Acoustic Models." *ICML* 30, Workshop on Deep Learning for Audio, Speech and Language Processing. (Introduction of Leaky ReLU.) [Stanford link](https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf)
 - Hendrycks, D. & Gimpel, K. (2016). "Gaussian Error Linear Units (GELUs)." *arXiv*. [arXiv 1606.08415](https://arxiv.org/abs/1606.08415)
 
-<Quiz
+<InteractivePrint
+  label="Quiz: chapter 3 recap (interactive)"
+  description="Multiple-choice quiz checking the chapter's takeaways: sigmoid and tanh, ReLU and the dying ReLU problem, derivatives, and the vanishing gradient. To be taken online for automatic scoring."
+>
+  <Quiz
   client:load
   submitLabel="Check"
   resetLabel="Reset"
@@ -438,4 +458,5 @@ This is significant, and it is the second reason (with the preserved gradient) f
       explain: "Sigmoid's derivative has a maximum of 0.25. Multiplied 10 times, you get 0.25^10 ≈ 9.5×10⁻⁷. The input-side gradient collapses, the first layer stops learning. That is why we use ReLU in deep hidden layers.",
     },
   ]}
-/>
+  />
+</InteractivePrint>

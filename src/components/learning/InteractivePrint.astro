@@ -1,0 +1,23 @@
+---
+interface Props {
+  label?: string;
+  description: string;
+}
+
+const { label, description } = Astro.props;
+---
+
+<div class="interactive-only">
+  <slot />
+</div>
+
+<div class="print-only print-fallback" aria-hidden="true">
+  {label && <p class="print-fallback-label">{label}</p>}
+  <p class="print-fallback-description">{description}</p>
+</div>
+
+<style>
+  .print-only {
+    display: none;
+  }
+</style>

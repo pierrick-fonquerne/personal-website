@@ -1,0 +1,15 @@
+slug: hiver-de-l-ia
+fr:
+  term: Hiver de l'IA
+  definition: >-
+    Période de désintérêt et de coupure de financement de la recherche en intelligence artificielle. Le premier hiver, années 1970 et début des années 1980, suit la critique du perceptron par Minsky et Papert (1969). Le second, fin des années 1980 et années 1990, suit les déceptions liées aux systèmes experts. Chaque hiver précède un regain : la rétropropagation pour le premier, l'apprentissage profond moderne pour le second.
+  source: Russell & Norvig, *AIMA*, ch. 1
+en:
+  term: AI winter
+  definition: >-
+    Period of disinterest and funding cuts for artificial intelligence research. The first AI winter, in the 1970s and early 1980s, followed Minsky and Papert's critique of the perceptron (1969). The second, in the late 1980s and 1990s, followed disappointments with expert systems. Each winter preceded a comeback: backpropagation after the first, modern deep learning after the second.
+  source: Russell & Norvig, *AIMA*, ch. 1
+seeAlso:
+  - minsky-papert
+  - perceptron
+  - backpropagation

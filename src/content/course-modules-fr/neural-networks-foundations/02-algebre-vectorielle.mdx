@@ -13,6 +13,7 @@ import InteractiveSlider from '../../../components/learning/InteractiveSlider.ts
 import DotProductViewer from '../../../components/learning/DotProductViewer.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
 Tu viens de voir au chapitre précédent que la formule du neurone s'écrit en notation vectorielle $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. Ce chapitre installe les briques mathématiques cachées derrière cette notation. L'objectif : que tu lises $\mathbf{w} \cdot \mathbf{x}$ sans buter, et que tu comprennes ce que ça raconte géométriquement.
 
@@ -82,7 +83,12 @@ C'est la somme pondérée du neurone, sans le biais. En ajoutant $b = -0{,}5$, o
 
 Le composant ci-dessous dessine deux vecteurs $\mathbf{x}$ et $\mathbf{w}$ dans le plan. Bouge les curseurs et observe trois choses simultanément : le produit scalaire change, mais aussi la <Term slug="norme">norme</Term> et l'angle entre eux. Quand l'angle approche $90°$, le produit scalaire tombe à zéro : les vecteurs deviennent <Term slug="orthogonalite">orthogonaux</Term>.
 
-<DotProductViewer client:visible initialX={[1.2, 0.6]} initialW={[0.6, 1.2]} />
+<InteractivePrint
+  label="Figure : deux vecteurs et leur produit scalaire (interactif)"
+  description="Plan 2D qui dessine deux vecteurs x=(1,2 ; 0,6) et w=(0,6 ; 1,2) depuis l'origine. Les curseurs bougent les pointes des deux vecteurs et affichent simultanément trois quantités : le produit scalaire x·w, les normes ‖x‖ et ‖w‖, et l'angle entre eux. Quand l'angle approche 90°, le produit scalaire tombe à zéro : les vecteurs sont orthogonaux."
+>
+  <DotProductViewer client:visible initialX={[1.2, 0.6]} initialW={[0.6, 1.2]} />
+</InteractivePrint>
 
 Trois expériences à tenter :
 - Aligne les deux vecteurs sur la même direction (par exemple $\mathbf{x} = \mathbf{w}$). Le produit scalaire devient maximal, et égal à $\|\mathbf{x}\| \cdot \|\mathbf{w}\|$.
@@ -334,11 +340,15 @@ $$
 - 3Blue1Brown, série *Essence of Linear Algebra*. Visualisations remarquables des concepts clés, francophone via les sous-titres. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 2 sur l'algèbre linéaire spécifique au ML. [deeplearningbook.org](https://www.deeplearningbook.org/)
 
-<Quiz
-  client:load
-  submitLabel="Vérifier"
-  resetLabel="Recommencer"
-  scoreLabel="Score"
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 2 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : le produit scalaire vectoriel, la formulation géométrique x·w = ‖x‖ ‖w‖ cos(θ), l'orthogonalité, et le produit matrice-vecteur. À faire en ligne pour le scoring automatique."
+>
+  <Quiz
+    client:load
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
   questions={[
     {
       q: "Que représente le produit scalaire de deux vecteurs ?",
@@ -396,4 +406,5 @@ $$
       explain: "Chaque ligne wⱼ de W est un vecteur de dimension n. Le produit Wx prend en parallèle m produits scalaires wⱼ · x, donc le résultat est un vecteur de m coordonnées. C'est la base d'une couche de m neurones.",
     },
   ]}
-/>
+  />
+</InteractivePrint>

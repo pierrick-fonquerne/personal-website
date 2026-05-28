@@ -1,0 +1,15 @@
+slug: minsky-papert
+fr:
+  term: Minsky & Papert
+  definition: >-
+    Marvin Minsky et Seymour Papert, auteurs du livre *Perceptrons* (MIT Press, 1969) qui démontre formellement les limites d'un perceptron simple, notamment l'impossibilité de réaliser la fonction XOR. Leur analyse a contribué au déclin du financement public de la recherche en réseaux de neurones jusqu'au milieu des années 1980.
+  source: Minsky & Papert, *Perceptrons*, MIT Press, 1969
+en:
+  term: Minsky & Papert
+  definition: >-
+    Marvin Minsky and Seymour Papert, authors of *Perceptrons* (MIT Press, 1969), which formally proved the limits of a single perceptron, notably the impossibility of computing the XOR function. Their analysis contributed to the decline of public funding for neural network research until the mid-1980s.
+  source: Minsky & Papert, *Perceptrons*, MIT Press, 1969
+seeAlso:
+  - perceptron
+  - xor
+  - hiver-de-l-ia

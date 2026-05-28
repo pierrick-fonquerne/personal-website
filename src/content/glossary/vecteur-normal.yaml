@@ -1,0 +1,15 @@
+slug: vecteur-normal
+fr:
+  term: Vecteur normal
+  definition: >-
+    Vecteur $w$ qui définit la direction perpendiculaire à un hyperplan d'équation $w \cdot x + b = 0$. Sa direction indique de quel côté de l'hyperplan se trouve un point ; sa norme fixe l'échelle de la distance signée.
+  source: Bishop, PRML, ch. 4
+en:
+  term: Normal vector
+  definition: >-
+    Vector $w$ that defines the direction perpendicular to a hyperplane with equation $w \cdot x + b = 0$. Its direction indicates which side of the hyperplane a point lies on; its norm sets the scale of the signed distance.
+  source: Bishop, PRML, ch. 4
+seeAlso:
+  - hyperplan
+  - produit-scalaire
+  - norme

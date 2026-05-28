@@ -1,0 +1,13 @@
+slug: mark-i-perceptron
+fr:
+  term: Mark I Perceptron
+  definition: >-
+    Machine physique construite par Frank Rosenblatt entre 1958 et 1960 au Cornell Aeronautical Laboratory. Capable de reconnaître des formes simples grâce à 400 photorécepteurs connectés à des poids ajustables via potentiomètres motorisés. Première implémentation matérielle d'un algorithme d'apprentissage automatique, distincte du modèle théorique publié en 1958.
+  source: Rosenblatt, 1958, 1960
+en:
+  term: Mark I Perceptron
+  definition: >-
+    Physical machine built by Frank Rosenblatt between 1958 and 1960 at Cornell Aeronautical Laboratory. Able to recognise simple shapes thanks to 400 photoreceptors connected to weights that were tunable via motorised potentiometers. The first hardware implementation of a machine learning algorithm, distinct from the theoretical model published in 1958.
+  source: Rosenblatt, 1958, 1960
+seeAlso:
+  - perceptron
