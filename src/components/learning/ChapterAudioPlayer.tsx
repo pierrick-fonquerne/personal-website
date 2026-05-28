@@ -147,6 +147,32 @@ function saveStoredPosition(locale: string, course: string, mod: string, value: 
   }
 }
 
+function dismissedStorageKey(locale: string, course: string, mod: string): string {
+  return `audio-player:dismissed:${locale}/${course}/${mod}`;
+}
+
+function loadStoredDismissed(locale: string, course: string, mod: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(dismissedStorageKey(locale, course, mod)) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveStoredDismissed(locale: string, course: string, mod: string, value: boolean): void {
+  if (typeof window === 'undefined') return;
+  try {
+    if (value) {
+      window.localStorage.setItem(dismissedStorageKey(locale, course, mod), '1');
+    } else {
+      window.localStorage.removeItem(dismissedStorageKey(locale, course, mod));
+    }
+  } catch {
+    /* localStorage unavailable */
+  }
+}
+
 export default function ChapterAudioPlayer({
   locale,
   courseSlug,
@@ -166,6 +192,9 @@ export default function ChapterAudioPlayer({
   const [mp3Url, setMp3Url] = useState<string | null>(null);
   const [nextCountdown, setNextCountdown] = useState<number | null>(null);
   const [showShortcuts, setShowShortcuts] = useState<boolean>(false);
+  const [dismissed, setDismissed] = useState<boolean>(() =>
+    loadStoredDismissed(locale, courseSlug, moduleSlug),
+  );
 
   const initialPositionRef = useRef<number>(loadStoredPosition(locale, courseSlug, moduleSlug));
   const positionRestoredRef = useRef<boolean>(false);
@@ -222,6 +251,12 @@ export default function ChapterAudioPlayer({
     }, 5000);
     return () => window.clearInterval(id);
   }, [courseSlug, locale, moduleSlug, progress, status]);
+
+  useEffect(() => {
+    if (source === 'mp3' && !dismissed) {
+      setOpen(true);
+    }
+  }, [source, dismissed]);
 
   useEffect(() => {
     let cancelled = false;
@@ -327,6 +362,8 @@ export default function ChapterAudioPlayer({
 
   const handlePlay = useCallback((): void => {
     setOpen(true);
+    setDismissed(false);
+    saveStoredDismissed(locale, courseSlug, moduleSlug, false);
     if (status === 'paused') {
       if (source === 'mp3' && audioRef.current) {
         audioRef.current.playbackRate = rate;
@@ -342,7 +379,7 @@ export default function ChapterAudioPlayer({
     } else {
       playSpeech();
     }
-  }, [playMp3, playSpeech, rate, source, status]);
+  }, [courseSlug, locale, moduleSlug, playMp3, playSpeech, rate, source, status]);
 
   const handlePause = useCallback((): void => {
     if (source === 'mp3' && audioRef.current) {
@@ -356,7 +393,9 @@ export default function ChapterAudioPlayer({
   const handleClose = useCallback((): void => {
     stopAll();
     setOpen(false);
-  }, [stopAll]);
+    setDismissed(true);
+    saveStoredDismissed(locale, courseSlug, moduleSlug, true);
+  }, [courseSlug, locale, moduleSlug, stopAll]);
 
   const handleSeek = useCallback(
     (targetSeconds: number): void => {
@@ -479,7 +518,11 @@ export default function ChapterAudioPlayer({
         aria-label={isPlaying ? labels.pause : labels.listen}
         title={isPlaying ? labels.pause : labels.listen}
         disabled={isLoadingSource}
-        className="chapter-audio-player inline-flex cursor-pointer items-center gap-2 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-3 py-1.5 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-muted)] uppercase transition-colors duration-150 hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)] disabled:cursor-not-allowed disabled:opacity-50"
+        className={`chapter-audio-player inline-flex cursor-pointer items-center gap-2 rounded-md border bg-[var(--color-bg-elevated)] px-3 py-1.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
+          source === 'mp3'
+            ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:opacity-90'
+            : 'border-[var(--color-line)] text-[var(--color-fg-muted)] hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)]'
+        }`}
         data-print="hide"
       >
         <svg
