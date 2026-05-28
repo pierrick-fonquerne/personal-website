@@ -14,6 +14,8 @@ Second, the ReLU function. ReLU means Rectified Linear Unit. Definition: ReLU of
 
 On the page, the interactive component lets you push the bias of a ReLU neuron toward very negative values. You will see all the points flip red, the neuron dies. At that stage, the neuron will not learn anymore, because its gradient is zero everywhere.
 
+The dying ReLU trap in practice. If during training some of your ReLU neurons stay silent across the entire dataset, they are dead: their output stays at zero, their gradient too, backpropagation cannot revive them. First reflexes: lower the learning rate, swap the ReLUs for Leaky ReLU or GELU, which let some gradient through on the negative side, and check the bias initialisation in chapter eleven.
+
 Third, the hyperbolic tangent, written tanh. Definition: tanh of x equals the exponential of x minus the exponential of minus x, all divided by the exponential of x plus the exponential of minus x. Derivative: one minus tanh of x squared. Shape: the same S-curve as the sigmoid, but centred. Output between minus one and one. The hyperbolic tangent is the centred cousin of the sigmoid. We prefer it when we want a zero-centred output, statistically preferable for training. Often used in classical RNNs.
 
 Play with the functions.
@@ -30,7 +32,9 @@ On the page, the component simulates a deep network. Move the number of layers a
 
 The vanishing-gradient trap in practice. If you train a deep network and the first layer stays mute while the last one converges, you almost certainly have a vanishing gradient. First reflexes: swap sigmoids for ReLUs, check the initialisation in chapter eleven, and try batch normalisation, same chapter.
 
-How to choose in practice. A simple heuristic that works in ninety-five percent of cases. Hidden layers: ReLU by default. Output layer for binary classification: sigmoid. Output layer for multi-class classification: softmax, which we will cover later. Output layer for regression: no activation, keep the raw value. For more exotic cases there are variants like leaky ReLU and GELU, which finely address the dying ReLU problem.
+How to choose in practice. A simple heuristic that works in ninety-five percent of cases. Hidden layers: ReLU by default. Output layer for binary classification: sigmoid. Output layer for multi-class classification: softmax, which we will cover later. Output layer for regression: no activation, keep the raw value.
+
+The modern ReLU family. ReLU has been the default since two thousand and twelve, but state-of-the-art architectures have adopted smoother variants that solve the dying ReLU problem. Three names to remember. First variant, Leaky ReLU: instead of clamping the output to zero for negative inputs, we let a small slope alpha, typically zero point zero one, through. The neuron keeps a non-zero gradient on both sides and can no longer die. Introduced by Maas, Hannun and Ng in two thousand and thirteen. Second variant, GELU. Definition: GELU of x equals x times capital Phi of x, where capital Phi is the cumulative distribution function of the standard normal. This is the activation used in BERT, GPT-2, GPT-3, GPT-4, Llama, Claude, and most modern transformers. Introduced by Hendrycks and Gimpel in two thousand and sixteen. Third variant, SiLU, sometimes called Swish. Definition: SiLU of x equals x times sigma of x. Used in EfficientNet, Mixtral, some Llama variants. Described by Ramachandran, Zoph and Le in two thousand and seventeen, then independently by Elfwing, Uchibe and Doya in two thousand and eighteen. In two thousand and twenty-six, the trio ReLU, GELU, SiLU covers the overwhelming majority of architectures deployed in production.
 
 In one sentence. An activation function is what turns a linear stack into a real learning network, and the choice between sigmoid, ReLU and tanh depends on the trade-off between saturation and piecewise linearity.
 
