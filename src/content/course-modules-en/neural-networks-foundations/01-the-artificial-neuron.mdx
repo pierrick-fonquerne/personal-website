@@ -80,7 +80,7 @@ Three things to notice while playing:
 <Callout kind="note" title="Historical note: from binary threshold to sigmoid">
 The NeuronDiagram above uses a **sigmoid** activation by default, producing a continuous output between 0 and 1. But the original neurons of McCulloch and Pitts (1943), and Rosenblatt's perceptron (1958), used a **binary threshold** function $H(z) = \mathbb{1}[z \geq 0]$: output 1 if the sum is at least 0, else 0. No nuance.
 
-The shift to sigmoid, and later to ReLU, is historically tied to backpropagation (1986), which requires a **differentiable** activation function to propagate the gradient. Subject of chapter 4. The sigmoid here gives a smoother intuition, but keep in mind that the simplest neuron, mathematically, is the threshold one.
+The shift to sigmoid, and later to ReLU, is historically tied to backpropagation (1986), which requires a **differentiable** activation function to propagate the gradient. Subject of chapter 3. The sigmoid here gives a smoother intuition, but keep in mind that the simplest neuron, mathematically, is the threshold one.
 </Callout>
 
 ## The mathematical formula
@@ -114,7 +114,7 @@ The most useful version for training yourself to read maths: *"y equals f applie
 - $x_i$ : the **inputs**, the information the neuron receives
 - $w_i$ : the **weights**, the importance assigned to each input
 - $b$ : the <Term slug="biais">bias</Term>, a base offset independent of the inputs
-- $f$ : the <Term slug="fonction-activation">activation function</Term>, which turns the raw result into something interpretable (covered in chapter 4)
+- $f$ : the <Term slug="fonction-activation">activation function</Term>, which turns the raw result into something interpretable (covered in chapter 3)
 
 ## Information flow as a graph
 
