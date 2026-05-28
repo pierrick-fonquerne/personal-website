@@ -16,7 +16,7 @@ import Quiz from '../../../components/learning/Quiz.tsx';
 In chapters 1 and 2 you met the <Term slug="fonction-activation">activation function</Term> $f$ in the formula $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ without really spending time on it. That's the subject of this chapter. We will see why it is mathematically essential, compare the four classics (Identity, sigmoid, ReLU, tanh) and learn how to choose between them.
 
 <Callout kind="info" title="Prerequisites and level">
-**What you need to know**: chapter 1 (neuron), the notation $f(z)$ of a real function of one variable, ideally the notion of a derivative (revisit chapter 7 if needed; it is only required in the last section).
+**What you need to know**: chapter 1 (neuron), the notation $f(z)$ of a real function of one variable, and the intuitive meaning of a derivative. Derivatives appear from the interactive-plot section onwards, but you are not asked to *compute* them by hand before chapter 7; understanding that a derivative is a slope is enough.
 
 **What is not required**: advanced differential calculus, approximation theory, numerical optimisation.
 
@@ -46,6 +46,8 @@ $$
 $$
 
 **That is a single affine layer.** Stacking layers without non-linearity is mathematically pointless: the whole thing reduces to one equivalent layer. This is the **reason for being** of the activation function.
+
+The same argument repeats at every transition between layers. That is why we insert $f$ **after every hidden layer**, and not only at the output: if a single pair of adjacent layers lacks a non-linearity between them, those two layers collapse into one and depth loses its point again.
 
 <Callout kind="tip" title="The theorem in one sentence">
 *Without non-linearity, network depth is an illusion.* That is why we insert a function $f$ at the output of every neuron, to "break" linearity. Without it, you do not have a deep network, you have a linear regression with fancy notation.
@@ -103,7 +105,7 @@ ReLU(x) = max(0, x)
 
 **Shape**: zero on negatives, identity on positives. Not bounded above.
 
-**Modern usage**: 90 % of modern deep networks use ReLU or one of its variants (Leaky ReLU, ELU, GELU) in their hidden layers (Nair and Hinton, 2010). It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and it stops learning. This is the *dying ReLU* problem, mitigated by the variants.
+**Modern usage**: 90 % of modern deep networks use ReLU or one of its variants (Leaky ReLU, ELU, GELU) in their hidden layers (Nair and Hinton, 2010). It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the *dying ReLU* problem, mitigated by the variants.
 
 ### Tanh
 
