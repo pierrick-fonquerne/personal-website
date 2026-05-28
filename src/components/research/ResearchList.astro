@@ -1,0 +1,80 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { useTranslations, type Locale } from '../../lib/i18n';
+import CategoryHeading from '../ui/CategoryHeading.astro';
+import ResearchCard from './ResearchCard.astro';
+
+interface Props {
+  entries: CollectionEntry<'research'>[];
+  locale: Locale;
+}
+
+const { entries, locale } = Astro.props;
+const t = useTranslations(locale);
+
+const THEME_ORDER = [
+  'architecture',
+  'math',
+  'ai',
+  'systems',
+  'data',
+  'security',
+  'network',
+  'quant',
+  'tooling',
+] as const;
+type Theme = (typeof THEME_ORDER)[number];
+
+const STATUS_WEIGHT: Record<CollectionEntry<'research'>['data']['status'], number> = {
+  published: 0,
+  wip: 1,
+  draft: 2,
+  archived: 3,
+};
+
+function sortEntries(items: CollectionEntry<'research'>[]) {
+  return [...items].sort((a, b) => {
+    const statusDelta = STATUS_WEIGHT[a.data.status] - STATUS_WEIGHT[b.data.status];
+    if (statusDelta !== 0) return statusDelta;
+
+    const dateDelta = b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf();
+    if (dateDelta !== 0) return dateDelta;
+
+    return a.data.slug.localeCompare(b.data.slug);
+  });
+}
+
+const visibleEntries = entries.filter((e) => e.data.status !== 'archived');
+
+const groups = THEME_ORDER.map((theme) => ({
+  theme: theme as Theme,
+  items: sortEntries(visibleEntries.filter((e) => e.data.theme === theme)),
+})).filter((g) => g.items.length > 0);
+---
+
+{
+  groups.length === 0 ? (
+    <div class="rounded-md border border-dashed border-[var(--color-line)] p-10 text-center">
+      <p class="font-mono text-[12px] tracking-[0.1em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.emptyState}
+      </p>
+    </div>
+  ) : (
+    <div class="flex flex-col gap-20">
+      {groups.map((group) => (
+        <section aria-labelledby={`research-${group.theme}`}>
+          <CategoryHeading
+            id={`research-${group.theme}`}
+            title={t.themes[group.theme]}
+            count={t.research.count(group.items.length)}
+          />
+          <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
+            {group.items.map((entry) => (
+              <ResearchCard entry={entry} locale={locale} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}

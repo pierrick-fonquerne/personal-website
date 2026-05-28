@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import SectionHead from '../../components/ui/SectionHead.astro';
+import Eyebrow from '../../components/ui/Eyebrow.astro';
 import ProjectsList from '../../components/projects/ProjectsList.astro';
 import { useTranslations } from '../../lib/i18n';
 
@@ -11,27 +11,23 @@ const projects = (await getCollection('projects')).filter((p) => p.data.publishe
 ---
 
 <BaseLayout
-  title="Projets · Pierrick Fonquerne"
+  title={`${t.projects.indexTitle} · Pierrick Fonquerne`}
   description="Sélection de projets logiciels de Pierrick Fonquerne : entrepreneuriat, open source, jeu vidéo, expérimentations."
   current="/projects"
   locale={locale}
 >
-  <section
-    id="projects"
-    aria-labelledby="projects-heading"
-    class="mx-auto mt-8 max-w-[1280px] px-14 pb-24"
-  >
-    <SectionHead
-      id="projects-heading"
-      title={t.projects.title}
-      count={t.projects.count(projects.length)}
-    />
-    <p
-      class="mt-8 max-w-[60ch] border-t border-[var(--color-line)] pt-8 text-[18px] leading-[1.55] text-[var(--color-fg-muted)]"
+  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+    <Eyebrow text={t.projects.eyebrow} />
+    <h1
+      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
+      {t.projects.indexTitle}
+    </h1>
+    <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
       {t.projects.lead}
     </p>
-    <div class="mt-16">
+
+    <div class="mt-20">
       <ProjectsList projects={projects} locale={locale} />
     </div>
   </section>

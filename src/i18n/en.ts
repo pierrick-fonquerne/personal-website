@@ -165,6 +165,8 @@ export interface Translations {
   };
   about: {
     title: string;
+    eyebrow: string;
+    indexTitle: string;
     greeting: string;
     lead: string;
     photoYear: string;
@@ -465,6 +467,8 @@ const en: Translations = {
   },
   about: {
     title: '// About',
+    eyebrow: 'ABOUT',
+    indexTitle: 'About',
     greeting: 'Hi, I’m Pierrick.',
     lead: 'Hooked on code since childhood, professional full-stack developer since 2014. Based in a small village in southern France.',
     photoYear: '2025',

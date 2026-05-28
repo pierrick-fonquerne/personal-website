@@ -27,13 +27,13 @@ const stats = [
 
 <section
   id="about"
-  aria-labelledby="about-heading"
+  aria-labelledby={standalone ? undefined : 'about-heading'}
   class:list={[
-    'mx-auto max-w-[1280px] px-14 pb-24',
-    standalone ? 'mt-8' : 'mt-20',
+    'mx-auto max-w-[1280px] pb-24',
+    standalone ? 'mt-0 px-6 lg:px-14' : 'mt-20 px-14',
   ]}
 >
-  <SectionHead id="about-heading" title={t.about.title} />
+  {!standalone && <SectionHead id="about-heading" title={t.about.title} />}
 
   <div
     class="grid grid-cols-1 gap-12 border-t border-[var(--color-line)] pt-12 md:grid-cols-[420px_1fr]"

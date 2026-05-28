@@ -1,0 +1,105 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
+import ExternalLink from '../ui/icons/ExternalLink.astro';
+
+interface Props {
+  entry: CollectionEntry<'research'>;
+  locale: Locale;
+}
+
+const { entry, locale } = Astro.props;
+const t = useTranslations(locale);
+const content = entry.data[locale];
+
+const isExternal = Boolean(entry.data.external);
+const href = isExternal
+  ? entry.data.external!
+  : localizedPath(`/research/${entry.data.slug}`, locale);
+
+const dateFormatter = new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+  year: 'numeric',
+  month: 'short',
+});
+const publishedAtLabel = dateFormatter.format(entry.data.publishedAt);
+
+const isMuted = entry.data.status === 'archived' || entry.data.status === 'draft';
+---
+
+<article
+  class:list={[
+    'flex h-full flex-col gap-5 rounded-md border border-[var(--color-line)] p-6 transition-colors duration-200 hover:border-[var(--color-line-strong)]',
+    isMuted && 'opacity-75',
+  ]}
+>
+  <header class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <span
+        class:list={[
+          'font-mono text-[11px] tracking-[0.16em] uppercase',
+          entry.data.status === 'published'
+            ? 'text-[var(--color-accent)]'
+            : 'text-[var(--color-fg-dim)]',
+        ]}
+      >
+        {t.research.types[entry.data.type]}
+      </span>
+      <span class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]">
+        {publishedAtLabel}
+      </span>
+    </div>
+
+    <h4 class="font-display text-[22px] leading-[1.2] font-bold tracking-[-0.01em]">
+      <a
+        href={href}
+        target={isExternal ? '_blank' : undefined}
+        rel={isExternal ? 'noopener noreferrer' : undefined}
+        class="inline-flex items-center gap-2 text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
+      >
+        {content.title}
+        {isExternal && <ExternalLink class="h-[14px] w-[14px] opacity-70" />}
+      </a>
+    </h4>
+
+    <p class="text-[15px] leading-[1.5] text-[var(--color-fg-muted)]">
+      {content.tagline}
+    </p>
+  </header>
+
+  {
+    entry.data.tags.length > 0 && (
+      <ul class="flex flex-wrap gap-1.5">
+        {entry.data.tags.map((tag) => (
+          <li class="rounded-sm border border-[var(--color-line)] px-2 py-1 font-mono text-[11px] tracking-[0.05em] text-[var(--color-fg-dim)]">
+            #{tag}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  {
+    entry.data.papers.length > 0 && (
+      <footer class="mt-auto border-t border-[var(--color-line)] pt-4">
+        <div class="mb-2 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          {t.research.papersLabel}
+        </div>
+        <ul class="flex flex-col gap-1.5">
+          {entry.data.papers.map((paper) => (
+            <li class="text-[13px] leading-[1.45] text-[var(--color-fg-muted)]">
+              <a
+                href={paper.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="transition-colors duration-200 hover:text-[var(--color-accent)]"
+              >
+                {paper.title}
+              </a>
+              <span class="text-[var(--color-fg-dim)]"> · {paper.authors}</span>
+            </li>
+          ))}
+        </ul>
+      </footer>
+    )
+  }
+</article>

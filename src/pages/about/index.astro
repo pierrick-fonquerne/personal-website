@@ -1,13 +1,27 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import Eyebrow from '../../components/ui/Eyebrow.astro';
 import About from '../../components/about/About.astro';
+import { useTranslations } from '../../lib/i18n';
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
 ---
 
 <BaseLayout
-  title="À propos · Pierrick Fonquerne"
+  title={`${t.about.indexTitle} · Pierrick Fonquerne`}
   description="Parcours, compétences et engagements de Pierrick Fonquerne, développeur full-stack basé à Limoux."
   current="/about"
-  locale="fr"
+  locale={locale}
 >
-  <About locale="fr" standalone />
+  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+    <Eyebrow text={t.about.eyebrow} />
+    <h1
+      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {t.about.indexTitle}
+    </h1>
+  </section>
+
+  <About locale={locale} standalone />
 </BaseLayout>
