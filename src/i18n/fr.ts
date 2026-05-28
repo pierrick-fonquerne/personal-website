@@ -12,6 +12,9 @@ const fr: Translations = {
     research: 'Recherche',
     about: 'À propos',
   },
+  toolbar: {
+    print: 'Imprimer le chapitre',
+  },
   projects: {
     title: '// Projets',
     lead: "Une sélection de ce que je construis, maintiens ou explore. Perso, open source et entrepreneurial.",

@@ -1,11 +1,16 @@
 ---
+import ChapterToolbar from './ChapterToolbar';
+import { useTranslations, type Locale } from '../../lib/i18n';
+
 interface Props {
   badge: string;
   title: string;
   subtitle?: string;
+  locale: Locale;
 }
 
-const { badge, title, subtitle } = Astro.props;
+const { badge, title, subtitle, locale } = Astro.props;
+const t = useTranslations(locale);
 ---
 
 <article class="min-w-0 py-12">
@@ -26,6 +31,7 @@ const { badge, title, subtitle } = Astro.props;
       )
     }
   </header>
+  <ChapterToolbar client:idle labels={{ print: t.toolbar.print }} />
   <div class="prose-module">
     <slot />
   </div>
