@@ -6,6 +6,18 @@
 @import './tokens.css';
 @import 'katex/dist/katex.min.css';
 
+@utility container-page {
+  margin-inline: auto;
+  max-width: 1280px;
+  padding-inline: 1rem;
+  @media (min-width: 640px) {
+    padding-inline: 1.5rem;
+  }
+  @media (min-width: 1024px) {
+    padding-inline: 3.5rem;
+  }
+}
+
 html {
   scroll-behavior: smooth;
   background: var(--color-bg);
@@ -153,8 +165,12 @@ body::before {
   transition: transform 0.12s ease;
 }
 .learning-slider:focus-visible::-webkit-slider-thumb {
-  box-shadow: 0 0 0 2px var(--color-accent), 0 0 0 4px var(--color-bg);
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    0 0 0 4px var(--color-bg);
 }
 .learning-slider:focus-visible::-moz-range-thumb {
-  box-shadow: 0 0 0 2px var(--color-accent), 0 0 0 4px var(--color-bg);
+  box-shadow:
+    0 0 0 2px var(--color-accent),
+    0 0 0 4px var(--color-bg);
 }

@@ -93,7 +93,7 @@ export interface Translations {
     types: {
       'deep-dive': string;
       'paper-synthesis': string;
-      'exploration': string;
+      exploration: string;
     };
     statuses: {
       draft: string;
@@ -180,6 +180,9 @@ export interface Translations {
   };
   a11y: {
     skipToContent: string;
+    openMenu: string;
+    closeMenu: string;
+    openChapters: string;
   };
   stack: {
     title: string;
@@ -292,14 +295,15 @@ const en: Translations = {
     indexTitle: 'Research',
     soon: 'Section under construction.',
     lead: 'A field notebook: deep dives, paper syntheses and explorations on the topics I care about.',
-    disclaimer: "I am not an academic researcher. No PhD, no claim to legitimacy or to publishing peer-reviewed work. Just curious, hands-on and stubborn. Today AI lets me explore and prototype ideas fast. Some are probably wrong. That's research: being wrong on the way to being a little less wrong.",
+    disclaimer:
+      "I am not an academic researcher. No PhD, no claim to legitimacy or to publishing peer-reviewed work. Just curious, hands-on and stubborn. Today AI lets me explore and prototype ideas fast. Some are probably wrong. That's research: being wrong on the way to being a little less wrong.",
     count: (n) => `${String(n).padStart(2, '0')} / notes`,
     emptyState: 'No note published yet. Come back soon.',
     backToList: '← Back to notes',
     types: {
       'deep-dive': 'Deep dive',
       'paper-synthesis': 'Paper synthesis',
-      'exploration': 'Exploration',
+      exploration: 'Exploration',
     },
     statuses: {
       draft: 'Draft',
@@ -541,6 +545,9 @@ const en: Translations = {
   },
   a11y: {
     skipToContent: 'Skip to content',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    openChapters: 'Open chapter list',
   },
 };
 

@@ -9,9 +9,7 @@ const terms = entries
   .map((e) => ({ slug: e.data.slug, ...e.data.fr, seeAlso: e.data.seeAlso }))
   .sort((a, b) => a.term.localeCompare(b.term, 'fr'));
 
-const allTerms = new Map(
-  entries.map((e) => [e.data.slug, e.data.fr.term]),
-);
+const allTerms = new Map(entries.map((e) => [e.data.slug, e.data.fr.term]));
 ---
 
 <BaseLayout
@@ -20,16 +18,16 @@ const allTerms = new Map(
   current="/glossary"
   locale={locale}
 >
-  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+  <section class="container-page py-16">
     <Eyebrow text="GLOSSAIRE" />
     <h1
-      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+      class="font-display mt-4 text-[clamp(28px,6vw,44px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       Glossaire
     </h1>
     <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
-      Définitions courtes des termes techniques utilisés dans les cours interactifs.
-      Chaque mot souligné en pointillés dans un cours renvoie vers son entrée ici.
+      Définitions courtes des termes techniques utilisés dans les cours interactifs. Chaque mot
+      souligné en pointillés dans un cours renvoie vers son entrée ici.
     </p>
 
     <ul class="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

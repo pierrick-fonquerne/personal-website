@@ -4,6 +4,7 @@ import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import CourseSidebar from '../../../../components/learning/CourseSidebar.astro';
 import ModuleLayout from '../../../../components/learning/ModuleLayout.astro';
 import ModuleNav from '../../../../components/learning/ModuleNav.astro';
+import ModuleNavMobile from '../../../../components/learning/ModuleNavMobile.astro';
 import {
   getCourse,
   listCourses,
@@ -56,7 +57,7 @@ const sidebarModules = modules.map((m) => ({
   current="/interactive-courses"
   locale={locale}
 >
-  <div class="mx-auto max-w-[1280px] px-6 lg:px-14">
+  <div class="container-page">
     <div class="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
       <CourseSidebar
         courseSlug={courseSlug!}
@@ -66,6 +67,14 @@ const sidebarModules = modules.map((m) => ({
         activeSlug={moduleSlug}
       />
       <div class="min-w-0">
+        <ModuleNavMobile
+          courseSlug={courseSlug!}
+          courseTitle={course.data.title}
+          locale={locale}
+          modules={sidebarModules}
+          activeSlug={moduleSlug}
+          openLabel={t.a11y.openChapters}
+        />
         <ModuleLayout
           badge={badge}
           title={current.data.title}
@@ -73,7 +82,9 @@ const sidebarModules = modules.map((m) => ({
           locale={locale}
           courseSlug={courseSlug!}
           moduleSlug={moduleSlug!}
-          nextHref={next ? `/en/interactive-courses/${courseSlug}/${moduleSlugOf(next)}` : undefined}
+          nextHref={next
+            ? `/en/interactive-courses/${courseSlug}/${moduleSlugOf(next)}`
+            : undefined}
           nextTitle={next ? next.data.title : undefined}
         >
           <Content />

@@ -1,0 +1,104 @@
+---
+import { localizedPath, type Locale } from '../../lib/i18n';
+
+interface ModuleLink {
+  slug: string;
+  title: string;
+  order: number;
+}
+
+interface Props {
+  courseSlug: string;
+  courseTitle: string;
+  locale: Locale;
+  modules: ModuleLink[];
+  activeSlug?: string;
+  openLabel: string;
+}
+
+const { courseSlug, courseTitle, locale, modules, activeSlug, openLabel } = Astro.props;
+const total = modules.length;
+const current = modules.find((m) => m.slug === activeSlug);
+const currentOrder = current?.order ?? 1;
+const currentTitle = current?.title ?? courseTitle;
+---
+
+<details
+  class="module-nav-mobile sticky top-[60px] z-30 mb-6 rounded-md border border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg-elevated)_92%,transparent)] backdrop-blur-[10px] backdrop-saturate-150 lg:hidden"
+>
+  <summary
+    class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md px-4 py-3 transition-colors hover:bg-[var(--color-hover)]"
+    aria-label={openLabel}
+  >
+    <span class="flex min-w-0 items-center gap-3">
+      <span
+        class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase tabular-nums"
+      >
+        {String(currentOrder).padStart(2, '0')} / {String(total).padStart(2, '0')}
+      </span>
+      <span class="font-display truncate text-[14px] font-bold text-[var(--color-fg)]">
+        {currentTitle}
+      </span>
+    </span>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="caret h-4 w-4 shrink-0 text-[var(--color-fg-muted)] transition-transform"
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  </summary>
+
+  <ol class="border-t border-[var(--color-line)] p-2">
+    <li>
+      <a
+        href={localizedPath(`/interactive-courses/${courseSlug}`, locale)}
+        class="block rounded-md px-3 py-2.5 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-accent)]"
+      >
+        ← {courseTitle}
+      </a>
+    </li>
+    {
+      modules.map((mod) => {
+        const href = localizedPath(`/interactive-courses/${courseSlug}/${mod.slug}`, locale);
+        const isActive = mod.slug === activeSlug;
+        return (
+          <li>
+            <a
+              href={href}
+              class:list={[
+                'flex gap-3 rounded-md px-3 py-3 font-mono text-[13px] transition-colors',
+                isActive
+                  ? 'bg-[var(--color-hover)] text-[var(--color-accent)]'
+                  : 'text-[var(--color-fg-muted)] hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
+              ]}
+            >
+              <span class="text-[var(--color-fg-dim)] tabular-nums">
+                {String(mod.order).padStart(2, '0')}
+              </span>
+              <span class="truncate">{mod.title}</span>
+            </a>
+          </li>
+        );
+      })
+    }
+  </ol>
+</details>
+
+<style>
+  .module-nav-mobile[open] .caret {
+    transform: rotate(180deg);
+  }
+  .module-nav-mobile summary::-webkit-details-marker {
+    display: none;
+  }
+  .module-nav-mobile summary::marker {
+    content: '';
+  }
+</style>

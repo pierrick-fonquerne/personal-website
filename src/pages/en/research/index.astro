@@ -17,10 +17,10 @@ const entries = (await getCollection('research')).filter((e) => e.data.published
   current="/research"
   locale={locale}
 >
-  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+  <section class="container-page py-16">
     <Eyebrow text={t.research.eyebrow} />
     <h1
-      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+      class="font-display mt-4 text-[clamp(28px,6vw,44px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       {t.research.indexTitle}
     </h1>

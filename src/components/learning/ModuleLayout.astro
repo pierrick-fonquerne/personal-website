@@ -52,7 +52,7 @@ const audioLabels = {
       {badge}
     </span>
     <h1
-      class="mt-3 font-display text-[40px] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+      class="font-display mt-3 text-[clamp(28px,6vw,40px)] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       {title}
     </h1>
@@ -63,7 +63,7 @@ const audioLabels = {
     }
   </header>
   <div
-    class="sticky top-4 z-20 mb-8 flex items-center justify-end gap-2"
+    class="sticky top-[112px] z-20 mb-8 flex flex-wrap items-center justify-end gap-2 lg:top-4"
     data-print="hide"
   >
     <ChapterToolbar client:idle labels={{ print: t.toolbar.print }} />
@@ -137,11 +137,21 @@ const audioLabels = {
     color: var(--color-fg-dim);
   }
   .prose-module :global(table) {
+    display: block;
     width: 100%;
+    max-width: 100%;
     margin: 1.4rem 0;
     border-collapse: collapse;
     font-size: 15px;
     line-height: 1.5;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .prose-module :global(table thead),
+  .prose-module :global(table tbody) {
+    display: table;
+    width: 100%;
+    min-width: 480px;
   }
   .prose-module :global(thead) {
     border-bottom: 1px solid var(--color-line-strong);

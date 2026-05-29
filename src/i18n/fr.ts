@@ -2,8 +2,7 @@ import type { Translations } from './en';
 
 const fr: Translations = {
   meta: {
-    description:
-      'Pierrick Fonquerne, développeur passionné. Projets, écrits et recherche.',
+    description: 'Pierrick Fonquerne, développeur passionné. Projets, écrits et recherche.',
   },
   nav: {
     home: 'Accueil',
@@ -42,7 +41,7 @@ const fr: Translations = {
     title: '// Projets',
     eyebrow: 'PROJETS',
     indexTitle: 'Projets',
-    lead: "Une sélection de ce que je construis, maintiens ou explore. Perso, open source et entrepreneurial.",
+    lead: 'Une sélection de ce que je construis, maintiens ou explore. Perso, open source et entrepreneurial.',
     soon: 'Section en construction.',
     count: (n) => `${String(n).padStart(2, '0')} / projets`,
     emptyCategory: 'Rien à montrer ici pour le moment.',
@@ -76,15 +75,16 @@ const fr: Translations = {
     eyebrow: 'RECHERCHE',
     indexTitle: 'Recherche',
     soon: 'Section en construction.',
-    lead: "Un carnet de bord : études techniques, notes de lecture et explorations sur les sujets qui me tiennent à cœur.",
-    disclaimer: "Je ne suis pas chercheur académique. Aucun doctorat, aucune prétention à publier des travaux à comité de lecture. Juste curieux, motivé et têtu. L'IA me permet aujourd'hui d'explorer et de prototyper des idées vite. Certaines sont probablement fausses. C'est aussi ça la recherche : se tromper en chemin pour se tromper un peu moins ensuite.",
+    lead: 'Un carnet de bord : études techniques, notes de lecture et explorations sur les sujets qui me tiennent à cœur.',
+    disclaimer:
+      "Je ne suis pas chercheur académique. Aucun doctorat, aucune prétention à publier des travaux à comité de lecture. Juste curieux, motivé et têtu. L'IA me permet aujourd'hui d'explorer et de prototyper des idées vite. Certaines sont probablement fausses. C'est aussi ça la recherche : se tromper en chemin pour se tromper un peu moins ensuite.",
     count: (n) => `${String(n).padStart(2, '0')} / notes`,
     emptyState: 'Aucune note publiée pour le moment. Reviens bientôt.',
     backToList: '← Retour aux notes',
     types: {
       'deep-dive': 'Étude technique',
       'paper-synthesis': 'Note de lecture',
-      'exploration': 'Exploration',
+      exploration: 'Exploration',
     },
     statuses: {
       draft: 'Brouillon',
@@ -327,6 +327,9 @@ const fr: Translations = {
   },
   a11y: {
     skipToContent: 'Aller au contenu',
+    openMenu: 'Ouvrir le menu',
+    closeMenu: 'Fermer le menu',
+    openChapters: 'Voir la liste des chapitres',
   },
 };
 

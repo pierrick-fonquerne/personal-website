@@ -28,10 +28,7 @@ const stats = [
 <section
   id="about"
   aria-labelledby={standalone ? undefined : 'about-heading'}
-  class:list={[
-    'mx-auto max-w-[1280px] pb-24',
-    standalone ? 'mt-0 px-6 lg:px-14' : 'mt-20 px-14',
-  ]}
+  class:list={['container-page pb-24', standalone ? 'mt-0 px-6 lg:px-14' : 'mt-20 px-14']}
 >
   {!standalone && <SectionHead id="about-heading" title={t.about.title} />}
 
