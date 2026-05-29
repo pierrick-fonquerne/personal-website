@@ -1,0 +1,87 @@
+---
+import type { Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  courseSlug: string;
+  moduleSlug: string;
+}
+
+const { locale, courseSlug, moduleSlug } = Astro.props;
+const storageKey = `reading-pos:${locale}/${courseSlug}/${moduleSlug}`;
+---
+
+<span id="reading-position" data-key={storageKey} hidden></span>
+
+<script is:inline>
+  (() => {
+    const SAVE_DELAY = 500;
+    const MIN_FRACTION = 0.1;
+    const MAX_FRACTION = 0.9;
+
+    const scrollableHeight = () => document.documentElement.scrollHeight - window.innerHeight;
+
+    const restore = () => {
+      const node = document.getElementById('reading-position');
+      if (!node || node.dataset.restored || window.location.hash) return;
+      node.dataset.restored = '1';
+      const key = node.dataset.key;
+      if (!key) return;
+      let saved;
+      try {
+        const raw = window.localStorage.getItem(key);
+        if (!raw) return;
+        saved = Number.parseFloat(raw);
+      } catch {
+        return;
+      }
+      if (!Number.isFinite(saved) || saved <= 0) return;
+      requestAnimationFrame(() => {
+        const max = scrollableHeight();
+        if (max > 0 && saved > max * MIN_FRACTION && saved < max * MAX_FRACTION) {
+          window.scrollTo(0, saved);
+        }
+      });
+    };
+
+    const bindSaver = () => {
+      if (window.__readingPosBound) return;
+      window.__readingPosBound = true;
+      let timer = 0;
+      const save = () => {
+        timer = 0;
+        const node = document.getElementById('reading-position');
+        const key = node && node.dataset.key;
+        if (!key) return;
+        try {
+          const max = scrollableHeight();
+          const y = window.scrollY;
+          if (max <= 0 || y < max * 0.05 || y > max * 0.95) {
+            window.localStorage.removeItem(key);
+          } else {
+            window.localStorage.setItem(key, String(Math.round(y)));
+          }
+        } catch {
+          /* localStorage unavailable */
+        }
+      };
+      window.addEventListener(
+        'scroll',
+        () => {
+          if (timer) return;
+          timer = window.setTimeout(save, SAVE_DELAY);
+        },
+        { passive: true },
+      );
+    };
+
+    const init = () => {
+      if (!document.getElementById('reading-position')) return;
+      restore();
+      bindSaver();
+    };
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>
