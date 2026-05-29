@@ -46,10 +46,37 @@ function sortEntries(items: CollectionEntry<'research'>[]) {
 
 const visibleEntries = entries.filter((e) => e.data.status !== 'archived');
 
-const groups = THEME_ORDER.map((theme) => ({
-  theme: theme as Theme,
-  items: sortEntries(visibleEntries.filter((e) => e.data.theme === theme)),
-})).filter((g) => g.items.length > 0);
+interface ProgramGroup {
+  program: string;
+  items: CollectionEntry<'research'>[];
+}
+
+interface DomainGroup {
+  theme: Theme;
+  total: number;
+  free: CollectionEntry<'research'>[];
+  programs: ProgramGroup[];
+}
+
+const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
+  const inTheme = visibleEntries.filter((e) => e.data.theme === theme);
+  const free = sortEntries(inTheme.filter((e) => !e.data.subtheme));
+
+  const byProgram = new Map<string, CollectionEntry<'research'>[]>();
+  for (const entry of inTheme) {
+    const program = entry.data.subtheme;
+    if (!program) continue;
+    const bucket = byProgram.get(program) ?? [];
+    bucket.push(entry);
+    byProgram.set(program, bucket);
+  }
+
+  const programs: ProgramGroup[] = [...byProgram.entries()]
+    .map(([program, items]) => ({ program, items: sortEntries(items) }))
+    .sort((a, b) => a.program.localeCompare(b.program, locale));
+
+  return { theme: theme as Theme, total: inTheme.length, free, programs };
+}).filter((group) => group.total > 0);
 ---
 
 {
@@ -66,13 +93,37 @@ const groups = THEME_ORDER.map((theme) => ({
           <CategoryHeading
             id={`research-${group.theme}`}
             title={t.themes[group.theme]}
-            count={t.research.count(group.items.length)}
+            count={t.research.count(group.total)}
           />
-          <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-            {group.items.map((entry) => (
-              <ResearchCard entry={entry} locale={locale} />
-            ))}
-          </div>
+
+          {group.free.length > 0 && (
+            <div class="mt-8" aria-label={t.research.freeFlow}>
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {group.free.map((entry) => (
+                  <ResearchCard entry={entry} locale={locale} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {group.programs.map((prog) => (
+            <div class="mt-12">
+              <div class="mb-6 flex items-center gap-4">
+                <span class="font-mono text-[12px] tracking-[0.16em] text-[var(--color-fg)] uppercase">
+                  {prog.program}
+                </span>
+                <span class="h-px flex-1 bg-[var(--color-line)]" />
+                <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+                  {t.research.count(prog.items.length)}
+                </span>
+              </div>
+              <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {prog.items.map((entry) => (
+                  <ResearchCard entry={entry} locale={locale} />
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
       ))}
     </div>
