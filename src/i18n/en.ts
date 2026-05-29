@@ -210,6 +210,17 @@ export interface Translations {
     siteTitle: string;
     elsewhereTitle: string;
     contactTitle: string;
+    legalLink: string;
+  };
+  consent: {
+    message: string;
+    accept: string;
+    decline: string;
+    learnMore: string;
+  };
+  legal: {
+    indexTitle: string;
+    linkLabel: string;
   };
   socials: {
     github: string;
@@ -536,6 +547,17 @@ const en: Translations = {
     siteTitle: '// Site',
     elsewhereTitle: '// Elsewhere',
     contactTitle: '// Contact',
+    legalLink: 'Legal',
+  },
+  consent: {
+    message: 'This site uses Umami Analytics to measure audience anonymously, without cookies.',
+    accept: 'Accept',
+    decline: 'Decline',
+    learnMore: 'Learn more',
+  },
+  legal: {
+    indexTitle: 'Legal Notice',
+    linkLabel: 'Legal',
   },
   socials: {
     github: 'GitHub',

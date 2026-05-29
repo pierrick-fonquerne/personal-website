@@ -39,14 +39,6 @@ const siteVersion = 'v2026.05';
             </li>
           ))
         }
-        <li class="col-span-2 mt-2 border-t border-[var(--color-line)] pt-2">
-          <a
-            href={localizedPath('/legal', locale)}
-            class="text-xs transition-colors duration-200 hover:text-[var(--color-accent)]"
-          >
-            {t.footer.legalLink}
-          </a>
-        </li>
       </ul>
     </div>
 
@@ -109,6 +101,14 @@ const siteVersion = 'v2026.05';
           >
             <Mail class="h-[14px] w-[14px] opacity-70" />
             {SITE.email}
+          </a>
+        </li>
+        <li class="mt-2 border-t border-[var(--color-line)] pt-2">
+          <a
+            href={localizedPath('/legal', locale)}
+            class="text-xs transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            {t.footer.legalLink}
           </a>
         </li>
       </ul>
