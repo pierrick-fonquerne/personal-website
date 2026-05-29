@@ -3,6 +3,7 @@ import ChapterToolbar from './ChapterToolbar';
 import ChapterAudioPlayer from './ChapterAudioPlayer';
 import MathZoom from './MathZoom.astro';
 import CodeCopy from './CodeCopy.astro';
+import TermSheet from './TermSheet.astro';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -87,6 +88,7 @@ const audioLabels = {
 </article>
 <MathZoom zoomLabel={t.a11y.zoomEquation} closeLabel={t.a11y.closeZoom} />
 <CodeCopy copyLabel={t.a11y.copyCode} copiedLabel={t.a11y.copiedCode} />
+<TermSheet openGlossaryLabel={t.a11y.openGlossary} closeLabel={t.a11y.closeDefinition} />
 
 <style>
   .prose-module :global(h2) {

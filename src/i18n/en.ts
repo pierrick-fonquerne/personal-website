@@ -187,6 +187,8 @@ export interface Translations {
     closeZoom: string;
     copyCode: string;
     copiedCode: string;
+    openGlossary: string;
+    closeDefinition: string;
   };
   stack: {
     title: string;
@@ -578,6 +580,8 @@ const en: Translations = {
     closeZoom: 'Close zoom',
     copyCode: 'Copy code',
     copiedCode: 'Copied!',
+    openGlossary: 'Open glossary',
+    closeDefinition: 'Close',
   },
 };
 

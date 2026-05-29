@@ -345,6 +345,8 @@ const fr: Translations = {
     closeZoom: 'Fermer le zoom',
     copyCode: 'Copier le code',
     copiedCode: 'Copié !',
+    openGlossary: 'Ouvrir le glossaire',
+    closeDefinition: 'Fermer',
   },
 };
 
