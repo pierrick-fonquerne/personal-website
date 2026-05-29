@@ -4,7 +4,7 @@ order: 4
 title: The perceptron
 subtitle: 'How Rosenblatt taught a machine to learn without a gradient (1958).'
 estimatedMinutes: 35
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -17,7 +17,7 @@ import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 
-In chapter 3 you learned why an <Term slug="fonction-activation">activation function</Term> has to be <Term slug="non-linearite">non-linear</Term> and differentiable for a deep network to be mathematically interesting. Yet the first artificial neuron that could ever learn, the <Term slug="perceptron">perceptron</Term> of Frank Rosenblatt (1958), uses the <Term slug="fonction-seuil">threshold function</Term>, which is almost everywhere differentiable with derivative zero. How did Rosenblatt make such a machine learn anything at all?
+In chapter 3 you learned why an activation function has to be <Term slug="non-linearite">non-linear</Term> and differentiable for a deep network to be mathematically interesting. Yet the first artificial neuron that could ever learn, the perceptron of Frank Rosenblatt (1958), uses the <Term slug="fonction-seuil">threshold function</Term>, which is almost everywhere differentiable with derivative zero. How did Rosenblatt make such a machine learn anything at all?
 
 This chapter answers that question by building the perceptron from a purely geometric point of view, without ever differentiating. We prove that the procedure converges on a separable dataset, then we discover the limit that ended the first age of neural networks.
 
@@ -253,7 +253,7 @@ corrections before classifying every sample correctly.
 
 Let $w_t$ denote the weight vector after the $t$-th correction.
 
-**Lemma 1 (lower bound).** _For every $t \geq 0$, $w_t \cdot w^_ \geq t \gamma$.\*
+**Lemma 1 (lower bound).** _For every $t \geq 0$, $w_t \cdot w^* \geq t \gamma$._
 
 **Step 1.** At initialisation $w_0 = 0$, hence $w_0 \cdot w^* = 0$.
 
@@ -293,7 +293,7 @@ $$
 
 **Combining via Cauchy-Schwarz.**
 
-**Step 1.** The <Term slug="cauchy-schwarz">Cauchy-Schwarz</Term> inequality says, for two vectors $u, v$:
+**Step 1.** The Cauchy-Schwarz inequality says, for two vectors $u, v$:
 
 $$
 u \cdot v \;\leq\; \|u\| \, \|v\|.
@@ -360,7 +360,7 @@ This procedure, the **Pocket Algorithm**, was introduced by Gallant (1990). On a
 
 ### The impossible checkerboard analogy
 
-Picture four squares of a chessboard: the diagonals alternate (two whites at bottom-left and top-right, two blacks at top-left and bottom-right). No single straight line can separate the whites from the blacks. That is exactly the situation of the <Term slug="xor">XOR</Term> function.
+Picture four squares of a chessboard: the diagonals alternate (two whites at bottom-left and top-right, two blacks at top-left and bottom-right). No single straight line can separate the whites from the blacks. That is exactly the situation of the XOR function.
 
 ### Statement
 
@@ -415,7 +415,7 @@ Three things to watch as you play:
 
 ### Historical context
 
-Marvin <Term slug="minsky-papert">Minsky and Seymour Papert</Term> publish _Perceptrons_ in 1969, the central chapter of which proves this impossibility and generalises it to a whole family of "non-local" functions. Their rigorous analysis contributed to a withdrawal of public funding for neural network research, a period we now call the first <Term slug="hiver-de-l-ia">AI winter</Term>. Recovery had to wait for Hopfield in 1982 and the rediscovery of <Term slug="backpropagation">backpropagation</Term> by Rumelhart, Hinton and Williams in 1986.
+Marvin <Term slug="minsky-papert">Minsky and Seymour Papert</Term> publish _Perceptrons_ in 1969, the central chapter of which proves this impossibility and generalises it to a whole family of "non-local" functions. Their rigorous analysis contributed to a withdrawal of public funding for neural network research, a period we now call the first <Term slug="hiver-de-l-ia">AI winter</Term>. Recovery had to wait for Hopfield in 1982 and the rediscovery of backpropagation by Rumelhart, Hinton and Williams in 1986.
 
 ## Pen-and-paper exercises
 

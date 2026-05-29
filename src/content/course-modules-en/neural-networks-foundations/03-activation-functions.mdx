@@ -4,7 +4,7 @@ order: 3
 title: Activation functions
 subtitle: 'Identity, sigmoid, ReLU, tanh: why they exist, what they give, and how to choose.'
 estimatedMinutes: 16
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -16,7 +16,7 @@ import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
-In chapters 1 and 2 you met the <Term slug="fonction-activation">activation function</Term> $f$ in the formula $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ without really spending time on it. That's the subject of this chapter. We will see why it is mathematically essential, compare the four classics (Identity, sigmoid, ReLU, tanh) and learn how to choose between them.
+In chapters 1 and 2 you met the activation function $f$ in the formula $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ without really spending time on it. That's the subject of this chapter. We will see why it is mathematically essential, compare the four classics (Identity, sigmoid, ReLU, tanh) and learn how to choose between them.
 
 <Callout kind="info" title="Prerequisites and level">
 **What you need to know**: chapter 1 (neuron), the notation $f(z)$ of a real function of one variable, and the intuitive meaning of a derivative. Derivatives appear from the interactive-plot section onwards, but you are not asked to *compute* them by hand before chapter 7; understanding that a derivative is a slope is enough.
@@ -64,7 +64,7 @@ The same argument repeats at every transition between layers. That is why we ins
 To be usable in practice, a function $f$ has to tick several boxes:
 
 1. **Non-linear** (for the reason we just saw).
-2. **Differentiable** almost everywhere, so <Term slug="backpropagation">backpropagation</Term> can compute a gradient (chapter 8).
+2. **Differentiable** almost everywhere, so backpropagation can compute a gradient (chapter 8).
 3. **Fast to compute**, because we evaluate it millions of times per second during training.
 4. **Bounded** (ideally), to keep outputs from blowing up.
 5. **Non-zero gradient** over a wide range, otherwise training stalls.

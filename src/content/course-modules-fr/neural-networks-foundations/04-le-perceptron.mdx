@@ -4,7 +4,7 @@ order: 4
 title: Le perceptron
 subtitle: 'Comment Rosenblatt a fait apprendre une machine sans gradient (1958).'
 estimatedMinutes: 35
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -17,7 +17,7 @@ import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 
-Au chapitre 3, tu as compris pourquoi une <Term slug="fonction-activation">fonction d'activation</Term> doit être <Term slug="non-linearite">non-linéaire</Term> et dérivable pour qu'un réseau profond ait un intérêt mathématique. Or le premier neurone artificiel capable d'apprendre, le <Term slug="perceptron">perceptron</Term> de Frank Rosenblatt (1958), utilise la <Term slug="fonction-seuil">fonction de seuil</Term>, qui n'est presque partout dérivable que de dérivée nulle. Comment Rosenblatt a-t-il pu lui faire apprendre quoi que ce soit ?
+Au chapitre 3, tu as compris pourquoi une fonction d'activation doit être <Term slug="non-linearite">non-linéaire</Term> et dérivable pour qu'un réseau profond ait un intérêt mathématique. Or le premier neurone artificiel capable d'apprendre, le perceptron de Frank Rosenblatt (1958), utilise la <Term slug="fonction-seuil">fonction de seuil</Term>, qui n'est presque partout dérivable que de dérivée nulle. Comment Rosenblatt a-t-il pu lui faire apprendre quoi que ce soit ?
 
 Ce chapitre répond à cette question en construisant le perceptron d'un point de vue géométrique, sans dérivée. On démontre que la procédure converge sur un dataset séparable, puis on découvre la limite qui a mis fin au premier âge des réseaux de neurones.
 
@@ -253,7 +253,7 @@ corrections avant de classer correctement tous les exemples.
 
 On note $w_t$ le vecteur de poids après la $t$-ème correction.
 
-**Lemme 1 (minoration).** _Pour tout $t \geq 0$, $w_t \cdot w^_ \geq t \gamma$.\*
+**Lemme 1 (minoration).** _Pour tout $t \geq 0$, $w_t \cdot w^* \geq t \gamma$._
 
 **Étape 1.** À l'initialisation, $w_0 = 0$, donc $w_0 \cdot w^* = 0$.
 
@@ -293,7 +293,7 @@ $$
 
 **Combinaison via Cauchy-Schwarz.**
 
-**Étape 1.** L'inégalité de <Term slug="cauchy-schwarz">Cauchy-Schwarz</Term> donne, pour deux vecteurs $u, v$ :
+**Étape 1.** L'inégalité de Cauchy-Schwarz donne, pour deux vecteurs $u, v$ :
 
 $$
 u \cdot v \;\leq\; \|u\| \, \|v\|.
@@ -363,7 +363,7 @@ Cette procédure, le **Pocket Algorithm**, a été introduite par Gallant (1990)
 
 ### L'analogie du damier impossible
 
-Imagine quatre cases d'un damier : les diagonales sont alternées (deux blanches en bas-gauche et haut-droite, deux noires en haut-gauche et bas-droite). Aucune ligne droite ne peut séparer les deux blanches des deux noires. C'est exactement la situation de la fonction <Term slug="xor">XOR</Term>.
+Imagine quatre cases d'un damier : les diagonales sont alternées (deux blanches en bas-gauche et haut-droite, deux noires en haut-gauche et bas-droite). Aucune ligne droite ne peut séparer les deux blanches des deux noires. C'est exactement la situation de la fonction XOR.
 
 ### Énoncé
 
@@ -418,7 +418,7 @@ Trois choses à observer en jouant :
 
 ### Le contexte historique
 
-Marvin <Term slug="minsky-papert">Minsky et Seymour Papert</Term> publient _Perceptrons_ en 1969, livre dont le chapitre central démontre cette impossibilité et la généralise à toute une famille de fonctions « non-locales ». Leur analyse rigoureuse a contribué à un repli du financement public de la recherche en réseaux de neurones, période qu'on appelle aujourd'hui le premier <Term slug="hiver-de-l-ia">hiver de l'IA</Term>. Il faudra attendre Hopfield en 1982 et la redécouverte de la <Term slug="backpropagation">rétropropagation</Term> par Rumelhart, Hinton et Williams en 1986 pour que la communauté reparte.
+Marvin <Term slug="minsky-papert">Minsky et Seymour Papert</Term> publient _Perceptrons_ en 1969, livre dont le chapitre central démontre cette impossibilité et la généralise à toute une famille de fonctions « non-locales ». Leur analyse rigoureuse a contribué à un repli du financement public de la recherche en réseaux de neurones, période qu'on appelle aujourd'hui le premier <Term slug="hiver-de-l-ia">hiver de l'IA</Term>. Il faudra attendre Hopfield en 1982 et la redécouverte de la rétropropagation par Rumelhart, Hinton et Williams en 1986 pour que la communauté reparte.
 
 ## Exercices papier-crayon
 

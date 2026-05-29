@@ -4,7 +4,7 @@ order: 3
 title: Fonctions d'activation
 subtitle: "Identity, sigmoïde, ReLU, tanh : pourquoi elles existent, ce qu'elles donnent, et comment choisir."
 estimatedMinutes: 16
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -16,7 +16,7 @@ import Term from '../../../components/learning/Term.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
 
-Aux chapitres 1 et 2 tu as croisé la <Term slug="fonction-activation">fonction d'activation</Term> $f$ dans la formule $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ sans qu'on lui consacre vraiment de temps. C'est l'objet de ce chapitre. On va voir pourquoi elle est mathématiquement indispensable, comparer les quatre classiques (Identity, sigmoïde, ReLU, tanh) et apprendre à les choisir.
+Aux chapitres 1 et 2 tu as croisé la fonction d'activation $f$ dans la formule $y = f(\mathbf{w} \cdot \mathbf{x} + b)$ sans qu'on lui consacre vraiment de temps. C'est l'objet de ce chapitre. On va voir pourquoi elle est mathématiquement indispensable, comparer les quatre classiques (Identity, sigmoïde, ReLU, tanh) et apprendre à les choisir.
 
 <Callout kind="info" title="Pré-requis et niveau">
 **Ce qu'il faut savoir** : les concepts du chapitre 1 (neurone), la notation $f(z)$ d'une fonction réelle d'une variable, et le sens intuitif d'une dérivée. La dérivée apparaît dès la section sur le tracé interactif, mais on ne demande pas de la *calculer* à la main avant le chapitre 7 ; il suffit de comprendre qu'elle mesure une pente.
@@ -64,7 +64,7 @@ Cet argument se reproduit à chaque transition entre couches. C'est pourquoi on 
 Pour être utilisable en pratique, une fonction $f$ doit cocher plusieurs cases :
 
 1. **Non-linéaire** (pour la raison qu'on vient de voir).
-2. **Dérivable** presque partout, pour que la <Term slug="backpropagation">backpropagation</Term> puisse calculer un gradient (sujet du chapitre 8).
+2. **Dérivable** presque partout, pour que la backpropagation puisse calculer un gradient (sujet du chapitre 8).
 3. **Calculable rapidement**, parce qu'on l'évalue des millions de fois par seconde en entraînement.
 4. **Bornée** (idéalement), pour éviter que la sortie ne diverge.
 5. **De gradient non-nul** sur un intervalle large, sinon l'apprentissage stagne.
