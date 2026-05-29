@@ -20,8 +20,10 @@ const homeHref = localizedPath('/', locale);
 <nav
   class="sticky top-0 z-50 border-b border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] backdrop-blur-[14px] backdrop-saturate-150"
 >
-  <div class="container-page flex items-center justify-between py-3.5">
-    <a href={homeHref} class="group flex items-center gap-3.5" aria-label={SITE.name}>
+  <div
+    class="container-page flex items-center justify-between pt-[max(0.875rem,env(safe-area-inset-top))] pb-3.5"
+  >
+    <a href={homeHref} class="group flex items-center gap-3.5">
       <span
         class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-colors duration-200 group-hover:border-[var(--color-accent)]"
       >
@@ -99,7 +101,9 @@ const homeHref = localizedPath('/', locale);
   class="m-0 h-dvh max-h-none w-dvw max-w-none border-0 bg-[var(--color-bg)] p-0 text-[var(--color-fg)]"
   aria-label={t.a11y.openMenu}
 >
-  <div class="container-page flex h-full flex-col py-4">
+  <div
+    class="container-page flex h-full flex-col pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]"
+  >
     <div class="flex items-center justify-end">
       <button
         id="nav-drawer-close"

@@ -9,12 +9,14 @@
 @utility container-page {
   margin-inline: auto;
   max-width: 1280px;
-  padding-inline: 1rem;
+  padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
   @media (min-width: 640px) {
-    padding-inline: 1.5rem;
+    padding-inline: max(1.5rem, env(safe-area-inset-left))
+      max(1.5rem, env(safe-area-inset-right));
   }
   @media (min-width: 1024px) {
-    padding-inline: 3.5rem;
+    padding-inline: max(3.5rem, env(safe-area-inset-left))
+      max(3.5rem, env(safe-area-inset-right));
   }
 }
 
