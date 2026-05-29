@@ -6,6 +6,7 @@ import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ConsentBanner from '../components/layout/ConsentBanner.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
+import { Font } from 'astro:assets';
 import {
   getLocaleFromUrl,
   LOCALES,
@@ -44,6 +45,10 @@ const resolvedDescription = description ?? t.meta.description;
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
     <meta name="generator" content={Astro.generator} />
+
+    <Font cssVariable="--font-geist" preload />
+    <Font cssVariable="--font-inter" />
+    <Font cssVariable="--font-jetbrains" />
 
     <title>{title}</title>
     <meta name="description" content={resolvedDescription} />

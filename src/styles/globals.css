@@ -1,7 +1,3 @@
-@import '@fontsource-variable/geist';
-@import '@fontsource-variable/inter';
-@import '@fontsource-variable/jetbrains-mono';
-
 @import 'tailwindcss';
 @import './tokens.css';
 @import 'katex/dist/katex.min.css';
