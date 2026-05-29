@@ -4,6 +4,7 @@ import '../styles/print.css';
 import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
+import ConsentBanner from '../components/layout/ConsentBanner.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
 import {
   getLocaleFromUrl,
@@ -38,7 +39,10 @@ const resolvedDescription = description ?? t.meta.description;
 <html lang={locale} data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="generator" content={Astro.generator} />
 
     <title>{title}</title>
@@ -139,5 +143,10 @@ const resolvedDescription = description ?? t.meta.description;
       <slot />
     </main>
     <Footer locale={locale} />
+    <ConsentBanner
+      locale={locale}
+      umamiSiteId={import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''}
+      umamiUrl={import.meta.env.PUBLIC_UMAMI_URL ?? ''}
+    />
   </body>
 </html>
