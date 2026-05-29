@@ -1,0 +1,5 @@
+# Force LF line endings for files executed on Linux servers
+scripts/*.sh text eol=lf
+
+# Default: auto CRLF for Windows text files
+* text=auto
