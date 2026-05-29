@@ -153,10 +153,12 @@ Une seule vue d'ensemble pour mémoriser les quatre fonctions classiques : forme
 |---|---|---|---|---|
 | Identity | $f(x) = x$ | $f'(x) = 1$ | $\mathbb{R}$ | 1× (référence) |
 | Sigmoïde | $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ | $\sigma'(x) = \sigma(x)(1 - \sigma(x))$ | $(0, 1)$ | ~10× (une exp) |
-| Tanh | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$ | $(-1, 1)$ | ~15× (deux exp) |
+| Tanh | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$ | $(-1, 1)$ | ~10× (une exp en pratique) |
 | ReLU | $\text{ReLU}(x) = \max(0, x)$ | $\text{ReLU}'(x) = \mathbb{1}[x > 0]$ | $[0, +\infty)$ | 1× (un test) |
 
 Trois observations à garder en tête : (1) seules ReLU et Identity ont un coût aussi faible que le produit scalaire qui les précède ; (2) seules Sigmoïde et Tanh saturent et donc déclenchent le vanishing gradient ; (3) seule ReLU peut mourir, ce que les variantes modernes ci-dessous corrigent.
+
+Les coûts relatifs sont des **ordres de grandeur** : la valeur exacte dépend du hardware (CPU vs GPU, FP32 vs FP16, présence d'instructions vectorielles ou de tables de lookup pour l'exponentielle). Sur un CPU sans optimisation matérielle de l'exponentielle, on est dans la zone indiquée ; sur un GPU moderne en FP16, l'écart entre ReLU et sigmoïde se resserre significativement. Note pratique : on calcule tanh comme $\tanh(x) = 1 - 2 / (e^{2x} + 1)$, ce qui ne demande qu'une seule exponentielle malgré la formule définitionnelle qui en suggère deux.
 
 ## La famille ReLU moderne
 
@@ -178,7 +180,7 @@ Au lieu de plaquer la sortie à zéro pour les entrées négatives, on laisse pa
 GELU(x) = x · Φ(x)
 </Formula>
 
-**Équation** : $\text{GELU}(x) = x \cdot \Phi(x)$, où $\Phi$ est la fonction de répartition de la loi normale standard. C'est l'activation utilisée dans BERT, GPT-2, GPT-3, GPT-4, Llama, Claude et la plupart des transformers modernes. **Dérivée** : $\Phi(x) + x \cdot \phi(x)$ où $\phi$ est la densité gaussienne.
+**Équation** : $\text{GELU}(x) = x \cdot \Phi(x)$, où $\Phi$ est la fonction de répartition de la loi normale standard. C'est l'activation des transformers de la fin des années 2010 (BERT, GPT-2, GPT-3) et elle reste très utilisée dans la plupart des transformers contemporains. Les architectures propriétaires plus récentes (GPT-4, Claude) ne publient pas leur choix d'activation. **Dérivée** : $\Phi(x) + x \cdot \phi(x)$ où $\phi$ est la densité gaussienne.
 
 Géométriquement, GELU se comporte presque comme ReLU loin de zéro, mais elle est lisse partout (donc dérivable partout, contrairement à ReLU). Introduite par Hendrycks et Gimpel (2016).
 
@@ -188,7 +190,7 @@ Géométriquement, GELU se comporte presque comme ReLU loin de zéro, mais elle 
 SiLU(x) = x · σ(x)
 </Formula>
 
-**Équation** : $\text{SiLU}(x) = x \cdot \sigma(x)$, où $\sigma$ est la sigmoïde. C'est la même chose que la fonction « Swish » de Ramachandran et al. (2017), simplement renommée. Utilisée dans EfficientNet, Mixtral, certaines variantes de Llama. **Dérivée** : $\sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))$.
+**Équation** : $\text{SiLU}(x) = x \cdot \sigma(x)$, où $\sigma$ est la sigmoïde. C'est la même chose que la fonction « Swish » de Ramachandran et al. (2017), simplement renommée. Elle est la composante d'activation interne de **SwiGLU**, le bloc utilisé dans Llama (toutes générations), Mistral, Mixtral, PaLM et la plupart des LLMs ouverts récents. Elle apparaît aussi telle quelle dans EfficientNet. **Dérivée** : $\sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))$.
 
 Forme très proche de GELU, légèrement moins chère à calculer (pas de fonction d'erreur, juste une sigmoïde). Décrite indépendamment par Elfwing, Uchibe et Doya (2018) sous le nom SiLU.
 

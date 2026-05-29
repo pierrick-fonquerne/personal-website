@@ -95,7 +95,41 @@ Trois expériences à tenter :
 - Place-les perpendiculairement (par exemple $\mathbf{x} = (1, 0)$ et $\mathbf{w} = (0, 1)$). Le produit scalaire est exactement zéro.
 - Inverse la direction de $\mathbf{w}$ (mets $w_1$ et $w_2$ négatifs). Le produit scalaire devient négatif, car les flèches pointent dans des directions opposées.
 
-### Cauchy-Schwarz, ou pourquoi la formule géométrique est légitime
+Pour aller plus loin et démontrer que la formulation géométrique du produit scalaire n'est pas une définition tombée du ciel mais bien une conséquence de la définition algébrique, il nous faut d'abord deux outils : la **norme** d'un vecteur et une **identité de calcul** sur les normes. On les installe maintenant, puis on les utilisera dans la section sur l'inégalité de Cauchy-Schwarz.
+
+## Norme et distance
+
+La **norme** (ou longueur) d'un vecteur $\mathbf{x} \in \mathbb{R}^n$ est définie par le produit scalaire avec lui-même :
+
+$$
+\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
+$$
+
+C'est la généralisation du théorème de Pythagore en $n$ dimensions. En 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, soit la longueur de l'hypoténuse d'un triangle rectangle.
+
+La **distance** entre deux vecteurs $\mathbf{u}$ et $\mathbf{v}$ est la norme de leur différence : $\|\mathbf{u} - \mathbf{v}\|$. C'est ce qui te permet de mesurer « à quel point deux images se ressemblent » quand chaque image est représentée comme un vecteur.
+
+### Démonstration utile : l'identité du parallélogramme
+
+Une propriété revient sans cesse en machine learning. On l'établit ici une fois pour toutes, à partir des définitions :
+
+$$
+\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2
+$$
+
+<Callout kind="tip" title="Démonstration en quatre lignes">
+Par définition, $\|\mathbf{x} + \mathbf{w}\|^2 = (\mathbf{x} + \mathbf{w}) \cdot (\mathbf{x} + \mathbf{w})$.
+
+En distribuant : $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \mathbf{w} \cdot \mathbf{x} + \mathbf{w} \cdot \mathbf{w}$.
+
+Le produit scalaire est commutatif ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), donc deux termes croisés se combinent en $2\,\mathbf{x} \cdot \mathbf{w}$.
+
+D'où $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
+</Callout>
+
+Cette identité, c'est exactement le théorème de Pythagore généralisé. Conséquence immédiate : si $\mathbf{x}$ et $\mathbf{w}$ sont orthogonaux ($\mathbf{x} \cdot \mathbf{w} = 0$), alors $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagore dans toute sa splendeur, sans triangle ni angle droit explicite.
+
+## Cauchy-Schwarz, ou pourquoi la formule géométrique est légitime
 
 Beaucoup de cours présentent la formule $\mathbf{x} \cdot \mathbf{w} = \|\mathbf{x}\| \, \|\mathbf{w}\| \cos(\theta)$ comme une seconde définition du produit scalaire, tombée du ciel. Ce n'est pas honnête. La bonne lecture est inverse : on définit le produit scalaire algébriquement (somme des produits coordonnée par coordonnée), on démontre une inégalité fondamentale, et c'est cette inégalité qui rend la formule géométrique légitime.
 
@@ -118,7 +152,7 @@ $$
 
 Une norme au carré est toujours positive ou nulle, donc $P(t) \geq 0$ pour tout $t$.
 
-**Étape 2.** On développe $P(t)$ en utilisant l'identité du parallélogramme prouvée plus bas dans ce chapitre :
+**Étape 2.** On développe $P(t)$ en utilisant l'identité du parallélogramme prouvée juste au-dessus :
 
 $$
 P(t) = \|\mathbf{x}\|^2 + 2 t \, (\mathbf{x} \cdot \mathbf{w}) + t^2 \|\mathbf{w}\|^2
@@ -202,38 +236,6 @@ Les conséquences usuelles de la formule géométrique se lisent immédiatement 
 Géométriquement, le produit scalaire mesure **à quel point deux vecteurs pointent dans la même direction**, pondéré par leurs longueurs. C'est exactement ce que veut savoir un neurone : *« mes entrées ressemblent-elles à mes poids ? »*
 
 En machine learning, l'inégalité de Cauchy-Schwarz garantit aussi que tu peux toujours **normaliser** un produit scalaire par les longueurs pour obtenir une mesure dans $[-1, 1]$, appelée *similarité cosinus*. C'est l'outil de base pour comparer deux représentations vectorielles, par exemple deux embeddings de mots ou de phrases.
-
-## Norme et distance
-
-La **norme** (ou longueur) d'un vecteur $\mathbf{x} \in \mathbb{R}^n$ est définie par le produit scalaire avec lui-même :
-
-$$
-\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
-$$
-
-C'est la généralisation du théorème de Pythagore en $n$ dimensions. En 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, soit la longueur de l'hypoténuse d'un triangle rectangle.
-
-La **distance** entre deux vecteurs $\mathbf{u}$ et $\mathbf{v}$ est la norme de leur différence : $\|\mathbf{u} - \mathbf{v}\|$. C'est ce qui te permet de mesurer « à quel point deux images se ressemblent » quand chaque image est représentée comme un vecteur.
-
-### Démonstration utile : l'identité du parallélogramme
-
-Une propriété revient sans cesse en machine learning. On l'établit ici une fois pour toutes, à partir des définitions :
-
-$$
-\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2
-$$
-
-<Callout kind="tip" title="Démonstration en quatre lignes">
-Par définition, $\|\mathbf{x} + \mathbf{w}\|^2 = (\mathbf{x} + \mathbf{w}) \cdot (\mathbf{x} + \mathbf{w})$.
-
-En distribuant : $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \mathbf{w} \cdot \mathbf{x} + \mathbf{w} \cdot \mathbf{w}$.
-
-Le produit scalaire est commutatif ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), donc deux termes croisés se combinent en $2\,\mathbf{x} \cdot \mathbf{w}$.
-
-D'où $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
-</Callout>
-
-Cette identité, c'est exactement le théorème de Pythagore généralisé. Conséquence immédiate : si $\mathbf{x}$ et $\mathbf{w}$ sont orthogonaux ($\mathbf{x} \cdot \mathbf{w} = 0$), alors $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagore dans toute sa splendeur, sans triangle ni angle droit explicite.
 
 ## Transposée et produit matriciel
 

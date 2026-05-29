@@ -105,7 +105,41 @@ Three experiments to try:
 - Place them perpendicularly (e.g. $\mathbf{x} = (1, 0)$ and $\mathbf{w} = (0, 1)$). The dot product is exactly zero.
 - Flip the direction of $\mathbf{w}$ (negative $w_1$ and $w_2$). The dot product becomes negative, because the arrows point in opposite directions.
 
-### Cauchy-Schwarz, or why the geometric formula is legitimate
+To go further and prove that the geometric formulation of the dot product is not a definition dropped from the sky but a genuine consequence of the algebraic one, we first need two tools: the **norm** of a vector and a **computational identity** about norms. We set them up now, then use them in the Cauchy-Schwarz section that follows.
+
+## Norm and distance
+
+The **norm** (or length) of a vector $\mathbf{x} \in \mathbb{R}^n$ is defined by the dot product with itself:
+
+$$
+\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
+$$
+
+It generalises the Pythagorean theorem to $n$ dimensions. In 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, the length of the hypotenuse of a right triangle.
+
+The **distance** between two vectors $\mathbf{u}$ and $\mathbf{v}$ is the norm of their difference: $\|\mathbf{u} - \mathbf{v}\|$. That is how you measure "how similar two images are" when each image is represented as a vector.
+
+### A useful proof: the parallelogram identity
+
+One property comes back constantly in machine learning. We establish it once and for all, straight from the definitions:
+
+$$
+\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2
+$$
+
+<Callout kind="tip" title="Proof in four lines">
+By definition, $\|\mathbf{x} + \mathbf{w}\|^2 = (\mathbf{x} + \mathbf{w}) \cdot (\mathbf{x} + \mathbf{w})$.
+
+Distributing: $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \mathbf{w} \cdot \mathbf{x} + \mathbf{w} \cdot \mathbf{w}$.
+
+The dot product is commutative ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), so the two cross-terms combine into $2\,\mathbf{x} \cdot \mathbf{w}$.
+
+Hence $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
+</Callout>
+
+This identity is exactly the generalised Pythagorean theorem. Immediate consequence: if $\mathbf{x}$ and $\mathbf{w}$ are orthogonal ($\mathbf{x} \cdot \mathbf{w} = 0$), then $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagoras at its purest, without a triangle or an explicit right angle.
+
+## Cauchy-Schwarz, or why the geometric formula is legitimate
 
 Many courses present the formula $\mathbf{x} \cdot \mathbf{w} = \|\mathbf{x}\| \, \|\mathbf{w}\| \cos(\theta)$ as a second definition of the dot product, dropped from the sky. That is not honest. The right reading is the other way round: we define the dot product algebraically (sum of coordinate-wise products), we prove a fundamental inequality, and that inequality is what makes the geometric formula legitimate.
 
@@ -128,7 +162,7 @@ $$
 
 A squared norm is always non-negative, so $P(t) \geq 0$ for every $t$.
 
-**Step 2.** Expand $P(t)$ using the parallelogram identity proved further down this chapter:
+**Step 2.** Expand $P(t)$ using the parallelogram identity proved just above:
 
 $$
 P(t) = \|\mathbf{x}\|^2 + 2 t \, (\mathbf{x} \cdot \mathbf{w}) + t^2 \|\mathbf{w}\|^2
@@ -212,38 +246,6 @@ The usual consequences of the geometric formula can be read straight off the cos
 Geometrically, the dot product measures **how much two vectors point in the same direction**, weighted by their lengths. That is precisely what a neuron wants to know: *"do my inputs look like my weights?"*
 
 In machine learning, Cauchy-Schwarz also guarantees that you can always **normalise** a dot product by the lengths to get a measure in $[-1, 1]$, called *cosine similarity*. It is the basic tool to compare two vector representations, for example two word or sentence embeddings.
-
-## Norm and distance
-
-The **norm** (or length) of a vector $\mathbf{x} \in \mathbb{R}^n$ is defined by the dot product with itself:
-
-$$
-\|\mathbf{x}\| = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{x_1^2 + x_2^2 + \dots + x_n^2}
-$$
-
-It generalises the Pythagorean theorem to $n$ dimensions. In 2D, $\|(x_1, x_2)\| = \sqrt{x_1^2 + x_2^2}$, the length of the hypotenuse of a right triangle.
-
-The **distance** between two vectors $\mathbf{u}$ and $\mathbf{v}$ is the norm of their difference: $\|\mathbf{u} - \mathbf{v}\|$. That is how you measure "how similar two images are" when each image is represented as a vector.
-
-### A useful proof: the parallelogram identity
-
-One property comes back constantly in machine learning. We establish it once and for all, straight from the definitions:
-
-$$
-\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2
-$$
-
-<Callout kind="tip" title="Proof in four lines">
-By definition, $\|\mathbf{x} + \mathbf{w}\|^2 = (\mathbf{x} + \mathbf{w}) \cdot (\mathbf{x} + \mathbf{w})$.
-
-Distributing: $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \mathbf{w} \cdot \mathbf{x} + \mathbf{w} \cdot \mathbf{w}$.
-
-The dot product is commutative ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), so the two cross-terms combine into $2\,\mathbf{x} \cdot \mathbf{w}$.
-
-Hence $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
-</Callout>
-
-This identity is exactly the generalised Pythagorean theorem. Immediate consequence: if $\mathbf{x}$ and $\mathbf{w}$ are orthogonal ($\mathbf{x} \cdot \mathbf{w} = 0$), then $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagoras at its purest, without a triangle or an explicit right angle.
 
 ## Transpose and matrix product
 
