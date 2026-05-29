@@ -24,7 +24,7 @@ const currentTitle = current?.title ?? courseTitle;
 ---
 
 <details
-  class="module-nav-mobile sticky top-[60px] z-30 mb-6 rounded-md border border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg-elevated)_92%,transparent)] backdrop-blur-[10px] backdrop-saturate-150 lg:hidden"
+  class="module-nav-mobile sticky top-[calc(max(0.875rem,env(safe-area-inset-top))+59px)] z-30 mb-4 rounded-md border border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg-elevated)_92%,transparent)] backdrop-blur-[10px] backdrop-saturate-150 lg:top-4 lg:hidden"
 >
   <summary
     class="flex cursor-pointer list-none items-center justify-between gap-3 rounded-md px-4 py-3 transition-colors hover:bg-[var(--color-hover)]"
@@ -92,6 +92,9 @@ const currentTitle = current?.title ?? courseTitle;
 </details>
 
 <style>
+  .module-nav-mobile {
+    interpolate-size: allow-keywords;
+  }
   .module-nav-mobile[open] .caret {
     transform: rotate(180deg);
   }
@@ -100,5 +103,25 @@ const currentTitle = current?.title ?? courseTitle;
   }
   .module-nav-mobile summary::marker {
     content: '';
+  }
+  /* Animated disclosure: slide + fade the chapter list on open/close.
+     Falls back to an instant toggle where ::details-content is unsupported. */
+  .module-nav-mobile::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.24s ease,
+      opacity 0.24s ease,
+      content-visibility 0.24s allow-discrete;
+  }
+  .module-nav-mobile[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .module-nav-mobile::details-content {
+      transition: none;
+    }
   }
 </style>
