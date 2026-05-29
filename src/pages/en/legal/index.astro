@@ -8,67 +8,101 @@ const t = useTranslations(locale);
 
 <BaseLayout title={t.legal.indexTitle} locale={locale}>
   <div class="container-page py-16 md:py-24">
-    <h1 class="mb-12 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
-      {t.legal.indexTitle}
-    </h1>
 
-    <div class="prose prose-neutral max-w-2xl space-y-10 text-[var(--color-fg-muted)]">
+    <header class="mb-16 max-w-2xl">
+      <p class="mb-4 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        Legal
+      </p>
+      <h1 class="mb-3 text-2xl font-semibold text-[var(--color-fg)]">
+        {t.legal.indexTitle}
+      </h1>
+      <p class="text-sm text-[var(--color-fg-dim)]">Last updated: May 2026</p>
+    </header>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Site publisher</h2>
-        <p class="text-sm leading-relaxed">
-          Pierrick Fonquerne<br />
-          Individual<br />
-          Limoux, Aude, France<br />
-          Contact: <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] hover:underline">contact@pierrickfonquerne.com</a>
+    <div class="max-w-2xl space-y-14">
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Site publisher
         </p>
+        <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>Pierrick Fonquerne</p>
+          <p>Individual — Limoux, Aude, France</p>
+          <p>
+            Contact:
+            <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
+              contact@pierrickfonquerne.com
+            </a>
+          </p>
+        </div>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Publication director</h2>
-        <p class="text-sm leading-relaxed">Pierrick Fonquerne</p>
-      </section>
-
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Hosting</h2>
-        <p class="text-sm leading-relaxed">
-          OVH SAS<br />
-          2 rue Kellermann<br />
-          59100 Roubaix, France<br />
-          <a href="https://www.ovhcloud.com" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:underline">www.ovhcloud.com</a>
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Publication director
         </p>
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">Pierrick Fonquerne</p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Intellectual property</h2>
-        <p class="text-sm leading-relaxed">
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Hosting
+        </p>
+        <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>OVH SAS — 2 rue Kellermann, 59100 Roubaix, France</p>
+          <p>
+            <a href="https://www.ovhcloud.com" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] transition-colors hover:underline">
+              www.ovhcloud.com
+            </a>
+          </p>
+        </div>
+      </section>
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Intellectual property
+        </p>
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
           All content published on this site (text, illustrations, source code) is the exclusive property of Pierrick Fonquerne unless otherwise stated. Any reproduction, even partial, without prior authorization is prohibited.
         </p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Personal data and analytics</h2>
-        <p class="text-sm leading-relaxed">
-          This site uses <strong>Umami Analytics</strong>, a self-hosted, cookieless, GDPR-compliant audience measurement tool. No cookie is placed in your browser. IP addresses are anonymized before storage. No data is shared with third parties.
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Personal data and analytics
         </p>
-        <p class="mt-3 text-sm leading-relaxed">
-          Audience measurement is only activated after your explicit consent. You may withdraw your consent at any time by clearing the <code class="rounded bg-[var(--color-hover)] px-1 py-0.5 font-mono text-xs">analytics-consent</code> key from your localStorage (via your browser's developer tools).
+        <div class="space-y-3 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>
+            This site uses <strong class="font-medium text-[var(--color-fg)]">Umami Analytics</strong>, a self-hosted, cookieless, GDPR-compliant audience measurement tool. No cookie is placed in your browser. IP addresses are anonymized before storage. No data is shared with third parties.
+          </p>
+          <p>
+            Audience measurement is only activated after your explicit consent. You may withdraw your consent at any time by clearing the
+            <code class="rounded bg-[var(--color-hover)] px-1.5 py-0.5 font-mono text-xs">analytics-consent</code>
+            key from your localStorage (via your browser's developer tools).
+          </p>
+          <p>
+            In accordance with the GDPR, you have the right to access, correct, and delete your data. Contact:
+            <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
+              contact@pierrickfonquerne.com
+            </a>
+          </p>
+        </div>
+      </section>
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          External links
         </p>
-        <p class="mt-3 text-sm leading-relaxed">
-          In accordance with the General Data Protection Regulation (GDPR), you have the right to access, correct, and delete your data. To exercise these rights, contact: <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] hover:underline">contact@pierrickfonquerne.com</a>.
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          This site may contain links to third-party websites, provided for informational purposes only. Pierrick Fonquerne is not responsible for their content.
         </p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">External links</h2>
-        <p class="text-sm leading-relaxed">
-          This site may contain links to third-party websites. These links are provided for informational purposes only. Pierrick Fonquerne is not responsible for the content of these external sites.
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Applicable law
         </p>
-      </section>
-
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Applicable law</h2>
-        <p class="text-sm leading-relaxed">
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
           This site is governed by French law. In case of dispute, French courts will have sole jurisdiction.
         </p>
       </section>

@@ -8,67 +8,101 @@ const t = useTranslations(locale);
 
 <BaseLayout title={t.legal.indexTitle} locale={locale}>
   <div class="container-page py-16 md:py-24">
-    <h1 class="mb-12 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
-      {t.legal.indexTitle}
-    </h1>
 
-    <div class="prose prose-neutral max-w-2xl space-y-10 text-[var(--color-fg-muted)]">
+    <header class="mb-16 max-w-2xl">
+      <p class="mb-4 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        Legal
+      </p>
+      <h1 class="mb-3 text-2xl font-semibold text-[var(--color-fg)]">
+        {t.legal.indexTitle}
+      </h1>
+      <p class="text-sm text-[var(--color-fg-dim)]">Dernière mise à jour : mai 2026</p>
+    </header>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Éditeur du site</h2>
-        <p class="text-sm leading-relaxed">
-          Pierrick Fonquerne<br />
-          Particulier<br />
-          Limoux, Aude, France<br />
-          Contact : <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] hover:underline">contact@pierrickfonquerne.com</a>
+    <div class="max-w-2xl space-y-14">
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Éditeur du site
         </p>
+        <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>Pierrick Fonquerne</p>
+          <p>Particulier — Limoux, Aude, France</p>
+          <p>
+            Contact :
+            <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
+              contact@pierrickfonquerne.com
+            </a>
+          </p>
+        </div>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Directeur de la publication</h2>
-        <p class="text-sm leading-relaxed">Pierrick Fonquerne</p>
-      </section>
-
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Hébergement</h2>
-        <p class="text-sm leading-relaxed">
-          OVH SAS<br />
-          2 rue Kellermann<br />
-          59100 Roubaix, France<br />
-          <a href="https://www.ovhcloud.com" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] hover:underline">www.ovhcloud.com</a>
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Directeur de la publication
         </p>
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">Pierrick Fonquerne</p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Propriété intellectuelle</h2>
-        <p class="text-sm leading-relaxed">
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Hébergement
+        </p>
+        <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>OVH SAS — 2 rue Kellermann, 59100 Roubaix, France</p>
+          <p>
+            <a href="https://www.ovhcloud.com" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] transition-colors hover:underline">
+              www.ovhcloud.com
+            </a>
+          </p>
+        </div>
+      </section>
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Propriété intellectuelle
+        </p>
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
           L'ensemble des contenus publiés sur ce site (textes, illustrations, code source) est la propriété exclusive de Pierrick Fonquerne, sauf mention contraire. Toute reproduction, même partielle, sans autorisation préalable est interdite.
         </p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Données personnelles et analytique</h2>
-        <p class="text-sm leading-relaxed">
-          Ce site utilise <strong>Umami Analytics</strong>, un outil d'audience auto-hébergé, cookieless et conforme au RGPD. Aucun cookie n'est déposé sur votre navigateur. Les adresses IP sont anonymisées avant tout stockage. Aucune donnée n'est transmise à des tiers.
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Données personnelles et analytique
         </p>
-        <p class="mt-3 text-sm leading-relaxed">
-          La mesure d'audience n'est activée qu'après votre consentement explicite. Vous pouvez retirer ce consentement à tout moment en effaçant la clé <code class="rounded bg-[var(--color-hover)] px-1 py-0.5 font-mono text-xs">analytics-consent</code> de votre localStorage (via les outils développeur de votre navigateur).
+        <div class="space-y-3 text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          <p>
+            Ce site utilise <strong class="font-medium text-[var(--color-fg)]">Umami Analytics</strong>, un outil d'audience auto-hébergé, cookieless et conforme au RGPD. Aucun cookie n'est déposé sur votre navigateur. Les adresses IP sont anonymisées avant tout stockage. Aucune donnée n'est transmise à des tiers.
+          </p>
+          <p>
+            La mesure d'audience n'est activée qu'après votre consentement explicite. Vous pouvez retirer ce consentement à tout moment en effaçant la clé
+            <code class="rounded bg-[var(--color-hover)] px-1.5 py-0.5 font-mono text-xs">analytics-consent</code>
+            de votre localStorage (via les outils développeur de votre navigateur).
+          </p>
+          <p>
+            Conformément au RGPD et à la loi Informatique et Libertés, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact :
+            <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
+              contact@pierrickfonquerne.com
+            </a>
+          </p>
+        </div>
+      </section>
+
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Liens externes
         </p>
-        <p class="mt-3 text-sm leading-relaxed">
-          Conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Pour exercer ces droits, contactez : <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] hover:underline">contact@pierrickfonquerne.com</a>.
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
+          Ce site peut contenir des liens vers des sites tiers, fournis à titre informatif. Pierrick Fonquerne n'est pas responsable de leur contenu.
         </p>
       </section>
 
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Liens externes</h2>
-        <p class="text-sm leading-relaxed">
-          Ce site peut contenir des liens vers des sites tiers. Ces liens sont fournis à titre informatif. Pierrick Fonquerne n'est pas responsable du contenu de ces sites externes.
+      <section class="border-l-2 border-[var(--color-accent)] pl-5">
+        <p class="mb-3 font-mono text-[11px] font-medium tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+          Droit applicable
         </p>
-      </section>
-
-      <section>
-        <h2 class="mb-3 text-base font-semibold text-[var(--color-fg)]">Droit applicable</h2>
-        <p class="text-sm leading-relaxed">
+        <p class="text-sm leading-relaxed text-[var(--color-fg-muted)]">
           Le présent site est soumis au droit français. En cas de litige, les tribunaux français seront seuls compétents.
         </p>
       </section>
