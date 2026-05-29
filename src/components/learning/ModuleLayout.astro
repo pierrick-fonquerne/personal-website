@@ -1,6 +1,7 @@
 ---
 import ChapterToolbar from './ChapterToolbar';
 import ChapterAudioPlayer from './ChapterAudioPlayer';
+import MathZoom from './MathZoom.astro';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -83,6 +84,7 @@ const audioLabels = {
     <slot />
   </div>
 </article>
+<MathZoom zoomLabel={t.a11y.zoomEquation} closeLabel={t.a11y.closeZoom} />
 
 <style>
   .prose-module :global(h2) {
@@ -201,6 +203,30 @@ const audioLabels = {
   .prose-module :global(pre code) {
     background: transparent;
     padding: 0;
+  }
+  .prose-module :global(.katex-display) {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: 6px 12px;
+    -webkit-overflow-scrolling: touch;
+    background:
+      linear-gradient(to right, var(--color-bg), transparent) 0 0 / 32px 100% no-repeat,
+      linear-gradient(to left, var(--color-bg), transparent) 100% 0 / 32px 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, var(--color-accent-soft), transparent) 0 0 / 12px 100%
+        no-repeat,
+      radial-gradient(farthest-side at 100% 50%, var(--color-accent-soft), transparent) 100% 0 /
+        12px 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+  @media (max-width: 640px) {
+    .prose-module :global(.katex-display) {
+      text-align: left;
+    }
+  }
+  @media (pointer: coarse) {
+    .prose-module :global(.katex-display) {
+      cursor: zoom-in;
+    }
   }
   .prose-module :global(blockquote) {
     border-left: 2px solid var(--color-line-strong);

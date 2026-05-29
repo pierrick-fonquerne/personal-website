@@ -1,0 +1,114 @@
+---
+interface Props {
+  zoomLabel: string;
+  closeLabel: string;
+}
+
+const { zoomLabel, closeLabel } = Astro.props;
+---
+
+<dialog id="math-zoom" class="math-zoom" data-zoom-label={zoomLabel} aria-label={zoomLabel}>
+  <button type="button" class="math-zoom-close" aria-label={closeLabel}>&times;</button>
+  <div class="math-zoom-scroll">
+    <div class="math-zoom-content"></div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      const dialog = document.getElementById('math-zoom');
+      if (!dialog || !window.matchMedia('(pointer: coarse)').matches) return;
+      const content = dialog.querySelector('.math-zoom-content');
+      const closeBtn = dialog.querySelector('.math-zoom-close');
+      const label = dialog.dataset.zoomLabel || '';
+
+      const open = (el) => {
+        content.replaceChildren(el.cloneNode(true));
+        if (!dialog.open) dialog.showModal();
+      };
+      const close = () => {
+        if (dialog.open) dialog.close();
+        content.replaceChildren();
+      };
+
+      document.querySelectorAll('#chapter-content .katex-display').forEach((el) => {
+        if (el.dataset.zoomBound) return;
+        el.dataset.zoomBound = '1';
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        el.setAttribute('aria-label', label);
+        el.addEventListener('click', () => open(el));
+        el.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            open(el);
+          }
+        });
+      });
+
+      if (closeBtn && !closeBtn.dataset.bound) {
+        closeBtn.dataset.bound = '1';
+        closeBtn.addEventListener('click', close);
+      }
+      if (!dialog.dataset.bound) {
+        dialog.dataset.bound = '1';
+        dialog.addEventListener('click', (event) => {
+          if (event.target === dialog) close();
+        });
+      }
+    };
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>
+
+<style>
+  .math-zoom {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-fg);
+  }
+  .math-zoom::backdrop {
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(2px);
+  }
+  .math-zoom-scroll {
+    display: flex;
+    align-items: center;
+    justify-content: safe center;
+    min-width: 100%;
+    min-height: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: max(2.5rem, env(safe-area-inset-top)) 1.25rem
+      max(2rem, env(safe-area-inset-bottom));
+  }
+  .math-zoom-content {
+    font-size: 1.8em;
+  }
+  .math-zoom-close {
+    position: fixed;
+    top: max(0.75rem, env(safe-area-inset-top));
+    right: max(0.75rem, env(safe-area-inset-right));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--color-fg);
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+</style>
