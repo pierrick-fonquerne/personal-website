@@ -145,11 +145,7 @@ export function computeR(dataset: readonly Sample[]): number {
  * Geometric margin: γ = min_i y_i (w · x_i + b) / ||w||.
  * Returns zero margins if ||w|| is degenerate.
  */
-export function computeMargin(
-  dataset: readonly Sample[],
-  w: Vector2,
-  b: number,
-): MarginInfo {
+export function computeMargin(dataset: readonly Sample[], w: Vector2, b: number): MarginInfo {
   const normW = Math.sqrt(w[0] * w[0] + w[1] * w[1]);
   if (normW < EPSILON || dataset.length === 0) {
     return { functional: 0, geometric: 0 };

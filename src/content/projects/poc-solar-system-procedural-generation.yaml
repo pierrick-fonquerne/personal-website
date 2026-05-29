@@ -1,7 +1,7 @@
 slug: poc-solar-system-procedural-generation
 category: poc
 status: archived
-period: "2023 - 2025"
+period: '2023 - 2025'
 stack:
   - Unity
   - C#
@@ -12,14 +12,14 @@ links:
     href: https://github.com/pierrick-fonquerne/poc-solar-system-procedural-generation
     type: repo
 fr:
-  title: "POC : Système solaire procédural"
+  title: 'POC : Système solaire procédural'
   tagline: Génération procédurale d'un système solaire dans Unity.
   summary: >-
     Preuve de concept Unity : génération procédurale d'un système solaire,
     avec shaders custom (HLSL/ShaderLab) pour les surfaces planétaires et les
     atmosphères. Exploration archivée.
 en:
-  title: "POC: Procedural solar system"
+  title: 'POC: Procedural solar system'
   tagline: Procedural generation of a solar system in Unity.
   summary: >-
     Unity proof of concept: procedural generation of a solar system, with

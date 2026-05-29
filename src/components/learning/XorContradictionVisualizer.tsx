@@ -37,7 +37,7 @@ const DICT: Record<Locale, Dictionary> = {
     presetANDLike: 'Essayer une frontière de type AND',
     presetReset: 'Réinitialiser',
     explanation:
-      "Supposons (1), (2), (3), (4) toutes vraies. Additionnons (2) et (3) : w₁ + w₂ + 2b ≥ 0, soit w₁ + w₂ ≥ -2b. Comme (1) impose b < 0, on a -2b > 0, donc w₁ + w₂ > 0. En ajoutant b de chaque côté : w₁ + w₂ + b ≥ -2b + b = -b. Et puisque b < 0, on a -b > 0, donc w₁ + w₂ + b > 0. Mais (4) impose w₁ + w₂ + b < 0. Contradiction : la même quantité ne peut pas être à la fois strictement négative et strictement positive.",
+      'Supposons (1), (2), (3), (4) toutes vraies. Additionnons (2) et (3) : w₁ + w₂ + 2b ≥ 0, soit w₁ + w₂ ≥ -2b. Comme (1) impose b < 0, on a -2b > 0, donc w₁ + w₂ > 0. En ajoutant b de chaque côté : w₁ + w₂ + b ≥ -2b + b = -b. Et puisque b < 0, on a -b > 0, donc w₁ + w₂ + b > 0. Mais (4) impose w₁ + w₂ + b < 0. Contradiction : la même quantité ne peut pas être à la fois strictement négative et strictement positive.',
   },
   en: {
     title: 'Why XOR is impossible',
@@ -88,7 +88,11 @@ interface Inequality {
   readonly satisfied: boolean;
 }
 
-function evaluateInequalities(w1: number, w2: number, b: number): {
+function evaluateInequalities(
+  w1: number,
+  w2: number,
+  b: number,
+): {
   inequalities: readonly Inequality[];
   satisfiedCount: number;
 } {
@@ -132,7 +136,11 @@ function evaluateInequalities(w1: number, w2: number, b: number): {
   };
 }
 
-function computeBoundary(w1: number, w2: number, b: number): { x1: number; y1: number; x2: number; y2: number } | null {
+function computeBoundary(
+  w1: number,
+  w2: number,
+  b: number,
+): { x1: number; y1: number; x2: number; y2: number } | null {
   const EPS = 1e-9;
   if (Math.abs(w2) >= EPS) {
     const yLeft = -(w1 * DATA_MIN + b) / w2;
@@ -278,16 +286,18 @@ export default function XorContradictionVisualizer({
             const correct = pred === p.targetXor;
             const fill =
               p.targetXor === 1 ? 'var(--accent-orange, #fb923c)' : 'var(--text-muted, #64748b)';
-            const stroke = correct
-              ? 'var(--accent-green, #4ade80)'
-              : 'var(--accent-red, #f87171)';
+            const stroke = correct ? 'var(--accent-green, #4ade80)' : 'var(--accent-red, #f87171)';
             return (
               <g key={`xor-${idx}`}>
                 <circle cx={cx} cy={cy} r={13} fill={fill} stroke={stroke} strokeWidth={3} />
                 <text
                   x={cx}
                   y={cy + 4}
-                  fill={p.targetXor === 1 ? 'var(--bg-primary, #0f0f1a)' : 'var(--text-primary, #e2e8f0)'}
+                  fill={
+                    p.targetXor === 1
+                      ? 'var(--bg-primary, #0f0f1a)'
+                      : 'var(--text-primary, #e2e8f0)'
+                  }
                   fontSize={11}
                   fontWeight={700}
                   textAnchor="middle"
@@ -350,14 +360,20 @@ export default function XorContradictionVisualizer({
             />
           </div>
         ))}
-        <div style={{ display: 'flex', gap: '6px', marginTop: '10px', marginBottom: '14px', flexWrap: 'wrap' }}>
-          {(
-            [
-              { label: t.presetORLike, key: 'OR' as const },
-              { label: t.presetANDLike, key: 'AND' as const },
-              { label: t.presetReset, key: 'reset' as const },
-            ]
-          ).map(({ label, key }) => (
+        <div
+          style={{
+            display: 'flex',
+            gap: '6px',
+            marginTop: '10px',
+            marginBottom: '14px',
+            flexWrap: 'wrap',
+          }}
+        >
+          {[
+            { label: t.presetORLike, key: 'OR' as const },
+            { label: t.presetANDLike, key: 'AND' as const },
+            { label: t.presetReset, key: 'reset' as const },
+          ].map(({ label, key }) => (
             <button
               key={key}
               type="button"

@@ -126,7 +126,8 @@ export default function ActivationPlotter({
     const plotW = cssWidth - padLeft - padRight;
     const plotH = cssHeight - padTop - padBottom;
 
-    const xToPx = (x: number): number => padLeft + ((x - clampedXMin) / (clampedXMax - clampedXMin)) * plotW;
+    const xToPx = (x: number): number =>
+      padLeft + ((x - clampedXMin) / (clampedXMax - clampedXMin)) * plotW;
     const yToPx = (y: number): number => padTop + (1 - (y - yMin) / (yMax - yMin)) * plotH;
 
     ctx.strokeStyle = lineColor;
@@ -311,7 +312,8 @@ export default function ActivationPlotter({
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-              {minLabel} = <span className="text-[var(--color-accent)]">{clampedXMin.toFixed(1)}</span>
+              {minLabel} ={' '}
+              <span className="text-[var(--color-accent)]">{clampedXMin.toFixed(1)}</span>
             </span>
             <input
               type="range"
@@ -325,7 +327,8 @@ export default function ActivationPlotter({
           </label>
           <label className="block">
             <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-              {maxLabel} = <span className="text-[var(--color-accent)]">{clampedXMax.toFixed(1)}</span>
+              {maxLabel} ={' '}
+              <span className="text-[var(--color-accent)]">{clampedXMax.toFixed(1)}</span>
             </span>
             <input
               type="range"
@@ -369,22 +372,28 @@ export default function ActivationPlotter({
                 <tr key={kind} className="border-b border-[var(--color-line)] last:border-b-0">
                   <td className="py-1.5 pr-3">
                     <span className="inline-flex items-center gap-1.5 text-[var(--color-fg)]">
-                      <span aria-hidden="true" className="inline-block h-[3px] w-3 rounded-sm" style={{ backgroundColor: ACTIVATION_COLOR[kind] }} />
+                      <span
+                        aria-hidden="true"
+                        className="inline-block h-[3px] w-3 rounded-sm"
+                        style={{ backgroundColor: ACTIVATION_COLOR[kind] }}
+                      />
                       {ACTIVATION_LABEL[kind]}
                     </span>
                   </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-[var(--color-fg)]">
+                  <td className="py-1.5 pr-3 text-right text-[var(--color-fg)] tabular-nums">
                     {formatNumber(ACTIVATION_FN[kind](safeCursorX))}
                   </td>
-                  <td className="py-1.5 text-right tabular-nums text-[var(--color-fg)]">
+                  <td className="py-1.5 text-right text-[var(--color-fg)] tabular-nums">
                     {formatNumber(ACTIVATION_DERIVATIVE[kind](safeCursorX))}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p className="text-[11px] italic text-[var(--color-fg-dim)]">
-            Les segments en pointillés autour de chaque point sont les tangentes locales. Une tangente plate signifie un gradient faible (apprentissage lent) ; une tangente raide signifie un gradient fort.
+          <p className="text-[11px] text-[var(--color-fg-dim)] italic">
+            Les segments en pointillés autour de chaque point sont les tangentes locales. Une
+            tangente plate signifie un gradient faible (apprentissage lent) ; une tangente raide
+            signifie un gradient fort.
           </p>
         </div>
       )}

@@ -4,7 +4,7 @@ fr:
   definition: "Une des deux régions dans lesquelles un hyperplan partitionne Rⁿ. Algébriquement, l'ensemble des points x tels que w · x + b > 0 (resp. < 0). Un neurone à seuil sépare l'espace en exactement deux demi-espaces : actif et inactif."
 en:
   term: Half-space
-  definition: "One of the two regions in which a hyperplane partitions Rⁿ. Algebraically, the set of points x with w · x + b > 0 (resp. < 0). A threshold neuron splits space into exactly two half-spaces: active and inactive."
+  definition: 'One of the two regions in which a hyperplane partitions Rⁿ. Algebraically, the set of points x with w · x + b > 0 (resp. < 0). A threshold neuron splits space into exactly two half-spaces: active and inactive.'
 seeAlso:
   - hyperplan
   - fonction-seuil

@@ -8,8 +8,7 @@ export type CourseModule =
 
 const PROD = import.meta.env.PROD;
 
-const coursesCollectionFor = (lang: Locale) =>
-  lang === 'fr' ? 'courses-fr' : 'courses-en';
+const coursesCollectionFor = (lang: Locale) => (lang === 'fr' ? 'courses-fr' : 'courses-en');
 
 const modulesCollectionFor = (lang: Locale) =>
   lang === 'fr' ? 'course-modules-fr' : 'course-modules-en';
@@ -34,10 +33,7 @@ export async function getCourse(lang: Locale, slug: string): Promise<Course | un
   return all.find((c) => c.data.slug === slug && isCoursePublished(c));
 }
 
-export async function listModulesOf(
-  lang: Locale,
-  courseSlug: string,
-): Promise<CourseModule[]> {
+export async function listModulesOf(lang: Locale, courseSlug: string): Promise<CourseModule[]> {
   const all = await getCollection(modulesCollectionFor(lang));
   return all
     .filter((m) => m.data.course === courseSlug && isModulePublished(m))

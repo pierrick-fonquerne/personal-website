@@ -63,7 +63,10 @@ function classify(pt: Point, slope: number, intercept: number): 0 | 1 {
   return pt.y > slope * pt.x + intercept ? 1 : 0;
 }
 
-function lineEndpoints(slope: number, intercept: number): {
+function lineEndpoints(
+  slope: number,
+  intercept: number,
+): {
   x1: number;
   y1: number;
   x2: number;
@@ -248,9 +251,24 @@ export default function LinearSeparabilityViewer({
             return (
               <g key={`pt-${p.x}-${p.y}`}>
                 {!correct && (
-                  <circle cx={cx} cy={cy} r="14" fill="none" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="4 3" />
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r="14"
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                  />
                 )}
-                <circle cx={cx} cy={cy} r="8" fill={fill} stroke={stroke} strokeWidth={ringStrokeWidth} />
+                <circle
+                  cx={cx}
+                  cy={cy}
+                  r="8"
+                  fill={fill}
+                  stroke={stroke}
+                  strokeWidth={ringStrokeWidth}
+                />
                 <text
                   x={cx}
                   y={cy + 3}
@@ -284,7 +302,8 @@ export default function LinearSeparabilityViewer({
           </label>
           <label className="block">
             <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-              {interceptLabel} = <span className="text-[var(--color-accent)]">{intercept.toFixed(2)}</span>
+              {interceptLabel} ={' '}
+              <span className="text-[var(--color-accent)]">{intercept.toFixed(2)}</span>
             </span>
             <input
               type="range"
@@ -305,7 +324,7 @@ export default function LinearSeparabilityViewer({
               <span
                 className={
                   stats.correct === stats.total
-                    ? 'text-[var(--color-accent)] font-semibold'
+                    ? 'font-semibold text-[var(--color-accent)]'
                     : 'text-[var(--color-fg)]'
                 }
               >
@@ -314,7 +333,9 @@ export default function LinearSeparabilityViewer({
               {classifiedLabel}
             </div>
             {datasetKind === 'xor' && stats.correct < stats.total && (
-              <div className="mt-2 text-[11px] text-[var(--color-fg-dim)] italic">{impossibleHint}</div>
+              <div className="mt-2 text-[11px] text-[var(--color-fg-dim)] italic">
+                {impossibleHint}
+              </div>
             )}
           </div>
         </div>

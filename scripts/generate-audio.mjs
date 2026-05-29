@@ -228,9 +228,7 @@ async function main() {
       console.log(`     name=${v.name ?? '(unnamed)'}  slug=${v.slug ?? '-'}  ${meta}`);
     }
     console.log('-'.repeat(80));
-    console.log(
-      'Set MISTRAL_TTS_VOICE_ID=<id> in your .env, then re-run audio:generate.',
-    );
+    console.log('Set MISTRAL_TTS_VOICE_ID=<id> in your .env, then re-run audio:generate.');
     return;
   }
   const banner = `Voxtral TTS — model=${MODEL}, voice=${VOICE_ID}${dryRun ? ' [DRY RUN]' : ''}`;
@@ -318,7 +316,9 @@ async function main() {
       }
 
       if (dryRun) {
-        console.log(`would ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})`);
+        console.log(
+          `would ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})`,
+        );
         continue;
       }
 
@@ -333,7 +333,9 @@ async function main() {
         }
       }
 
-      console.log(`gen   ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})…`);
+      console.log(
+        `gen   ${key} (${text.length} chars, ~${fmtCost(text.length)}, source=${source})…`,
+      );
       const audio = await callVoxtral(text);
       await mkdir(dirname(outFile), { recursive: true });
       await writeFile(outFile, audio);

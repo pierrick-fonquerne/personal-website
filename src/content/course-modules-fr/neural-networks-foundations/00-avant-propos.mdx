@@ -2,7 +2,7 @@
 course: neural-networks-foundations
 order: 0
 title: Avant-propos
-subtitle: "Pourquoi des réseaux de neurones, à quels problèmes ils répondent, et comment lire ce cours."
+subtitle: 'Pourquoi des réseaux de neurones, à quels problèmes ils répondent, et comment lire ce cours.'
 estimatedMinutes: 8
 published: true
 ---
@@ -20,7 +20,7 @@ Treize chapitres, environ trois heures et demi de lecture. Aucun langage de prog
 Sans prétendre être exhaustif, voici les usages où ils ont réellement changé la donne, avec des ordres de grandeur :
 
 - **Vision par ordinateur** : reconnaître un chat, segmenter une tumeur sur une IRM, conduire une voiture. Erreur sur ImageNet passée de 26 % en 2011 à moins de 4 % en 2020.
-- **Traduction automatique** : DeepL, Google Translate, modernisés par les *transformers* depuis 2017. Qualité indistinguable de l'humain sur les paires de langues majoritaires.
+- **Traduction automatique** : DeepL, Google Translate, modernisés par les _transformers_ depuis 2017. Qualité indistinguable de l'humain sur les paires de langues majoritaires.
 - **Compréhension et génération de texte** : assistants conversationnels (<Term slug="foundation-model">modèles de fondation</Term> comme GPT, Claude, Gemini, Mistral), résumé automatique, programmation assistée. Tous reposent sur l'architecture <Term slug="transformer">transformer</Term> (2017).
 - **Génération d'image et de son** : Stable Diffusion, Midjourney, DALL-E, models text-to-speech. Photoréalisme indistinguable sur certains domaines.
 - **Jeux et planification** : AlphaGo (2016) qui a battu le champion du monde de go, AlphaFold (2021) qui prédit la structure 3D des protéines.
@@ -32,13 +32,16 @@ Le point commun : tous ces systèmes sont des assemblages, parfois immenses (jus
 Important pour ne pas vendre du rêve. Les limites actuelles, à l'heure où ces lignes sont écrites :
 
 - **Raisonnement formel** : un réseau peut résoudre une équation du second degré avec entraînement, mais ne « comprend » pas pourquoi la formule est ce qu'elle est. Il interpole, il ne déduit pas.
-- **Apprentissage avec peu de données** : un humain reconnaît un chat après en avoir vu trois. Un réseau classique en demande des milliers. L'apprentissage *few-shot* progresse mais reste loin de l'humain.
+- **Apprentissage avec peu de données** : un humain reconnaît un chat après en avoir vu trois. Un réseau classique en demande des milliers. L'apprentissage _few-shot_ progresse mais reste loin de l'humain.
 - **Généralisation hors distribution** : un réseau entraîné sur des images de jour bute sur les mêmes objets photographiés de nuit. Il apprend ce qu'on lui montre, pas plus.
 - **Hallucinations** : les modèles de langage produisent parfois des affirmations fausses avec aplomb. C'est un défaut structurel de leur entraînement, pas un bug.
-- **Explicabilité** : un réseau profond classe correctement, mais expliquer *pourquoi* il a classé ainsi reste un problème de recherche ouvert.
+- **Explicabilité** : un réseau profond classe correctement, mais expliquer _pourquoi_ il a classé ainsi reste un problème de recherche ouvert.
 
 <Callout kind="warn" title="L'IA n'est pas magique">
-Le marketing autour des « intelligences artificielles » exagère souvent leurs capacités. Comprendre les fondations mathématiques que ce cours te donne, c'est le meilleur antidote au discours commercial. Tu verras qu'un réseau de neurones, c'est essentiellement des combinaisons linéaires empilées et des fonctions non-linéaires, pas une forme de conscience.
+  Le marketing autour des « intelligences artificielles » exagère souvent leurs capacités.
+  Comprendre les fondations mathématiques que ce cours te donne, c'est le meilleur antidote au
+  discours commercial. Tu verras qu'un réseau de neurones, c'est essentiellement des combinaisons
+  linéaires empilées et des fonctions non-linéaires, pas une forme de conscience.
 </Callout>
 
 ## Trois phases dans une histoire de 80 ans
@@ -53,16 +56,16 @@ Le chapitre 1 récapitule ces jalons dans une frise plus précise. Garde simplem
 
 ### Frise des jalons clés
 
-| Année | Acteurs | Apport |
-|---|---|---|
-| 1943 | McCulloch et Pitts | Modèle du neurone formel |
-| 1958 | Rosenblatt | Perceptron qui apprend |
-| 1969 | Minsky et Papert | Limites de XOR, premier signal d'arrêt |
-| 1973 | Rapport Lighthill (Royaume-Uni) | Premier hiver de l'IA |
-| 1986 | Rumelhart, Hinton, Williams | Backpropagation |
-| 1998 | LeCun | LeNet et la vision convolutionnelle |
-| 2012 | Krizhevsky, Sutskever, Hinton | AlexNet et l'explosion GPU |
-| 2017 | Vaswani et al. | Transformer et mécanisme d'attention |
+| Année | Acteurs                            | Apport                                     |
+| ----- | ---------------------------------- | ------------------------------------------ |
+| 1943  | McCulloch et Pitts                 | Modèle du neurone formel                   |
+| 1958  | Rosenblatt                         | Perceptron qui apprend                     |
+| 1969  | Minsky et Papert                   | Limites de XOR, premier signal d'arrêt     |
+| 1973  | Rapport Lighthill (Royaume-Uni)    | Premier hiver de l'IA                      |
+| 1986  | Rumelhart, Hinton, Williams        | Backpropagation                            |
+| 1998  | LeCun                              | LeNet et la vision convolutionnelle        |
+| 2012  | Krizhevsky, Sutskever, Hinton      | AlexNet et l'explosion GPU                 |
+| 2017  | Vaswani et al.                     | Transformer et mécanisme d'attention       |
 | 2020+ | OpenAI, Anthropic, Google, Mistral | Modèles de fondation à très grande échelle |
 
 ## Le parcours en treize chapitres
@@ -70,15 +73,19 @@ Le chapitre 1 récapitule ces jalons dans une frise plus précise. Garde simplem
 Le cours s'organise en quatre blocs progressifs :
 
 ### Bloc 1 : fondations conceptuelles (chapitres 1 à 4)
+
 Le neurone artificiel, l'algèbre vectorielle, les fonctions d'activation, le perceptron. Tout ce qu'il faut pour comprendre une brique unique.
 
 ### Bloc 2 : de la brique au réseau (chapitres 5 à 6)
+
 Empiler les neurones en couches. Forward pass, fonctions de coût, classification vs régression.
 
 ### Bloc 3 : apprentissage (chapitres 7 à 9)
+
 Dérivées et règle de la chaîne, backpropagation, descente de gradient. Le cœur mathématique du domaine.
 
 ### Bloc 4 : optimisation et généralisation (chapitres 10 à 12)
+
 Régularisation, initialisation et batch normalisation, optimiseurs avancés. Ce qui fait la différence entre un réseau qui marche en théorie et un qui marche en pratique.
 
 ### Carte des dépendances entre chapitres
@@ -130,7 +137,9 @@ Trois suggestions :
 Chaque chapitre te propose un quiz auto-corrigé en fin de section et au moins deux exercices papier-crayon avec corrigés. Joue le jeu : passer le crayon sur la feuille change radicalement ce qui reste en tête.
 
 <Callout kind="tip" title="Les blocs interactifs">
-Plusieurs chapitres contiennent des composants interactifs : neurones avec curseurs, plans 2D manipulables, traceurs de fonctions. **Ils ne sont pas décoratifs.** Joue avec les paramètres trois minutes avant de continuer la lecture, tu apprendras plus vite que par la prose seule.
+  Plusieurs chapitres contiennent des composants interactifs : neurones avec curseurs, plans 2D
+  manipulables, traceurs de fonctions. **Ils ne sont pas décoratifs.** Joue avec les paramètres
+  trois minutes avant de continuer la lecture, tu apprendras plus vite que par la prose seule.
 </Callout>
 
 ## En une phrase
@@ -143,11 +152,11 @@ Tout commence par la brique. Comment un neurone biologique a inspiré une équat
 
 ## Sources
 
-- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). « ImageNet Classification with Deep Convolutional Neural Networks. » *NeurIPS* 25. [Lien NeurIPS](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
-- Russakovsky, O. et al. (2015). « ImageNet Large Scale Visual Recognition Challenge. » *IJCV* 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). « ImageNet Classification with Deep Convolutional Neural Networks. » _NeurIPS_ 25. [Lien NeurIPS](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Russakovsky, O. et al. (2015). « ImageNet Large Scale Visual Recognition Challenge. » _IJCV_ 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
 
 ### Pour aller plus loin avant d'attaquer le chap 1
 
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 1 : *Introduction*. Excellent panorama global, gratuit en ligne. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 1 : _Introduction_. Excellent panorama global, gratuit en ligne. [deeplearningbook.org](https://www.deeplearningbook.org/)
 - LeCun, Y. (cours en ligne au Collège de France). « Pourquoi l'apprentissage profond ? ». [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
-- Karpathy, A. (vidéo YouTube, 2022). *The spelled-out intro to neural networks and backpropagation: building micrograd*. La meilleure explication pratique du domaine. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)
+- Karpathy, A. (vidéo YouTube, 2022). _The spelled-out intro to neural networks and backpropagation: building micrograd_. La meilleure explication pratique du domaine. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)

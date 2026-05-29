@@ -75,9 +75,7 @@ export default function NeuronDiagram({
   diagramLabel,
   showCalculation = true,
 }: Props): JSX.Element {
-  const [inputValues, setInputValues] = useState<number[]>(() =>
-    inputs.map((i) => i.defaultValue),
-  );
+  const [inputValues, setInputValues] = useState<number[]>(() => inputs.map((i) => i.defaultValue));
   const [weightValues, setWeightValues] = useState<number[]>(() =>
     weights.map((w) => w.defaultValue),
   );
@@ -85,8 +83,7 @@ export default function NeuronDiagram({
   const [currentActivation, setCurrentActivation] = useState<ActivationKind>(activation);
 
   const z = useMemo(
-    () =>
-      inputValues.reduce((acc, x, i) => acc + x * (weightValues[i] ?? 0), 0) + biasValue,
+    () => inputValues.reduce((acc, x, i) => acc + x * (weightValues[i] ?? 0), 0) + biasValue,
     [inputValues, weightValues, biasValue],
   );
   const y = useMemo(() => ACTIVATION_FN[currentActivation](z), [currentActivation, z]);
@@ -204,23 +201,78 @@ export default function NeuronDiagram({
           </g>
         )}
 
-        <circle cx={sumX} cy={centerY} r="22" fill="var(--color-bg)" stroke="var(--color-fg)" strokeWidth="1.5" />
-        <text x={sumX} y={centerY + 6} fill="var(--color-fg)" fontSize="18" fontFamily="var(--font-mono)" textAnchor="middle">
+        <circle
+          cx={sumX}
+          cy={centerY}
+          r="22"
+          fill="var(--color-bg)"
+          stroke="var(--color-fg)"
+          strokeWidth="1.5"
+        />
+        <text
+          x={sumX}
+          y={centerY + 6}
+          fill="var(--color-fg)"
+          fontSize="18"
+          fontFamily="var(--font-mono)"
+          textAnchor="middle"
+        >
           Σ
         </text>
 
-        <line x1={sumX + 22} y1={centerY} x2={actX - 22} y2={centerY} stroke="var(--color-fg)" strokeWidth="1.5" />
-        <text x={(sumX + actX) / 2} y={centerY - 8} fill="var(--color-fg-dim)" fontSize="11" fontFamily="var(--font-mono)" textAnchor="middle">
+        <line
+          x1={sumX + 22}
+          y1={centerY}
+          x2={actX - 22}
+          y2={centerY}
+          stroke="var(--color-fg)"
+          strokeWidth="1.5"
+        />
+        <text
+          x={(sumX + actX) / 2}
+          y={centerY - 8}
+          fill="var(--color-fg-dim)"
+          fontSize="11"
+          fontFamily="var(--font-mono)"
+          textAnchor="middle"
+        >
           z = {formatNumber(z)}
         </text>
 
-        <circle cx={actX} cy={centerY} r="22" fill="var(--color-bg)" stroke="var(--color-accent)" strokeWidth="1.5" />
-        <text x={actX} y={centerY + 5} fill="var(--color-accent)" fontSize="13" fontFamily="var(--font-mono)" textAnchor="middle">
+        <circle
+          cx={actX}
+          cy={centerY}
+          r="22"
+          fill="var(--color-bg)"
+          stroke="var(--color-accent)"
+          strokeWidth="1.5"
+        />
+        <text
+          x={actX}
+          y={centerY + 5}
+          fill="var(--color-accent)"
+          fontSize="13"
+          fontFamily="var(--font-mono)"
+          textAnchor="middle"
+        >
           {ACTIVATION_LABEL[currentActivation]}
         </text>
 
-        <line x1={actX + 22} y1={centerY} x2={outX} y2={centerY} stroke="var(--color-fg)" strokeWidth="1.5" />
-        <text x={outX + 4} y={centerY + 5} fill="var(--color-fg)" fontSize="14" fontFamily="var(--font-mono)">
+        <line
+          x1={actX + 22}
+          y1={centerY}
+          x2={outX}
+          y2={centerY}
+          stroke="var(--color-fg)"
+          strokeWidth="1.5"
+        />
+        <text
+          x={outX + 4}
+          y={centerY + 5}
+          fill="var(--color-fg)"
+          fontSize="14"
+          fontFamily="var(--font-mono)"
+        >
           y = {formatNumber(y)}
         </text>
       </svg>
@@ -231,7 +283,10 @@ export default function NeuronDiagram({
           return (
             <label key={`x-${input.label}`} className="block">
               <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-                {input.label} = <span className="text-[var(--color-accent)]">{formatNumber(inputValues[i] ?? 0)}</span>
+                {input.label} ={' '}
+                <span className="text-[var(--color-accent)]">
+                  {formatNumber(inputValues[i] ?? 0)}
+                </span>
               </span>
               <input
                 type="range"
@@ -251,7 +306,10 @@ export default function NeuronDiagram({
           return (
             <label key={`w-${weight.label}`} className="block">
               <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
-                {weight.label} = <span className="text-[var(--color-accent)]">{formatNumber(weightValues[i] ?? 0)}</span>
+                {weight.label} ={' '}
+                <span className="text-[var(--color-accent)]">
+                  {formatNumber(weightValues[i] ?? 0)}
+                </span>
               </span>
               <input
                 type="range"

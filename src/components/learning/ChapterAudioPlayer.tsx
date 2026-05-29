@@ -554,11 +554,14 @@ export default function ChapterAudioPlayer({
               <span className="truncate">{chapterTitle}</span>
               {nextCountdown !== null && nextTitle && (
                 <span className="flex items-center gap-2">
-                  <span>{labels.nextChapterIn(nextCountdown)} — {nextTitle}</span>
+                  <span>
+                    {labels.nextChapterIn(nextCountdown)} — {nextTitle}
+                  </span>
                   <button
                     type="button"
                     onClick={() => {
-                      if (nextHref && typeof window !== 'undefined') window.location.assign(nextHref);
+                      if (nextHref && typeof window !== 'undefined')
+                        window.location.assign(nextHref);
                     }}
                     className="cursor-pointer rounded border border-[var(--color-fg)] px-2 py-0.5 text-[var(--color-fg)] hover:opacity-80"
                   >
@@ -584,7 +587,17 @@ export default function ChapterAudioPlayer({
                 title={`${labels.skipBack} (J)`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <polyline points="11 17 6 12 11 7" />
                   <polyline points="18 17 13 12 18 7" />
                 </svg>
@@ -597,12 +610,24 @@ export default function ChapterAudioPlayer({
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)]"
               >
                 {isPlaying ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <rect x="6" y="5" width="4" height="14" />
                     <rect x="14" y="5" width="4" height="14" />
                   </svg>
                 ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 )}
@@ -614,7 +639,17 @@ export default function ChapterAudioPlayer({
                 title={`${labels.skipForward} (L)`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <polyline points="13 17 18 12 13 7" />
                   <polyline points="6 17 11 12 6 7" />
                 </svg>
@@ -640,10 +675,7 @@ export default function ChapterAudioPlayer({
                 <div
                   className="h-full bg-[var(--color-fg)] transition-all duration-100"
                   style={{
-                    width:
-                      duration > 0
-                        ? `${Math.min(100, (progress / duration) * 100)}%`
-                        : '0%',
+                    width: duration > 0 ? `${Math.min(100, (progress / duration) * 100)}%` : '0%',
                   }}
                 />
               </div>
@@ -685,7 +717,17 @@ export default function ChapterAudioPlayer({
                 title={labels.download}
                 className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
@@ -702,7 +744,17 @@ export default function ChapterAudioPlayer({
                 title={labels.shortcuts}
                 className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
                   <line x1="12" y1="17" x2="12.01" y2="17" />
@@ -721,29 +773,47 @@ export default function ChapterAudioPlayer({
                     <li className="flex items-center justify-between gap-3">
                       <span className="text-[var(--color-fg)]">{labels.shortcutPlayPause}</span>
                       <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
-                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">Espace</kbd>{' '}
-                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">K</kbd>
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          Espace
+                        </kbd>{' '}
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          K
+                        </kbd>
                       </span>
                     </li>
                     <li className="flex items-center justify-between gap-3">
                       <span className="text-[var(--color-fg)]">{labels.shortcutSkipBack}</span>
-                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">J</kbd>
+                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">
+                        J
+                      </kbd>
                     </li>
                     <li className="flex items-center justify-between gap-3">
                       <span className="text-[var(--color-fg)]">{labels.shortcutSkipForward}</span>
-                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">L</kbd>
+                      <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--color-fg-muted)]">
+                        L
+                      </kbd>
                     </li>
                     <li className="flex items-center justify-between gap-3">
                       <span className="text-[var(--color-fg)]">{labels.shortcutFineSeek}</span>
                       <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
-                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">←</kbd>{' '}
-                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">→</kbd>
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          ←
+                        </kbd>{' '}
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          →
+                        </kbd>
                       </span>
                     </li>
                     <li className="flex items-center justify-between gap-3">
                       <span className="text-[var(--color-fg)]">{labels.shortcutJump}</span>
                       <span className="font-mono text-[10px] text-[var(--color-fg-muted)]">
-                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">0</kbd>…<kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">9</kbd>
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          0
+                        </kbd>
+                        …
+                        <kbd className="rounded border border-[var(--color-line)] px-1.5 py-0.5">
+                          9
+                        </kbd>
                       </span>
                     </li>
                   </ul>
@@ -758,7 +828,17 @@ export default function ChapterAudioPlayer({
               title={labels.close}
               className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>

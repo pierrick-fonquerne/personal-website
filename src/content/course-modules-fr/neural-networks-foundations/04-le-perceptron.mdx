@@ -2,7 +2,7 @@
 course: neural-networks-foundations
 order: 4
 title: Le perceptron
-subtitle: "Comment Rosenblatt a fait apprendre une machine sans gradient (1958)."
+subtitle: 'Comment Rosenblatt a fait apprendre une machine sans gradient (1958).'
 estimatedMinutes: 35
 published: false
 ---
@@ -27,13 +27,14 @@ Ce chapitre répond à cette question en construisant le perceptron d'un point d
 **Ce qu'il n'est pas nécessaire de connaître** : descente de gradient (chapitres 7 à 9), réseaux multi-couches (chapitre 5).
 
 **Niveau de rigueur** : définitions formelles complètes des objets géométriques, deux démonstrations centrales écrites pas à pas (théorème de Novikoff et impossibilité de XOR), quatre exercices papier-crayon avec corrigés aérés ligne par ligne.
+
 </Callout>
 
 ## La géométrie d'un hyperplan
 
 ### L'analogie de la règle sur la table
 
-Pose une règle plate sur une table. Cette règle divise la surface de la table en deux zones : la partie devant la règle et la partie derrière la règle. Le bord de la règle, c'est la *frontière*. La direction perpendiculaire au bord, c'est ce qu'on va appeler le <Term slug="vecteur-normal">vecteur normal</Term>, et la distance entre la règle et le bord de la table, c'est le décalage.
+Pose une règle plate sur une table. Cette règle divise la surface de la table en deux zones : la partie devant la règle et la partie derrière la règle. Le bord de la règle, c'est la _frontière_. La direction perpendiculaire au bord, c'est ce qu'on va appeler le <Term slug="vecteur-normal">vecteur normal</Term>, et la distance entre la règle et le bord de la table, c'est le décalage.
 
 Un <Term slug="hyperplan">hyperplan</Term> en deux dimensions, c'est ça : une droite qui sépare le plan en deux <Term slug="demi-espace">demi-espaces</Term>. En trois dimensions, c'est un plan. En $n$ dimensions, c'est une surface plate de dimension $n-1$.
 
@@ -46,7 +47,9 @@ $$
 $$
 
 <Callout kind="tip" title="Lis l'équation à voix haute">
-*« H est l'ensemble des points x de R puissance n tels que le produit scalaire de w par x, plus b, est égal à zéro. »* Le vecteur $w$ donne la direction perpendiculaire à $\mathcal{H}$. Le scalaire $b$ règle la position de $\mathcal{H}$ par rapport à l'origine.
+  *« H est l'ensemble des points x de R puissance n tels que le produit scalaire de w par x, plus b,
+  est égal à zéro. »* Le vecteur $w$ donne la direction perpendiculaire à $\mathcal{H}$. Le scalaire
+  $b$ règle la position de $\mathcal{H}$ par rapport à l'origine.
 </Callout>
 
 ### Distance signée d'un point à l'hyperplan
@@ -60,7 +63,9 @@ $$
 Cette quantité est positive d'un côté de $\mathcal{H}$, négative de l'autre, nulle sur $\mathcal{H}$ lui-même. En valeur absolue, c'est la distance perpendiculaire usuelle.
 
 <Callout kind="tip" title="Pourquoi diviser par la norme de w">
-Si tu doubles $w$ et $b$ en même temps, l'hyperplan ne change pas géométriquement, mais la quantité $w \cdot x + b$ est multipliée par deux. Pour avoir une distance qui ne dépend que de l'hyperplan, pas du codage particulier $(w, b)$ qu'on a choisi, on normalise par $\|w\|$.
+  Si tu doubles $w$ et $b$ en même temps, l'hyperplan ne change pas géométriquement, mais la
+  quantité $w \cdot x + b$ est multipliée par deux. Pour avoir une distance qui ne dépend que de
+  l'hyperplan, pas du codage particulier $(w, b)$ qu'on a choisi, on normalise par $\|w\|$.
 </Callout>
 
 ### Joue avec l'hyperplan
@@ -77,7 +82,7 @@ Trois choses à remarquer en jouant :
 
 ### L'analogie de la bande tampon
 
-Imagine deux pays voisins avec une bande tampon entre eux. La frontière, c'est la droite au milieu. La largeur de la bande tampon, c'est la *marge* : plus elle est large, plus la frontière est robuste aux petites perturbations des points. Si la bande tampon se réduit à zéro, des habitants des deux pays se croisent et la frontière devient ambiguë.
+Imagine deux pays voisins avec une bande tampon entre eux. La frontière, c'est la droite au milieu. La largeur de la bande tampon, c'est la _marge_ : plus elle est large, plus la frontière est robuste aux petites perturbations des points. Si la bande tampon se réduit à zéro, des habitants des deux pays se croisent et la frontière devient ambiguë.
 
 ### Encodage des cibles : pourquoi $y \in \{-1, +1\}$
 
@@ -125,7 +130,7 @@ $\operatorname{sgn}(z)$ vaut $+1$ si $z \geq 0$ et $-1$ si $z < 0$. C'est la ver
 
 ### 1958 et 1960 : deux dates distinctes
 
-Frank Rosenblatt publie l'article fondateur dans la revue *Psychological Review* (Rosenblatt, 1958). Il y propose le modèle théorique et la règle d'apprentissage que tu vas voir tout de suite. Deux ans plus tard, il construit au Cornell Aeronautical Laboratory le <Term slug="mark-i-perceptron">Mark I Perceptron</Term> : une machine physique avec 400 photorécepteurs et des poids ajustables via des potentiomètres motorisés. Le New York Times titre alors que la marine américaine vient de construire « une machine qui apprend par elle-même ».
+Frank Rosenblatt publie l'article fondateur dans la revue _Psychological Review_ (Rosenblatt, 1958). Il y propose le modèle théorique et la règle d'apprentissage que tu vas voir tout de suite. Deux ans plus tard, il construit au Cornell Aeronautical Laboratory le <Term slug="mark-i-perceptron">Mark I Perceptron</Term> : une machine physique avec 400 photorécepteurs et des poids ajustables via des potentiomètres motorisés. Le New York Times titre alors que la marine américaine vient de construire « une machine qui apprend par elle-même ».
 
 Le point important : 1958, c'est le modèle ; 1960, c'est l'implémentation matérielle. Beaucoup de récits confondent les deux, mais l'article théorique précède la machine de deux ans.
 
@@ -133,7 +138,7 @@ Le point important : 1958, c'est le modèle ; 1960, c'est l'implémentation mat�
 
 Au chapitre 3, on a démontré que la profondeur d'un réseau ne sert à rien si la fonction d'activation est linéaire, et qu'on a besoin d'une fonction dérivable pour calculer un gradient. Or $\operatorname{sgn}$ est presque partout dérivable de dérivée nulle. **Comment Rosenblatt a-t-il fait apprendre une machine équipée d'une telle fonction ?**
 
-La réponse, étonnamment, est qu'il n'a pas eu besoin d'une dérivée. Sa procédure d'apprentissage est une *correction géométrique locale* : quand le perceptron se trompe sur un exemple, on déplace le vecteur de poids dans la direction qui corrigerait l'erreur, sans jamais calculer de gradient.
+La réponse, étonnamment, est qu'il n'a pas eu besoin d'une dérivée. Sa procédure d'apprentissage est une _correction géométrique locale_ : quand le perceptron se trompe sur un exemple, on déplace le vecteur de poids dans la direction qui corrigerait l'erreur, sans jamais calculer de gradient.
 
 C'est une exception historique. À partir du chapitre 7, on rebasculera sur des fonctions d'activation dérivables et la <Term slug="descente-de-gradient">descente de gradient</Term> prendra le relais. Mais pour le perceptron, l'apprentissage se fait à la main, par projection.
 
@@ -156,15 +161,17 @@ $$
 Pour un exemple bien classé, on ne touche à rien. La procédure parcourt le dataset, applique l'update à chaque erreur, et recommence jusqu'à ce qu'aucun exemple ne soit mal classé.
 
 <Callout kind="tip" title="Lis l'équation à voix haute">
-*« Le nouveau vecteur de poids w est l'ancien w plus le pas eta multiplié par la cible y i, multipliée par l'exemple x i. Le nouveau biais b est l'ancien plus eta fois y i. »* L'update est donc une *addition* (ou soustraction) du vecteur $x_i$ au vecteur $w$, selon le signe de $y_i$.
+  *« Le nouveau vecteur de poids w est l'ancien w plus le pas eta multiplié par la cible y i,
+  multipliée par l'exemple x i. Le nouveau biais b est l'ancien plus eta fois y i. »* L'update est
+  donc une *addition* (ou soustraction) du vecteur $x_i$ au vecteur $w$, selon le signe de $y_i$.
 </Callout>
 
 ### Trois formes pour la même règle
 
-| Forme | Écriture |
-|---|---|
-| Par composante | $w_j \leftarrow w_j + \eta y_i x_{i,j}$ pour chaque $j$ |
-| Vectorielle | $w \leftarrow w + \eta y_i x_i$ |
+| Forme              | Écriture                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------- |
+| Par composante     | $w_j \leftarrow w_j + \eta y_i x_{i,j}$ pour chaque $j$                                              |
+| Vectorielle        | $w \leftarrow w + \eta y_i x_i$                                                                      |
 | Avec biais absorbé | $\tilde w \leftarrow \tilde w + \eta y_i \tilde x_i$ avec $\tilde x = (x, 1)$ et $\tilde w = (w, b)$ |
 
 Les trois disent exactement la même chose. La forme par composante est la plus explicite pour calculer à la main. La forme vectorielle est la plus compacte. La forme avec biais absorbé est utile pour les démonstrations : elle réduit deux mises à jour ($w$ et $b$) à une seule.
@@ -203,7 +210,7 @@ Trois choses à observer en jouant :
 
 - Sur OR ou AND, la frontière violette se stabilise rapidement. Le compteur d'erreurs tombe à zéro et le perceptron a convergé.
 - Sur XOR, le compteur d'erreurs ne tombe jamais à zéro, même après cent époques. La règle continue d'osciller indéfiniment.
-- Le taux $\eta$ ne change pas la convergence sur les datasets séparables : il modifie seulement l'amplitude de chaque pas et donc la *vitesse* visuelle de la frontière, pas le résultat final.
+- Le taux $\eta$ ne change pas la convergence sur les datasets séparables : il modifie seulement l'amplitude de chaque pas et donc la _vitesse_ visuelle de la frontière, pas le résultat final.
 
 ## Le théorème de convergence (Novikoff, 1962)
 
@@ -224,8 +231,15 @@ $$
 Soit $R = \max_{i} \|x_i\|$ le rayon du dataset.
 
 <Callout kind="tip" title="Astuce du biais absorbé">
-Pour alléger la rédaction, on absorbe le biais dans les poids : on remplace chaque $x_i \in \mathbb{R}^n$ par $\tilde x_i = (x_i, 1) \in \mathbb{R}^{n+1}$ et chaque $(w, b)$ par $\tilde w = (w, b) \in \mathbb{R}^{n+1}$. La règle d'apprentissage et l'inégalité de séparation gardent exactement leur forme, et on peut désormais travailler comme si le biais n'existait pas, dans un espace de dimension $n+1$. L'exercice 4 montre pourquoi on ne peut pas simplement *figer* $b = 0$ : sans cette absorption, la convergence n'est plus garantie.
+  Pour alléger la rédaction, on absorbe le biais dans les poids : on remplace chaque $x_i \in
+  \mathbb{R}^n$ par $\tilde x_i = (x_i, 1) \in \mathbb{R}^{n + 1}$ et chaque $(w, b)$ par $\tilde w
+  = (w, b) \in \mathbb{R}^{n + 1}$. La règle d'apprentissage et l'inégalité de séparation gardent
+  exactement leur forme, et on peut désormais travailler comme si le biais n'existait pas, dans un
+  espace de dimension $n+1$. L'exercice 4 montre pourquoi on ne peut pas simplement *figer* $b = 0$
+  : sans cette absorption, la convergence n'est plus garantie.
 </Callout>
+
+Une précision de rigueur : une fois le biais absorbé, les quantités du théorème se lisent toutes dans $\mathbb{R}^{n+1}$. Le rayon est alors $R = \max_i \|\tilde x_i\| = \max_i \sqrt{\|x_i\|^2 + 1}$, et $w^*$ désigne le séparateur optimal renormalisé à $\|w^*\| = 1$ dans ce même espace augmenté. La borne $R^2 / \gamma^2$ garde exactement sa forme.
 
 **Théorème.** L'algorithme du perceptron (en forme à biais absorbé) initialisé à $w_0 = 0$ avec pas $\eta = 1$ effectue au plus
 
@@ -239,7 +253,7 @@ corrections avant de classer correctement tous les exemples.
 
 On note $w_t$ le vecteur de poids après la $t$-ème correction.
 
-**Lemme 1 (minoration).** *Pour tout $t \geq 0$, $w_t \cdot w^* \geq t \gamma$.*
+**Lemme 1 (minoration).** _Pour tout $t \geq 0$, $w_t \cdot w^_ \geq t \gamma$.\*
 
 **Étape 1.** À l'initialisation, $w_0 = 0$, donc $w_0 \cdot w^* = 0$.
 
@@ -259,7 +273,7 @@ $$
 
 **Étape 5.** Par récurrence sur $t$, $w_t \cdot w^* \geq t \gamma$. □
 
-**Lemme 2 (majoration).** *Pour tout $t \geq 0$, $\|w_t\|^2 \leq t R^2$.*
+**Lemme 2 (majoration).** _Pour tout $t \geq 0$, $\|w_t\|^2 \leq t R^2$._
 
 **Étape 1.** À l'initialisation, $\|w_0\|^2 = 0$.
 
@@ -309,7 +323,7 @@ $$
 
 - Plus la marge $\gamma$ est étroite (deux classes très proches), plus la borne $R^2 / \gamma^2$ explose, et plus la convergence est lente.
 - Plus le rayon $R$ est grand (points éloignés de l'origine), plus la borne croît quadratiquement.
-- Mais quelle que soit la difficulté, la borne reste *finie* tant que $\gamma > 0$.
+- Mais quelle que soit la difficulté, la borne reste _finie_ tant que $\gamma > 0$.
 
 ### Explore la borne en direct
 
@@ -327,7 +341,7 @@ Le théorème de Novikoff fait une hypothèse cruciale : il existe un séparateu
 
 ### Le perceptron oscille
 
-La borne $T \leq R^2 / \gamma^2$ est démontrée sous l'hypothèse $\gamma > 0$. Quand le dataset n'est pas linéairement séparable, $\gamma$ n'est pas défini : il n'existe aucun couple $(w, b)$ qui classe tout correctement. Conséquence : la règle d'apprentissage de Rosenblatt continue à corriger en boucle, sans jamais converger. Le vecteur de poids $w$ oscille indéfiniment, et même les itérations qui passent par un *« presque bon »* $(w, b)$ sont perdues à l'itération suivante quand un autre exemple mal classé déclenche un update qui dégrade ce qu'on avait.
+La borne $T \leq R^2 / \gamma^2$ est démontrée sous l'hypothèse $\gamma > 0$. Quand le dataset n'est pas linéairement séparable, $\gamma$ n'est pas défini : il n'existe aucun couple $(w, b)$ qui classe tout correctement. Conséquence : la règle d'apprentissage de Rosenblatt continue à corriger en boucle, sans jamais converger. Le vecteur de poids $w$ oscille indéfiniment, et même les itérations qui passent par un _« presque bon »_ $(w, b)$ sont perdues à l'itération suivante quand un autre exemple mal classé déclenche un update qui dégrade ce qu'on avait.
 
 ### Le Pocket Algorithm de Gallant
 
@@ -335,8 +349,14 @@ La solution classique est étonnamment simple : on garde **en poche** le meilleu
 
 Cette procédure, le **Pocket Algorithm**, a été introduite par Gallant (1990). Sur dataset séparable elle se réduit au perceptron classique (la poche finit par contenir un séparateur parfait). Sur dataset non séparable, elle converge en probabilité vers le séparateur qui maximise le nombre d'exemples bien classés. On perd la garantie de Novikoff, mais on récupère une procédure utilisable en pratique.
 
-<Callout kind="note" title="Pourquoi le perceptron pur ne se contente pas de la « moyenne des poids »">
-Une idée naïve : faire converger en moyennant les $w_t$ obtenus à chaque itération. Cette stratégie marche aussi (c'est le *voted perceptron* de Freund et Schapire (1999)), mais elle exige de garder un historique et de pondérer chaque $w_t$ par sa durée de vie. Le Pocket Algorithm est plus simple : un seul $(w, b)$ stocké, mis à jour seulement quand on fait strictement mieux.
+<Callout
+  kind="note"
+  title="Pourquoi le perceptron pur ne se contente pas de la « moyenne des poids »"
+>
+  Une idée naïve : faire converger en moyennant les $w_t$ obtenus à chaque itération. Cette
+  stratégie marche aussi (c'est le *voted perceptron* de Freund et Schapire (1999)), mais elle exige
+  de garder un historique et de pondérer chaque $w_t$ par sa durée de vie. Le Pocket Algorithm est
+  plus simple : un seul $(w, b)$ stocké, mis à jour seulement quand on fait strictement mieux.
 </Callout>
 
 ## L'impossibilité de XOR
@@ -355,12 +375,12 @@ Pour cette démonstration, on revient à l'encodage usuel de XOR avec cibles dan
 
 Supposons qu'il existe $(w_1, w_2, b) \in \mathbb{R}^3$ tels que le perceptron réalise XOR. Alors les quatre contraintes suivantes sont simultanément vraies :
 
-| Point $(x_1, x_2)$ | XOR | Inéquation |
-|---|---|---|
-| $(0, 0)$ | $0$ | (1) : $b < 0$ |
-| $(1, 0)$ | $1$ | (2) : $w_1 + b \geq 0$ |
-| $(0, 1)$ | $1$ | (3) : $w_2 + b \geq 0$ |
-| $(1, 1)$ | $0$ | (4) : $w_1 + w_2 + b < 0$ |
+| Point $(x_1, x_2)$ | XOR | Inéquation                |
+| ------------------ | --- | ------------------------- |
+| $(0, 0)$           | $0$ | (1) : $b < 0$             |
+| $(1, 0)$           | $1$ | (2) : $w_1 + b \geq 0$    |
+| $(0, 1)$           | $1$ | (3) : $w_2 + b \geq 0$    |
+| $(1, 1)$           | $0$ | (4) : $w_1 + w_2 + b < 0$ |
 
 **Étape 1.** Additionnons (2) et (3) :
 
@@ -398,7 +418,7 @@ Trois choses à observer en jouant :
 
 ### Le contexte historique
 
-Marvin <Term slug="minsky-papert">Minsky et Seymour Papert</Term> publient *Perceptrons* en 1969, livre dont le chapitre central démontre cette impossibilité et la généralise à toute une famille de fonctions « non-locales ». Leur analyse rigoureuse a contribué à un repli du financement public de la recherche en réseaux de neurones, période qu'on appelle aujourd'hui le premier <Term slug="hiver-de-l-ia">hiver de l'IA</Term>. Il faudra attendre Hopfield en 1982 et la redécouverte de la <Term slug="backpropagation">rétropropagation</Term> par Rumelhart, Hinton et Williams en 1986 pour que la communauté reparte.
+Marvin <Term slug="minsky-papert">Minsky et Seymour Papert</Term> publient _Perceptrons_ en 1969, livre dont le chapitre central démontre cette impossibilité et la généralise à toute une famille de fonctions « non-locales ». Leur analyse rigoureuse a contribué à un repli du financement public de la recherche en réseaux de neurones, période qu'on appelle aujourd'hui le premier <Term slug="hiver-de-l-ia">hiver de l'IA</Term>. Il faudra attendre Hopfield en 1982 et la redécouverte de la <Term slug="backpropagation">rétropropagation</Term> par Rumelhart, Hinton et Williams en 1986 pour que la communauté reparte.
 
 ## Exercices papier-crayon
 
@@ -462,6 +482,7 @@ $$
 **Étape 7.** Nouvelle marge fonctionnelle : $\hat\gamma' = y (w' \cdot x + b') = 1 \times 0 = 0$. Ancienne marge : $\hat\gamma = 1 \times (-0{,}4) = -0{,}4$.
 
 **Résultat.** La nouvelle marge $0$ est strictement supérieure à l'ancienne $-0{,}4$. L'exemple n'est pas encore parfaitement classé (la marge n'est pas strictement positive), mais elle a augmenté, conformément à la démonstration. Une seconde itération corrigerait le tir.
+
 </Callout>
 
 ### Exercice 2 : tester la séparabilité
@@ -496,6 +517,7 @@ $$
 Donc $w_1 + w_2 + b < 0$. Mais (4) impose $w_1 + w_2 + b \geq 0$.
 
 **Résultat.** Contradiction entre $w_1 + w_2 + b < 0$ et $w_1 + w_2 + b \geq 0$. Le dataset n'est pas linéairement séparable.
+
 </Callout>
 
 ### Exercice 3 : un perceptron explicite pour NAND
@@ -506,33 +528,34 @@ Trouve explicitement $(w_1, w_2, b)$ tels que le perceptron réalise la fonction
 **Étape 1.** NAND est la négation de AND. La table de vérité est :
 
 | $(x_1, x_2)$ | NAND |
-|---|---|
-| $(0, 0)$ | $1$ |
-| $(0, 1)$ | $1$ |
-| $(1, 0)$ | $1$ |
-| $(1, 1)$ | $0$ |
+| ------------ | ---- |
+| $(0, 0)$     | $1$  |
+| $(0, 1)$     | $1$  |
+| $(1, 0)$     | $1$  |
+| $(1, 1)$     | $0$  |
 
 **Étape 2.** Intuition : on cherche une droite qui sépare le point $(1, 1)$ (cible $0$) des trois autres (cibles $1$). On essaye $w_1 = w_2 = -1$ et $b = 1{,}5$.
 
-**Étape 3.** Vérification sur chaque point. On calcule $z = w_1 x_1 + w_2 x_2 + b$ et $\operatorname{sgn}(z)$.
+**Étape 3.** Vérification sur chaque point. Comme la cible NAND est dans $\{0, 1\}$, on lit la sortie avec la fonction de Heaviside $H$ (sortie $1$ si $z \geq 0$, sinon $0$), comme dans la démonstration de XOR. On calcule $z = w_1 x_1 + w_2 x_2 + b$ et $H(z)$.
 
 $$
-(0, 0) : z = 0 + 0 + 1{,}5 = 1{,}5 \;>\; 0 \;\Longrightarrow\; \operatorname{sgn} = 1. \;\;\text{OK}.
-$$
-
-$$
-(0, 1) : z = 0 - 1 + 1{,}5 = 0{,}5 \;>\; 0 \;\Longrightarrow\; \operatorname{sgn} = 1. \;\;\text{OK}.
+(0, 0) : z = 0 + 0 + 1{,}5 = 1{,}5 \;\geq\; 0 \;\Longrightarrow\; H = 1. \;\;\text{OK}.
 $$
 
 $$
-(1, 0) : z = -1 + 0 + 1{,}5 = 0{,}5 \;>\; 0 \;\Longrightarrow\; \operatorname{sgn} = 1. \;\;\text{OK}.
+(0, 1) : z = 0 - 1 + 1{,}5 = 0{,}5 \;\geq\; 0 \;\Longrightarrow\; H = 1. \;\;\text{OK}.
 $$
 
 $$
-(1, 1) : z = -1 - 1 + 1{,}5 = -0{,}5 \;<\; 0 \;\Longrightarrow\; \operatorname{sgn} = 0. \;\;\text{OK}.
+(1, 0) : z = -1 + 0 + 1{,}5 = 0{,}5 \;\geq\; 0 \;\Longrightarrow\; H = 1. \;\;\text{OK}.
+$$
+
+$$
+(1, 1) : z = -1 - 1 + 1{,}5 = -0{,}5 \;<\; 0 \;\Longrightarrow\; H = 0. \;\;\text{OK}.
 $$
 
 **Résultat.** Le perceptron $(w_1, w_2, b) = (-1, -1, 1{,}5)$ réalise NAND. Géométriquement, la frontière de décision est la droite $-x_1 - x_2 + 1{,}5 = 0$, soit $x_1 + x_2 = 1{,}5$, qui sépare effectivement $(1, 1)$ des trois autres points.
+
 </Callout>
 
 ### Exercice 4 : sans biais, Novikoff peut échouer
@@ -544,13 +567,14 @@ On force $b = 0$ pendant tout l'apprentissage (le perceptron ne met à jour que 
 
 **Étape 2.** Considérons le dataset $\{ (1, +1), \; (-1, +1) \}$ : deux points placés de part et d'autre de l'origine, mais avec la même cible $+1$.
 
-**Étape 3.** Vérifions que ce dataset est linéairement séparable *avec biais*. Prenons $(w, b) = (0{,}1, \; 1)$. Pour le premier point : $w \cdot 1 + b = 0{,}1 + 1 = 1{,}1 > 0$, donc prédit $+1$. Pour le second : $w \cdot (-1) + b = -0{,}1 + 1 = 0{,}9 > 0$, donc prédit $+1$ aussi. Les deux points sont bien classés.
+**Étape 3.** Vérifions que ce dataset est linéairement séparable _avec biais_. Prenons $(w, b) = (0{,}1, \; 1)$. Pour le premier point : $w \cdot 1 + b = 0{,}1 + 1 = 1{,}1 > 0$, donc prédit $+1$. Pour le second : $w \cdot (-1) + b = -0{,}1 + 1 = 0{,}9 > 0$, donc prédit $+1$ aussi. Les deux points sont bien classés.
 
 **Étape 4.** Sans biais ($b = 0$ figé), la prédiction est $\operatorname{sgn}(w \cdot x)$. Pour prédire $+1$ sur $x = 1$, il faut $w > 0$. Pour prédire $+1$ sur $x = -1$, il faut $w < 0$. Ces deux conditions sont incompatibles : aucun $w \in \mathbb{R}$ ne classifie correctement les deux points.
 
 **Étape 5.** L'algorithme oscille : sur l'exemple mal classé, il pousse $w$ dans une direction, mais l'autre exemple devient alors mal classé et il pousse $w$ dans la direction opposée. Aucune convergence n'est possible.
 
 **Résultat.** Sur le dataset $\{ (1, +1), (-1, +1) \}$, linéairement séparable avec biais (par exemple $(w, b) = (0{,}1, 1)$), le perceptron sans biais ne converge pas : le théorème de Novikoff a besoin du biais comme degré de liberté supplémentaire. C'est pourquoi on le met à jour en pratique, soit directement, soit en l'absorbant dans $\tilde w$ via une coordonnée constante $\tilde x = (x, 1)$.
+
 </Callout>
 
 ## En une phrase
@@ -590,67 +614,72 @@ C'est exactement ce que le chapitre 5 va formaliser : empiler des perceptrons en
     {
       q: "Pourquoi la règle d'apprentissage du perceptron n'a-t-elle pas besoin de calculer une dérivée ?",
       options: [
-        "Parce que la fonction signe est dérivable partout.",
+        'Parce que la fonction signe est dérivable partout.',
         "Parce que l'update est une correction géométrique locale : on déplace w dans la direction de l'exemple mal classé, sans optimiser une fonction de coût continue.",
-        "Parce que Rosenblatt n'avait pas encore inventé le calcul différentiel."
+        "Parce que Rosenblatt n'avait pas encore inventé le calcul différentiel.",
       ],
       answer: 1,
-      explain: "La règle w ← w + η y x est une projection : on ajoute (ou retranche) le vecteur d'entrée. Elle améliore strictement la marge fonctionnelle de l'exemple corrigé, comme on l'a démontré, sans jamais évaluer la pente d'une fonction."
+      explain:
+        "La règle w ← w + η y x est une projection : on ajoute (ou retranche) le vecteur d'entrée. Elle améliore strictement la marge fonctionnelle de l'exemple corrigé, comme on l'a démontré, sans jamais évaluer la pente d'une fonction.",
     },
     {
-      q: "Sur un dataset non linéairement séparable, que se passe-t-il avec le perceptron ?",
+      q: 'Sur un dataset non linéairement séparable, que se passe-t-il avec le perceptron ?',
       options: [
-        "Il converge vers la meilleure frontière possible au sens des moindres carrés.",
-        "Il oscille indéfiniment, sans jamais classer tous les exemples correctement.",
-        "Il diverge : les poids partent à l'infini."
+        'Il converge vers la meilleure frontière possible au sens des moindres carrés.',
+        'Il oscille indéfiniment, sans jamais classer tous les exemples correctement.',
+        "Il diverge : les poids partent à l'infini.",
       ],
       answer: 1,
-      explain: "Le théorème de Novikoff ne s'applique pas. À chaque correction, un autre exemple devient mal classé, et l'algorithme passe son temps à corriger l'un puis l'autre sans jamais converger."
+      explain:
+        "Le théorème de Novikoff ne s'applique pas. À chaque correction, un autre exemple devient mal classé, et l'algorithme passe son temps à corriger l'un puis l'autre sans jamais converger.",
     },
     {
       q: "Dans l'update w ← w + η y x, pourquoi multiplie-t-on par x et pas par autre chose ?",
       options: [
-        "Pour normaliser le pas.",
+        'Pour normaliser le pas.',
         "Pour que seuls les poids dont l'entrée a contribué à l'erreur soient corrigés : une composante nulle de x laisse le poids correspondant inchangé.",
-        "Parce que c'est plus rapide à calculer."
+        "Parce que c'est plus rapide à calculer.",
       ],
       answer: 1,
-      explain: "Si xᵢ = 0, le poids wᵢ n'a pas influencé la prédiction (multiplié par zéro). Le corriger serait arbitraire. La règle ajuste seulement les poids responsables, en proportion de leur entrée."
+      explain:
+        "Si xᵢ = 0, le poids wᵢ n'a pas influencé la prédiction (multiplié par zéro). Le corriger serait arbitraire. La règle ajuste seulement les poids responsables, en proportion de leur entrée.",
     },
     {
       q: "Quelle est la signification géométrique de b dans l'équation w · x + b = 0 ?",
       options: [
         "C'est la pente de l'hyperplan.",
         "C'est tel que b / ‖w‖ est la distance signée de l'origine à l'hyperplan ; en valeur absolue, |b| / ‖w‖ est la distance perpendiculaire.",
-        "C'est la norme du vecteur normal."
+        "C'est la norme du vecteur normal.",
       ],
       answer: 1,
-      explain: "L'hyperplan passe par les points x tels que w · x = -b. La distance signée de l'origine à l'hyperplan est b / ‖w‖. Sans biais, l'hyperplan est forcé de passer par l'origine, ce qui restreint fortement la classe de classifieurs réalisables."
+      explain:
+        "L'hyperplan passe par les points x tels que w · x = -b. La distance signée de l'origine à l'hyperplan est b / ‖w‖. Sans biais, l'hyperplan est forcé de passer par l'origine, ce qui restreint fortement la classe de classifieurs réalisables.",
     },
     {
       q: "Pourquoi XOR n'est-il pas réalisable par un seul perceptron, et que va faire le chapitre 5 ?",
       options: [
-        "Parce que XOR a quatre valeurs au lieu de deux ; le chapitre 5 va utiliser un perceptron à quatre entrées.",
+        'Parce que XOR a quatre valeurs au lieu de deux ; le chapitre 5 va utiliser un perceptron à quatre entrées.',
         "Parce que la fonction XOR n'est pas linéairement séparable (démontré par contradiction) ; le chapitre 5 va l'écrire comme composition (x₁ OR x₂) AND NOT(x₁ AND x₂) et empiler trois perceptrons en deux couches.",
-        "Parce que XOR est NP-difficile ; le chapitre 5 va utiliser une approximation polynomiale."
+        'Parce que XOR est NP-difficile ; le chapitre 5 va utiliser une approximation polynomiale.',
       ],
       answer: 1,
-      explain: "On a démontré dans ce chapitre que les quatre contraintes XOR sont incompatibles. Mais la décomposition XOR = OR ∧ ¬AND est faite uniquement de fonctions linéairement séparables. Trois perceptrons empilés résolvent XOR : c'est l'idée du chapitre 5."
-    }
+      explain:
+        "On a démontré dans ce chapitre que les quatre contraintes XOR sont incompatibles. Mais la décomposition XOR = OR ∧ ¬AND est faite uniquement de fonctions linéairement séparables. Trois perceptrons empilés résolvent XOR : c'est l'idée du chapitre 5.",
+    },
   ]}
 />
 
 ## Sources
 
-- Rosenblatt, F. (1958). « The perceptron: A probabilistic model for information storage and organization in the brain ». *Psychological Review* 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
-- Novikoff, A. B. J. (1962). « On convergence proofs on perceptrons ». *Symposium on the Mathematical Theory of Automata* 12, 615-622.
-- Minsky, M. & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*. MIT Press. ISBN 978-0-262-13043-1.
-- Gallant, S. I. (1990). « Perceptron-Based Learning Algorithms ». *IEEE Transactions on Neural Networks* 1(2), 179-191. (Introduction du Pocket Algorithm.) [DOI 10.1109/72.80230](https://doi.org/10.1109/72.80230)
-- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*, ch. 4. Springer. ISBN 978-0-387-31073-2.
-- Hastie, T., Tibshirani, R. & Friedman, J. (2009). *The Elements of Statistical Learning*, ch. 4. Springer. ISBN 978-0-387-84857-0.
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*, ch. 1. MIT Press. ISBN 978-0-262-03561-3.
+- Rosenblatt, F. (1958). « The perceptron: A probabilistic model for information storage and organization in the brain ». _Psychological Review_ 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
+- Novikoff, A. B. J. (1962). « On convergence proofs on perceptrons ». _Symposium on the Mathematical Theory of Automata_ 12, 615-622.
+- Minsky, M. & Papert, S. (1969). _Perceptrons: An Introduction to Computational Geometry_. MIT Press. ISBN 978-0-262-13043-1.
+- Gallant, S. I. (1990). « Perceptron-Based Learning Algorithms ». _IEEE Transactions on Neural Networks_ 1(2), 179-191. (Introduction du Pocket Algorithm.) [DOI 10.1109/72.80230](https://doi.org/10.1109/72.80230)
+- Bishop, C. M. (2006). _Pattern Recognition and Machine Learning_, ch. 4. Springer. ISBN 978-0-387-31073-2.
+- Hastie, T., Tibshirani, R. & Friedman, J. (2009). _The Elements of Statistical Learning_, ch. 4. Springer. ISBN 978-0-387-84857-0.
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_, ch. 1. MIT Press. ISBN 978-0-262-03561-3.
 
 ### Pour aller plus loin
 
-- Cortes, C. & Vapnik, V. (1995). « Support-Vector Networks ». *Machine Learning* 20(3), 273-297. Les SVM sont précisément le perceptron à **marge maximale** : là où la règle de Rosenblatt accepte n'importe quel séparateur valide, SVM optimise le séparateur dont la marge géométrique $\gamma$ (celle-là même qui apparaît dans Novikoff) est la plus grande possible. C'est l'héritage direct du perceptron, et la pierre angulaire de l'apprentissage supervisé pré-2012. [DOI 10.1007/BF00994018](https://doi.org/10.1007/BF00994018)
-- Freund, Y. & Schapire, R. E. (1999). « Large Margin Classification Using the Perceptron Algorithm ». *Machine Learning* 37(3), 277-296. Introduit le *voted perceptron* qui agrège les hypothèses intermédiaires : sur dataset bruité, performance proche de SVM pour un coût comparable au perceptron. [DOI 10.1023/A:1007662407062](https://doi.org/10.1023/A:1007662407062)
+- Cortes, C. & Vapnik, V. (1995). « Support-Vector Networks ». _Machine Learning_ 20(3), 273-297. Les SVM sont précisément le perceptron à **marge maximale** : là où la règle de Rosenblatt accepte n'importe quel séparateur valide, SVM optimise le séparateur dont la marge géométrique $\gamma$ (celle-là même qui apparaît dans Novikoff) est la plus grande possible. C'est l'héritage direct du perceptron, et la pierre angulaire de l'apprentissage supervisé pré-2012. [DOI 10.1007/BF00994018](https://doi.org/10.1007/BF00994018)
+- Freund, Y. & Schapire, R. E. (1999). « Large Margin Classification Using the Perceptron Algorithm ». _Machine Learning_ 37(3), 277-296. Introduit le _voted perceptron_ qui agrège les hypothèses intermédiaires : sur dataset bruité, performance proche de SVM pour un coût comparable au perceptron. [DOI 10.1023/A:1007662407062](https://doi.org/10.1023/A:1007662407062)

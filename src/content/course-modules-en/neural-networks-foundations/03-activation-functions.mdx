@@ -2,7 +2,7 @@
 course: neural-networks-foundations
 order: 3
 title: Activation functions
-subtitle: "Identity, sigmoid, ReLU, tanh: why they exist, what they give, and how to choose."
+subtitle: 'Identity, sigmoid, ReLU, tanh: why they exist, what they give, and how to choose.'
 estimatedMinutes: 16
 published: false
 ---
@@ -24,6 +24,7 @@ In chapters 1 and 2 you met the <Term slug="fonction-activation">activation func
 **What is not required**: advanced differential calculus, approximation theory, numerical optimisation.
 
 **Level of rigour**: each function gets an equation, a derivative and its limits. The central proof (without non-linearity, depth is pointless) is explicit.
+
 </Callout>
 
 ## Why we need a non-linear function
@@ -53,7 +54,9 @@ $$
 The same argument repeats at every transition between layers. That is why we insert $f$ **after every hidden layer**, and not only at the output: if a single pair of adjacent layers lacks a non-linearity between them, those two layers collapse into one and depth loses its point again.
 
 <Callout kind="tip" title="The theorem in one sentence">
-*Without non-linearity, network depth is an illusion.* That is why we insert a function $f$ at the output of every neuron, to "break" linearity. Without it, you do not have a deep network, you have a linear regression with fancy notation.
+  *Without non-linearity, network depth is an illusion.* That is why we insert a function $f$ at the
+  output of every neuron, to "break" linearity. Without it, you do not have a deep network, you have
+  a linear regression with fancy notation.
 </Callout>
 
 ### What we expect from an activation function
@@ -74,9 +77,7 @@ The four classics we are about to study tick those boxes to varying degrees.
 
 The identity is the function that does nothing. We include it for completeness and because we use it on the **output layer** for regression problems.
 
-<Formula caption="Identity">
-f(x) = x
-</Formula>
+<Formula caption="Identity">f(x) = x</Formula>
 
 **Equation**: $f(x) = x$. **Derivative**: $f'(x) = 1$.
 
@@ -86,9 +87,7 @@ You can safely ignore this function as long as we are inside hidden layers, but 
 
 The <Term slug="sigmoide">sigmoid</Term> dominated neural networks between 1986 and 2010. Its S-shape squashes any real number into the open interval $]0, 1[$, which lets us read its output as a probability.
 
-<Formula caption="Sigmoid">
-σ(x) = 1 / (1 + e⁻ˣ)
-</Formula>
+<Formula caption="Sigmoid">σ(x) = 1 / (1 + e⁻ˣ)</Formula>
 
 **Equation**: $\sigma(x) = \dfrac{1}{1 + e^{-x}}$. **Derivative**: $\sigma'(x) = \sigma(x)(1 - \sigma(x))$, an elegant property that simplifies backpropagation.
 
@@ -98,17 +97,16 @@ The <Term slug="sigmoide">sigmoid</Term> dominated neural networks between 1986 
 
 ### ReLU
 
-<Term slug="relu">ReLU</Term> is today the default choice for hidden layers. Its brutal simplicity is precisely what makes it efficient.
+<Term slug="relu">ReLU</Term> is today the default choice for hidden layers. Its brutal simplicity
+is precisely what makes it efficient.
 
-<Formula caption="ReLU">
-ReLU(x) = max(0, x)
-</Formula>
+<Formula caption="ReLU">ReLU(x) = max(0, x)</Formula>
 
 **Equation**: $\text{ReLU}(x) = \max(0, x)$. **Derivative**: $\text{ReLU}'(x) = \mathbb{1}[x > 0]$, i.e. $1$ for $x > 0$ and $0$ otherwise. Strictly undefined at $x = 0$, but we conventionally set it to $0$ or $1$ with no practical consequence.
 
 **Shape**: zero on negatives, identity on positives. Not bounded above.
 
-**Modern usage**: since its introduction for RBMs by Nair and Hinton (2010), ReLU and its variants (Leaky ReLU, ELU, GELU) have become the dominant choice for hidden layers in deep networks. It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the *dying ReLU* problem, mitigated by the variants.
+**Modern usage**: since its introduction for RBMs by Nair and Hinton (2010), ReLU and its variants (Leaky ReLU, ELU, GELU) have become the dominant choice for hidden layers in deep networks. It computes in one operation, its gradient is exact (1 or 0), and it does not saturate upwards. Drawback: if a neuron's input stays negative, its gradient is zero and backpropagation (chapter 8) can no longer update its weights. The neuron freezes. This is the _dying ReLU_ problem, mitigated by the variants.
 
 #### Watch a neuron die
 
@@ -123,12 +121,13 @@ The component below is a single-input ReLU neuron. Its output $\text{ReLU}(w \cd
     initialW={1.2}
     initialB={0.4}
     labels={{
-    weightLabel: 'Weight w',
-    biasLabel: 'Bias b',
-    activeLabel: 'active',
-    deadLabel: 'dead',
-    helpText: "Push the bias down to drive the neuron to death. When the ReLU output is zero on every sample, so is its gradient, and the neuron stops learning.",
-  }}
+      weightLabel: 'Weight w',
+      biasLabel: 'Bias b',
+      activeLabel: 'active',
+      deadLabel: 'dead',
+      helpText:
+        'Push the bias down to drive the neuron to death. When the ReLU output is zero on every sample, so is its gradient, and the neuron stops learning.',
+    }}
   />
 </InteractivePrint>
 
@@ -139,16 +138,19 @@ Three things to try:
 - Find a configuration where exactly half of the points are active. That is typically a good starting point for training.
 
 <Callout kind="warn" title="The dying ReLU trap">
-If during training you notice that some of your ReLU neurons stay silent across the entire dataset, they are dead: their output stays at zero and their gradient too, so backpropagation cannot revive them. First reflexes: lower the learning rate (an oversized step can push a neuron past a very negative bias in one go), replace the ReLUs with **Leaky ReLU** or **GELU** (variants that let some gradient through on the negative side), and check the bias initialisation (chapter 11), which should not be overly negative.
+  If during training you notice that some of your ReLU neurons stay silent across the entire
+  dataset, they are dead: their output stays at zero and their gradient too, so backpropagation
+  cannot revive them. First reflexes: lower the learning rate (an oversized step can push a neuron
+  past a very negative bias in one go), replace the ReLUs with **Leaky ReLU** or **GELU** (variants
+  that let some gradient through on the negative side), and check the bias initialisation (chapter
+  11), which should not be overly negative.
 </Callout>
 
 ### Tanh
 
 The hyperbolic tangent is the centred cousin of the sigmoid. Same S-shape, but squashes into $]-1, 1[$ instead of $]0, 1[$.
 
-<Formula caption="Tanh">
-tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
-</Formula>
+<Formula caption="Tanh">tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)</Formula>
 
 **Equation**: $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$. **Derivative**: $\tanh'(x) = 1 - \tanh^2(x)$.
 
@@ -160,12 +162,12 @@ tanh(x) = (eˣ - e⁻ˣ) / (eˣ + e⁻ˣ)
 
 A single overview to memorise the four classical functions: shape, derivative, output range, and computational cost.
 
-| Function | Definition | Derivative | Range | Relative cost |
-|---|---|---|---|---|
-| Identity | $f(x) = x$ | $f'(x) = 1$ | $\mathbb{R}$ | 1× (baseline) |
-| Sigmoid | $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ | $\sigma'(x) = \sigma(x)(1 - \sigma(x))$ | $(0, 1)$ | ~10× (one exp) |
-| Tanh | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$ | $(-1, 1)$ | ~10× (one exp in practice) |
-| ReLU | $\text{ReLU}(x) = \max(0, x)$ | $\text{ReLU}'(x) = \mathbb{1}[x > 0]$ | $[0, +\infty)$ | 1× (one test) |
+| Function | Definition                                      | Derivative                              | Range          | Relative cost              |
+| -------- | ----------------------------------------------- | --------------------------------------- | -------------- | -------------------------- |
+| Identity | $f(x) = x$                                      | $f'(x) = 1$                             | $\mathbb{R}$   | 1× (baseline)              |
+| Sigmoid  | $\sigma(x) = \dfrac{1}{1 + e^{-x}}$             | $\sigma'(x) = \sigma(x)(1 - \sigma(x))$ | $(0, 1)$       | ~10× (one exp)             |
+| Tanh     | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$            | $(-1, 1)$      | ~10× (one exp in practice) |
+| ReLU     | $\text{ReLU}(x) = \max(0, x)$                   | $\text{ReLU}'(x) = \mathbb{1}[x > 0]$   | $[0, +\infty)$ | 1× (one test)              |
 
 Three observations to keep in mind: (1) only ReLU and Identity match the low cost of the dot product that feeds them; (2) only sigmoid and tanh saturate and therefore trigger vanishing gradient; (3) only ReLU can die, which the modern variants below fix.
 
@@ -173,13 +175,11 @@ Relative costs are **orders of magnitude**: the exact value depends on hardware 
 
 ## The modern ReLU family
 
-ReLU has been the default since 2012, but state-of-the-art architectures (transformers, foundation models, diffusion) have adopted smoother variants that solve the *dying ReLU* problem while preserving most of its advantages.
+ReLU has been the default since 2012, but state-of-the-art architectures (transformers, foundation models, diffusion) have adopted smoother variants that solve the _dying ReLU_ problem while preserving most of its advantages.
 
 ### Leaky ReLU
 
-<Formula caption="Leaky ReLU">
-LeakyReLU(x) = max(α x, x)
-</Formula>
+<Formula caption="Leaky ReLU">LeakyReLU(x) = max(α x, x)</Formula>
 
 **Equation**: $\text{LeakyReLU}(x) = \max(\alpha x, x)$, with a small coefficient $\alpha$ typically set to $0.01$. **Derivative**: $\alpha$ on the negative side, $1$ on the positive side.
 
@@ -187,9 +187,7 @@ Instead of clamping the output to zero for negative inputs, we let a small slope
 
 ### GELU
 
-<Formula caption="GELU">
-GELU(x) = x · Φ(x)
-</Formula>
+<Formula caption="GELU">GELU(x) = x · Φ(x)</Formula>
 
 **Equation**: $\text{GELU}(x) = x \cdot \Phi(x)$, where $\Phi$ is the cumulative distribution function of the standard normal distribution. It is the activation of late-2010s transformers (BERT, GPT-2, GPT-3) and remains widely used in most contemporary transformers. More recent proprietary architectures (GPT-4, Claude) do not publish their activation choice. **Derivative**: $\Phi(x) + x \cdot \phi(x)$ where $\phi$ is the Gaussian density.
 
@@ -197,9 +195,7 @@ Geometrically, GELU behaves almost like ReLU far from zero, but it is smooth eve
 
 ### SiLU (Swish)
 
-<Formula caption="SiLU / Swish">
-SiLU(x) = x · σ(x)
-</Formula>
+<Formula caption="SiLU / Swish">SiLU(x) = x · σ(x)</Formula>
 
 **Equation**: $\text{SiLU}(x) = x \cdot \sigma(x)$, where $\sigma$ is the sigmoid. It is the same function as the "Swish" of Ramachandran et al. (2017), simply renamed. It is the inner activation of **SwiGLU**, the block used in Llama (all generations), Mistral, Mixtral, PaLM and most recent open-weight LLMs. It also shows up directly in EfficientNet. **Derivative**: $\sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))$.
 
@@ -207,9 +203,7 @@ Shape very close to GELU, slightly cheaper to compute (no error function, just a
 
 ### ELU
 
-<Formula caption="ELU">
-ELU(x) = x if x ≥ 0, else α(eˣ - 1)
-</Formula>
+<Formula caption="ELU">ELU(x) = x if x ≥ 0, else α(eˣ - 1)</Formula>
 
 **Equation**: $\text{ELU}(x) = x$ if $x \geq 0$, else $\alpha (e^x - 1)$, with $\alpha$ typically equal to $1$. A smooth shape on the negative side that asymptotes to $-\alpha$. **Derivative**: $1$ on the positive side, $\alpha e^x$ on the negative side.
 
@@ -227,17 +221,17 @@ The idea of an activation function is easier to see than to describe. The compon
 >
   <ActivationPlotter
     client:visible
-    functions={["sigmoid", "relu", "tanh", "identity"]}
+    functions={['sigmoid', 'relu', 'tanh', 'identity']}
     showDerivative={true}
     showCursor={true}
     range={[-5, 5]}
     labels={{
-    derivativeLabel: 'Derivative',
-    cursorLabel: 'Cursor',
-    xRangeLabel: 'x domain',
-    minLabel: 'min',
-    maxLabel: 'max',
-  }}
+      derivativeLabel: 'Derivative',
+      cursorLabel: 'Cursor',
+      xRangeLabel: 'x domain',
+      minLabel: 'min',
+      maxLabel: 'max',
+    }}
   />
 </InteractivePrint>
 
@@ -271,36 +265,39 @@ The component below simulates a deep network. Change the number of layers and sw
     maxLayers={20}
     defaultActivation="sigmoid"
     labels={{
-    layersLabel: 'Number of layers',
-    layerPrefix: 'Layer',
-    helpText: "The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh 1, ReLU 1.",
-  }}
+      layersLabel: 'Number of layers',
+      layerPrefix: 'Layer',
+      helpText:
+        'The output layer receives a reference gradient of 1. Each layer crossed back toward the input multiplies it by the maximum derivative of the chosen function: sigmoid 0.25, tanh 1, ReLU 1.',
+    }}
   />
 </InteractivePrint>
 
 The key experiment: push to $15$ layers with sigmoid and look at the first-layer gradient. It is on the order of $10^{-9}$, totally insufficient to update a weight. Now switch to ReLU and watch the bars all match again. That is the exact technical reason why sigmoid was dropped from hidden layers in favour of ReLU starting in 2012.
 
 <Callout kind="warn" title="The vanishing-gradient trap">
-If you train a deep network and the first layer stays mute while the last one converges, you almost certainly have a vanishing gradient. First reflexes: swap sigmoids for ReLUs, check the initialisation (chapter 11), and try batch normalisation (same chapter).
+  If you train a deep network and the first layer stays mute while the last one converges, you
+  almost certainly have a vanishing gradient. First reflexes: swap sigmoids for ReLUs, check the
+  initialisation (chapter 11), and try batch normalisation (same chapter).
 </Callout>
 
 ## How to choose in practice
 
 A simple heuristic that works 95 % of the time:
 
-| Layer | Default choice | Variants |
-|---|---|---|
-| Hidden layers | **ReLU** | Leaky ReLU, ELU, GELU for dying-ReLU cases |
-| Binary classification output | **Sigmoid** | (none) |
-| Multi-class classification output | **Softmax** (chapter 6) | (none) |
-| Regression output | **Identity** | (none) |
-| Recurrent layers (RNN, LSTM, GRU) | **Tanh** + sigmoid on gates | (none) |
+| Layer                             | Default choice              | Variants                                   |
+| --------------------------------- | --------------------------- | ------------------------------------------ |
+| Hidden layers                     | **ReLU**                    | Leaky ReLU, ELU, GELU for dying-ReLU cases |
+| Binary classification output      | **Sigmoid**                 | (none)                                     |
+| Multi-class classification output | **Softmax** (chapter 6)     | (none)                                     |
+| Regression output                 | **Identity**                | (none)                                     |
+| Recurrent layers (RNN, LSTM, GRU) | **Tanh** + sigmoid on gates | (none)                                     |
 
 This table is a heuristic, not dogma. Specific architectures (transformers, GANs, diffusion models) use other functions (GELU, Swish, Mish). But for a standard network, ReLU everywhere except output is an excellent starting point.
 
 ## In one sentence
 
-The activation function is what stops a deep network from collapsing into a linear regression. Sigmoid and tanh ruled until 2010, ReLU has dominated since. The choice depends on context but rarely turns out to be tricky in practice.
+The activation function is what stops a deep network from collapsing into a linear regression. Sigmoid and tanh ruled until 2010, then ReLU took over the hidden layers from 2012 on. The choice depends on context but rarely turns out to be tricky in practice.
 
 ## On to chapter 4
 
@@ -366,6 +363,7 @@ $$
 $$
 \sigma'(x) = \sigma(x) \cdot (1 - \sigma(x)) \qquad \square
 $$
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 2: computation at two values">
@@ -404,6 +402,7 @@ $$
 **Comparison and interpretation.**
 
 The gradient is divided by about $2.4$ between $x = 0$ and $x = 2$. For larger inputs, it collapses very quickly: this is the **saturation** of the sigmoid and the source of the vanishing-gradient problem.
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 3: comparing compute costs">
@@ -442,91 +441,87 @@ Total: around **2003 operations**.
 
 The exponential is very expensive on commodity hardware: about **20 to 50 CPU cycles**, against **1 cycle** for a comparison.
 
-With billions of evaluations per second in a deep network, this 20-50× factor on the activation becomes a 5 to 10× factor on overall throughput.
+For this 1000-input neuron the overhead nonetheless stays marginal: the weighted sum (about 2000 operations) dominates by far, and the exponential adds only a few percent. The difference becomes truly significant only when the activation weighs as much as the computation before it: neurons with very few inputs, or above all activations applied element-wise over large tensors, where each output costs just a handful of operations before the exponential. That is precisely the regime of modern deep networks, and that is where ReLU's thriftiness pays off.
 
-This is significant, and it is the second reason (with the preserved gradient) for ReLU's dominance.
+This is the second reason (along with the preserved gradient) for ReLU's dominance in hidden layers.
+
 </Callout>
 
 ## Sources
 
-- Nair, V. & Hinton, G. E. (2010). "Rectified Linear Units Improve Restricted Boltzmann Machines." *ICML* 27. [ICML link](https://icml.cc/Conferences/2010/papers/432.pdf)
-- Glorot, X. & Bengio, Y. (2010). "Understanding the difficulty of training deep feedforward neural networks." *AISTATS* 9, 249-256. [AISTATS link](https://proceedings.mlr.press/v9/glorot10a.html)
-- Cox, D. R. (1958). "The Regression Analysis of Binary Sequences." *Journal of the Royal Statistical Society* 20(2), 215-242. (Historical origin of the logistic function.) [DOI 10.1111/j.2517-6161.1958.tb00292.x](https://doi.org/10.1111/j.2517-6161.1958.tb00292.x)
+- Nair, V. & Hinton, G. E. (2010). "Rectified Linear Units Improve Restricted Boltzmann Machines." _ICML_ 27. [ICML link](https://icml.cc/Conferences/2010/papers/432.pdf)
+- Glorot, X. & Bengio, Y. (2010). "Understanding the difficulty of training deep feedforward neural networks." _AISTATS_ 9, 249-256. [AISTATS link](https://proceedings.mlr.press/v9/glorot10a.html)
+- Cox, D. R. (1958). "The Regression Analysis of Binary Sequences." _Journal of the Royal Statistical Society_ 20(2), 215-242. (Historical origin of the logistic function.) [DOI 10.1111/j.2517-6161.1958.tb00292.x](https://doi.org/10.1111/j.2517-6161.1958.tb00292.x)
 
 ### Further reading
 
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Section 6.3 on activation functions and their variants. [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Maas, A. L., Hannun, A. Y. & Ng, A. Y. (2013). "Rectifier Nonlinearities Improve Neural Network Acoustic Models." *ICML* 30, Workshop on Deep Learning for Audio, Speech and Language Processing. (Introduction of Leaky ReLU.) [Stanford link](https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf)
-- Hendrycks, D. & Gimpel, K. (2016). "Gaussian Error Linear Units (GELUs)." *arXiv*. [arXiv 1606.08415](https://arxiv.org/abs/1606.08415)
-- Ramachandran, P., Zoph, B. & Le, Q. V. (2017). "Searching for Activation Functions." *arXiv*. (Automated search for activations, introduces the Swish family, equivalent to SiLU.) [arXiv 1710.05941](https://arxiv.org/abs/1710.05941)
-- Elfwing, S., Uchibe, E. & Doya, K. (2018). "Sigmoid-Weighted Linear Units for Neural Network Function Approximation in Reinforcement Learning." *Neural Networks* 107, 3-11. (Original description of SiLU.) [arXiv 1702.03118](https://arxiv.org/abs/1702.03118)
-- Clevert, D.-A., Unterthiner, T. & Hochreiter, S. (2015). "Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)." *arXiv*. [arXiv 1511.07289](https://arxiv.org/abs/1511.07289)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Section 6.3 on activation functions and their variants. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Maas, A. L., Hannun, A. Y. & Ng, A. Y. (2013). "Rectifier Nonlinearities Improve Neural Network Acoustic Models." _ICML_ 30, Workshop on Deep Learning for Audio, Speech and Language Processing. (Introduction of Leaky ReLU.) [Stanford link](https://ai.stanford.edu/~amaas/papers/relu_hybrid_icml2013_final.pdf)
+- Hendrycks, D. & Gimpel, K. (2016). "Gaussian Error Linear Units (GELUs)." _arXiv_. [arXiv 1606.08415](https://arxiv.org/abs/1606.08415)
+- Ramachandran, P., Zoph, B. & Le, Q. V. (2017). "Searching for Activation Functions." _arXiv_. (Automated search for activations, introduces the Swish family, equivalent to SiLU.) [arXiv 1710.05941](https://arxiv.org/abs/1710.05941)
+- Elfwing, S., Uchibe, E. & Doya, K. (2018). "Sigmoid-Weighted Linear Units for Neural Network Function Approximation in Reinforcement Learning." _Neural Networks_ 107, 3-11. (Original description of SiLU.) [arXiv 1702.03118](https://arxiv.org/abs/1702.03118)
+- Clevert, D.-A., Unterthiner, T. & Hochreiter, S. (2015). "Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)." _arXiv_. [arXiv 1511.07289](https://arxiv.org/abs/1511.07289)
 
 <InteractivePrint
   label="Quiz: chapter 3 recap (interactive)"
   description="Multiple-choice quiz checking the chapter's takeaways: sigmoid and tanh, ReLU and the dying ReLU problem, derivatives, and the vanishing gradient. To be taken online for automatic scoring."
 >
   <Quiz
-  client:load
-  submitLabel="Check"
-  resetLabel="Reset"
-  scoreLabel="Score"
-  questions={[
-    {
-      q: "Why is a non-linear activation function essential in a deep network?",
-      options: [
-        "To make computations faster",
-        "To prevent the network from collapsing to a single equivalent affine layer",
-        "To normalise outputs between 0 and 1",
-        "To reduce GPU memory usage",
-      ],
-      answer: 1,
-      explain: "Without non-linearity, a composition of affine layers stays affine: y = W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂). Depth brings nothing mathematically.",
-    },
-    {
-      q: "What is the derivative of the sigmoid σ(x)?",
-      options: [
-        "σ(x)",
-        "1 - σ(x)",
-        "σ(x)(1 - σ(x))",
-        "1 / (1 + e⁻ˣ)",
-      ],
-      answer: 2,
-      explain: "An elegant property of the sigmoid: its derivative is expressible directly from its own value. That simplifies backpropagation since we do not have to recompute the exponential.",
-    },
-    {
-      q: "Why has ReLU dominated hidden layers of deep networks since 2012?",
-      options: [
-        "It is bounded, preventing divergence",
-        "It computes in a single operation and its gradient on positives is 1, avoiding vanishing gradients",
-        "It produces a probabilistic output",
-        "It is differentiable everywhere without exception",
-      ],
-      answer: 1,
-      explain: "Ultra-fast computation (max with 0) and exact gradient of 1 on the active part. ReLU is not bounded above, not probabilistic, and not strictly differentiable at 0, but those points are negligible in practice.",
-    },
-    {
-      q: "For a binary classification, which activation function is typically used at the output?",
-      options: [
-        "ReLU",
-        "Tanh",
-        "Sigmoid",
-        "Identity",
-      ],
-      answer: 2,
-      explain: "Sigmoid squashes the output into ]0, 1[, giving a directly interpretable probability. For multi-class classification we would use softmax (chapter 6).",
-    },
-    {
-      q: "For a 10-layer deep network using sigmoid everywhere, what can happen during training?",
-      options: [
-        "The network converges quickly thanks to a high gradient",
-        "The gradient at the first layer becomes nearly zero due to saturation (vanishing gradient)",
-        "The network diverges because of exploding gradients",
-        "The middle layers learn faster than the others",
-      ],
-      answer: 1,
-      explain: "Sigmoid's derivative has a maximum of 0.25. Multiplied 10 times, you get 0.25^10 ≈ 9.5×10⁻⁷. The input-side gradient collapses, the first layer stops learning. That is why we use ReLU in deep hidden layers.",
-    },
-  ]}
+    client:load
+    submitLabel="Check"
+    resetLabel="Reset"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Why is a non-linear activation function essential in a deep network?',
+        options: [
+          'To make computations faster',
+          'To prevent the network from collapsing to a single equivalent affine layer',
+          'To normalise outputs between 0 and 1',
+          'To reduce GPU memory usage',
+        ],
+        answer: 1,
+        explain:
+          'Without non-linearity, a composition of affine layers stays affine: y = W₂(W₁x + b₁) + b₂ = (W₂W₁)x + (W₂b₁ + b₂). Depth brings nothing mathematically.',
+      },
+      {
+        q: 'What is the derivative of the sigmoid σ(x)?',
+        options: ['σ(x)', '1 - σ(x)', 'σ(x)(1 - σ(x))', '1 / (1 + e⁻ˣ)'],
+        answer: 2,
+        explain:
+          'An elegant property of the sigmoid: its derivative is expressible directly from its own value. That simplifies backpropagation since we do not have to recompute the exponential.',
+      },
+      {
+        q: 'Why has ReLU dominated hidden layers of deep networks since 2012?',
+        options: [
+          'It is bounded, preventing divergence',
+          'It computes in a single operation and its gradient on positives is 1, avoiding vanishing gradients',
+          'It produces a probabilistic output',
+          'It is differentiable everywhere without exception',
+        ],
+        answer: 1,
+        explain:
+          'Ultra-fast computation (max with 0) and exact gradient of 1 on the active part. ReLU is not bounded above, not probabilistic, and not strictly differentiable at 0, but those points are negligible in practice.',
+      },
+      {
+        q: 'For a binary classification, which activation function is typically used at the output?',
+        options: ['ReLU', 'Tanh', 'Sigmoid', 'Identity'],
+        answer: 2,
+        explain:
+          'Sigmoid squashes the output into ]0, 1[, giving a directly interpretable probability. For multi-class classification we would use softmax (chapter 6).',
+      },
+      {
+        q: 'For a 10-layer deep network using sigmoid everywhere, what can happen during training?',
+        options: [
+          'The network converges quickly thanks to a high gradient',
+          'The gradient at the first layer becomes nearly zero due to saturation (vanishing gradient)',
+          'The network diverges because of exploding gradients',
+          'The middle layers learn faster than the others',
+        ],
+        answer: 1,
+        explain:
+          "Sigmoid's derivative has a maximum of 0.25. Multiplied 10 times, you get 0.25^10 ≈ 9.5×10⁻⁷. The input-side gradient collapses, the first layer stops learning. That is why we use ReLU in deep hidden layers.",
+      },
+    ]}
   />
 </InteractivePrint>

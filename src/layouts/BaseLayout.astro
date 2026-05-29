@@ -79,9 +79,11 @@ const resolvedDescription = description ?? t.meta.description;
 
     <ClientRouter />
 
-    {/* First-visit language detection: redirect non-FR browsers from / to /en/.
+    {
+      /* First-visit language detection: redirect non-FR browsers from / to /en/.
         After redirect or first FR visit, the choice is persisted in localStorage
-        so this block is a no-op on later loads (and the manual switcher always wins). */}
+        so this block is a no-op on later loads (and the manual switcher always wins). */
+    }
     <script is:inline>
       (() => {
         try {
@@ -103,9 +105,11 @@ const resolvedDescription = description ?? t.meta.description;
       })();
     </script>
 
-    {/* Apply the stored theme before paint and on every view-transition swap.
+    {
+      /* Apply the stored theme before paint and on every view-transition swap.
         Without astro:before-swap, ClientRouter resets <html data-theme> back to
-        the SSR default whenever the user navigates (e.g. switches language). */}
+        the SSR default whenever the user navigates (e.g. switches language). */
+    }
     <script is:inline>
       (() => {
         const apply = (doc) => {

@@ -2,7 +2,7 @@
 course: neural-networks-foundations
 order: 2
 title: Essential linear algebra
-subtitle: "Vectors, dot products and matrices: exactly what you need to speak neural-network language."
+subtitle: 'Vectors, dot products and matrices: exactly what you need to speak neural-network language.'
 estimatedMinutes: 22
 published: false
 ---
@@ -23,6 +23,7 @@ You saw in the previous chapter that the neuron formula reads in vector notation
 **What is not required**: abstract linear algebra (axiomatic vector spaces, infinite dimensions, linear maps). We stay firmly in $\mathbb{R}^n$ and concrete.
 
 **Level of rigour**: we define every object formally and prove the properties used later, without venturing into the full academic formalism (fields, dual bases, etc.).
+
 </Callout>
 
 ## The vector, an ordered list of numbers
@@ -60,7 +61,8 @@ $$
 It is an operation that takes two vectors and returns a single number. Read it "x dot w" or "dot product of x and w".
 
 <Callout kind="tip" title="Read the operation out loud">
-*"We multiply each coordinate of x by the coordinate of the same index of w, then we add up all the products."* In plain English: this is exactly the weighted sum of chapter 1.
+  *"We multiply each coordinate of x by the coordinate of the same index of w, then we add up all
+  the products."* In plain English: this is exactly the weighted sum of chapter 1.
 </Callout>
 
 ### Worked example
@@ -92,15 +94,17 @@ The component below draws two vectors $\mathbf{x}$ and $\mathbf{w}$ in the plane
     initialX={[1.2, 0.6]}
     initialW={[0.6, 1.2]}
     labels={{
-    dotLabel: 'Dot product',
-    normLabel: 'Norm',
-    angleLabel: 'Angle',
-    helpText: 'Play with the coordinates. When the arrows point in the same direction the dot product is maximal. When they are perpendicular it is zero.',
-  }}
+      dotLabel: 'Dot product',
+      normLabel: 'Norm',
+      angleLabel: 'Angle',
+      helpText:
+        'Play with the coordinates. When the arrows point in the same direction the dot product is maximal. When they are perpendicular it is zero.',
+    }}
   />
 </InteractivePrint>
 
 Three experiments to try:
+
 - Align the two vectors on the same direction (say $\mathbf{x} = \mathbf{w}$). The dot product hits its maximum, equal to $\|\mathbf{x}\| \cdot \|\mathbf{w}\|$.
 - Place them perpendicularly (e.g. $\mathbf{x} = (1, 0)$ and $\mathbf{w} = (0, 1)$). The dot product is exactly zero.
 - Flip the direction of $\mathbf{w}$ (negative $w_1$ and $w_2$). The dot product becomes negative, because the arrows point in opposite directions.
@@ -119,7 +123,7 @@ It generalises the Pythagorean theorem to $n$ dimensions. In 2D, $\|(x_1, x_2)\|
 
 The **distance** between two vectors $\mathbf{u}$ and $\mathbf{v}$ is the norm of their difference: $\|\mathbf{u} - \mathbf{v}\|$. That is how you measure "how similar two images are" when each image is represented as a vector.
 
-### A useful proof: the parallelogram identity
+### A useful proof: the squared-norm expansion
 
 One property comes back constantly in machine learning. We establish it once and for all, straight from the definitions:
 
@@ -135,6 +139,7 @@ Distributing: $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \math
 The dot product is commutative ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), so the two cross-terms combine into $2\,\mathbf{x} \cdot \mathbf{w}$.
 
 Hence $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
+
 </Callout>
 
 This identity is exactly the generalised Pythagorean theorem. Immediate consequence: if $\mathbf{x}$ and $\mathbf{w}$ are orthogonal ($\mathbf{x} \cdot \mathbf{w} = 0$), then $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagoras at its purest, without a triangle or an explicit right angle.
@@ -162,7 +167,7 @@ $$
 
 A squared norm is always non-negative, so $P(t) \geq 0$ for every $t$.
 
-**Step 2.** Expand $P(t)$ using the parallelogram identity proved just above:
+**Step 2.** Expand $P(t)$ using the squared-norm expansion proved just above:
 
 $$
 P(t) = \|\mathbf{x}\|^2 + 2 t \, (\mathbf{x} \cdot \mathbf{w}) + t^2 \|\mathbf{w}\|^2
@@ -191,6 +196,7 @@ $$
 $$
 
 **Result.** Cauchy-Schwarz is proved. Equality holds iff $\Delta = 0$, that is iff $P$ admits a double root $t_0$, that is iff $\mathbf{x} + t_0 \mathbf{w} = \mathbf{0}$, in other words iff $\mathbf{x}$ and $\mathbf{w}$ are colinear. ∎
+
 </Callout>
 
 Now that we have the bound $|\mathbf{x} \cdot \mathbf{w}| \leq \|\mathbf{x}\| \, \|\mathbf{w}\|$, we can divide safely. For non-zero $\mathbf{x}, \mathbf{w}$, we **define**:
@@ -235,6 +241,7 @@ $$
 $$
 
 **Result.** Since $\theta$ and $\alpha$ both lie in $[0, \pi]$, and $\cos$ is injective on that interval, we conclude $\theta = \alpha$. The algebraic definition of $\cos\theta$ reproduces exactly the Euclidean geometric angle. ∎
+
 </Callout>
 
 The usual consequences of the geometric formula can be read straight off the cosine function:
@@ -243,9 +250,9 @@ The usual consequences of the geometric formula can be read straight off the cos
 - If $\theta = 90°$ (vectors perpendicular), $\cos(\theta) = 0$: zero dot product.
 - If $\theta = 180°$ (vectors opposite), $\cos(\theta) = -1$: minimum dot product.
 
-Geometrically, the dot product measures **how much two vectors point in the same direction**, weighted by their lengths. That is precisely what a neuron wants to know: *"do my inputs look like my weights?"*
+Geometrically, the dot product measures **how much two vectors point in the same direction**, weighted by their lengths. That is precisely what a neuron wants to know: _"do my inputs look like my weights?"_
 
-In machine learning, Cauchy-Schwarz also guarantees that you can always **normalise** a dot product by the lengths to get a measure in $[-1, 1]$, called *cosine similarity*. It is the basic tool to compare two vector representations, for example two word or sentence embeddings.
+In machine learning, Cauchy-Schwarz also guarantees that you can always **normalise** a dot product by the lengths to get a measure in $[-1, 1]$, called _cosine similarity_. It is the basic tool to compare two vector representations, for example two word or sentence embeddings.
 
 ## Transpose and matrix product
 
@@ -268,7 +275,11 @@ $$
 The first row of $A$ becomes the first column of $A^T$, and so on.
 
 <Callout kind="tip" title="Why we need the transpose">
-Depending on the convention, a layer's output is written either $W \mathbf{x}$ (inputs as a column) or $\mathbf{x} W^T$ (inputs as a row). When we feed a *batch* of several examples stacked in a matrix $X$, the compact layer formula becomes $X W^T$: each row of $X$ is one example, each row of $W$ is one neuron, and the transpose lines up the dimensions so the dot products come out the right way. You will meet this notation everywhere in PyTorch and NumPy.
+  Depending on the convention, a layer's output is written either $W \mathbf{x}$ (inputs as a
+  column) or $\mathbf{x} W^T$ (inputs as a row). When we feed a *batch* of several examples stacked
+  in a matrix $X$, the compact layer formula becomes $X W^T$: each row of $X$ is one example, each
+  row of $W$ is one neuron, and the transpose lines up the dimensions so the dot products come out
+  the right way. You will meet this notation everywhere in PyTorch and NumPy.
 </Callout>
 
 ### The matrix-matrix product
@@ -282,7 +293,10 @@ $$
 **Compatibility condition**: the number of columns of $A$ must equal the number of rows of $B$ (both equal $n$ here). Otherwise the product is undefined.
 
 <Callout kind="tip" title="Practical reading">
-Every entry $(AB)_{ij}$ is the **dot product** of the $i$-th row of $A$ with the $j$-th column of $B$. In other words, the matrix product is nothing more than a table of dot products carried out in parallel. This reading is the same as in the "Stacking neurons" section below, simply extended to several columns on the right-hand side.
+  Every entry $(AB)_{ij}$ is the **dot product** of the $i$-th row of $A$ with the $j$-th column of
+  $B$. In other words, the matrix product is nothing more than a table of dot products carried out
+  in parallel. This reading is the same as in the "Stacking neurons" section below, simply extended
+  to several columns on the right-hand side.
 </Callout>
 
 A $2 \times 2$ worked example:
@@ -351,7 +365,9 @@ $$
 The entry $w_{ji}$ reads "row $j$, column $i$". Each row, taken as a vector of dimension $n$, is itself a vector in $\mathbb{R}^n$.
 
 <Callout kind="tip" title="Indexing convention">
-In this chapter we pick: $j$ = neuron index (the row), $i$ = input index (the column). The entry $w_{ji}$ is therefore the weight applied by the $j$-th neuron to the $i$-th input. This convention makes $\mathbf{w}_j \cdot \mathbf{x}$ read naturally as the output of neuron $j$.
+  In this chapter we pick: $j$ = neuron index (the row), $i$ = input index (the column). The entry
+  $w_{ji}$ is therefore the weight applied by the $j$-th neuron to the $i$-th input. This convention
+  makes $\mathbf{w}_j \cdot \mathbf{x}$ read naturally as the output of neuron $j$.
 </Callout>
 
 ### From a vector to a full layer
@@ -373,7 +389,10 @@ $$
 It is an operation that takes a vector and returns another vector, where each coordinate of the result is a dot product. We will dig into this at chapter 5 when we build a multi-layer network.
 
 <Callout kind="note" title="Why this notation is everywhere">
-Most of modern deep learning is expressed in linear algebra: as a first approximation, a network is a sequence of matrix-vector multiplications interleaved with activation functions. This compact representation is what lets libraries like PyTorch or TensorFlow exploit GPUs' parallel matrix arithmetic. Mastering vector notation is not a luxury, it is the language of the entire field.
+  Most of modern deep learning is expressed in linear algebra: as a first approximation, a network
+  is a sequence of matrix-vector multiplications interleaved with activation functions. This compact
+  representation is what lets libraries like PyTorch or TensorFlow exploit GPUs' parallel matrix
+  arithmetic. Mastering vector notation is not a luxury, it is the language of the entire field.
 </Callout>
 
 ## In one sentence
@@ -456,6 +475,7 @@ $$
 $$
 
 **Result.** $\mathbf{x} \cdot \mathbf{w} = -8$.
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 2: norm of a vector">
@@ -496,6 +516,7 @@ $$
 $$
 
 **Result.** $\|\mathbf{u}\| = 5$. We recognise the classic 3-4-5 right triangle.
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 3: dot product and orthogonality">
@@ -530,6 +551,7 @@ $$
 $$
 
 **Result.** $a = -\dfrac{1}{2}$. The two vectors are then orthogonal. ✓
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 4: prove $(AB)^T = B^T A^T$ on a concrete case">
@@ -604,21 +626,20 @@ $$
 $$
 
 **Result.** The identity $(AB)^T = B^T A^T$ is verified on this concrete case. ✓ Note that computing $A^T B^T$ (wrong order) would yield a different matrix: the swapped order is what matters.
+
 </Callout>
 
 ## Sources
 
-- Anton, H. & Rorres, C. (2010). *Elementary Linear Algebra*, 10th edition. Wiley. Chapters 1 to 3 for the basics.
-- Strang, G. (2016). *Introduction to Linear Algebra*, 5th edition. Wellesley-Cambridge Press. [MIT OCW companion course](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) is free and excellent.
-- Wikipedia (retrieved 2026). "Dot product". [en.wikipedia.org/wiki/Dot_product](https://en.wikipedia.org/wiki/Dot_product)
-
+- Anton, H. & Rorres, C. (2010). _Elementary Linear Algebra_, 10th edition. Wiley. Chapters 1 to 3 for the basics.
+- Strang, G. (2016). _Introduction to Linear Algebra_, 5th edition. Wellesley-Cambridge Press. [MIT OCW companion course](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) is free and excellent.
 ### Further reading
 
-- Strang, G. (online course MIT 18.06 *Linear Algebra*). The reference course on linear algebra in major universities, freely available. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
-- 3Blue1Brown, series *Essence of Linear Algebra*. Remarkable visualisations of the key concepts. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 2 on ML-specific linear algebra. [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Lay, D. C., Lay, S. R. & McDonald, J. J. (2021). *Linear Algebra and Its Applications*, 6th edition. Pearson. A classical reference for applied linear algebra, balanced between theory and exercises.
-- Axler, S. (2024). *Linear Algebra Done Right*, 4th edition. Springer. A conceptual approach that delays determinants as long as possible and emphasises the structure of vector spaces. [Free open-access PDF](https://linear.axler.net/)
+- Strang, G. (online course MIT 18.06 _Linear Algebra_). The reference course on linear algebra in major universities, freely available. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
+- 3Blue1Brown, series _Essence of Linear Algebra_. Remarkable visualisations of the key concepts. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 2 on ML-specific linear algebra. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Lay, D. C., Lay, S. R. & McDonald, J. J. (2021). _Linear Algebra and Its Applications_, 6th edition. Pearson. A classical reference for applied linear algebra, balanced between theory and exercises.
+- Axler, S. (2024). _Linear Algebra Done Right_, 4th edition. Springer. A conceptual approach that delays determinants as long as possible and emphasises the structure of vector spaces. [Free open-access PDF](https://linear.axler.net/)
 
 <InteractivePrint
   label="Quiz: chapter 2 recap (interactive)"
@@ -629,73 +650,69 @@ $$
     submitLabel="Check"
     resetLabel="Reset"
     scoreLabel="Score"
-  questions={[
-    {
-      q: "What does the dot product of two vectors return?",
-      options: [
-        "A vector of the same dimension as the operands",
-        "A single real number, the sum of coordinate-wise products",
-        "A square matrix",
-        "The geometric angle between the two vectors",
-      ],
-      answer: 1,
-      explain: "The dot product returns ONE scalar, computed as Σ xᵢ wᵢ. The geometric formulation (lengths and angle) is a second reading of that same number, not a different output.",
-    },
-    {
-      q: "If two vectors are orthogonal, their dot product equals:",
-      options: [
-        "1",
-        "-1",
-        "0",
-        "it depends on their lengths",
-      ],
-      answer: 2,
-      explain: "Orthogonal means a 90° angle. Since cos(90°) = 0, the geometric formulation x·w = ‖x‖ ‖w‖ cos(θ) gives 0, regardless of the norms.",
-    },
-    {
-      q: "The norm of a vector x = (x₁, x₂, ..., xₙ) is:",
-      options: [
-        "The sum x₁ + x₂ + ... + xₙ",
-        "The maximum of the xᵢ",
-        "The square root of the sum of squares Σ xᵢ²",
-        "The product x₁ · x₂ · ... · xₙ",
-      ],
-      answer: 2,
-      explain: "It is the generalisation of the Pythagorean theorem: ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).",
-    },
-    {
-      q: "Why do a neuron's weights share the dimension of its inputs?",
-      options: [
-        "It is an arbitrary convention",
-        "For the dot product wᵢ xᵢ to be defined, you need one weight coordinate per input coordinate",
-        "To save memory",
-        "To respect the Pythagorean theorem",
-      ],
-      answer: 1,
-      explain: "The dot product is only defined for two vectors of equal dimension. Without that pairing, there is no coordinate-wise multiplication, and no weighted sum.",
-    },
-    {
-      q: "What does the matrix-vector operation W·x compute, where W is m×n and x has dimension n?",
-      options: [
-        "A scalar",
-        "A matrix of size n×m",
-        "A vector of dimension m, each coordinate being a dot product between a row of W and x",
-        "A diagonal matrix",
-      ],
-      answer: 2,
-      explain: "Each row wⱼ of W is a vector of dimension n. The product Wx runs m dot products wⱼ · x in parallel, so the result is a vector of m coordinates. This is the basis of a layer of m neurons.",
-    },
-    {
-      q: "If A is a 3×4 matrix and B a 4×2 matrix, what is the size of the product AB?",
-      options: [
-        "2×3",
-        "3×2",
-        "4×4",
-        "The product is undefined",
-      ],
-      answer: 1,
-      explain: "Compatibility rule: the number of columns of A (4) must equal the number of rows of B (4), which holds here. The resulting size is then rows of A × columns of B, so 3×2.",
-    },
-  ]}
+    questions={[
+      {
+        q: 'What does the dot product of two vectors return?',
+        options: [
+          'A vector of the same dimension as the operands',
+          'A single real number, the sum of coordinate-wise products',
+          'A square matrix',
+          'The geometric angle between the two vectors',
+        ],
+        answer: 1,
+        explain:
+          'The dot product returns ONE scalar, computed as Σ xᵢ wᵢ. The geometric formulation (lengths and angle) is a second reading of that same number, not a different output.',
+      },
+      {
+        q: 'If two vectors are orthogonal, their dot product equals:',
+        options: ['1', '-1', '0', 'it depends on their lengths'],
+        answer: 2,
+        explain:
+          'Orthogonal means a 90° angle. Since cos(90°) = 0, the geometric formulation x·w = ‖x‖ ‖w‖ cos(θ) gives 0, regardless of the norms.',
+      },
+      {
+        q: 'The norm of a vector x = (x₁, x₂, ..., xₙ) is:',
+        options: [
+          'The sum x₁ + x₂ + ... + xₙ',
+          'The maximum of the xᵢ',
+          'The square root of the sum of squares Σ xᵢ²',
+          'The product x₁ · x₂ · ... · xₙ',
+        ],
+        answer: 2,
+        explain:
+          'It is the generalisation of the Pythagorean theorem: ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).',
+      },
+      {
+        q: "Why do a neuron's weights share the dimension of its inputs?",
+        options: [
+          'It is an arbitrary convention',
+          'For the dot product wᵢ xᵢ to be defined, you need one weight coordinate per input coordinate',
+          'To save memory',
+          'To respect the Pythagorean theorem',
+        ],
+        answer: 1,
+        explain:
+          'The dot product is only defined for two vectors of equal dimension. Without that pairing, there is no coordinate-wise multiplication, and no weighted sum.',
+      },
+      {
+        q: 'What does the matrix-vector operation W·x compute, where W is m×n and x has dimension n?',
+        options: [
+          'A scalar',
+          'A matrix of size n×m',
+          'A vector of dimension m, each coordinate being a dot product between a row of W and x',
+          'A diagonal matrix',
+        ],
+        answer: 2,
+        explain:
+          'Each row wⱼ of W is a vector of dimension n. The product Wx runs m dot products wⱼ · x in parallel, so the result is a vector of m coordinates. This is the basis of a layer of m neurons.',
+      },
+      {
+        q: 'If A is a 3×4 matrix and B a 4×2 matrix, what is the size of the product AB?',
+        options: ['2×3', '3×2', '4×4', 'The product is undefined'],
+        answer: 1,
+        explain:
+          'Compatibility rule: the number of columns of A (4) must equal the number of rows of B (4), which holds here. The resulting size is then rows of A × columns of B, so 3×2.',
+      },
+    ]}
   />
 </InteractivePrint>

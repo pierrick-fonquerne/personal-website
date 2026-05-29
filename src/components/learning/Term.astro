@@ -26,13 +26,20 @@ const sourcePrefix = locale === 'en' ? 'Source: ' : 'Source : ';
   aria-describedby={`term-${slug}`}
 >
   <slot />
-  {!missing && (
-    <span class="term-tooltip" role="tooltip" id={`term-${slug}`}>
-      <span class="term-tooltip-head">{term}</span>
-      <span class="term-tooltip-body">{definition}</span>
-      {source && <span class="term-tooltip-source">{sourcePrefix}{source}</span>}
-    </span>
-  )}
+  {
+    !missing && (
+      <span class="term-tooltip" role="tooltip" id={`term-${slug}`}>
+        <span class="term-tooltip-head">{term}</span>
+        <span class="term-tooltip-body">{definition}</span>
+        {source && (
+          <span class="term-tooltip-source">
+            {sourcePrefix}
+            {source}
+          </span>
+        )}
+      </span>
+    )
+  }
 </a>
 
 <style>

@@ -57,5 +57,8 @@ export function extractReadableText(rootSelector: string): string {
   const parts: string[] = [];
   collectText(clone, parts);
 
-  return parts.join('').replace(/\n{2,}/g, '\n').trim();
+  return parts
+    .join('')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
 }

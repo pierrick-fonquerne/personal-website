@@ -29,10 +29,7 @@ const courseHref = localizedPath(`/interactive-courses/${courseSlug}`, locale);
   <ol class="mt-4 space-y-1">
     {
       modules.map((mod) => {
-        const href = localizedPath(
-          `/interactive-courses/${courseSlug}/${mod.slug}`,
-          locale,
-        );
+        const href = localizedPath(`/interactive-courses/${courseSlug}/${mod.slug}`, locale);
         const isActive = mod.slug === activeSlug;
         return (
           <li>

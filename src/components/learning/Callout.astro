@@ -9,10 +9,22 @@ interface Props {
 const { kind = 'info', title } = Astro.props;
 
 const KIND_STYLES: Record<CalloutKind, { border: string; accent: string; label: string }> = {
-  info: { border: 'border-l-[var(--color-accent)]', accent: 'text-[var(--color-accent)]', label: 'INFO' },
-  tip: { border: 'border-l-[var(--color-success)]', accent: 'text-[var(--color-success)]', label: 'ASTUCE' },
+  info: {
+    border: 'border-l-[var(--color-accent)]',
+    accent: 'text-[var(--color-accent)]',
+    label: 'INFO',
+  },
+  tip: {
+    border: 'border-l-[var(--color-success)]',
+    accent: 'text-[var(--color-success)]',
+    label: 'ASTUCE',
+  },
   warn: { border: 'border-l-amber-400', accent: 'text-amber-400', label: 'ATTENTION' },
-  note: { border: 'border-l-[var(--color-fg-dim)]', accent: 'text-[var(--color-fg-dim)]', label: 'NOTE' },
+  note: {
+    border: 'border-l-[var(--color-fg-dim)]',
+    accent: 'text-[var(--color-fg-dim)]',
+    label: 'NOTE',
+  },
 };
 
 const styles = KIND_STYLES[kind];

@@ -35,17 +35,13 @@ export default function Quiz({
 
   const select = (qIdx: number, optIdx: number): void => {
     setStates((prev) =>
-      prev.map((s, i) =>
-        i === qIdx && !s.submitted ? { ...s, selected: optIdx } : s,
-      ),
+      prev.map((s, i) => (i === qIdx && !s.submitted ? { ...s, selected: optIdx } : s)),
     );
   };
 
   const submit = (qIdx: number): void => {
     setStates((prev) =>
-      prev.map((s, i) =>
-        i === qIdx && s.selected !== null ? { ...s, submitted: true } : s,
-      ),
+      prev.map((s, i) => (i === qIdx && s.selected !== null ? { ...s, submitted: true } : s)),
     );
   };
 
@@ -103,9 +99,7 @@ export default function Quiz({
                 })}
               </ul>
               {state.submitted && q.explain && (
-                <p className="mt-3 text-[13px] text-[var(--color-fg-muted)] italic">
-                  {q.explain}
-                </p>
+                <p className="mt-3 text-[13px] text-[var(--color-fg-muted)] italic">{q.explain}</p>
               )}
               {!state.submitted && (
                 <button

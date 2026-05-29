@@ -29,7 +29,7 @@ interface Dictionary {
 const DICT: Record<Locale, Dictionary> = {
   fr: {
     title: "Géométrie de l'hyperplan",
-    hyperplaneEq: "Hyperplan : w · x + b = 0",
+    hyperplaneEq: 'Hyperplan : w · x + b = 0',
     sliderW1: 'w₁',
     sliderW2: 'w₂',
     sliderB: 'b',
@@ -38,7 +38,7 @@ const DICT: Record<Locale, Dictionary> = {
     signedDistance: 'Distance signée',
     resetProbe: 'Retirer le point',
     emptyProbeHint: 'Aucun point sondé pour le moment.',
-    degenerateHint: 'Pas d\'hyperplan : w est nul.',
+    degenerateHint: "Pas d'hyperplan : w est nul.",
     positiveSide: 'Côté positif',
     negativeSide: 'Côté négatif',
     normalLabel: 'w (normal)',
@@ -220,10 +220,21 @@ export default function HyperplaneGeometry({
             stroke="var(--text-muted, #64748b)"
             strokeWidth={1.5}
           />
-          <text x={VIEW - PAD + 6} y={dataToSvgY(0) + 4} fill="var(--text-muted, #64748b)" fontSize={12}>
+          <text
+            x={VIEW - PAD + 6}
+            y={dataToSvgY(0) + 4}
+            fill="var(--text-muted, #64748b)"
+            fontSize={12}
+          >
             x
           </text>
-          <text x={dataToSvgX(0) - 4} y={PAD - 8} fill="var(--text-muted, #64748b)" fontSize={12} textAnchor="end">
+          <text
+            x={dataToSvgX(0) - 4}
+            y={PAD - 8}
+            fill="var(--text-muted, #64748b)"
+            fontSize={12}
+            textAnchor="end"
+          >
             y
           </text>
           {lineEnds && (
@@ -437,7 +448,9 @@ export default function HyperplaneGeometry({
             </div>
           )}
           {hasNormal && !probe && (
-            <div style={{ marginTop: '8px', color: 'var(--text-muted, #64748b)', fontSize: '12px' }}>
+            <div
+              style={{ marginTop: '8px', color: 'var(--text-muted, #64748b)', fontSize: '12px' }}
+            >
               {t.emptyProbeHint}
             </div>
           )}

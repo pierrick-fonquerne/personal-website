@@ -26,11 +26,12 @@ Tout réseau de neurones, du plus simple au plus profond, est un assemblage d'un
 **Ce qu'il n'est pas nécessaire de connaître** : calcul différentiel (chapitre 7), algèbre linéaire formelle (chapitre 2), programmation (chapitre dédié au Cours 2 « Réseaux de neurones en Rust »).
 
 **Niveau de rigueur** : ce chapitre fait des choix pédagogiques (analogies, sliders, prose accessible) mais ne sacrifie rien sur la précision mathématique. Les démonstrations sont explicites, les définitions formelles, les sources tracées.
+
 </Callout>
 
 ## L'inspiration biologique
 
-Ton cerveau contient environ **86 milliards de neurones** (Azevedo et al., 2009). Chaque neurone reçoit des signaux électriques d'autres neurones via ses *dendrites*, intègre ces signaux dans son corps cellulaire, et décide selon un seuil interne s'il doit lui-même envoyer un signal le long de son *axone*.
+Ton cerveau contient environ **86 milliards de neurones** (Azevedo et al., 2009). Chaque neurone reçoit des signaux électriques d'autres neurones via ses _dendrites_, intègre ces signaux dans son corps cellulaire, et décide selon un seuil interne s'il doit lui-même envoyer un signal le long de son _axone_.
 
 En 1943, Warren McCulloch et Walter Pitts modélisent ce comportement par une équation (McCulloch & Pitts, 1943), et posent les bases de ce qu'on appellera quelques années plus tard le neurone artificiel. Ce n'est pas une copie fidèle de la biologie, c'est une **simplification mathématique** qui s'avère puissante.
 
@@ -38,11 +39,11 @@ En 1943, Warren McCulloch et Walter Pitts modélisent ce comportement par une é
 
 Imagine un arbitre de foot qui doit décider si une faute mérite un penalty. Il reçoit plusieurs informations, et chacune compte plus ou moins selon le contexte.
 
-| Information | Entrée | Poids |
-|---|---|---|
-| La main a touché le ballon | $x_1 = 1$ | $w_1 = 0{,}8$ |
+| Information                   | Entrée    | Poids         |
+| ----------------------------- | --------- | ------------- |
+| La main a touché le ballon    | $x_1 = 1$ | $w_1 = 0{,}8$ |
 | Dans la surface de réparation | $x_2 = 0$ | $w_2 = 0{,}5$ |
-| Geste intentionnel | $x_3 = 1$ | $w_3 = 0{,}9$ |
+| Geste intentionnel            | $x_3 = 1$ | $w_3 = 0{,}9$ |
 
 L'arbitre fait dans sa tête une <Term slug="somme-ponderee">somme pondérée</Term> : il additionne les informations en les multipliant chacune par leur importance. Si le total dépasse un seuil, il siffle. C'est exactement ce que fait un neurone artificiel.
 
@@ -81,20 +82,19 @@ Trois choses à remarquer en jouant :
 - Le biais translate la sortie indépendamment des entrées. Un biais très négatif rend le neurone très difficile à activer.
 
 <Callout kind="note" title="Note historique : du seuil binaire à la sigmoïde">
-Le NeuronDiagram ci-dessus utilise une fonction d'activation **sigmoïde** par défaut, qui rend la sortie continue entre 0 et 1. Mais les neurones originaux de McCulloch et Pitts (1943) et le perceptron de Rosenblatt (1958) utilisaient une **fonction seuil binaire** $H(z) = \mathbb{1}[z \geq 0]$ : sortie 1 si la somme dépasse 0, sortie 0 sinon. Pas de nuance.
+Le NeuronDiagram ci-dessus utilise une fonction d'activation **sigmoïde** par défaut, qui rend la sortie continue entre 0 et 1. Mais les neurones originaux de McCulloch et Pitts (1943) et le perceptron de Rosenblatt (1958) utilisaient une **fonction seuil binaire** $H(z) = \mathbb{1}[z \geq 0]$ : sortie 1 si la somme atteint ou dépasse 0, sortie 0 sinon. Pas de nuance.
 
 Bascule le sélecteur **f =** au-dessus du diagramme entre `σ (sigmoid)` et `H (Heaviside)` pour comparer en direct les deux activations. Avec la configuration de départ, la sigmoïde donne $y \approx 0{,}77$ et le seuil binaire bascule directement à $y = 1$. Joue avec les curseurs pour trouver les zones où le seuil change de sortie : tu y verras l'effet « tout ou rien » du neurone historique.
 
 Le passage à la sigmoïde, puis plus tard à ReLU, est historiquement lié à la backpropagation (1986) qui exige une fonction d'activation **dérivable** pour propager le gradient. Sujet du chapitre 3. La sigmoïde te donne une intuition plus douce ici, mais ne perds pas de vue que le neurone le plus simple, mathématiquement, est celui à seuil.
+
 </Callout>
 
 ## La formule mathématique
 
 L'opération du neurone se résume en une équation. La forme développée, lisible :
 
-<Formula caption="Forme développée">
-y = f( x₁·w₁ + x₂·w₂ + x₃·w₃ + b )
-</Formula>
+<Formula caption="Forme développée">y = f( x₁·w₁ + x₂·w₂ + x₃·w₃ + b )</Formula>
 
 La même équation en notation compacte avec le symbole somme :
 
@@ -111,7 +111,10 @@ $$
 Les trois formes disent la même chose, à des niveaux d'abstraction croissants. Apprends à les reconnaître toutes les trois, tu les croiseras dans n'importe quel article scientifique.
 
 <Callout kind="tip" title="Lis l'équation à voix haute">
-La version la plus utile pour s'entraîner à lire les maths : *« y est égal à f appliquée à la somme, pour i allant de un à n, des produits w i fois x i, plus b. »* Cette phrase verbale doit devenir un réflexe. Quand tu rencontreras une équation plus complexe plus tard, tu pourras la lire de la même façon, morceau par morceau.
+  La version la plus utile pour s'entraîner à lire les maths : *« y est égal à f appliquée à la
+  somme, pour i allant de un à n, des produits w i fois x i, plus b. »* Cette phrase verbale doit
+  devenir un réflexe. Quand tu rencontreras une équation plus complexe plus tard, tu pourras la lire
+  de la même façon, morceau par morceau.
 </Callout>
 
 ### Que représente chaque symbole
@@ -139,32 +142,36 @@ Chaque entrée passe par une multiplication par son poids, toutes les contributi
 
 ## Du biologique à l'artificiel
 
-| Élément biologique | Rôle | Équivalent artificiel |
-|---|---|---|
-| Dendrites | Reçoivent les signaux entrants | Entrées $x_1, x_2, \dots, x_n$ |
-| Synapses | Régulent l'intensité du signal | Poids $w_1, w_2, \dots, w_n$ |
-| Corps cellulaire | Intègre tous les signaux | Somme pondérée $\sum w_i x_i$ |
-| Seuil d'activation | Déclenche ou non le signal | Biais $b$ + fonction $f$ |
-| Axone | Transmet la sortie | Sortie $y$ |
+| Élément biologique | Rôle                           | Équivalent artificiel          |
+| ------------------ | ------------------------------ | ------------------------------ |
+| Dendrites          | Reçoivent les signaux entrants | Entrées $x_1, x_2, \dots, x_n$ |
+| Synapses           | Régulent l'intensité du signal | Poids $w_1, w_2, \dots, w_n$   |
+| Corps cellulaire   | Intègre tous les signaux       | Somme pondérée $\sum w_i x_i$  |
+| Seuil d'activation | Déclenche ou non le signal     | Biais $b$ + fonction $f$       |
+| Axone              | Transmet la sortie             | Sortie $y$                     |
 
 <Callout kind="note">
-Le neurone artificiel est une caricature du neurone biologique. Un vrai neurone est dynamique dans le temps, communique par impulsions discrètes, et possède une chimie interne complexe. Ces différences sortent du périmètre de ce cours, qui se concentre sur les modèles dominants en pratique. Elles font l'objet d'une recherche active autour du calcul neuromorphique et des réseaux de neurones impulsionnels.
+  Le neurone artificiel est une caricature du neurone biologique. Un vrai neurone est dynamique dans
+  le temps, communique par impulsions discrètes, et possède une chimie interne complexe. Ces
+  différences sortent du périmètre de ce cours, qui se concentre sur les modèles dominants en
+  pratique. Elles font l'objet d'une recherche active autour du calcul neuromorphique et des réseaux
+  de neurones impulsionnels.
 </Callout>
 
 ## Une idée née en 1943
 
 Le neurone artificiel a une histoire de 83 ans, faite de percées et de longs hivers.
 
-| Année | Événement |
-|---|---|
-| 1943 | **McCulloch & Pitts** modélisent le neurone mathématiquement. |
-| 1949 | **Donald Hebb** énonce la règle « les neurones qui s'activent ensemble se renforcent ensemble ». |
-| 1958 | **Frank Rosenblatt** publie l'article fondateur du <Term slug="perceptron">perceptron</Term>, première règle d'apprentissage automatique d'un neurone. |
-| 1960 | **Mark I Perceptron** : première réalisation matérielle (Cornell Aeronautical Laboratory), un calculateur électromécanique capable de reconnaître des formes simples. |
-| 1969 | **Minsky & Papert** publient *Perceptrons* et démontrent qu'un seul neurone ne peut pas apprendre <Term slug="xor">XOR</Term>. Premier coup d'arrêt sérieux à l'enthousiasme. |
-| 1973 | **Rapport Lighthill** au Royaume-Uni : l'IA est jugée incapable de tenir ses promesses. Les financements s'effondrent en Europe et aux États-Unis. C'est le premier **hiver de l'IA**, qui durera une décennie. |
-| 1986 | **Rumelhart, Hinton & Williams** publient la <Term slug="backpropagation">rétropropagation</Term> du gradient. La recherche repart. |
-| 2012 | **AlexNet** (Krizhevsky, Sutskever, Hinton) écrase ImageNet sur GPU. Début de l'ère du deep learning moderne. |
+| Année | Événement                                                                                                                                                                                                       |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1943  | **McCulloch & Pitts** modélisent le neurone mathématiquement.                                                                                                                                                   |
+| 1949  | **Donald Hebb** énonce la règle « les neurones qui s'activent ensemble se renforcent ensemble ».                                                                                                                |
+| 1958  | **Frank Rosenblatt** publie l'article fondateur du <Term slug="perceptron">perceptron</Term>, première règle d'apprentissage automatique d'un neurone.                                                          |
+| 1960  | **Mark I Perceptron** : première réalisation matérielle (Cornell Aeronautical Laboratory), un calculateur électromécanique capable de reconnaître des formes simples.                                           |
+| 1969  | **Minsky & Papert** publient _Perceptrons_ et démontrent qu'un seul neurone ne peut pas apprendre <Term slug="xor">XOR</Term>. Premier coup d'arrêt sérieux à l'enthousiasme.                                   |
+| 1973  | **Rapport Lighthill** au Royaume-Uni : l'IA est jugée incapable de tenir ses promesses. Les financements s'effondrent en Europe et aux États-Unis. C'est le premier **hiver de l'IA**, qui durera une décennie. |
+| 1986  | **Rumelhart, Hinton & Williams** publient la <Term slug="backpropagation">rétropropagation</Term> du gradient. La recherche repart.                                                                             |
+| 2012  | **AlexNet** (Krizhevsky, Sutskever, Hinton) écrase ImageNet sur GPU. Début de l'ère du deep learning moderne.                                                                                                   |
 
 ## Ce qu'un seul neurone ne peut pas faire
 
@@ -178,7 +185,7 @@ $$
 
 est ce qu'on appelle un **hyperplan**. Dans $\mathbb{R}^2$ c'est une droite, dans $\mathbb{R}^3$ un plan, et en dimension supérieure on ne peut plus le dessiner mais l'équation reste la même.
 
-Un hyperplan partitionne l'espace en deux **demi-espaces** : celui où $\mathbf{w} \cdot \mathbf{x} + b > 0$ (le neurone *s'active*) et celui où $\mathbf{w} \cdot \mathbf{x} + b < 0$ (le neurone *ne s'active pas*). Un neurone à seuil est exactement cette opération de partition.
+Un hyperplan partitionne l'espace en deux **demi-espaces** : celui où $\mathbf{w} \cdot \mathbf{x} + b > 0$ (le neurone _s'active_) et celui où $\mathbf{w} \cdot \mathbf{x} + b < 0$ (le neurone _ne s'active pas_). Un neurone à seuil est exactement cette opération de partition.
 
 Un ensemble de points étiquetés $\{(\mathbf{x}_i, y_i)\}$ avec $y_i \in \{0, 1\}$ est dit **linéairement séparable** s'il existe $(\mathbf{w}, b)$ tel que l'hyperplan associé sépare correctement les points de label 1 des points de label 0. Sinon, il est **non linéairement séparable**.
 
@@ -207,6 +214,7 @@ En additionnant $(2)$ et $(3)$ : $w_1 + w_2 + 2b \geq 0$, donc $w_1 + w_2 \geq -
 De $(4)$ on a $w_1 + w_2 + b < 0$, donc $w_1 + w_2 < -b$.
 
 En combinant les deux : $-2b \leq w_1 + w_2 < -b$, donc $-2b < -b$, soit $b > 0$. Contradiction avec $(1)$ qui impose $b < 0$. ∎
+
 </Callout>
 
 Cette démonstration tient en cinq lignes mais elle clôt définitivement le débat : aucun choix de poids et de biais ne peut résoudre XOR avec un seul neurone à seuil.
@@ -231,7 +239,8 @@ Bouge les curseurs ci-dessous pour orienter et déplacer la droite. Sur AND et O
       intercept: 'Ordonnée',
       classified: 'bien classés',
       line: 'Droite',
-      impossible: "Sur XOR, aucune droite ne sépare correctement les quatre points. Tu auras beau essayer, tu n'atteindras jamais 4 sur 4.",
+      impossible:
+        "Sur XOR, aucune droite ne sépare correctement les quatre points. Tu auras beau essayer, tu n'atteindras jamais 4 sur 4.",
     }}
   />
 </InteractivePrint>
@@ -239,12 +248,15 @@ Bouge les curseurs ci-dessous pour orienter et déplacer la droite. Sur AND et O
 C'est exactement ce qu'ont démontré Minsky et Papert en 1969. Géométriquement, un neurone correspond à une droite ; XOR demande une frontière qui ne peut pas être linéaire. La solution viendra des réseaux multi-couches, qui peuvent composer plusieurs droites pour dessiner des frontières plus complexes.
 
 <Callout kind="warn" title="Le piège historique">
-En 1969, Minsky et Papert démontrent cette limite formellement. Beaucoup en concluent, à tort, que les réseaux de neurones sont une impasse. Les financements s'effondrent. La solution, les réseaux **multi-couches**, existait pourtant déjà en théorie. Il faudra attendre 1986 et la backpropagation pour pouvoir les entraîner efficacement. Sujet des chapitres 5 et 7.
+  En 1969, Minsky et Papert démontrent cette limite formellement. Beaucoup en concluent, à tort, que
+  les réseaux de neurones sont une impasse. Les financements s'effondrent. La solution, les réseaux
+  **multi-couches**, existait pourtant déjà en théorie. Il faudra attendre 1986 et la
+  backpropagation pour pouvoir les entraîner efficacement. Sujet des chapitres 5 et 7.
 </Callout>
 
 ## Le rôle du biais, visuellement
 
-Sans biais, la droite que trace le neurone passe forcément par l'origine. C'est une contrainte forte : la plupart des problèmes réels ont une frontière de décision qui n'est *pas* à l'origine.
+Sans biais, la droite que trace le neurone passe forcément par l'origine. C'est une contrainte forte : la plupart des problèmes réels ont une frontière de décision qui n'est _pas_ à l'origine.
 
 Le biais résout ça en **translatant** la droite n'importe où dans le plan. Image mentale utile : les poids contrôlent l'**orientation** de la droite (sa pente), le biais contrôle sa **position**.
 
@@ -328,6 +340,7 @@ y = \text{ReLU}(1{,}6) = \max(0\ ;\ 1{,}6) = 1{,}6
 $$
 
 **Résultat.** La sortie du neurone est $y = 1{,}6$.
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 2 : construire un neurone AND">
@@ -369,27 +382,28 @@ $$
 
 Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
 
-**Autres solutions valides.** Le triplet $(1, 1, -0{,}5)$ fonctionne aussi (à vérifier en refaisant les quatre cas).
+**Autres solutions valides.** Le triplet $(1, 1, -1{,}2)$ fonctionne aussi (à vérifier en refaisant les quatre cas).
 
 **Caractérisation générale.** Tout triplet $(w_1, w_2, b)$ tel que $w_1, w_2 > 0$, $w_1 + b < 0$, $w_2 + b < 0$ et $w_1 + w_2 + b \geq 0$ est solution. Géométriquement, la droite $w_1 x_1 + w_2 x_2 + b = 0$ doit passer entre les trois points négatifs et le point $(1, 1)$.
+
 </Callout>
 
 ## Sources
 
-- Azevedo, F. A. et al. (2009). « Equal numbers of neuronal and nonneuronal cells make the human brain an isotropically scaled-up primate brain. » *Journal of Comparative Neurology* 513(5), 532-541. [DOI 10.1002/cne.21974](https://doi.org/10.1002/cne.21974)
-- McCulloch, W. & Pitts, W. (1943). « A Logical Calculus of Ideas Immanent in Nervous Activity. » *Bulletin of Mathematical Biophysics* 5(4), 115-133. [DOI 10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
-- Hebb, D. O. (1949). *The Organization of Behavior*. Wiley. [Archive.org](https://archive.org/details/in.ernet.dli.2015.226341)
-- Rosenblatt, F. (1958). « The Perceptron: a probabilistic model for information storage and organization in the brain. » *Psychological Review* 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
-- Minsky, M. & Papert, S. (1969). *Perceptrons: An Introduction to Computational Geometry*. MIT Press.
-- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » *Nature* 323(6088), 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
-- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). « ImageNet Classification with Deep Convolutional Neural Networks. » *NeurIPS* 25. [Lien NeurIPS](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
-- Lighthill, J. (1973). *Artificial Intelligence: A General Survey*. Science Research Council, Royaume-Uni. [Archive.org](https://archive.org/details/lighthill-report)
+- Azevedo, F. A. et al. (2009). « Equal numbers of neuronal and nonneuronal cells make the human brain an isotropically scaled-up primate brain. » _Journal of Comparative Neurology_ 513(5), 532-541. [DOI 10.1002/cne.21974](https://doi.org/10.1002/cne.21974)
+- McCulloch, W. & Pitts, W. (1943). « A Logical Calculus of Ideas Immanent in Nervous Activity. » _Bulletin of Mathematical Biophysics_ 5(4), 115-133. [DOI 10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Hebb, D. O. (1949). _The Organization of Behavior_. Wiley. [Archive.org](https://archive.org/details/in.ernet.dli.2015.226341)
+- Rosenblatt, F. (1958). « The Perceptron: a probabilistic model for information storage and organization in the brain. » _Psychological Review_ 65(6), 386-408. [DOI 10.1037/h0042519](https://doi.org/10.1037/h0042519)
+- Minsky, M. & Papert, S. (1969). _Perceptrons: An Introduction to Computational Geometry_. MIT Press.
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » _Nature_ 323(6088), 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). « ImageNet Classification with Deep Convolutional Neural Networks. » _NeurIPS_ 25. [Lien NeurIPS](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Lighthill, J. (1973). _Artificial Intelligence: A General Survey_. Science Research Council, Royaume-Uni. [Archive.org](https://archive.org/details/lighthill-report)
 
 ### Pour aller plus loin
 
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 6 sur les réseaux feed-forward. [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Bishop, C. M. (2006). *Pattern Recognition and Machine Learning*. Springer. Chapitre 5 sur les réseaux de neurones.
-- Hastie, T., Tibshirani, R. & Friedman, J. (2009). *The Elements of Statistical Learning*. Springer. Chapitre 11. [stanford.edu PDF gratuit](https://hastie.su.domains/ElemStatLearn/)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 6 sur les réseaux feed-forward. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Bishop, C. M. (2006). _Pattern Recognition and Machine Learning_. Springer. Chapitre 5 sur les réseaux de neurones.
+- Hastie, T., Tibshirani, R. & Friedman, J. (2009). _The Elements of Statistical Learning_. Springer. Chapitre 11. [stanford.edu PDF gratuit](https://hastie.su.domains/ElemStatLearn/)
 - LeCun, Y. (cours en ligne au Collège de France, 2016 à aujourd'hui). « L'apprentissage profond ». [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
 - Ng, A. (cours en ligne Coursera, « Deep Learning Specialization »). Très bon complément en anglais.
 
@@ -402,62 +416,67 @@ Comme $z \geq 0$, la sortie vaut $1$. Attendu : $1$ ✓
     submitLabel="Vérifier"
     resetLabel="Recommencer"
     scoreLabel="Score"
-  questions={[
-    {
-      q: "Que produit l'opération d'un neurone, avant la fonction d'activation ?",
-      options: [
-        "Un produit matriciel",
-        "Une somme pondérée des entrées, plus un biais",
-        "Une multiplication des entrées entre elles",
-        "Une moyenne des entrées",
-      ],
-      answer: 1,
-      explain: "Le neurone calcule z = Σ wᵢ xᵢ + b. C'est une combinaison linéaire, pas un produit ni une moyenne.",
-    },
-    {
-      q: "Pourquoi un seul neurone ne peut-il pas apprendre XOR ?",
-      options: [
-        "Parce que XOR a trop de cas possibles",
-        "Parce que la fonction d'activation est trop simple",
-        "Parce qu'aucune droite ne peut séparer les cas positifs des cas négatifs",
-        "Parce que les poids doivent être entiers",
-      ],
-      answer: 2,
-      explain: "Un neurone trace une droite. Les cas positifs de XOR sont en diagonale, donc non séparables par une droite unique.",
-    },
-    {
-      q: "Quel est le rôle géométrique du biais ?",
-      options: [
-        "Il accentue l'effet des poids",
-        "Il translate la frontière de décision dans le plan",
-        "Il normalise la sortie entre 0 et 1",
-        "Il accélère le calcul",
-      ],
-      answer: 1,
-      explain: "Les poids fixent l'orientation de la droite, le biais sa position. Sans biais, la droite passe forcément par l'origine.",
-    },
-    {
-      q: "Que fait la fonction d'activation f dans l'équation y = f(Σ wᵢ xᵢ + b) ?",
-      options: [
-        "Elle additionne les entrées",
-        "Elle transforme le résultat brut en une valeur interprétable, en général non-linéaire",
-        "Elle ajuste automatiquement les poids",
-        "Elle remplace le biais quand il est nul",
-      ],
-      answer: 1,
-      explain: "f compresse ou réoriente la somme pondérée. Sans elle, empiler des neurones reviendrait à une simple combinaison linéaire, et un réseau profond perdrait toute sa puissance expressive.",
-    },
-    {
-      q: "Vrai ou faux : le neurone artificiel est une copie fidèle du neurone biologique.",
-      options: [
-        "Vrai, il reproduit la chimie interne du neurone",
-        "Faux, c'est une simplification mathématique qui s'inspire du biologique sans le reproduire",
-        "Vrai, sauf pour la mémoire",
-        "Faux, ils n'ont rien en commun",
-      ],
-      answer: 1,
-      explain: "Le neurone artificiel reprend l'idée des entrées pondérées et du seuil, mais il ignore la dimension temporelle, les impulsions discrètes et la chimie synaptique. C'est une caricature utile, pas une réplique.",
-    },
-  ]}
+    questions={[
+      {
+        q: "Que produit l'opération d'un neurone, avant la fonction d'activation ?",
+        options: [
+          'Un produit matriciel',
+          'Une somme pondérée des entrées, plus un biais',
+          'Une multiplication des entrées entre elles',
+          'Une moyenne des entrées',
+        ],
+        answer: 1,
+        explain:
+          "Le neurone calcule z = Σ wᵢ xᵢ + b. C'est une combinaison linéaire, pas un produit ni une moyenne.",
+      },
+      {
+        q: 'Pourquoi un seul neurone ne peut-il pas apprendre XOR ?',
+        options: [
+          'Parce que XOR a trop de cas possibles',
+          "Parce que la fonction d'activation est trop simple",
+          "Parce qu'aucune droite ne peut séparer les cas positifs des cas négatifs",
+          'Parce que les poids doivent être entiers',
+        ],
+        answer: 2,
+        explain:
+          'Un neurone trace une droite. Les cas positifs de XOR sont en diagonale, donc non séparables par une droite unique.',
+      },
+      {
+        q: 'Quel est le rôle géométrique du biais ?',
+        options: [
+          "Il accentue l'effet des poids",
+          'Il translate la frontière de décision dans le plan',
+          'Il normalise la sortie entre 0 et 1',
+          'Il accélère le calcul',
+        ],
+        answer: 1,
+        explain:
+          "Les poids fixent l'orientation de la droite, le biais sa position. Sans biais, la droite passe forcément par l'origine.",
+      },
+      {
+        q: "Que fait la fonction d'activation f dans l'équation y = f(Σ wᵢ xᵢ + b) ?",
+        options: [
+          'Elle additionne les entrées',
+          'Elle transforme le résultat brut en une valeur interprétable, en général non-linéaire',
+          'Elle ajuste automatiquement les poids',
+          'Elle remplace le biais quand il est nul',
+        ],
+        answer: 1,
+        explain:
+          'f compresse ou réoriente la somme pondérée. Sans elle, empiler des neurones reviendrait à une simple combinaison linéaire, et un réseau profond perdrait toute sa puissance expressive.',
+      },
+      {
+        q: 'Vrai ou faux : le neurone artificiel est une copie fidèle du neurone biologique.',
+        options: [
+          'Vrai, il reproduit la chimie interne du neurone',
+          "Faux, c'est une simplification mathématique qui s'inspire du biologique sans le reproduire",
+          'Vrai, sauf pour la mémoire',
+          "Faux, ils n'ont rien en commun",
+        ],
+        answer: 1,
+        explain:
+          "Le neurone artificiel reprend l'idée des entrées pondérées et du seuil, mais il ignore la dimension temporelle, les impulsions discrètes et la chimie synaptique. C'est une caricature utile, pas une réplique.",
+      },
+    ]}
   />
 </InteractivePrint>
