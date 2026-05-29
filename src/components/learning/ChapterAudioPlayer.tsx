@@ -8,6 +8,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { extractReadableText } from '../../lib/audio-text-extractor';
+import { useMediaSession } from './useMediaSession';
 
 interface ManifestEntry {
   url: string;
@@ -52,6 +53,7 @@ interface Props {
   contentSelector: string;
   labels: ChapterAudioLabels;
   chapterTitle?: string;
+  courseTitle?: string;
   nextHref?: string;
   nextTitle?: string;
 }
@@ -60,6 +62,8 @@ type Source = 'mp3' | 'speech' | 'unknown';
 type Status = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 
 const SPEED_OPTIONS = [0.75, 1, 1.25, 1.5];
+
+const MEDIA_ARTWORK = [{ src: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }];
 
 function manifestKey(locale: string, course: string, mod: string): string {
   return `${locale}/${course}/${mod}`;
@@ -180,6 +184,7 @@ export default function ChapterAudioPlayer({
   contentSelector,
   labels,
   chapterTitle,
+  courseTitle,
   nextHref,
   nextTitle,
 }: Props): JSX.Element {
@@ -510,6 +515,31 @@ export default function ChapterAudioPlayer({
   const isPlaying = status === 'playing';
   const isLoadingSource = source === 'unknown';
 
+  useMediaSession({
+    active: open && source !== 'unknown',
+    isPlaying,
+    title: chapterTitle ?? courseTitle ?? labels.listen,
+    artist: courseTitle ?? 'Pierrick Fonquerne',
+    artwork: MEDIA_ARTWORK,
+    duration,
+    position: progress,
+    playbackRate: rate,
+    supportsPosition: source === 'mp3',
+    handlers: {
+      play: handlePlay,
+      pause: handlePause,
+      stop: handleClose,
+      seekBackward: () => handleSkip(-15),
+      seekForward: () => handleSkip(15),
+      seekTo: handleSeek,
+      nextTrack: nextHref
+        ? () => {
+            if (typeof window !== 'undefined') window.location.assign(nextHref);
+          }
+        : undefined,
+    },
+  });
+
   return (
     <>
       <button
@@ -555,7 +585,7 @@ export default function ChapterAudioPlayer({
               {nextCountdown !== null && nextTitle && (
                 <span className="flex items-center gap-2">
                   <span>
-                    {labels.nextChapterIn(nextCountdown)} — {nextTitle}
+                    {labels.nextChapterIn(nextCountdown)} · {nextTitle}
                   </span>
                   <button
                     type="button"
@@ -578,14 +608,14 @@ export default function ChapterAudioPlayer({
               )}
             </div>
           )}
-          <div className="mx-auto flex max-w-[1280px] items-center gap-4">
+          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
                 onClick={() => handleSkip(-15)}
                 aria-label={labels.skipBack}
                 title={`${labels.skipBack} (J)`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
               >
                 <svg
                   width="16"
@@ -607,7 +637,7 @@ export default function ChapterAudioPlayer({
                 onClick={isPlaying ? handlePause : handlePlay}
                 aria-label={isPlaying ? labels.pause : labels.resume}
                 title={`${isPlaying ? labels.pause : labels.resume} (Espace / K)`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)]"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[var(--color-line)] text-[var(--color-fg)] hover:border-[var(--color-line-strong)] sm:h-9 sm:w-9"
               >
                 {isPlaying ? (
                   <svg
@@ -637,7 +667,7 @@ export default function ChapterAudioPlayer({
                 onClick={() => handleSkip(15)}
                 aria-label={labels.skipForward}
                 title={`${labels.skipForward} (L)`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
               >
                 <svg
                   width="16"
@@ -656,7 +686,7 @@ export default function ChapterAudioPlayer({
               </button>
             </div>
 
-            <div className="min-w-0 flex-1">
+            <div className="order-first w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
               <div
                 ref={progressBarRef}
                 onClick={handleProgressBarClick}
@@ -715,7 +745,7 @@ export default function ChapterAudioPlayer({
                 download
                 aria-label={labels.download}
                 title={labels.download}
-                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
               >
                 <svg
                   width="14"
@@ -735,14 +765,14 @@ export default function ChapterAudioPlayer({
               </a>
             )}
 
-            <div className="relative">
+            <div className="relative [@media(pointer:coarse)]:hidden">
               <button
                 type="button"
                 onClick={() => setShowShortcuts((v) => !v)}
                 aria-label={labels.shortcuts}
                 aria-expanded={showShortcuts}
                 title={labels.shortcuts}
-                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
               >
                 <svg
                   width="14"
@@ -826,7 +856,7 @@ export default function ChapterAudioPlayer({
               onClick={handleClose}
               aria-label={labels.close}
               title={labels.close}
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+              className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
             >
               <svg
                 width="14"

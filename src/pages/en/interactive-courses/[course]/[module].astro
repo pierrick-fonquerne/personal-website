@@ -81,6 +81,7 @@ const sidebarModules = modules.map((m) => ({
           subtitle={current.data.subtitle}
           locale={locale}
           courseSlug={courseSlug!}
+          courseTitle={course.data.title}
           moduleSlug={moduleSlug!}
           nextHref={next
             ? `/en/interactive-courses/${courseSlug}/${moduleSlugOf(next)}`
