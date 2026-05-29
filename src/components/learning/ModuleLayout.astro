@@ -12,12 +12,14 @@ interface Props {
   subtitle?: string;
   locale: Locale;
   courseSlug: string;
+  courseTitle: string;
   moduleSlug: string;
   nextHref?: string;
   nextTitle?: string;
 }
 
-const { badge, title, subtitle, locale, courseSlug, moduleSlug, nextHref, nextTitle } = Astro.props;
+const { badge, title, subtitle, locale, courseSlug, courseTitle, moduleSlug, nextHref, nextTitle } =
+  Astro.props;
 const t = useTranslations(locale);
 
 const audioLabels = {
@@ -78,6 +80,7 @@ const audioLabels = {
       contentSelector="#chapter-content"
       labels={audioLabels}
       chapterTitle={title}
+      courseTitle={courseTitle}
       nextHref={nextHref}
       nextTitle={nextTitle}
     />
