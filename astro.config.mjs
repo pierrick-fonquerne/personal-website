@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
@@ -21,6 +21,32 @@ export default defineConfig({
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],
   },
+  fonts: [
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Geist',
+      cssVariable: '--font-geist',
+      weights: ['100 900'],
+      subsets: ['latin'],
+      styles: ['normal'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'Inter',
+      cssVariable: '--font-inter',
+      weights: ['100 900'],
+      subsets: ['latin'],
+      styles: ['normal'],
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: 'JetBrains Mono',
+      cssVariable: '--font-jetbrains',
+      weights: ['400 700'],
+      subsets: ['latin'],
+      styles: ['normal'],
+    },
+  ],
   integrations: [
     react(),
     mdx({
