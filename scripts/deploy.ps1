@@ -133,7 +133,9 @@ echo "deploy ok"
 $bashScript = $bashScript.
     Replace('__REMOTEROOT__', $RemoteRoot).
     Replace('__STAMP__',       $stamp).
-    Replace('__REMOTE_TAR__',  $remoteTar)
+    Replace('__REMOTE_TAR__',  $remoteTar).
+    Replace("`r`n", "`n").
+    Replace("`r", "`n")
 
 [System.IO.File]::WriteAllText(
     $scriptFile,
