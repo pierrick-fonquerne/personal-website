@@ -1,0 +1,13 @@
+slug: pouvoir-expressif
+fr:
+  term: Pouvoir expressif
+  definition: Étendue des fonctions qu'un modèle peut représenter en faisant varier ses paramètres. Un perceptron simple n'exprime que des séparations linéaires ; ajouter des couches cachées élargit le pouvoir expressif jusqu'à pouvoir approcher n'importe quelle fonction continue.
+  source: Goodfellow, Bengio & Courville, 2016
+en:
+  term: Expressive power
+  definition: The range of functions a model can represent as its parameters vary. A single perceptron expresses only linear separations ; adding hidden layers widens the expressive power until it can approximate any continuous function.
+  source: Goodfellow, Bengio & Courville, 2016
+seeAlso:
+  - theoreme-approximation-universelle
+  - perceptron-multicouches
+  - couche-cachee

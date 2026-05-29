@@ -1,0 +1,11 @@
+slug: composition-de-fonctions
+fr:
+  term: Composition de fonctions
+  definition: Opération consistant à appliquer une fonction au résultat d'une autre, notée f rond g. Un réseau multi-couches est une composition, où la sortie d'une couche devient l'entrée de la suivante, et c'est cet emboîtement, alterné avec des activations non linéaires, qui crée la non-linéarité globale.
+en:
+  term: Function composition
+  definition: The operation of applying one function to the result of another, written f ring g. A multilayer network is a composition where each layer output becomes the next layer input, and this nesting, alternated with non-linear activations, is what creates the global non-linearity.
+seeAlso:
+  - perceptron-multicouches
+  - non-linearite
+  - couche-cachee

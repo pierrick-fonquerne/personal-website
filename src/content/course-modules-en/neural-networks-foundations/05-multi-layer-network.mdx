@@ -1,22 +1,343 @@
 ---
 course: neural-networks-foundations
 order: 5
-title: From neuron to multi-layer network
-subtitle: 'How stacking neurons buys you expressive power.'
-estimatedMinutes: 15
+title: From the neuron to the multilayer network
+subtitle: 'Stacking neurons to solve XOR, then approximating almost any function.'
+estimatedMinutes: 22
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import XorHiddenLayerSolver from '../../../components/learning/XorHiddenLayerSolver.tsx';
+import DecisionRegionComposer from '../../../components/learning/DecisionRegionComposer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 4 we proved that a single perceptron cannot compute XOR: no straight line separates the points where XOR equals $1$ from those where it equals $0$. But we also noticed something. XOR can be written as a combination of functions that are themselves separable: $\text{XOR}(x_1, x_2) = (x_1 \vee x_2) \wedge \neg(x_1 \wedge x_2)$.
+
+This chapter turns that remark into a general method. We will feed neurons with the outputs of other neurons, solve XOR by hand, understand which boundary shapes this wiring can draw, then discover how far the idea reaches: almost every function.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the perceptron and the threshold function (chapter 4), the dot product and the matrix (chapter 2), why a non-linear activation is indispensable (chapter 3).
+
+**What you do not need to know**: gradient descent (chapters 7 to 9) and backpropagation (chapter 8). Here we set the weights by hand, not by learning.
+
+**Level of rigour**: an explicit and verified construction of XOR, the full matrix notation of a layer, the definition of the multilayer perceptron as a composition, a semi-formal sketch of the universal approximation theorem, and four pen-and-paper exercises with step-by-step solutions.
+
 </Callout>
 
-## What you will learn
+## Solving XOR by hand
 
-- The idea of layers: input, hidden, output
-- Matrix notation for a network
-- The universal approximation theorem (intuition, no proof)
+### The two-assistant analogy
 
-A single neuron splits space in two. A layer splits it into many regions. Several layers can approximate almost any function. This chapter shows why.
+Imagine you are forbidden from answering the question "are the two inputs different?" directly. Instead, you may ask two simpler questions to two assistants, then combine their answers.
+
+- First assistant: "is at least one input equal to $1$?" That is the OR function.
+- Second assistant: "is it false that both inputs equal $1$?" That is the NAND function.
+
+Think for a moment. When exactly one input is $1$, the first assistant says yes (there is indeed at least one) and so does the second (the two are not both $1$). When both are $0$, the first says no. When both are $1$, the second says no. The two assistants say yes at the same time only in the case "exactly one input is $1$", which is precisely XOR. So all you have to do is answer yes when both assistants say yes: a simple AND.
+
+### The hidden layer
+
+Each assistant is a perceptron. We place them in a <Term slug="couche-cachee">hidden layer</Term>: an intermediate layer whose outputs are not the final answer but intermediate questions that the next layer will combine. The resulting network, which stacks one or more hidden layers between input and output, is called a <Term slug="perceptron-multicouches">multilayer perceptron</Term>.
+
+We reuse the threshold convention from chapter 4: the Heaviside function $H$ equals $1$ if its argument is positive or zero, and $0$ otherwise. The hidden layer computes two values $h_1$ and $h_2$:
+
+$$
+h_1 \;=\; H(x_1 + x_2 - 0.5) \qquad (\text{OR}).
+$$
+
+This equation reads: $h_1$ equals $1$ as soon as $x_1 + x_2 \geq 0.5$, that is, as soon as at least one of the two inputs equals $1$.
+
+$$
+h_2 \;=\; H(1.5 - x_1 - x_2) \qquad (\text{NAND}).
+$$
+
+This one reads: $h_2$ equals $1$ as long as $x_1 + x_2 \leq 1.5$, so everywhere except when both inputs equal $1$ at once.
+
+Finally, the output neuron computes the logical AND of $h_1$ and $h_2$:
+
+$$
+y \;=\; H(h_1 + h_2 - 1.5) \qquad (\text{AND}).
+$$
+
+It equals $1$ only if $h_1 + h_2 \geq 1.5$, that is, only if $h_1$ and $h_2$ both equal $1$. Three perceptrons, arranged in two layers, therefore compute XOR: something a single perceptron could not do.
+
+### Build it yourself
+
+The two hidden neurons are wired as OR and NAND. Your job is to set the output neuron (its weights $v_1$, $v_2$ on $h_1$, $h_2$, and its bias $c$) so that it becomes an AND, and watch the truth table turn green.
+
+<XorHiddenLayerSolver client:visible locale="en" />
+
+Three things to watch while playing:
+
+- As long as the output is not a true AND, at least one of the four rows stays red. The "Reveal the solution (AND)" button sets $v_1 = v_2 = 1$ and $c = -1.5$.
+- The XOR column (the target) and the $y$ column (what your network computes) match on all four rows only when the output realizes exactly the AND of OR and NAND.
+- The two hidden neurons have reshaped the problem: in the new coordinates $(h_1, h_2)$, XOR has become linearly separable, even though it was not in the coordinates $(x_1, x_2)$.
+
+## What layers let you draw
+
+### The fence analogy
+
+A single neuron is a straight fence in a field: animals on one side, nothing on the other. With a single fence you can only mark off a half-field. But with several straight fences, and the rule "an animal is enclosed only if it is on the right side of every fence at once", you fence in a plot whose shape you choose.
+
+### From half-plane to curve
+
+Let us formalize. The <Term slug="frontiere-de-decision">decision boundary</Term> of a neuron is the hyperplane where its output flips. A single neuron therefore splits the plane into two half-planes. A layer of $k$ neurons followed by an output neuron that computes their AND keeps only the points on the right side of all $k$ boundaries at once: the intersection of $k$ half-planes, that is, a convex region (a polygon). By adding one more layer, we can take the union of several such convex regions and obtain arbitrary shapes, including non-convex ones.
+
+<DecisionRegionComposer client:visible locale="en" />
+
+Three things to watch while playing:
+
+- With $k = 1$, the boundary is a single line, exactly like a perceptron. With $k = 2$, it is a wedge. From $k = 3$ on, it is a closed polygon.
+- The more hidden neurons you add, the more sides the polygon has and the more closely it hugs the circle. The boundary goes from linear to polygonal, then tends toward a curve.
+- Each hidden neuron contributes only one line. It is their combination by the next layer that creates the richness of shapes.
+
+## Matrix notation
+
+Writing the weighted sum of each neuron separately quickly becomes unreadable once a layer has hundreds of them. The matrix from chapter 2 solves this: it stacks all the weighted sums of a layer into a single operation.
+
+For a layer that receives an input vector $x \in \mathbb{R}^{n_{\text{in}}}$ and produces $n_{\text{out}}$ neurons, we gather the weights in a matrix $W \in \mathbb{R}^{n_{\text{out}} \times n_{\text{in}}}$ and the biases in a vector $b \in \mathbb{R}^{n_{\text{out}}}$. The layer then computes:
+
+$$
+a \;=\; f(Wx + b).
+$$
+
+This equation reads: we multiply the input vector $x$ by the weight matrix $W$, add the bias vector $b$, then apply the activation function $f$ to each component of the result. Each row of $W$ is the weight vector of one neuron in the layer, and each component of $b$ its bias. A single line of algebra thus replaces $n_{\text{out}}$ weighted sums written out by hand.
+
+<MermaidDiagram
+  client:visible
+  caption="A network with one hidden layer: two inputs, one hidden layer, one output"
+  definition={`graph LR
+    x1["x₁"] --> h1["a⁽¹⁾"]
+    x2["x₂"] --> h1
+    x1 --> h2["a⁽¹⁾"]
+    x2 --> h2
+    h1 --> y["a⁽²⁾"]
+    h2 --> y`}
+/>
+
+## The multilayer perceptron as a composition
+
+A deep network stacks these layers: the output of one becomes the input of the next. With $L$ layers, the network computes
+
+$$
+a^{(L)} \;=\; f\big(W^{(L)} \cdots f(W^{(1)} x + b^{(1)}) \cdots + b^{(L)}\big).
+$$
+
+This is a composition of functions: we apply one layer, then another to the result of the first, and so on. But this composition is only useful because a non-linear activation is inserted between each layer. Without it, composing several linear layers would still give a linear function (we saw this in chapter 3), and the whole stack would collapse into a single layer. It is exactly the alternation "linear layer, then non-linear activation" that gives the network its <Term slug="pouvoir-expressif">expressive power</Term>.
+
+## How far can we go? The universal approximation theorem
+
+### The bump intuition
+
+Take an activation function shaped like a soft step, such as the sigmoid from chapter 3. The difference of two slightly shifted sigmoids draws a bump: a function that is almost zero everywhere, except on a small interval where it forms a hump. By adding up many bumps, placed and scaled just right, you can hug the profile of any continuous curve, much as you approximate the relief of a mountain by stacking thinner and thinner bricks.
+
+A single hidden layer does exactly that: each hidden neuron builds a step, and the output neuron takes their weighted sum. With enough neurons, that sum approximates the target function as closely as you like.
+
+### The statement
+
+This is the content of the <Term slug="theoreme-approximation-universelle">universal approximation theorem</Term>.
+
+<Callout kind="note" title="Semi-formal sketch (without a full proof)">
+**Statement (Cybenko, 1989; Hornik, Stinchcombe and White, 1989).** Let $f$ be a continuous function on a bounded domain of $\mathbb{R}^n$, and let $\varepsilon > 0$ be as small as we like. Then there exists a network with **a single hidden layer**, with finitely many neurons and a non-polynomial activation function, that approximates $f$ everywhere on that domain to within $\varepsilon$.
+
+**Idea of the proof.** One shows that combinations of hidden neurons (functions of the form $\sum_i \alpha_i \, \sigma(w_i \cdot x + b_i)$) form a dense set in the space of continuous functions on the domain. Cybenko uses a functional-analysis argument (the Hahn-Banach theorem and a property of measures); Hornik and his coauthors give a version via characteristic functions. Neither proof says how many neurons are needed, nor how to find their weights.
+
+</Callout>
+
+<Callout kind="warn" title="Universal does not mean learnable">
+  The theorem guarantees that a good network **exists**. It does not say that an algorithm will be
+  able to **find** it from data, nor how many neurons will be required (that number can blow up).
+  The rest of the course, from chapter 6 on, is about that other question: how to set the weights
+  automatically, by learning, rather than by hand as we just did for XOR.
+</Callout>
+
+## Pen-and-paper exercises
+
+### Exercise 1: verifying the XOR construction
+
+With $h_1 = H(x_1 + x_2 - 0.5)$, $h_2 = H(1.5 - x_1 - x_2)$ and $y = H(h_1 + h_2 - 1.5)$, compute $h_1$, $h_2$ and $y$ on the four inputs, and check that $y$ does reproduce XOR.
+
+<Callout kind="tip" title="Solution to exercise 1: verifying the XOR construction">
+Recall that $H(z) = 1$ if $z \geq 0$, and $0$ otherwise.
+
+**Step 1.** Input $(0, 0)$.
+
+$$
+h_1 = H(0 + 0 - 0.5) = H(-0.5) = 0, \qquad h_2 = H(1.5 - 0 - 0) = H(1.5) = 1.
+$$
+
+$$
+y = H(0 + 1 - 1.5) = H(-0.5) = 0. \qquad \text{XOR}(0,0) = 0. \;\; \text{OK}.
+$$
+
+**Step 2.** Input $(1, 0)$.
+
+$$
+h_1 = H(1 + 0 - 0.5) = H(0.5) = 1, \qquad h_2 = H(1.5 - 1 - 0) = H(0.5) = 1.
+$$
+
+$$
+y = H(1 + 1 - 1.5) = H(0.5) = 1. \qquad \text{XOR}(1,0) = 1. \;\; \text{OK}.
+$$
+
+**Step 3.** Input $(0, 1)$. By symmetry with step 2 (the two inputs play the same role), we get $h_1 = 1$, $h_2 = 1$, then $y = 1$, and $\text{XOR}(0,1) = 1$. OK.
+
+**Step 4.** Input $(1, 1)$.
+
+$$
+h_1 = H(1 + 1 - 0.5) = H(1.5) = 1, \qquad h_2 = H(1.5 - 1 - 1) = H(-0.5) = 0.
+$$
+
+$$
+y = H(1 + 0 - 1.5) = H(-0.5) = 0. \qquad \text{XOR}(1,1) = 0. \;\; \text{OK}.
+$$
+
+**Result.** On the four inputs, $y$ equals $0, 1, 1, 0$ respectively, which is exactly the XOR table. The one-hidden-layer network therefore computes XOR.
+
+</Callout>
+
+### Exercise 2: counting the parameters
+
+Consider a network with architecture $2 \to 3 \to 1$: two inputs, a hidden layer of three neurons, one output neuron. How many parameters (weights and biases) does this network have in total?
+
+<Callout kind="tip" title="Solution to exercise 2: counting the parameters">
+**Step 1.** Hidden layer. Each of the $3$ neurons receives the $2$ inputs, so it has $2$ weights, plus $1$ bias. That makes $3 \times (2 + 1)$ parameters.
+
+$$
+3 \times (2 + 1) = 3 \times 3 = 9.
+$$
+
+**Step 2.** Output layer. The $1$ neuron receives the $3$ outputs of the hidden layer, so it has $3$ weights, plus $1$ bias.
+
+$$
+1 \times (3 + 1) = 4.
+$$
+
+**Step 3.** We add the two layers.
+
+$$
+9 + 4 = 13.
+$$
+
+**Result.** The $2 \to 3 \to 1$ network has $13$ parameters. In matrix notation: $W^{(1)} \in \mathbb{R}^{3 \times 2}$ and $b^{(1)} \in \mathbb{R}^{3}$ for the hidden layer ($6 + 3 = 9$), then $W^{(2)} \in \mathbb{R}^{1 \times 3}$ and $b^{(2)} \in \mathbb{R}^{1}$ for the output ($3 + 1 = 4$).
+
+</Callout>
+
+### Exercise 3: the matrix form
+
+Write, in matrix notation, the equations of a network with two inputs, a hidden layer of two neurons, and one output ($2 \to 2 \to 1$). Specify the dimensions of each weight matrix and each bias vector. The activation function is denoted $f$.
+
+<Callout kind="tip" title="Solution to exercise 3: the matrix form">
+**Step 1.** Hidden layer. It transforms the input $x \in \mathbb{R}^{2}$ into an activation $a^{(1)} \in \mathbb{R}^{2}$.
+
+$$
+a^{(1)} = f\big(W^{(1)} x + b^{(1)}\big), \qquad W^{(1)} \in \mathbb{R}^{2 \times 2}, \quad b^{(1)} \in \mathbb{R}^{2}.
+$$
+
+**Step 2.** Output layer. It transforms $a^{(1)} \in \mathbb{R}^{2}$ into a scalar output $y \in \mathbb{R}$.
+
+$$
+y = f\big(W^{(2)} a^{(1)} + b^{(2)}\big), \qquad W^{(2)} \in \mathbb{R}^{1 \times 2}, \quad b^{(2)} \in \mathbb{R}.
+$$
+
+**Result.** The full network is the composition $y = f\big(W^{(2)} f(W^{(1)} x + b^{(1)}) + b^{(2)}\big)$. The dimension rule: the number of columns of a weight matrix equals the number of neurons in the previous layer, and its number of rows equals the number of neurons in the current layer.
+
+</Callout>
+
+### Exercise 4: depth or width?
+
+The universal approximation theorem states that a **single** hidden layer is enough to approximate any continuous function. Why, in practice, do we still build **deep** networks (with several hidden layers) rather than putting everything into one very wide layer?
+
+<Callout kind="tip" title="Solution to exercise 4: depth or width?">
+**Step 1.** What the theorem says. One hidden layer suffices, provided it has enough neurons. It is an **existence** result: it does not bound the number of neurons, which may have to grow enormously when the target function is complicated.
+
+**Step 2.** What width alone costs. For many useful functions (in particular those that are themselves compositions, such as recognizing a shape from edges, themselves from pixels), a single layer would require a number of neurons that blows up. Depth often lets us represent the same function with far fewer parameters, because each layer reuses the representations built by the previous one.
+
+**Step 3.** What depth enables. Stacking layers builds a hierarchy of representations: the early layers capture simple patterns, the later ones combine them into more abstract patterns. That is a form of reuse that width alone does not provide.
+
+**Result.** "Universal" is about what can be represented, not at what cost. Depth does not change the class of reachable functions (it stays the set of continuous functions), but it often makes them reachable with far fewer neurons, and with representations that are easier to learn.
+
+</Callout>
+
+## In one sentence
+
+A single neuron draws a line; stacking neurons into layers, with a non-linear activation in between, is enough to draw any boundary, and even to approximate almost any function.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Why can a single perceptron not compute XOR?',
+      options: [
+        'Because XOR has two inputs instead of one.',
+        'Because XOR is not linearly separable: no straight line separates the 1 outputs from the 0 outputs.',
+        'Because the threshold function is not differentiable.',
+      ],
+      answer: 1,
+      explain:
+        'We proved it in chapter 4 by contradiction: the four constraints imposed by XOR are incompatible. A single line is not enough, you have to compose several separators.',
+    },
+    {
+      q: 'In the hand-built XOR, what does the second hidden neuron h₂ compute?',
+      options: [
+        'The AND function (x₁ and x₂).',
+        'The NAND function: 1 everywhere except when both inputs equal 1.',
+        'The OR function (x₁ or x₂).',
+      ],
+      answer: 1,
+      explain:
+        'h₂ = H(1.5 - x₁ - x₂) equals 0 only for (1,1). That is NAND. Combined with OR (h₁) through an AND, we get XOR.',
+    },
+    {
+      q: 'What does the intersection of k half-planes represent geometrically (a layer whose output is an AND)?',
+      options: [
+        'A convex region, for example a polygon.',
+        'Always a perfect circle.',
+        'A union of several separate pieces.',
+      ],
+      answer: 0,
+      explain:
+        'Keeping the points on the right side of all k lines at once gives the intersection of the half-planes, which is convex. One more layer is needed to take the union of several convex regions.',
+    },
+    {
+      q: 'What does the universal approximation theorem guarantee?',
+      options: [
+        'That a deep network always beats a shallow one.',
+        'That a single hidden layer, with enough neurons, can approximate any continuous function on a bounded domain.',
+        'That a network automatically learns any function from data.',
+      ],
+      answer: 1,
+      explain:
+        'It is an existence result (Cybenko 1989, Hornik 1989). One hidden layer suffices in theory, with no bound on the number of neurons.',
+    },
+    {
+      q: 'Does universal imply learnable?',
+      options: [
+        'Yes: if a network exists, training necessarily finds it.',
+        'No: the theorem guarantees that a good network exists, not that an algorithm can find it.',
+        'The question is meaningless.',
+      ],
+      answer: 1,
+      explain:
+        'Existing and knowing how to find are two different things. Setting the weights automatically is the subject of the next chapters, from chapter 6 on.',
+    },
+  ]}
+/>
+
+## Toward chapter 6: measuring the error to learn
+
+We now know **that** a multilayer network can express anything. The real question remains, the one the universal approximation theorem leaves open: **how** do we set its weights without placing them by hand, as we just did for XOR?
+
+The first building block of the answer is being able to measure how wrong the network is. Chapter 6 introduces the forward pass (computing the output, layer after layer) and the cost function, which quantifies the gap between the prediction and the target. It is this measure of the error that, in chapters 7 and 8, will guide the automatic adjustment of the weights.
+
+## Sources
+
+- Cybenko, G. (1989). "Approximation by superpositions of a sigmoidal function." _Mathematics of Control, Signals and Systems_ 2(4), 303-314. [DOI 10.1007/BF02551274](https://doi.org/10.1007/BF02551274)
+- Hornik, K., Stinchcombe, M. and White, H. (1989). "Multilayer feedforward networks are universal approximators." _Neural Networks_ 2(5), 359-366. [DOI 10.1016/0893-6080(89)90020-8](<https://doi.org/10.1016/0893-6080(89)90020-8>)
+- Rumelhart, D. E., Hinton, G. E. and Williams, R. J. (1986). "Learning representations by back-propagating errors." _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Goodfellow, I., Bengio, Y. and Courville, A. (2016). _Deep Learning_, chapter 6. MIT Press. [deeplearningbook.org](https://www.deeplearningbook.org/)

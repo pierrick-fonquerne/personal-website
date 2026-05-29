@@ -2,21 +2,343 @@
 course: neural-networks-foundations
 order: 5
 title: Du neurone au réseau multi-couches
-subtitle: 'Comment empiler des neurones pour gagner du pouvoir expressif.'
-estimatedMinutes: 15
+subtitle: "Empiler des neurones pour résoudre XOR, puis approcher presque n'importe quelle fonction."
+estimatedMinutes: 22
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import XorHiddenLayerSolver from '../../../components/learning/XorHiddenLayerSolver.tsx';
+import DecisionRegionComposer from '../../../components/learning/DecisionRegionComposer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 4, on a démontré qu'un perceptron seul ne peut pas réaliser XOR : aucune droite ne sépare les points où XOR vaut $1$ de ceux où il vaut $0$. Mais on a aussi remarqué quelque chose. XOR s'écrit comme une combinaison de fonctions qui, elles, sont séparables : $\text{XOR}(x_1, x_2) = (x_1 \vee x_2) \wedge \neg(x_1 \wedge x_2)$.
+
+Ce chapitre transforme cette remarque en méthode générale. On va brancher des neurones sur la sortie d'autres neurones, résoudre XOR à la main, comprendre quelles formes de frontières ce branchement permet de dessiner, puis découvrir jusqu'où l'idée nous mène : presque toutes les fonctions.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : le perceptron et la fonction de seuil (chapitre 4), le produit scalaire et la matrice (chapitre 2), pourquoi une activation non linéaire est indispensable (chapitre 3).
+
+**Ce qu'il n'est pas nécessaire de connaître** : la descente de gradient (chapitres 7 à 9) et la rétropropagation (chapitre 8). Ici, on règle les poids à la main, pas par apprentissage.
+
+**Niveau de rigueur** : construction explicite et vérifiée de XOR, notation matricielle complète d'une couche, définition du perceptron multicouches comme composition, esquisse semi-formelle du théorème d'approximation universelle, quatre exercices papier-crayon avec corrigés aérés.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Résoudre XOR à la main
 
-- L'idée de couches : input, hidden, output
-- Notation matricielle d'un réseau
-- Théorème d'approximation universelle (intuition, sans démonstration)
+### L'analogie des deux assistants
 
-Un seul neurone sépare l'espace en deux. Une couche de neurones sépare en plusieurs régions. Plusieurs couches peuvent approximer presque n'importe quelle fonction. Ce chapitre montre pourquoi.
+Imagine qu'on t'interdit de répondre directement à la question « les deux entrées sont-elles différentes ? ». En revanche, tu as le droit de poser deux questions plus simples à deux assistants, puis de combiner leurs réponses.
+
+- Premier assistant : « au moins une entrée vaut-elle $1$ ? » C'est la fonction OR.
+- Deuxième assistant : « est-il faux que les deux entrées valent $1$ ? » C'est la fonction NAND.
+
+Réfléchis un instant. Quand exactement une entrée vaut $1$, le premier assistant répond oui (il y en a bien au moins une) et le deuxième aussi (les deux ne valent pas $1$ ensemble). Quand les deux valent $0$, le premier répond non. Quand les deux valent $1$, le deuxième répond non. Les deux assistants ne disent oui en même temps que dans le cas « exactement une entrée à $1$ », qui est précisément XOR. Il te suffit donc de répondre oui quand tes deux assistants disent oui : un simple ET.
+
+### La couche cachée
+
+Chaque assistant est un perceptron. On les place dans une <Term slug="couche-cachee">couche cachée</Term> : une couche intermédiaire dont les sorties ne sont pas la réponse finale, mais des questions intermédiaires que la couche suivante va combiner. Le réseau obtenu, qui empile une ou plusieurs couches cachées entre l'entrée et la sortie, s'appelle un <Term slug="perceptron-multicouches">perceptron multicouches</Term>.
+
+On reprend la convention de seuil du chapitre 4 : la fonction de Heaviside $H$ vaut $1$ si son argument est positif ou nul, et $0$ sinon. La couche cachée calcule deux valeurs $h_1$ et $h_2$ :
+
+$$
+h_1 \;=\; H(x_1 + x_2 - 0{,}5) \qquad (\text{OR}).
+$$
+
+Cette équation se lit : $h_1$ vaut $1$ dès que $x_1 + x_2 \geq 0{,}5$, c'est-à-dire dès qu'au moins une des deux entrées vaut $1$.
+
+$$
+h_2 \;=\; H(1{,}5 - x_1 - x_2) \qquad (\text{NAND}).
+$$
+
+Celle-ci se lit : $h_2$ vaut $1$ tant que $x_1 + x_2 \leq 1{,}5$, donc partout sauf quand les deux entrées valent $1$ en même temps.
+
+Le neurone de sortie calcule enfin le ET logique de $h_1$ et $h_2$ :
+
+$$
+y \;=\; H(h_1 + h_2 - 1{,}5) \qquad (\text{AND}).
+$$
+
+Il ne vaut $1$ que si $h_1 + h_2 \geq 1{,}5$, c'est-à-dire seulement si $h_1$ et $h_2$ valent tous les deux $1$. Trois perceptrons, organisés en deux couches, réalisent donc XOR : ce qu'un perceptron isolé ne pouvait pas faire.
+
+### Construis-le toi-même
+
+Les deux neurones cachés sont câblés en OR et NAND. À toi de régler le neurone de sortie (ses poids $v_1$, $v_2$ sur $h_1$, $h_2$, et son biais $c$) pour obtenir un ET, et de voir la table de vérité passer au vert.
+
+<XorHiddenLayerSolver client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Tant que la sortie n'est pas un vrai ET, au moins une des quatre lignes reste rouge. Le bouton « Révéler la solution (AND) » pose $v_1 = v_2 = 1$ et $c = -1{,}5$.
+- La colonne XOR (la cible) et la colonne $y$ (ce que calcule ton réseau) ne coïncident sur les quatre lignes que lorsque la sortie réalise exactement le ET de OR et NAND.
+- Les deux neurones cachés ont transformé le problème : dans les nouvelles coordonnées $(h_1, h_2)$, XOR est devenu linéairement séparable, alors qu'il ne l'était pas dans les coordonnées $(x_1, x_2)$.
+
+## Ce que des couches permettent de dessiner
+
+### L'analogie des clôtures
+
+Un neurone seul, c'est une clôture droite posée dans un champ : d'un côté les bêtes, de l'autre rien. Avec une seule clôture, tu ne peux délimiter qu'un demi-champ. Mais avec plusieurs clôtures droites, et la règle « une bête est enfermée seulement si elle est du bon côté de toutes les clôtures à la fois », tu encercles une parcelle dont tu choisis la forme.
+
+### Du demi-plan à la courbe
+
+Formalisons. La <Term slug="frontiere-de-decision">frontière de décision</Term> d'un neurone est l'hyperplan où sa sortie bascule. Un neurone seul partage donc le plan en deux demi-plans. Une couche de $k$ neurones suivie d'un neurone de sortie qui calcule leur ET garde uniquement les points situés du bon côté des $k$ frontières simultanément : l'intersection de $k$ demi-plans, c'est-à-dire une région convexe (un polygone). En ajoutant une couche de plus, on peut réunir plusieurs de ces régions convexes, et obtenir des formes quelconques, y compris non convexes.
+
+<DecisionRegionComposer client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Avec $k = 1$, la frontière est une simple droite, exactement comme un perceptron. Avec $k = 2$, c'est un coin. À partir de $k = 3$, c'est un polygone fermé.
+- Plus tu ajoutes de neurones cachés, plus le polygone a de côtés et plus il épouse le cercle. La frontière passe de linéaire à polygonale, puis tend vers une courbe.
+- Chaque neurone caché n'apporte qu'une seule droite. C'est leur combinaison par la couche suivante qui crée la richesse des formes.
+
+## La notation matricielle
+
+Écrire la somme pondérée de chaque neurone séparément devient vite illisible dès qu'une couche en compte des centaines. La matrice du chapitre 2 résout ce problème : elle empile toutes les sommes pondérées d'une couche en une seule opération.
+
+Pour une couche qui reçoit un vecteur d'entrée $x \in \mathbb{R}^{n_{\text{in}}}$ et produit $n_{\text{out}}$ neurones, on rassemble les poids dans une matrice $W \in \mathbb{R}^{n_{\text{out}} \times n_{\text{in}}}$ et les biais dans un vecteur $b \in \mathbb{R}^{n_{\text{out}}}$. La couche calcule alors :
+
+$$
+a \;=\; f(Wx + b).
+$$
+
+Cette équation se lit : on multiplie le vecteur d'entrée $x$ par la matrice de poids $W$, on ajoute le vecteur de biais $b$, puis on applique la fonction d'activation $f$ à chaque composante du résultat. Chaque ligne de $W$ est le vecteur de poids d'un neurone de la couche, et chaque composante de $b$ son biais. Une seule ligne d'algèbre remplace ainsi $n_{\text{out}}$ sommes pondérées écrites à la main.
+
+<MermaidDiagram
+  client:visible
+  caption="Un réseau à une couche cachée : deux entrées, une couche cachée, une sortie"
+  definition={`graph LR
+    x1["x₁"] --> h1["a⁽¹⁾"]
+    x2["x₂"] --> h1
+    x1 --> h2["a⁽¹⁾"]
+    x2 --> h2
+    h1 --> y["a⁽²⁾"]
+    h2 --> y`}
+/>
+
+## Le perceptron multicouches comme composition
+
+Un réseau profond empile ces couches : la sortie de l'une devient l'entrée de la suivante. Avec $L$ couches, le réseau calcule
+
+$$
+a^{(L)} \;=\; f\big(W^{(L)} \cdots f(W^{(1)} x + b^{(1)}) \cdots + b^{(L)}\big).
+$$
+
+C'est une composition de fonctions : on applique une couche, puis une autre au résultat de la première, et ainsi de suite. Or cette composition n'a d'intérêt que parce qu'une activation non linéaire est intercalée entre chaque couche. Sans elle, composer plusieurs couches linéaires donnerait encore une fonction linéaire (on l'a vu au chapitre 3), et tout l'empilement s'effondrerait en une seule couche. C'est exactement l'alternance « couche linéaire, puis activation non linéaire » qui donne au réseau son <Term slug="pouvoir-expressif">pouvoir expressif</Term>.
+
+## Jusqu'où peut-on aller ? Le théorème d'approximation universelle
+
+### L'intuition des bosses
+
+Prends une fonction d'activation en forme de marche douce, comme la sigmoïde du chapitre 3. La différence de deux sigmoïdes légèrement décalées dessine une bosse : une fonction qui vaut presque zéro partout, sauf sur un petit intervalle où elle forme une butte. En additionnant beaucoup de bosses, placées et dosées comme il faut, tu peux épouser le profil de n'importe quelle courbe continue, comme on approche le relief d'une montagne en empilant des briques de plus en plus fines.
+
+Une couche cachée fait exactement cela : chaque neurone caché fabrique une marche, et le neurone de sortie en fait la somme pondérée. Avec assez de neurones, cette somme approche d'aussi près qu'on veut la fonction cible.
+
+### L'énoncé
+
+C'est le contenu du <Term slug="theoreme-approximation-universelle">théorème d'approximation universelle</Term>.
+
+<Callout kind="note" title="Esquisse semi-formelle (sans démonstration complète)">
+**Énoncé (Cybenko, 1989 ; Hornik, Stinchcombe et White, 1989).** Soit $f$ une fonction continue sur un domaine borné de $\mathbb{R}^n$, et soit $\varepsilon > 0$ aussi petit qu'on veut. Alors il existe un réseau à **une seule couche cachée**, avec un nombre fini de neurones et une fonction d'activation non polynomiale, qui approche $f$ partout sur ce domaine à moins de $\varepsilon$ près.
+
+**Idée de la preuve.** On montre que les combinaisons de neurones cachés (des fonctions de la forme $\sum_i \alpha_i \, \sigma(w_i \cdot x + b_i)$) forment un ensemble dense dans l'espace des fonctions continues sur le domaine. Cybenko utilise un argument d'analyse fonctionnelle (le théorème de Hahn-Banach et une propriété des mesures) ; Hornik et ses coauteurs en donnent une version par les fonctions caractéristiques. Aucune des deux preuves ne dit combien de neurones il faut, ni comment trouver leurs poids.
+
+</Callout>
+
+<Callout kind="warn" title="Universel ne veut pas dire apprenable">
+  Le théorème garantit qu'un bon réseau **existe**. Il ne dit pas qu'un algorithme saura le
+  **trouver** à partir de données, ni combien de neurones seront nécessaires (ce nombre peut
+  exploser). Tout le reste du cours, à partir du chapitre 6, porte sur cette autre question :
+  comment régler les poids automatiquement, par l'apprentissage, plutôt qu'à la main comme on vient
+  de le faire pour XOR.
+</Callout>
+
+## Exercices papier-crayon
+
+### Exercice 1 : vérifier la construction de XOR
+
+Avec $h_1 = H(x_1 + x_2 - 0{,}5)$, $h_2 = H(1{,}5 - x_1 - x_2)$ et $y = H(h_1 + h_2 - 1{,}5)$, calcule $h_1$, $h_2$ et $y$ sur les quatre entrées, et vérifie que $y$ reproduit bien XOR.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : vérifier la construction de XOR">
+On rappelle que $H(z) = 1$ si $z \geq 0$, et $0$ sinon.
+
+**Étape 1.** Entrée $(0, 0)$.
+
+$$
+h_1 = H(0 + 0 - 0{,}5) = H(-0{,}5) = 0, \qquad h_2 = H(1{,}5 - 0 - 0) = H(1{,}5) = 1.
+$$
+
+$$
+y = H(0 + 1 - 1{,}5) = H(-0{,}5) = 0. \qquad \text{XOR}(0,0) = 0. \;\; \text{OK}.
+$$
+
+**Étape 2.** Entrée $(1, 0)$.
+
+$$
+h_1 = H(1 + 0 - 0{,}5) = H(0{,}5) = 1, \qquad h_2 = H(1{,}5 - 1 - 0) = H(0{,}5) = 1.
+$$
+
+$$
+y = H(1 + 1 - 1{,}5) = H(0{,}5) = 1. \qquad \text{XOR}(1,0) = 1. \;\; \text{OK}.
+$$
+
+**Étape 3.** Entrée $(0, 1)$. Par symétrie avec l'étape 2 (les deux entrées jouent le même rôle), on obtient $h_1 = 1$, $h_2 = 1$, puis $y = 1$, et $\text{XOR}(0,1) = 1$. OK.
+
+**Étape 4.** Entrée $(1, 1)$.
+
+$$
+h_1 = H(1 + 1 - 0{,}5) = H(1{,}5) = 1, \qquad h_2 = H(1{,}5 - 1 - 1) = H(-0{,}5) = 0.
+$$
+
+$$
+y = H(1 + 0 - 1{,}5) = H(-0{,}5) = 0. \qquad \text{XOR}(1,1) = 0. \;\; \text{OK}.
+$$
+
+**Résultat.** Sur les quatre entrées, $y$ vaut respectivement $0, 1, 1, 0$, ce qui est exactement la table de XOR. Le réseau à une couche cachée réalise donc XOR.
+
+</Callout>
+
+### Exercice 2 : compter les paramètres
+
+On considère un réseau d'architecture $2 \to 3 \to 1$ : deux entrées, une couche cachée de trois neurones, un neurone de sortie. Combien ce réseau a-t-il de paramètres (poids et biais) au total ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : compter les paramètres">
+**Étape 1.** Couche cachée. Chacun des $3$ neurones reçoit les $2$ entrées, donc possède $2$ poids, plus $1$ biais. Cela fait $3 \times (2 + 1)$ paramètres.
+
+$$
+3 \times (2 + 1) = 3 \times 3 = 9.
+$$
+
+**Étape 2.** Couche de sortie. Le $1$ neurone reçoit les $3$ sorties de la couche cachée, donc possède $3$ poids, plus $1$ biais.
+
+$$
+1 \times (3 + 1) = 4.
+$$
+
+**Étape 3.** On additionne les deux couches.
+
+$$
+9 + 4 = 13.
+$$
+
+**Résultat.** Le réseau $2 \to 3 \to 1$ compte $13$ paramètres. En notation matricielle : $W^{(1)} \in \mathbb{R}^{3 \times 2}$ et $b^{(1)} \in \mathbb{R}^{3}$ pour la couche cachée ($6 + 3 = 9$), puis $W^{(2)} \in \mathbb{R}^{1 \times 3}$ et $b^{(2)} \in \mathbb{R}^{1}$ pour la sortie ($3 + 1 = 4$).
+
+</Callout>
+
+### Exercice 3 : la forme matricielle
+
+Écris, en notation matricielle, les équations d'un réseau à deux entrées, une couche cachée de deux neurones et une sortie ($2 \to 2 \to 1$). Précise les dimensions de chaque matrice de poids et de chaque vecteur de biais. La fonction d'activation est notée $f$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : la forme matricielle">
+**Étape 1.** Couche cachée. Elle transforme l'entrée $x \in \mathbb{R}^{2}$ en une activation $a^{(1)} \in \mathbb{R}^{2}$.
+
+$$
+a^{(1)} = f\big(W^{(1)} x + b^{(1)}\big), \qquad W^{(1)} \in \mathbb{R}^{2 \times 2}, \quad b^{(1)} \in \mathbb{R}^{2}.
+$$
+
+**Étape 2.** Couche de sortie. Elle transforme $a^{(1)} \in \mathbb{R}^{2}$ en une sortie scalaire $y \in \mathbb{R}$.
+
+$$
+y = f\big(W^{(2)} a^{(1)} + b^{(2)}\big), \qquad W^{(2)} \in \mathbb{R}^{1 \times 2}, \quad b^{(2)} \in \mathbb{R}.
+$$
+
+**Résultat.** Le réseau complet est la composition $y = f\big(W^{(2)} f(W^{(1)} x + b^{(1)}) + b^{(2)}\big)$. La règle des dimensions : le nombre de colonnes d'une matrice de poids égale le nombre de neurones de la couche précédente, et son nombre de lignes égale le nombre de neurones de la couche courante.
+
+</Callout>
+
+### Exercice 4 : profondeur ou largeur ?
+
+Le théorème d'approximation universelle affirme qu'une **seule** couche cachée suffit pour approcher n'importe quelle fonction continue. Pourquoi, en pratique, construit-on quand même des réseaux **profonds** (à plusieurs couches cachées) plutôt que de tout mettre dans une seule couche très large ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : profondeur ou largeur ?">
+**Étape 1.** Ce que dit le théorème. Une couche cachée suffit, à condition d'avoir assez de neurones. C'est un résultat d'**existence** : il ne borne pas le nombre de neurones, qui peut devoir croître énormément quand la fonction cible est compliquée.
+
+**Étape 2.** Ce que coûte la largeur seule. Pour beaucoup de fonctions utiles (notamment celles qui sont elles-mêmes des compositions, comme reconnaître une forme à partir de bords, eux-mêmes à partir de pixels), une couche unique demanderait un nombre de neurones qui explose. La profondeur permet souvent de représenter la même fonction avec bien moins de paramètres, car chaque couche réutilise les représentations construites par la précédente.
+
+**Étape 3.** Ce que permet la profondeur. Empiler des couches construit une hiérarchie de représentations : les premières couches captent des motifs simples, les suivantes les combinent en motifs plus abstraits. C'est une réutilisation que la largeur seule ne permet pas.
+
+**Résultat.** « Universel » concerne ce qu'on peut représenter, pas à quel coût. La profondeur ne change pas la classe des fonctions atteignables (elle reste l'ensemble des fonctions continues), mais elle les rend souvent atteignables avec beaucoup moins de neurones, et avec des représentations plus faciles à apprendre.
+
+</Callout>
+
+## En une phrase
+
+Un neurone trace une droite ; empiler des neurones en couches, avec une activation non linéaire intercalée, suffit à dessiner n'importe quelle frontière, et même à approcher presque n'importe quelle fonction.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Pourquoi un perceptron simple ne peut-il pas réaliser XOR ?',
+      options: [
+        'Parce que XOR a deux entrées au lieu d’une seule.',
+        'Parce que XOR n’est pas linéairement séparable : aucune droite ne sépare les sorties 1 des sorties 0.',
+        'Parce que la fonction de seuil n’est pas dérivable.',
+      ],
+      answer: 1,
+      explain:
+        'On l’a démontré au chapitre 4 par contradiction : les quatre contraintes imposées par XOR sont incompatibles. Une seule droite ne suffit pas, il faut composer plusieurs séparateurs.',
+    },
+    {
+      q: 'Dans la construction à la main de XOR, que calcule le second neurone caché h₂ ?',
+      options: [
+        'La fonction AND (x₁ et x₂).',
+        'La fonction NAND : 1 partout sauf quand les deux entrées valent 1.',
+        'La fonction OR (x₁ ou x₂).',
+      ],
+      answer: 1,
+      explain:
+        'h₂ = H(1,5 - x₁ - x₂) vaut 0 uniquement pour (1,1). C’est NAND. Combiné à OR (h₁) par un ET, on obtient XOR.',
+    },
+    {
+      q: 'Que représente géométriquement l’intersection de k demi-plans (une couche dont la sortie est un ET) ?',
+      options: [
+        'Une région convexe, par exemple un polygone.',
+        'Toujours un cercle parfait.',
+        'Une union de plusieurs morceaux séparés.',
+      ],
+      answer: 0,
+      explain:
+        'Garder les points situés du bon côté des k droites à la fois donne l’intersection des demi-plans, qui est convexe. Il faut une couche de plus pour réunir plusieurs régions convexes.',
+    },
+    {
+      q: 'Que garantit le théorème d’approximation universelle ?',
+      options: [
+        'Qu’un réseau profond bat toujours un réseau peu profond.',
+        'Qu’une seule couche cachée, avec assez de neurones, peut approcher n’importe quelle fonction continue sur un domaine borné.',
+        'Qu’un réseau apprend automatiquement n’importe quelle fonction à partir de données.',
+      ],
+      answer: 1,
+      explain:
+        'C’est un résultat d’existence (Cybenko 1989, Hornik 1989). Une couche cachée suffit en théorie, sans borne sur le nombre de neurones.',
+    },
+    {
+      q: 'Universel implique-t-il apprenable ?',
+      options: [
+        'Oui : si un réseau existe, l’entraînement le trouve forcément.',
+        'Non : le théorème garantit qu’un bon réseau existe, pas qu’un algorithme sache le trouver.',
+        'La question n’a pas de sens.',
+      ],
+      answer: 1,
+      explain:
+        'Exister et savoir trouver sont deux choses différentes. Régler les poids automatiquement est le sujet des chapitres suivants, à partir du chapitre 6.',
+    },
+  ]}
+/>
+
+## Vers le chapitre 6 : mesurer l'erreur pour apprendre
+
+On sait maintenant **qu'un** réseau multi-couches peut tout exprimer. Il reste la vraie question, celle que le théorème d'approximation universelle laisse ouverte : **comment** régler ses poids sans les poser à la main, comme on vient de le faire pour XOR ?
+
+La première brique de la réponse est de savoir mesurer à quel point le réseau se trompe. Le chapitre 6 introduit le passage avant (le calcul de la sortie, couche après couche) et la fonction de coût, qui chiffre l'écart entre la prédiction et la cible. C'est cette mesure de l'erreur qui, aux chapitres 7 et 8, guidera l'ajustement automatique des poids.
+
+## Sources
+
+- Cybenko, G. (1989). « Approximation by superpositions of a sigmoidal function. » _Mathematics of Control, Signals and Systems_ 2(4), 303-314. [DOI 10.1007/BF02551274](https://doi.org/10.1007/BF02551274)
+- Hornik, K., Stinchcombe, M. & White, H. (1989). « Multilayer feedforward networks are universal approximators. » _Neural Networks_ 2(5), 359-366. [DOI 10.1016/0893-6080(89)90020-8](<https://doi.org/10.1016/0893-6080(89)90020-8>)
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_, chapitre 6. MIT Press. [deeplearningbook.org](https://www.deeplearningbook.org/)
