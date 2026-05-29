@@ -78,9 +78,16 @@ if (Test-Path $envProduction) {
     }
 }
 
-$indexHtml = Join-Path $repoRoot 'dist\index.html'
+$indexHtml    = Join-Path $repoRoot 'dist\index.html'
+$audioManifest = Join-Path $repoRoot 'public\audio\manifest.json'
 
 if (-not $SkipBuild) {
+    Write-Step 'Manifest audio (npm run audio:manifest)'
+    npm run audio:manifest
+    if (-not (Test-Path $audioManifest)) {
+        throw "audio:manifest a echoue: public\audio\manifest.json non produit (exit code npm: $LASTEXITCODE)"
+    }
+
     Write-Step 'Build Astro (npm run build)'
     if (Test-Path $indexHtml) { Remove-Item $indexHtml -Force }
     npm run build
