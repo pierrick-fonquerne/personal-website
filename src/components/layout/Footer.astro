@@ -15,7 +15,9 @@ const t = useTranslations(locale);
 const siteVersion = 'v2026.05';
 ---
 
-<footer class="container-page mt-20 border-t border-[var(--color-line)] pt-16 pb-10">
+<footer
+  class="container-page mt-20 border-t border-[var(--color-line)] pt-16 pb-[max(2.5rem,env(safe-area-inset-bottom))]"
+>
   <div class="mb-12 grid grid-cols-1 gap-10 md:grid-cols-3">
     <!-- Site -->
     <div>
@@ -37,6 +39,14 @@ const siteVersion = 'v2026.05';
             </li>
           ))
         }
+        <li class="col-span-2 mt-2 border-t border-[var(--color-line)] pt-2">
+          <a
+            href={localizedPath('/legal', locale)}
+            class="text-xs transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            {t.footer.legalLink}
+          </a>
+        </li>
       </ul>
     </div>
 
