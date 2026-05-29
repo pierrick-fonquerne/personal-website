@@ -341,6 +341,8 @@ const fr: Translations = {
     openMenu: 'Ouvrir le menu',
     closeMenu: 'Fermer le menu',
     openChapters: 'Voir la liste des chapitres',
+    zoomEquation: "Agrandir l'équation",
+    closeZoom: 'Fermer le zoom',
   },
 };
 

@@ -183,6 +183,8 @@ export interface Translations {
     openMenu: string;
     closeMenu: string;
     openChapters: string;
+    zoomEquation: string;
+    closeZoom: string;
   };
   stack: {
     title: string;
@@ -570,6 +572,8 @@ const en: Translations = {
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
     openChapters: 'Open chapter list',
+    zoomEquation: 'Zoom in on equation',
+    closeZoom: 'Close zoom',
   },
 };
 
