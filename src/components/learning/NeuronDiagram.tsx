@@ -28,6 +28,8 @@ interface Props {
   bias?: BiasConfig;
   activation?: ActivationKind;
   activationToggle?: ActivationKind[];
+  toggleLabel?: string;
+  diagramLabel?: string;
   showCalculation?: boolean;
 }
 
@@ -69,6 +71,8 @@ export default function NeuronDiagram({
   bias,
   activation = 'sigmoid',
   activationToggle,
+  toggleLabel,
+  diagramLabel,
   showCalculation = true,
 }: Props): JSX.Element {
   const [inputValues, setInputValues] = useState<number[]>(() =>
@@ -108,7 +112,7 @@ export default function NeuronDiagram({
       {showToggle && (
         <div
           role="radiogroup"
-          aria-label="Activation function"
+          aria-label={toggleLabel ?? 'Activation function'}
           className="mb-4 flex flex-wrap items-center gap-2 text-[11px] tracking-[0.12em] uppercase"
         >
           <span className="font-mono text-[var(--color-fg-muted)]">f =</span>
@@ -137,7 +141,7 @@ export default function NeuronDiagram({
         viewBox={`0 0 480 ${svgHeight}`}
         className="mx-auto block w-full max-w-[480px]"
         role="img"
-        aria-label="Diagramme du neurone"
+        aria-label={diagramLabel ?? 'Neuron diagram'}
       >
         {inputs.map((input, i) => {
           const inputY = 30 + i * 32;

@@ -164,10 +164,12 @@ A single overview to memorise the four classical functions: shape, derivative, o
 |---|---|---|---|---|
 | Identity | $f(x) = x$ | $f'(x) = 1$ | $\mathbb{R}$ | 1× (baseline) |
 | Sigmoid | $\sigma(x) = \dfrac{1}{1 + e^{-x}}$ | $\sigma'(x) = \sigma(x)(1 - \sigma(x))$ | $(0, 1)$ | ~10× (one exp) |
-| Tanh | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$ | $(-1, 1)$ | ~15× (two exps) |
+| Tanh | $\tanh(x) = \dfrac{e^x - e^{-x}}{e^x + e^{-x}}$ | $\tanh'(x) = 1 - \tanh^2(x)$ | $(-1, 1)$ | ~10× (one exp in practice) |
 | ReLU | $\text{ReLU}(x) = \max(0, x)$ | $\text{ReLU}'(x) = \mathbb{1}[x > 0]$ | $[0, +\infty)$ | 1× (one test) |
 
 Three observations to keep in mind: (1) only ReLU and Identity match the low cost of the dot product that feeds them; (2) only sigmoid and tanh saturate and therefore trigger vanishing gradient; (3) only ReLU can die, which the modern variants below fix.
+
+Relative costs are **orders of magnitude**: the exact value depends on hardware (CPU vs GPU, FP32 vs FP16, presence of vector instructions or lookup tables for the exponential). On a CPU without hardware-accelerated exponential, the figures above hold; on a modern FP16 GPU, the gap between ReLU and sigmoid narrows significantly. Practical note: tanh is usually computed as $\tanh(x) = 1 - 2 / (e^{2x} + 1)$, which requires only one exponential despite the defining formula seemingly asking for two.
 
 ## The modern ReLU family
 
@@ -189,7 +191,7 @@ Instead of clamping the output to zero for negative inputs, we let a small slope
 GELU(x) = x · Φ(x)
 </Formula>
 
-**Equation**: $\text{GELU}(x) = x \cdot \Phi(x)$, where $\Phi$ is the cumulative distribution function of the standard normal distribution. This is the activation used in BERT, GPT-2, GPT-3, GPT-4, Llama, Claude, and most modern transformers. **Derivative**: $\Phi(x) + x \cdot \phi(x)$ where $\phi$ is the Gaussian density.
+**Equation**: $\text{GELU}(x) = x \cdot \Phi(x)$, where $\Phi$ is the cumulative distribution function of the standard normal distribution. It is the activation of late-2010s transformers (BERT, GPT-2, GPT-3) and remains widely used in most contemporary transformers. More recent proprietary architectures (GPT-4, Claude) do not publish their activation choice. **Derivative**: $\Phi(x) + x \cdot \phi(x)$ where $\phi$ is the Gaussian density.
 
 Geometrically, GELU behaves almost like ReLU far from zero, but it is smooth everywhere (and therefore differentiable everywhere, unlike ReLU). Introduced by Hendrycks and Gimpel (2016).
 
@@ -199,7 +201,7 @@ Geometrically, GELU behaves almost like ReLU far from zero, but it is smooth eve
 SiLU(x) = x · σ(x)
 </Formula>
 
-**Equation**: $\text{SiLU}(x) = x \cdot \sigma(x)$, where $\sigma$ is the sigmoid. It is the same function as the "Swish" of Ramachandran et al. (2017), simply renamed. Used in EfficientNet, Mixtral, some Llama variants. **Derivative**: $\sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))$.
+**Equation**: $\text{SiLU}(x) = x \cdot \sigma(x)$, where $\sigma$ is the sigmoid. It is the same function as the "Swish" of Ramachandran et al. (2017), simply renamed. It is the inner activation of **SwiGLU**, the block used in Llama (all generations), Mistral, Mixtral, PaLM and most recent open-weight LLMs. It also shows up directly in EfficientNet. **Derivative**: $\sigma(x) + x \cdot \sigma(x)(1 - \sigma(x))$.
 
 Shape very close to GELU, slightly cheaper to compute (no error function, just a sigmoid). Independently described by Elfwing, Uchibe and Doya (2018) under the name SiLU.
 
