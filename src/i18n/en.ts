@@ -185,6 +185,10 @@ export interface Translations {
     openChapters: string;
     zoomEquation: string;
     closeZoom: string;
+    copyCode: string;
+    copiedCode: string;
+    openGlossary: string;
+    closeDefinition: string;
   };
   stack: {
     title: string;
@@ -574,6 +578,10 @@ const en: Translations = {
     openChapters: 'Open chapter list',
     zoomEquation: 'Zoom in on equation',
     closeZoom: 'Close zoom',
+    copyCode: 'Copy code',
+    copiedCode: 'Copied!',
+    openGlossary: 'Open glossary',
+    closeDefinition: 'Close',
   },
 };
 

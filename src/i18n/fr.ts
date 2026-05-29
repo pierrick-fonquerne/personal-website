@@ -343,6 +343,10 @@ const fr: Translations = {
     openChapters: 'Voir la liste des chapitres',
     zoomEquation: "Agrandir l'équation",
     closeZoom: 'Fermer le zoom',
+    copyCode: 'Copier le code',
+    copiedCode: 'Copié !',
+    openGlossary: 'Ouvrir le glossaire',
+    closeDefinition: 'Fermer',
   },
 };
 

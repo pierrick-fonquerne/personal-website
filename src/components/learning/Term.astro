@@ -112,4 +112,13 @@ const sourcePrefix = locale === 'en' ? 'Source: ' : 'Source : ';
     border-style: solid;
     border-color: var(--color-line-strong) transparent transparent transparent;
   }
+  /* On touch the hover tooltip is replaced by the TermSheet bottom-sheet */
+  @media (pointer: coarse) {
+    .term {
+      cursor: pointer;
+    }
+    .term-tooltip {
+      display: none !important;
+    }
+  }
 </style>

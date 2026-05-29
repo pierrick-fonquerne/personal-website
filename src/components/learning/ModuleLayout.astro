@@ -2,6 +2,8 @@
 import ChapterToolbar from './ChapterToolbar';
 import ChapterAudioPlayer from './ChapterAudioPlayer';
 import MathZoom from './MathZoom.astro';
+import CodeCopy from './CodeCopy.astro';
+import TermSheet from './TermSheet.astro';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -85,6 +87,8 @@ const audioLabels = {
   </div>
 </article>
 <MathZoom zoomLabel={t.a11y.zoomEquation} closeLabel={t.a11y.closeZoom} />
+<CodeCopy copyLabel={t.a11y.copyCode} copiedLabel={t.a11y.copiedCode} />
+<TermSheet openGlossaryLabel={t.a11y.openGlossary} closeLabel={t.a11y.closeDefinition} />
 
 <style>
   .prose-module :global(h2) {
@@ -194,7 +198,15 @@ const audioLabels = {
     margin: 1.2rem 0;
     padding: 1rem 1.2rem;
     border-radius: 6px;
-    background: var(--color-bg-elevated);
+    background:
+      linear-gradient(to right, var(--color-bg-elevated), transparent) 0 0 / 28px 100% no-repeat,
+      linear-gradient(to left, var(--color-bg-elevated), transparent) 100% 0 / 28px 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, var(--color-accent-soft), transparent) 0 0 / 10px 100%
+        no-repeat,
+      radial-gradient(farthest-side at 100% 50%, var(--color-accent-soft), transparent) 100% 0 /
+        10px 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+    background-color: var(--color-bg-elevated);
     border: 1px solid var(--color-line);
     overflow-x: auto;
     font-size: 13.5px;
@@ -203,6 +215,41 @@ const audioLabels = {
   .prose-module :global(pre code) {
     background: transparent;
     padding: 0;
+  }
+  .prose-module :global(.code-block) {
+    position: relative;
+  }
+  .prose-module :global(.code-copy) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--color-fg-muted);
+    background: var(--color-bg);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 4px;
+    cursor: pointer;
+    opacity: 0;
+    transition:
+      opacity 0.15s ease,
+      color 0.15s ease;
+  }
+  .prose-module :global(.code-block:hover .code-copy),
+  .prose-module :global(.code-copy:focus-visible) {
+    opacity: 1;
+  }
+  .prose-module :global(.code-copy.is-copied) {
+    color: var(--color-success);
+    border-color: var(--color-success);
+    opacity: 1;
+  }
+  @media (pointer: coarse) {
+    .prose-module :global(.code-copy) {
+      opacity: 1;
+    }
   }
   .prose-module :global(.katex-display) {
     overflow-x: auto;

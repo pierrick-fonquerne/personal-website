@@ -1,0 +1,60 @@
+---
+interface Props {
+  copyLabel: string;
+  copiedLabel: string;
+}
+
+const { copyLabel, copiedLabel } = Astro.props;
+---
+
+<span id="code-copy-config" data-copy={copyLabel} data-copied={copiedLabel} hidden></span>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      const cfg = document.getElementById('code-copy-config');
+      if (!cfg) return;
+      const copyLabel = cfg.dataset.copy || 'Copy';
+      const copiedLabel = cfg.dataset.copied || 'Copied';
+
+      document.querySelectorAll('#chapter-content pre.astro-code').forEach((pre) => {
+        if (pre.dataset.copyBound) return;
+        pre.dataset.copyBound = '1';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'code-block';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'code-copy';
+        button.setAttribute('aria-label', copyLabel);
+        button.textContent = copyLabel;
+
+        let timer;
+        button.addEventListener('click', async () => {
+          const code = pre.querySelector('code');
+          const text = (code ? code.textContent : pre.textContent) || '';
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = copiedLabel;
+            button.classList.add('is-copied');
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+              button.textContent = copyLabel;
+              button.classList.remove('is-copied');
+            }, 1600);
+          } catch {
+            /* clipboard unavailable */
+          }
+        });
+
+        wrapper.appendChild(button);
+      });
+    };
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>

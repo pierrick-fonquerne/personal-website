@@ -1,0 +1,168 @@
+---
+interface Props {
+  openGlossaryLabel: string;
+  closeLabel: string;
+}
+
+const { openGlossaryLabel, closeLabel } = Astro.props;
+---
+
+<dialog id="term-sheet" class="term-sheet" aria-labelledby="term-sheet-term">
+  <div class="term-sheet-panel">
+    <span id="term-sheet-term" class="term-sheet-term"></span>
+    <p class="term-sheet-def"></p>
+    <span class="term-sheet-source" hidden></span>
+    <div class="term-sheet-actions">
+      <a class="term-sheet-link" href="#">{openGlossaryLabel}</a>
+      <button type="button" class="term-sheet-close">{closeLabel}</button>
+    </div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      const sheet = document.getElementById('term-sheet');
+      if (!sheet) return;
+      const isTouch = window.matchMedia('(pointer: coarse)').matches;
+
+      if (isTouch && !sheet.dataset.touchBound) {
+        sheet.dataset.touchBound = '1';
+        const termEl = sheet.querySelector('.term-sheet-term');
+        const defEl = sheet.querySelector('.term-sheet-def');
+        const sourceEl = sheet.querySelector('.term-sheet-source');
+        const linkEl = sheet.querySelector('.term-sheet-link');
+        const closeBtn = sheet.querySelector('.term-sheet-close');
+        const close = () => {
+          if (sheet.open) sheet.close();
+        };
+
+        document.addEventListener('click', (event) => {
+          const target = event.target;
+          const term = target && target.closest ? target.closest('.term') : null;
+          if (!term) return;
+          const tip = term.querySelector('.term-tooltip');
+          if (!tip) return;
+          event.preventDefault();
+          const head = tip.querySelector('.term-tooltip-head');
+          const body = tip.querySelector('.term-tooltip-body');
+          const src = tip.querySelector('.term-tooltip-source');
+          termEl.textContent = head ? head.textContent : '';
+          defEl.textContent = body ? body.textContent : '';
+          if (src) {
+            sourceEl.textContent = src.textContent;
+            sourceEl.hidden = false;
+          } else {
+            sourceEl.textContent = '';
+            sourceEl.hidden = true;
+          }
+          linkEl.setAttribute('href', term.getAttribute('href') || '#');
+          if (!sheet.open) sheet.showModal();
+        });
+
+        closeBtn.addEventListener('click', close);
+        linkEl.addEventListener('click', close);
+        sheet.addEventListener('click', (event) => {
+          if (event.target === sheet) close();
+        });
+      }
+
+      if (!isTouch && !sheet.dataset.clampBound) {
+        sheet.dataset.clampBound = '1';
+        const clamp = (event) => {
+          const target = event.target;
+          const term = target && target.closest ? target.closest('.term') : null;
+          if (!term) return;
+          const tip = term.querySelector('.term-tooltip');
+          if (!tip) return;
+          tip.style.transform = 'translateX(-50%)';
+          requestAnimationFrame(() => {
+            const rect = tip.getBoundingClientRect();
+            const pad = 8;
+            let shift = 0;
+            if (rect.left < pad) {
+              shift = pad - rect.left;
+            } else if (rect.right > window.innerWidth - pad) {
+              shift = window.innerWidth - pad - rect.right;
+            }
+            if (shift) {
+              tip.style.transform = 'translateX(calc(-50% + ' + shift + 'px))';
+            }
+          });
+        };
+        document.addEventListener('pointerover', clamp);
+        document.addEventListener('focusin', clamp);
+      }
+    };
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>
+
+<style>
+  .term-sheet {
+    width: 100%;
+    max-width: 540px;
+    margin: auto auto 0;
+    padding: 0;
+    border: 0;
+    border-radius: 14px 14px 0 0;
+    background: var(--color-bg-elevated);
+    color: var(--color-fg);
+    box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.4);
+  }
+  .term-sheet::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+  .term-sheet-panel {
+    padding: 1.25rem 1.25rem max(1.25rem, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--color-line-strong);
+    border-radius: 14px 14px 0 0;
+  }
+  .term-sheet-term {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+    margin-bottom: 0.5rem;
+  }
+  .term-sheet-def {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-fg);
+  }
+  .term-sheet-source {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--color-fg-dim);
+  }
+  .term-sheet-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+  .term-sheet-link {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    font-size: 14px;
+  }
+  .term-sheet-close {
+    min-height: 40px;
+    padding: 0 1rem;
+    font-size: 14px;
+    color: var(--color-fg);
+    background: var(--color-bg);
+    border: 1px solid var(--color-line-strong);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+</style>
