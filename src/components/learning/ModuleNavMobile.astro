@@ -92,6 +92,9 @@ const currentTitle = current?.title ?? courseTitle;
 </details>
 
 <style>
+  .module-nav-mobile {
+    interpolate-size: allow-keywords;
+  }
   .module-nav-mobile[open] .caret {
     transform: rotate(180deg);
   }
@@ -100,5 +103,25 @@ const currentTitle = current?.title ?? courseTitle;
   }
   .module-nav-mobile summary::marker {
     content: '';
+  }
+  /* Animated disclosure: slide + fade the chapter list on open/close.
+     Falls back to an instant toggle where ::details-content is unsupported. */
+  .module-nav-mobile::details-content {
+    block-size: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.24s ease,
+      opacity 0.24s ease,
+      content-visibility 0.24s allow-discrete;
+  }
+  .module-nav-mobile[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .module-nav-mobile::details-content {
+      transition: none;
+    }
   }
 </style>
