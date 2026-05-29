@@ -548,7 +548,7 @@ export default function ChapterAudioPlayer({
         aria-label={isPlaying ? labels.pause : labels.listen}
         title={isPlaying ? labels.pause : labels.listen}
         disabled={isLoadingSource}
-        className={`chapter-audio-player inline-flex cursor-pointer items-center gap-2 rounded-md border bg-[var(--color-bg-elevated)] px-3 py-1.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 ${
+        className={`chapter-audio-player flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border bg-[var(--color-bg-elevated)] px-3 py-1.5 font-mono text-[11px] tracking-[0.14em] uppercase transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50 lg:inline-flex lg:min-h-10 lg:w-auto ${
           source === 'mp3'
             ? 'border-[var(--color-accent)] text-[var(--color-accent)] hover:border-[var(--color-accent)] hover:opacity-90'
             : 'border-[var(--color-line)] text-[var(--color-fg-muted)] hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)]'
@@ -606,9 +606,30 @@ export default function ChapterAudioPlayer({
                   </button>
                 </span>
               )}
+              <button
+                type="button"
+                onClick={handleClose}
+                aria-label={labels.close}
+                title={labels.close}
+                className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:hidden"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
             </div>
           )}
-          <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 sm:flex-nowrap sm:gap-4">
+          <div className="mx-auto flex max-w-[1280px] flex-col items-center gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4">
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
@@ -856,7 +877,7 @@ export default function ChapterAudioPlayer({
               onClick={handleClose}
               aria-label={labels.close}
               title={labels.close}
-              className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:h-9 sm:w-9"
+              className="hidden h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-md text-[var(--color-fg-muted)] hover:text-[var(--color-fg)] sm:flex sm:h-9 sm:w-9"
             >
               <svg
                 width="14"

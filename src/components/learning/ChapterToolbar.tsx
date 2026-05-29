@@ -19,7 +19,7 @@ export default function ChapterToolbar({ labels }: Props): JSX.Element {
       onClick={handlePrint}
       aria-label={labels.print}
       title={labels.print}
-      className="chapter-toolbar inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-3 py-2 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-muted)] uppercase transition-colors duration-150 hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)]"
+      className="chapter-toolbar flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-3 py-2 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-muted)] uppercase transition-colors duration-150 hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)] lg:inline-flex lg:min-h-10 lg:w-auto"
       data-print="hide"
     >
       <svg
