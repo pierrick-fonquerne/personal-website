@@ -1,5 +1,5 @@
 slug: neural-networks-rust
-title: "Réseaux de neurones en Rust : implémentation pratique"
+title: 'Réseaux de neurones en Rust : implémentation pratique'
 summary: Du neurone formel au réseau évolutif event-sourced, implémenté en Rust. Le cours suppose le cours de fondations lu et entre dans le code.
 tags:
   - réseaux-de-neurones

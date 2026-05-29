@@ -2,7 +2,7 @@
 course: neural-networks-foundations
 order: 0
 title: Foreword
-subtitle: "Why neural networks, which problems they actually solve, and how to read this course."
+subtitle: 'Why neural networks, which problems they actually solve, and how to read this course.'
 estimatedMinutes: 8
 published: true
 ---
@@ -20,7 +20,7 @@ Thirteen chapters, roughly three and a half hours of reading. No programming lan
 Without claiming to be exhaustive, here are the uses where they have genuinely changed the game, with rough numbers:
 
 - **Computer vision**: recognising a cat, segmenting a tumour on an MRI, driving a car. Error rate on ImageNet went from 26 % in 2011 to under 4 % in 2020.
-- **Machine translation**: DeepL, Google Translate, modernised by *transformers* since 2017. Indistinguishable from human quality on major language pairs.
+- **Machine translation**: DeepL, Google Translate, modernised by _transformers_ since 2017. Indistinguishable from human quality on major language pairs.
 - **Text understanding and generation**: conversational assistants (<Term slug="foundation-model">foundation models</Term> like GPT, Claude, Gemini, Mistral), summarisation, coding assistants. All built on the <Term slug="transformer">transformer</Term> architecture (2017).
 - **Image and audio generation**: Stable Diffusion, Midjourney, DALL-E, text-to-speech models. Photorealism indistinguishable from real photos on some domains.
 - **Games and planning**: AlphaGo (2016), which defeated the world champion of Go; AlphaFold (2021), which predicts 3D protein structures.
@@ -32,13 +32,16 @@ The common thread: all those systems are assemblies, sometimes massive (up to bi
 Important to avoid selling a dream. Current limitations at the time of writing:
 
 - **Formal reasoning**: a network can solve a quadratic equation with training, but does not "understand" why the formula is what it is. It interpolates, it does not deduce.
-- **Learning from few examples**: a human recognises a cat after seeing three. A classical network needs thousands. *Few-shot* learning is improving but is still far from human.
+- **Learning from few examples**: a human recognises a cat after seeing three. A classical network needs thousands. _Few-shot_ learning is improving but is still far from human.
 - **Out-of-distribution generalisation**: a network trained on daytime images stumbles on the same objects shot at night. It learns what you show it, nothing more.
 - **Hallucinations**: language models sometimes state false claims with confidence. It is a structural flaw of their training, not a bug.
-- **Explainability**: a deep network classifies correctly, but explaining *why* it classified that way remains an open research problem.
+- **Explainability**: a deep network classifies correctly, but explaining _why_ it classified that way remains an open research problem.
 
 <Callout kind="warn" title="AI is not magic">
-Marketing around "artificial intelligence" often exaggerates capabilities. Understanding the mathematical foundations this course gives you is the best antidote to commercial discourse. You will see that a neural network is essentially stacked linear combinations and non-linear functions, not a form of consciousness.
+  Marketing around "artificial intelligence" often exaggerates capabilities. Understanding the
+  mathematical foundations this course gives you is the best antidote to commercial discourse. You
+  will see that a neural network is essentially stacked linear combinations and non-linear
+  functions, not a form of consciousness.
 </Callout>
 
 ## Three phases in an 80-year story
@@ -53,32 +56,36 @@ Chapter 1 recaps these milestones in a more detailed timeline. Just remember: th
 
 ### Timeline of key milestones
 
-| Year | Actors | Contribution |
-|---|---|---|
-| 1943 | McCulloch and Pitts | Formal neuron model |
-| 1958 | Rosenblatt | Perceptron that learns |
-| 1969 | Minsky and Papert | XOR limitation, first alarm bell |
-| 1973 | Lighthill report (UK) | First AI winter |
-| 1986 | Rumelhart, Hinton, Williams | Backpropagation |
-| 1998 | LeCun | LeNet and convolutional vision |
-| 2012 | Krizhevsky, Sutskever, Hinton | AlexNet and the GPU explosion |
-| 2017 | Vaswani et al. | Transformer and attention mechanism |
-| 2020+ | OpenAI, Anthropic, Google, Mistral | Very-large-scale foundation models |
+| Year  | Actors                             | Contribution                        |
+| ----- | ---------------------------------- | ----------------------------------- |
+| 1943  | McCulloch and Pitts                | Formal neuron model                 |
+| 1958  | Rosenblatt                         | Perceptron that learns              |
+| 1969  | Minsky and Papert                  | XOR limitation, first alarm bell    |
+| 1973  | Lighthill report (UK)              | First AI winter                     |
+| 1986  | Rumelhart, Hinton, Williams        | Backpropagation                     |
+| 1998  | LeCun                              | LeNet and convolutional vision      |
+| 2012  | Krizhevsky, Sutskever, Hinton      | AlexNet and the GPU explosion       |
+| 2017  | Vaswani et al.                     | Transformer and attention mechanism |
+| 2020+ | OpenAI, Anthropic, Google, Mistral | Very-large-scale foundation models  |
 
 ## The course in thirteen chapters
 
 The course unfolds in four progressive blocks:
 
 ### Block 1 - Conceptual foundations (chapters 1 to 4)
+
 The artificial neuron, vector algebra, activation functions, the perceptron. Everything needed to understand a single brick.
 
 ### Block 2 - From brick to network (chapters 5 to 6)
+
 Stacking neurons in layers. Forward pass, loss functions, classification vs regression.
 
 ### Block 3 - Learning (chapters 7 to 9)
+
 Derivatives and the chain rule, backpropagation, gradient descent. The mathematical core of the field.
 
 ### Block 4 - Optimisation and generalisation (chapters 10 to 12)
+
 Regularisation, initialisation and batch normalisation, advanced optimisers. The difference between a network that works in theory and one that works in practice.
 
 ### Chapter dependency map
@@ -130,7 +137,9 @@ Three suggestions:
 Every chapter offers a self-graded quiz at the end and at least two paper-and-pencil exercises with solutions. Play the game: putting pencil on paper radically changes what stays in mind.
 
 <Callout kind="tip" title="The interactive blocks">
-Several chapters contain interactive components: neurons with sliders, manipulable 2D planes, function plotters. **They are not decoration.** Play with the parameters for three minutes before reading on; you will learn faster than from prose alone.
+  Several chapters contain interactive components: neurons with sliders, manipulable 2D planes,
+  function plotters. **They are not decoration.** Play with the parameters for three minutes before
+  reading on; you will learn faster than from prose alone.
 </Callout>
 
 ## In one sentence
@@ -143,11 +152,11 @@ It all starts with the brick. How a biological neuron inspired an equation. Why 
 
 ## Sources
 
-- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). "ImageNet Classification with Deep Convolutional Neural Networks." *NeurIPS* 25. [NeurIPS link](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
-- Russakovsky, O. et al. (2015). "ImageNet Large Scale Visual Recognition Challenge." *IJCV* 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
+- Krizhevsky, A., Sutskever, I. & Hinton, G. E. (2012). "ImageNet Classification with Deep Convolutional Neural Networks." _NeurIPS_ 25. [NeurIPS link](https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html)
+- Russakovsky, O. et al. (2015). "ImageNet Large Scale Visual Recognition Challenge." _IJCV_ 115(3), 211-252. [DOI 10.1007/s11263-015-0816-y](https://doi.org/10.1007/s11263-015-0816-y)
 
 ### Further reading before chapter 1
 
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapter 1: *Introduction*. Excellent global overview, free online. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 1: _Introduction_. Excellent global overview, free online. [deeplearningbook.org](https://www.deeplearningbook.org/)
 - LeCun, Y. (online course at Collège de France). "Why deep learning?" [college-de-france.fr](https://www.college-de-france.fr/site/yann-lecun/)
-- Karpathy, A. (YouTube video, 2022). *The spelled-out intro to neural networks and backpropagation: building micrograd*. The best practical explanation in the field. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)
+- Karpathy, A. (YouTube video, 2022). _The spelled-out intro to neural networks and backpropagation: building micrograd_. The best practical explanation in the field. [youtube.com](https://www.youtube.com/watch?v=VMj-3S1tku0)

@@ -99,10 +99,7 @@ export async function resolveTranslatedPath(
       if (targetEntry) {
         const idSegments = targetEntry.id.split('/');
         const targetModuleSlug = idSegments[idSegments.length - 1]!.replace(/\.mdx$/, '');
-        return localizedPath(
-          `/interactive-courses/${courseSlug}/${targetModuleSlug}`,
-          target,
-        );
+        return localizedPath(`/interactive-courses/${courseSlug}/${targetModuleSlug}`, target);
       }
     }
   }

@@ -1,11 +1,11 @@
 slug: gelu
 fr:
   term: GELU
-  definition: "Gaussian Error Linear Unit, variante moderne de ReLU définie comme GELU(x) = x · Φ(x) où Φ est la fonction de répartition gaussienne. Plus douce que ReLU autour de zéro, dominante dans les transformers (GPT, BERT, Claude)."
+  definition: 'Gaussian Error Linear Unit, variante moderne de ReLU définie comme GELU(x) = x · Φ(x) où Φ est la fonction de répartition gaussienne. Plus douce que ReLU autour de zéro, dominante dans les transformers (GPT, BERT, Claude).'
   source: Hendrycks et Gimpel, 2016
 en:
   term: GELU
-  definition: "Gaussian Error Linear Unit, a modern ReLU variant defined as GELU(x) = x · Φ(x) where Φ is the Gaussian cumulative distribution function. Smoother than ReLU around zero, dominant in transformers (GPT, BERT, Claude)."
+  definition: 'Gaussian Error Linear Unit, a modern ReLU variant defined as GELU(x) = x · Φ(x) where Φ is the Gaussian cumulative distribution function. Smoother than ReLU around zero, dominant in transformers (GPT, BERT, Claude).'
   source: Hendrycks and Gimpel, 2016
 seeAlso:
   - relu

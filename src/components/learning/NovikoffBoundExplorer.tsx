@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type JSX, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent,
+} from 'react';
 import {
   computeNovikoffMetrics,
   predict,
@@ -39,7 +48,7 @@ const DICT: Record<Locale, Dictionary> = {
     metricStepsActual: 'T effectif',
     metricStepsBound: 'Borne (R/γ)²',
     metricRatio: 'Ratio',
-    nonSeparable: 'Non séparable : Novikoff ne s\'applique pas.',
+    nonSeparable: "Non séparable : Novikoff ne s'applique pas.",
     errorsPerEpoch: 'Erreurs par époque',
     btnReset: 'Réinitialiser les points',
     converged: 'Convergé.',
@@ -111,7 +120,10 @@ function formatNumber(n: number, digits = 2): string {
   return n.toFixed(digits);
 }
 
-function computeBoundary(w: Vector2, b: number): { x1: number; y1: number; x2: number; y2: number } | null {
+function computeBoundary(
+  w: Vector2,
+  b: number,
+): { x1: number; y1: number; x2: number; y2: number } | null {
   const EPS = 1e-9;
   if (Math.abs(w[1]) >= EPS) {
     const yLeft = -(w[0] * DATA_MIN + b) / w[1];
@@ -140,16 +152,20 @@ export default function NovikoffBoundExplorer({
   initialPoints = DEFAULT_POINTS,
 }: NovikoffBoundExplorerProps): JSX.Element {
   const t = DICT[locale];
-  const [points, setPoints] = useState<readonly Sample[]>(() => initialPoints.map((p) => ({ x: [...p.x] as Vector2, y: p.y })));
+  const [points, setPoints] = useState<readonly Sample[]>(() =>
+    initialPoints.map((p) => ({ x: [...p.x] as Vector2, y: p.y })),
+  );
   const [draggingIdx, setDraggingIdx] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
   const state = useMemo(() => computeState(points), [points]);
 
-  const handlePointerDown = (idx: number) => (e: MouseEvent<SVGCircleElement>): void => {
-    e.preventDefault();
-    setDraggingIdx(idx);
-  };
+  const handlePointerDown =
+    (idx: number) =>
+    (e: MouseEvent<SVGCircleElement>): void => {
+      e.preventDefault();
+      setDraggingIdx(idx);
+    };
 
   const handlePointerMove = useCallback(
     (e: globalThis.MouseEvent): void => {
@@ -282,8 +298,7 @@ export default function NovikoffBoundExplorer({
           {points.map((p, idx) => {
             const cx = dataToSvgX(p.x[0]);
             const cy = dataToSvgY(p.x[1]);
-            const fill =
-              p.y === 1 ? 'var(--accent-orange, #fb923c)' : 'var(--text-muted, #64748b)';
+            const fill = p.y === 1 ? 'var(--accent-orange, #fb923c)' : 'var(--text-muted, #64748b)';
             const correctness =
               state.separator && predict(p, state.separator.w, state.separator.b) === p.y;
             const stroke = correctness
@@ -391,13 +406,20 @@ export default function NovikoffBoundExplorer({
             {t.metricGamma} :{' '}
             <span
               style={{
-                color: state.gamma > 0 ? 'var(--accent-green, #4ade80)' : 'var(--accent-red, #f87171)',
+                color:
+                  state.gamma > 0 ? 'var(--accent-green, #4ade80)' : 'var(--accent-red, #f87171)',
               }}
             >
               {formatNumber(state.gamma, 3)}
             </span>
           </div>
-          <div style={{ borderTop: '1px solid var(--border, #2d2d50)', paddingTop: '6px', marginTop: '6px' }}>
+          <div
+            style={{
+              borderTop: '1px solid var(--border, #2d2d50)',
+              paddingTop: '6px',
+              marginTop: '6px',
+            }}
+          >
             {t.metricStepsActual} :{' '}
             <span style={{ color: 'var(--accent-blue, #60a5fa)', fontWeight: 700 }}>
               {state.steps}

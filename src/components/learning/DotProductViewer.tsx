@@ -47,7 +47,7 @@ export default function DotProductViewer({
   const angleLabel = labels.angleLabel ?? 'Angle';
   const helpText =
     labels.helpText ??
-    "Joue avec les coordonnées. Quand les flèches pointent dans la même direction, le produit scalaire est maximal. Quand elles sont perpendiculaires, il vaut zéro.";
+    'Joue avec les coordonnées. Quand les flèches pointent dans la même direction, le produit scalaire est maximal. Quand elles sont perpendiculaires, il vaut zéro.';
 
   const center = SIZE / 2;
   const scale = (SIZE - 2 * PAD) / (2 * range);
@@ -209,9 +209,7 @@ export default function DotProductViewer({
                 <span className="font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-muted)] uppercase">
                   {labelX}
                   <sub>{idx + 1}</sub> ={' '}
-                  <span className="text-[var(--color-accent)]">
-                    {formatNumber(x[idx] ?? 0)}
-                  </span>
+                  <span className="text-[var(--color-accent)]">{formatNumber(x[idx] ?? 0)}</span>
                 </span>
                 <input
                   type="range"

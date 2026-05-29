@@ -5,7 +5,7 @@ fr:
   source: Cauchy 1821, Schwarz 1888
 en:
   term: Cauchy-Schwarz inequality
-  definition: "For any two vectors x and w in Rⁿ, |x · w| ≤ ‖x‖ · ‖w‖. Equality holds only if the two vectors are colinear. It is the fundamental inequality of linear algebra, ensuring consistency between the algebraic and geometric formulations of the dot product."
+  definition: 'For any two vectors x and w in Rⁿ, |x · w| ≤ ‖x‖ · ‖w‖. Equality holds only if the two vectors are colinear. It is the fundamental inequality of linear algebra, ensuring consistency between the algebraic and geometric formulations of the dot product.'
   source: Cauchy 1821, Schwarz 1888
 seeAlso:
   - produit-scalaire

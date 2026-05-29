@@ -1,5 +1,5 @@
 slug: neural-networks-rust
-title: "Neural networks in Rust: hands-on implementation"
+title: 'Neural networks in Rust: hands-on implementation'
 summary: From the formal neuron to event-sourced evolving networks, implemented in Rust. The course assumes the foundations course read and dives into the code.
 tags:
   - neural-networks

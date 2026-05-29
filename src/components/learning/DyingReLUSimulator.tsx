@@ -132,14 +132,32 @@ export default function DyingReLUSimulator({
             strokeWidth="1"
           />
 
-          <text x={PAD_LEFT + innerW - 4} y={yToPx(0) - 6} fill="var(--color-fg-dim)" fontSize="11" fontFamily="var(--font-mono)" textAnchor="end">
+          <text
+            x={PAD_LEFT + innerW - 4}
+            y={yToPx(0) - 6}
+            fill="var(--color-fg-dim)"
+            fontSize="11"
+            fontFamily="var(--font-mono)"
+            textAnchor="end"
+          >
             x
           </text>
-          <text x={xToPx(0) + 6} y={PAD_TOP + 8} fill="var(--color-fg-dim)" fontSize="11" fontFamily="var(--font-mono)">
+          <text
+            x={xToPx(0) + 6}
+            y={PAD_TOP + 8}
+            fill="var(--color-fg-dim)"
+            fontSize="11"
+            fontFamily="var(--font-mono)"
+          >
             ReLU
           </text>
 
-          <polyline points={polylinePoints} fill="none" stroke="var(--color-accent)" strokeWidth="2" />
+          <polyline
+            points={polylinePoints}
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth="2"
+          />
 
           {datasetPoints.map((p, i) => (
             <g key={`pt-${i}`}>

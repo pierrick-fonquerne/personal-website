@@ -14,61 +14,179 @@ interface Props {
 const { locale, current = '/' } = Astro.props;
 const t = useTranslations(locale);
 const compactName = `P. ${SITE.name.split(' ').pop() ?? ''}`;
+const homeHref = localizedPath('/', locale);
 ---
 
 <nav
-  class="sticky top-0 z-50 flex items-center justify-between border-b border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] px-14 py-4 backdrop-blur-[14px] backdrop-saturate-150"
+  class="sticky top-0 z-50 border-b border-[var(--color-line)] bg-[color-mix(in_oklab,var(--color-bg)_70%,transparent)] backdrop-blur-[14px] backdrop-saturate-150"
 >
-  <!-- Avatar + name -->
-  <a
-    href={localizedPath('/', locale)}
-    class="group flex items-center gap-3.5"
-    aria-label={SITE.name}
-  >
-    <span
-      class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-colors duration-200 group-hover:border-[var(--color-accent)]"
-    >
-      <Image
-        src={profile}
-        alt={SITE.name}
-        width={64}
-        height={64}
-        loading="eager"
-        class="h-full w-full object-cover [filter:grayscale(0.1)_contrast(1.05)] transition-[filter] duration-200 group-hover:[filter:none]"
-      />
-    </span>
-    <span
-      class="font-display text-[16px] font-bold tracking-[-0.01em] text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]"
-    >
-      {compactName}
-    </span>
-  </a>
+  <div class="container-page flex items-center justify-between py-3.5">
+    <a href={homeHref} class="group flex items-center gap-3.5" aria-label={SITE.name}>
+      <span
+        class="block h-8 w-8 overflow-hidden rounded-full border border-[var(--color-line-strong)] transition-colors duration-200 group-hover:border-[var(--color-accent)]"
+      >
+        <Image
+          src={profile}
+          alt={SITE.name}
+          width={64}
+          height={64}
+          loading="eager"
+          class="h-full w-full object-cover [filter:grayscale(0.1)_contrast(1.05)] transition-[filter] duration-200 group-hover:[filter:none]"
+        />
+      </span>
+      <span
+        class="font-display text-[16px] font-bold tracking-[-0.01em] text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]"
+      >
+        {compactName}
+      </span>
+    </a>
 
-  <!-- Nav links -->
-  <ul class="flex gap-[2px] font-mono text-[13px] text-[var(--color-fg-dim)]">
-    {
-      NAV_LINKS.map((link) => {
-        const href = localizedPath(link.href, locale);
-        return (
-          <li>
-            <a
-              href={href}
-              class:list={[
-                'rounded-md px-3.5 py-1.5 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
-                current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
-              ]}
-            >
-              {t.nav[link.key]}
-            </a>
-          </li>
-        );
-      })
-    }
-  </ul>
+    <ul class="hidden gap-[2px] font-mono text-[13px] text-[var(--color-fg-dim)] md:flex">
+      {
+        NAV_LINKS.map((link) => {
+          const href = localizedPath(link.href, locale);
+          return (
+            <li>
+              <a
+                href={href}
+                class:list={[
+                  'rounded-md px-3.5 py-2 transition-colors duration-200 hover:bg-[var(--color-hover)] hover:text-[var(--color-fg)]',
+                  current === link.href && 'bg-[var(--color-hover)] text-[var(--color-fg)]',
+                ]}
+              >
+                {t.nav[link.key]}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
 
-  <!-- Language + theme -->
-  <div class="flex items-center gap-3">
-    <LanguageSwitch locale={locale} ariaLabel={t.languageSwitchAria} />
-    <ThemeToggle ariaLabel={t.toggleThemeAria} />
+    <div class="hidden items-center gap-3 md:flex">
+      <LanguageSwitch locale={locale} ariaLabel={t.languageSwitchAria} />
+      <ThemeToggle ariaLabel={t.toggleThemeAria} />
+    </div>
+
+    <button
+      id="nav-burger"
+      type="button"
+      class="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-[var(--color-fg)] transition-colors hover:bg-[var(--color-hover)] md:hidden"
+      aria-controls="nav-drawer"
+      aria-expanded="false"
+      aria-label={t.a11y.openMenu}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="h-5 w-5"
+        aria-hidden="true"
+      >
+        <line x1="4" y1="7" x2="20" y2="7"></line>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="17" x2="20" y2="17"></line>
+      </svg>
+    </button>
   </div>
 </nav>
+
+<dialog
+  id="nav-drawer"
+  class="m-0 h-dvh max-h-none w-dvw max-w-none border-0 bg-[var(--color-bg)] p-0 text-[var(--color-fg)]"
+  aria-label={t.a11y.openMenu}
+>
+  <div class="container-page flex h-full flex-col py-4">
+    <div class="flex items-center justify-end">
+      <button
+        id="nav-drawer-close"
+        type="button"
+        class="-mr-2 inline-flex h-11 w-11 items-center justify-center rounded-md text-[var(--color-fg)] transition-colors hover:bg-[var(--color-hover)]"
+        aria-label={t.a11y.closeMenu}
+        autofocus
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="h-6 w-6"
+          aria-hidden="true"
+        >
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+          <line x1="6" y1="18" x2="18" y2="6"></line>
+        </svg>
+      </button>
+    </div>
+
+    <ul class="mt-10 flex flex-col gap-1">
+      {
+        NAV_LINKS.map((link) => {
+          const href = localizedPath(link.href, locale);
+          const active = current === link.href;
+          return (
+            <li>
+              <a
+                href={href}
+                class:list={[
+                  'font-display block rounded-md px-3 py-3 text-[28px] font-bold tracking-[-0.01em] transition-colors',
+                  active ? 'text-[var(--color-accent)]' : 'hover:text-[var(--color-accent)]',
+                ]}
+              >
+                {t.nav[link.key]}
+              </a>
+            </li>
+          );
+        })
+      }
+    </ul>
+
+    <div class="mt-auto flex items-center justify-between border-t border-[var(--color-line)] pt-6">
+      <LanguageSwitch locale={locale} ariaLabel={t.languageSwitchAria} />
+      <ThemeToggle ariaLabel={t.toggleThemeAria} />
+    </div>
+  </div>
+</dialog>
+
+<script is:inline>
+  (() => {
+    const init = () => {
+      const burger = document.getElementById('nav-burger');
+      const drawer = document.getElementById('nav-drawer');
+      const closeBtn = document.getElementById('nav-drawer-close');
+      if (!burger || !drawer || !closeBtn) return;
+      if (drawer.dataset.bound === '1') return;
+      drawer.dataset.bound = '1';
+
+      const openDrawer = () => {
+        if (typeof drawer.showModal === 'function') drawer.showModal();
+        else drawer.setAttribute('open', '');
+        burger.setAttribute('aria-expanded', 'true');
+        document.documentElement.style.overflow = 'hidden';
+      };
+      const closeDrawer = () => {
+        if (drawer.open) drawer.close();
+        else drawer.removeAttribute('open');
+      };
+
+      burger.addEventListener('click', openDrawer);
+      closeBtn.addEventListener('click', closeDrawer);
+      drawer.addEventListener('close', () => {
+        burger.setAttribute('aria-expanded', 'false');
+        document.documentElement.style.overflow = '';
+      });
+      drawer.querySelectorAll('a[href]').forEach((a) => {
+        a.addEventListener('click', closeDrawer);
+      });
+    };
+
+    init();
+    document.addEventListener('astro:page-load', init);
+  })();
+</script>

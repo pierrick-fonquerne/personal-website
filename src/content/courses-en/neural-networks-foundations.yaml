@@ -1,5 +1,5 @@
 slug: neural-networks-foundations
-title: "Neural networks: foundations and mathematics"
+title: 'Neural networks: foundations and mathematics'
 summary: University-grade introductory path to neural networks, from the formal neuron definition all the way to regularisation and advanced optimisers. Language-agnostic, accessible to a motivated high-school reader.
 tags:
   - neural-networks

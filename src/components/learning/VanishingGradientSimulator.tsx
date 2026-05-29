@@ -84,7 +84,11 @@ export default function VanishingGradientSimulator({
                 : 'border-[var(--color-line)] text-[var(--color-fg-muted)] hover:border-[var(--color-line-strong)] hover:text-[var(--color-fg)]',
             ].join(' ')}
           >
-            <span aria-hidden="true" className="mr-1.5 inline-block h-[8px] w-[8px] rounded-full align-middle" style={{ backgroundColor: ACTIVATION_COLOR[kind] }} />
+            <span
+              aria-hidden="true"
+              className="mr-1.5 inline-block h-[8px] w-[8px] rounded-full align-middle"
+              style={{ backgroundColor: ACTIVATION_COLOR[kind] }}
+            />
             {ACTIVATION_LABEL[kind]}
           </button>
         ))}
@@ -125,7 +129,7 @@ export default function VanishingGradientSimulator({
                   }}
                 />
               </div>
-              <span className="w-24 shrink-0 text-right tabular-nums text-[var(--color-fg)]">
+              <span className="w-24 shrink-0 text-right text-[var(--color-fg)] tabular-nums">
                 {formatGradient(g)}
               </span>
             </div>

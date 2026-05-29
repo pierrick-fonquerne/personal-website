@@ -92,7 +92,10 @@ const INNER = VIEW - 2 * PAD;
 const dataToSvgX = (dx: number): number => PAD + ((dx - DATA_MIN) / DATA_RANGE) * INNER;
 const dataToSvgY = (dy: number): number => VIEW - PAD - ((dy - DATA_MIN) / DATA_RANGE) * INNER;
 
-function computeBoundary(w: Vector2, b: number): { x1: number; y1: number; x2: number; y2: number } | null {
+function computeBoundary(
+  w: Vector2,
+  b: number,
+): { x1: number; y1: number; x2: number; y2: number } | null {
   if (Math.abs(w[1]) >= EPSILON) {
     const yLeft = -(w[0] * DATA_MIN + b) / w[1];
     const yRight = -(w[0] * DATA_MAX + b) / w[1];
@@ -310,10 +313,21 @@ export default function PerceptronGeometricStepper({
             stroke="var(--text-muted, #64748b)"
             strokeWidth={1}
           />
-          <text x={VIEW - PAD + 4} y={VIEW - PAD + 4} fill="var(--text-muted, #64748b)" fontSize={11}>
+          <text
+            x={VIEW - PAD + 4}
+            y={VIEW - PAD + 4}
+            fill="var(--text-muted, #64748b)"
+            fontSize={11}
+          >
             x₁
           </text>
-          <text x={PAD - 4} y={PAD - 10} fill="var(--text-muted, #64748b)" fontSize={11} textAnchor="end">
+          <text
+            x={PAD - 4}
+            y={PAD - 10}
+            fill="var(--text-muted, #64748b)"
+            fontSize={11}
+            textAnchor="end"
+          >
             x₂
           </text>
           {boundary && (
@@ -335,9 +349,7 @@ export default function PerceptronGeometricStepper({
             const correct = pred === sample.y;
             const fill =
               sample.y === 1 ? 'var(--accent-orange, #fb923c)' : 'var(--text-muted, #64748b)';
-            const stroke = correct
-              ? 'var(--accent-green, #4ade80)'
-              : 'var(--accent-red, #f87171)';
+            const stroke = correct ? 'var(--accent-green, #4ade80)' : 'var(--accent-red, #f87171)';
             const isHighlighted = highlightedIdx === idx;
             return (
               <g key={`sample-${idx}`}>
@@ -351,27 +363,17 @@ export default function PerceptronGeometricStepper({
                     strokeWidth={2}
                     opacity={0.6}
                   >
-                    <animate
-                      attributeName="r"
-                      from={16}
-                      to={26}
-                      dur="0.9s"
-                      repeatCount="1"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      from={0.8}
-                      to={0}
-                      dur="0.9s"
-                      repeatCount="1"
-                    />
+                    <animate attributeName="r" from={16} to={26} dur="0.9s" repeatCount="1" />
+                    <animate attributeName="opacity" from={0.8} to={0} dur="0.9s" repeatCount="1" />
                   </circle>
                 )}
                 <circle cx={cx} cy={cy} r={13} fill={fill} stroke={stroke} strokeWidth={3} />
                 <text
                   x={cx}
                   y={cy + 4}
-                  fill={sample.y === 1 ? 'var(--bg-primary, #0f0f1a)' : 'var(--text-primary, #e2e8f0)'}
+                  fill={
+                    sample.y === 1 ? 'var(--bg-primary, #0f0f1a)' : 'var(--text-primary, #e2e8f0)'
+                  }
                   fontSize={11}
                   fontWeight={700}
                   textAnchor="middle"
@@ -435,8 +437,12 @@ export default function PerceptronGeometricStepper({
                 onClick={() => handleDataset(name)}
                 style={{
                   padding: '4px 10px',
-                  background: datasetName === name ? 'var(--accent-violet, #a78bfa)' : 'transparent',
-                  color: datasetName === name ? 'var(--bg-primary, #0f0f1a)' : 'var(--text-secondary, #94a3b8)',
+                  background:
+                    datasetName === name ? 'var(--accent-violet, #a78bfa)' : 'transparent',
+                  color:
+                    datasetName === name
+                      ? 'var(--bg-primary, #0f0f1a)'
+                      : 'var(--text-secondary, #94a3b8)',
                   border: '1px solid var(--border, #2d2d50)',
                   borderRadius: '6px',
                   fontSize: '12px',
@@ -495,15 +501,23 @@ export default function PerceptronGeometricStepper({
           }}
         >
           <div>
-            w₁ = <span style={{ color: 'var(--accent-violet, #a78bfa)' }}>{formatSigned(w[0])}</span>
+            w₁ ={' '}
+            <span style={{ color: 'var(--accent-violet, #a78bfa)' }}>{formatSigned(w[0])}</span>
           </div>
           <div>
-            w₂ = <span style={{ color: 'var(--accent-violet, #a78bfa)' }}>{formatSigned(w[1])}</span>
+            w₂ ={' '}
+            <span style={{ color: 'var(--accent-violet, #a78bfa)' }}>{formatSigned(w[1])}</span>
           </div>
           <div>
             b = <span style={{ color: 'var(--accent-orange, #fb923c)' }}>{formatSigned(b)}</span>
           </div>
-          <div style={{ borderTop: '1px solid var(--border, #2d2d50)', paddingTop: '6px', marginTop: '6px' }}>
+          <div
+            style={{
+              borderTop: '1px solid var(--border, #2d2d50)',
+              paddingTop: '6px',
+              marginTop: '6px',
+            }}
+          >
             {t.stepsLabel} :{' '}
             <span style={{ color: 'var(--accent-blue, #60a5fa)', fontWeight: 700 }}>
               {stepsExecuted}
@@ -535,9 +549,7 @@ export default function PerceptronGeometricStepper({
               borderRadius: '6px',
               fontSize: '12px',
               marginBottom: '12px',
-              background: convergedSignal
-                ? 'rgba(74, 222, 128, 0.1)'
-                : 'rgba(248, 113, 113, 0.1)',
+              background: convergedSignal ? 'rgba(74, 222, 128, 0.1)' : 'rgba(248, 113, 113, 0.1)',
               color: convergedSignal
                 ? 'var(--accent-green, #4ade80)'
                 : 'var(--accent-red, #f87171)',
@@ -553,9 +565,21 @@ export default function PerceptronGeometricStepper({
           {(
             [
               { label: t.btnNextMistake, action: stepOnce, accent: 'var(--accent-blue, #60a5fa)' },
-              { label: t.btnOneEpoch, action: () => runEpochs(1), accent: 'var(--accent-green, #4ade80)' },
-              { label: t.btnTenEpochs, action: () => runEpochs(10), accent: 'var(--accent-green, #4ade80)' },
-              { label: t.btnRandomize, action: handleRandomize, accent: 'var(--accent-violet, #a78bfa)' },
+              {
+                label: t.btnOneEpoch,
+                action: () => runEpochs(1),
+                accent: 'var(--accent-green, #4ade80)',
+              },
+              {
+                label: t.btnTenEpochs,
+                action: () => runEpochs(10),
+                accent: 'var(--accent-green, #4ade80)',
+              },
+              {
+                label: t.btnRandomize,
+                action: handleRandomize,
+                accent: 'var(--accent-violet, #a78bfa)',
+              },
               { label: t.btnReset, action: handleReset, accent: 'var(--text-muted, #64748b)' },
             ] as const
           ).map(({ label, action, accent }) => (

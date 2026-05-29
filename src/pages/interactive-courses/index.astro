@@ -16,9 +16,7 @@ const groups = THEMES.map((theme) => ({
     .map((sub) => ({
       sub,
       subLabel: t.subthemes[sub] ?? sub,
-      courses: courses.filter(
-        (c) => c.data.theme === theme && c.data.subtheme === sub,
-      ),
+      courses: courses.filter((c) => c.data.theme === theme && c.data.subtheme === sub),
     }))
     .filter((s) => s.courses.length > 0),
 })).filter((g) => g.subthemes.length > 0);
@@ -30,10 +28,10 @@ const groups = THEMES.map((theme) => ({
   current="/interactive-courses"
   locale={locale}
 >
-  <section class="mx-auto max-w-[1280px] px-6 py-16 lg:px-14">
+  <section class="container-page py-16">
     <Eyebrow text={t.courses.eyebrow} />
     <h1
-      class="mt-4 font-display text-[44px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+      class="font-display mt-4 text-[clamp(28px,6vw,44px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
     >
       {t.courses.indexTitle}
     </h1>
@@ -49,16 +47,21 @@ const groups = THEMES.map((theme) => ({
     </a>
 
     <aside
-      class="mt-8 rounded-md border border-[var(--color-line)] border-l-4 border-l-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-4 text-[13px] leading-relaxed text-[var(--color-fg-muted)]"
+      class="mt-8 rounded-md border border-l-4 border-[var(--color-line)] border-l-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-4 text-[13px] leading-relaxed text-[var(--color-fg-muted)]"
     >
       <p>
         <strong class="text-[var(--color-fg)]">À propos de ces cours.</strong>{' '}
-        Ces cours, bien que relus avec soin, sont issus de notes prises au fil de discussions avec divers modèles d'IA. Des erreurs subtiles ont pu y glisser malgré la relecture. Si tu en repères une, signale-la moi : <a
+        Ces cours, bien que relus avec soin, sont issus de notes prises au fil de discussions avec divers
+        modèles d'IA. Des erreurs subtiles ont pu y glisser malgré la relecture. Si tu en repères une,
+        signale-la moi : <a
           href="mailto:contact@pierrickfonquerne.com"
-          class="underline hover:text-[var(--color-accent)]">contact@pierrickfonquerne.com</a>.
+          class="underline hover:text-[var(--color-accent)]">contact@pierrickfonquerne.com</a
+        >.
       </p>
       <p class="mt-3">
-        Les audios qui accompagnent les chapitres sont générés à partir d'un échantillon de ma propre voix, via Voxtral (Mistral AI). Pour les curieux qui voudraient écouter la version anglaise, je m'excuse d'avance pour mon terrible accent.
+        Les audios qui accompagnent les chapitres sont générés à partir d'un échantillon de ma
+        propre voix, via Voxtral (Mistral AI). Pour les curieux qui voudraient écouter la version
+        anglaise, je m'excuse d'avance pour mon terrible accent.
       </p>
     </aside>
 
@@ -69,7 +72,7 @@ const groups = THEMES.map((theme) => ({
             <header class="mb-10 border-b border-[var(--color-line)] pb-4">
               <h2
                 id={`theme-${theme}`}
-                class="font-display text-[36px] leading-[1.05] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+                class="font-display text-[clamp(24px,5vw,36px)] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
               >
                 {themeLabel}
               </h2>
@@ -107,7 +110,7 @@ const groups = THEMES.map((theme) => ({
                                 {course.data.estimatedMinutes} {t.courses.minutesUnit}
                               </span>
                             </div>
-                            <h4 class="mt-3 font-display text-[20px] font-bold tracking-[-0.01em] text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
+                            <h4 class="font-display mt-3 text-[20px] font-bold tracking-[-0.01em] text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
                               {course.data.title}
                             </h4>
                             <p class="mt-2 text-[14px] leading-relaxed text-[var(--color-fg-muted)]">

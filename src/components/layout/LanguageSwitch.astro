@@ -10,12 +10,15 @@ const { locale, ariaLabel = 'Switch language' } = Astro.props;
 const currentPath = Astro.url.pathname;
 
 const localeHrefs = await Promise.all(
-  LOCALES.map(async (l) => ({ locale: l, href: await resolveTranslatedPath(currentPath, locale, l) })),
+  LOCALES.map(async (l) => ({
+    locale: l,
+    href: await resolveTranslatedPath(currentPath, locale, l),
+  })),
 );
 ---
 
 <div
-  class="inline-flex items-center gap-px rounded-md border border-[var(--color-line-strong)] p-[2px] font-mono text-[11px] uppercase"
+  class="inline-flex h-10 items-center gap-px rounded-md border border-[var(--color-line-strong)] p-[3px] font-mono text-[11px] uppercase"
   aria-label={ariaLabel}
 >
   {
@@ -27,7 +30,7 @@ const localeHrefs = await Promise.all(
           data-locale={l}
           aria-current={isActive ? 'true' : undefined}
           class:list={[
-            'relative cursor-pointer rounded-[3px] px-2 py-1 transition-colors duration-150',
+            'relative inline-flex h-full cursor-pointer items-center rounded-[4px] px-3 transition-colors duration-150',
             isActive
               ? 'text-[var(--color-bg)]'
               : 'text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]',

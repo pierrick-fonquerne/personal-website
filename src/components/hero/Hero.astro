@@ -20,11 +20,11 @@ const cells = [
 ];
 ---
 
-<section class="mx-auto max-w-[1280px] px-14 pt-24 pb-12">
+<section class="container-page pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-24 lg:pb-12">
   <Eyebrow text={t.hero.eyebrow} />
 
   <h1
-    class="bigname font-display mt-14 text-[clamp(72px,12vw,180px)] leading-[0.85] font-extrabold tracking-[-0.06em] text-[var(--color-fg)] uppercase"
+    class="bigname font-display mt-10 text-[clamp(56px,12vw,180px)] leading-[0.88] font-extrabold tracking-[-0.06em] text-[var(--color-fg)] uppercase sm:mt-12 lg:mt-14"
   >
     <span class="word w1"><span>Pierrick</span></span><br />
     <span class="word w2"><span>Fonquerne</span></span>
@@ -32,12 +32,14 @@ const cells = [
 
   <RoleRotator label={t.hero.iAmLabel} roles={t.hero.roles} />
 
-  <p class="fade-up mt-9 max-w-[720px] text-[22px] leading-[1.45] text-[var(--color-fg-muted)]">
+  <p
+    class="fade-up mt-6 max-w-[720px] text-[clamp(17px,3.5vw,22px)] leading-[1.5] text-[var(--color-fg-muted)] sm:mt-8 lg:mt-9"
+  >
     {t.hero.tagline}
   </p>
 
   <div
-    class="fade-up grid-info mt-[72px] grid grid-cols-1 gap-6 border-t border-[var(--color-line)] pt-7 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5"
+    class="fade-up grid-info mt-12 grid grid-cols-1 gap-6 border-t border-[var(--color-line)] pt-7 sm:mt-16 sm:grid-cols-2 md:grid-cols-3 lg:mt-[72px] lg:grid-cols-5"
   >
     {
       cells.map((cell) => (

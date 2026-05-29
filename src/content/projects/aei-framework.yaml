@@ -1,7 +1,7 @@
 slug: aei-framework
 category: poc
 status: archived
-period: "2025"
+period: '2025'
 stack:
   - Rust
   - Event Sourcing

@@ -23,6 +23,7 @@ Tu viens de voir au chapitre précédent que la formule du neurone s'écrit en n
 **Ce qu'il n'est pas nécessaire de connaître** : algèbre linéaire abstraite (espaces vectoriels axiomatiques, dimension infinie, applications linéaires). On reste résolument dans $\mathbb{R}^n$ et concret.
 
 **Niveau de rigueur** : on définit chaque objet formellement et on démontre les propriétés utilisées plus tard, mais sans s'aventurer dans le formalisme académique complet (corps, bases duales, etc.).
+
 </Callout>
 
 ## Le vecteur, une liste ordonnée de nombres
@@ -60,7 +61,8 @@ $$
 C'est une opération qui prend deux vecteurs et retourne un seul nombre. On la lit « x point w » ou « produit scalaire de x et w ».
 
 <Callout kind="tip" title="Lis l'opération à voix haute">
-*« On multiplie chaque coordonnée de x par la coordonnée de même indice de w, puis on additionne tous les produits obtenus. »* En français : c'est exactement la somme pondérée du chapitre 1.
+  *« On multiplie chaque coordonnée de x par la coordonnée de même indice de w, puis on additionne
+  tous les produits obtenus. »* En français : c'est exactement la somme pondérée du chapitre 1.
 </Callout>
 
 ### Exemple chiffré
@@ -91,6 +93,7 @@ Le composant ci-dessous dessine deux vecteurs $\mathbf{x}$ et $\mathbf{w}$ dans 
 </InteractivePrint>
 
 Trois expériences à tenter :
+
 - Aligne les deux vecteurs sur la même direction (par exemple $\mathbf{x} = \mathbf{w}$). Le produit scalaire devient maximal, et égal à $\|\mathbf{x}\| \cdot \|\mathbf{w}\|$.
 - Place-les perpendiculairement (par exemple $\mathbf{x} = (1, 0)$ et $\mathbf{w} = (0, 1)$). Le produit scalaire est exactement zéro.
 - Inverse la direction de $\mathbf{w}$ (mets $w_1$ et $w_2$ négatifs). Le produit scalaire devient négatif, car les flèches pointent dans des directions opposées.
@@ -109,7 +112,7 @@ C'est la généralisation du théorème de Pythagore en $n$ dimensions. En 2D, $
 
 La **distance** entre deux vecteurs $\mathbf{u}$ et $\mathbf{v}$ est la norme de leur différence : $\|\mathbf{u} - \mathbf{v}\|$. C'est ce qui te permet de mesurer « à quel point deux images se ressemblent » quand chaque image est représentée comme un vecteur.
 
-### Démonstration utile : l'identité du parallélogramme
+### Démonstration utile : l'identité du carré scalaire
 
 Une propriété revient sans cesse en machine learning. On l'établit ici une fois pour toutes, à partir des définitions :
 
@@ -125,6 +128,7 @@ En distribuant : $\mathbf{x} \cdot \mathbf{x} + \mathbf{x} \cdot \mathbf{w} + \m
 Le produit scalaire est commutatif ($\mathbf{x} \cdot \mathbf{w} = \mathbf{w} \cdot \mathbf{x}$), donc deux termes croisés se combinent en $2\,\mathbf{x} \cdot \mathbf{w}$.
 
 D'où $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + 2\,\mathbf{x} \cdot \mathbf{w} + \|\mathbf{w}\|^2$. ∎
+
 </Callout>
 
 Cette identité, c'est exactement le théorème de Pythagore généralisé. Conséquence immédiate : si $\mathbf{x}$ et $\mathbf{w}$ sont orthogonaux ($\mathbf{x} \cdot \mathbf{w} = 0$), alors $\|\mathbf{x} + \mathbf{w}\|^2 = \|\mathbf{x}\|^2 + \|\mathbf{w}\|^2$. Pythagore dans toute sa splendeur, sans triangle ni angle droit explicite.
@@ -152,7 +156,7 @@ $$
 
 Une norme au carré est toujours positive ou nulle, donc $P(t) \geq 0$ pour tout $t$.
 
-**Étape 2.** On développe $P(t)$ en utilisant l'identité du parallélogramme prouvée juste au-dessus :
+**Étape 2.** On développe $P(t)$ grâce à l'identité du carré scalaire prouvée juste au-dessus :
 
 $$
 P(t) = \|\mathbf{x}\|^2 + 2 t \, (\mathbf{x} \cdot \mathbf{w}) + t^2 \|\mathbf{w}\|^2
@@ -181,6 +185,7 @@ $$
 $$
 
 **Résultat.** L'inégalité de Cauchy-Schwarz est démontrée. L'égalité a lieu si et seulement si $\Delta = 0$, c'est-à-dire si $P$ admet une racine double $t_0$, c'est-à-dire si $\mathbf{x} + t_0 \mathbf{w} = \mathbf{0}$, autrement dit si $\mathbf{x}$ et $\mathbf{w}$ sont colinéaires. ∎
+
 </Callout>
 
 Maintenant qu'on a la borne $|\mathbf{x} \cdot \mathbf{w}| \leq \|\mathbf{x}\| \, \|\mathbf{w}\|$, on peut diviser sans risque. Pour $\mathbf{x}, \mathbf{w}$ non nuls, on **définit** :
@@ -225,6 +230,7 @@ $$
 $$
 
 **Résultat.** Comme $\theta$ et $\alpha$ appartiennent tous deux à $[0, \pi]$, et que $\cos$ est injectif sur cet intervalle, on conclut $\theta = \alpha$. La définition algébrique de $\cos\theta$ reproduit exactement l'angle géométrique euclidien. ∎
+
 </Callout>
 
 Les conséquences usuelles de la formule géométrique se lisent immédiatement sur la fonction cosinus :
@@ -233,9 +239,9 @@ Les conséquences usuelles de la formule géométrique se lisent immédiatement 
 - Si $\theta = 90°$ (vecteurs perpendiculaires), $\cos(\theta) = 0$ : produit scalaire nul.
 - Si $\theta = 180°$ (vecteurs opposés), $\cos(\theta) = -1$ : produit scalaire minimal.
 
-Géométriquement, le produit scalaire mesure **à quel point deux vecteurs pointent dans la même direction**, pondéré par leurs longueurs. C'est exactement ce que veut savoir un neurone : *« mes entrées ressemblent-elles à mes poids ? »*
+Géométriquement, le produit scalaire mesure **à quel point deux vecteurs pointent dans la même direction**, pondéré par leurs longueurs. C'est exactement ce que veut savoir un neurone : _« mes entrées ressemblent-elles à mes poids ? »_
 
-En machine learning, l'inégalité de Cauchy-Schwarz garantit aussi que tu peux toujours **normaliser** un produit scalaire par les longueurs pour obtenir une mesure dans $[-1, 1]$, appelée *similarité cosinus*. C'est l'outil de base pour comparer deux représentations vectorielles, par exemple deux embeddings de mots ou de phrases.
+En machine learning, l'inégalité de Cauchy-Schwarz garantit aussi que tu peux toujours **normaliser** un produit scalaire par les longueurs pour obtenir une mesure dans $[-1, 1]$, appelée _similarité cosinus_. C'est l'outil de base pour comparer deux représentations vectorielles, par exemple deux embeddings de mots ou de phrases.
 
 ## Transposée et produit matriciel
 
@@ -258,7 +264,12 @@ $$
 La première ligne de $A$ devient la première colonne de $A^T$, et ainsi de suite.
 
 <Callout kind="tip" title="Pourquoi on a besoin de la transposée">
-Selon les conventions, on écrit la sortie d'une couche soit $W \mathbf{x}$ (entrées en colonne), soit $\mathbf{x} W^T$ (entrées en ligne). Quand on traite un *batch* de plusieurs exemples empilés dans une matrice $X$, l'écriture compacte de la couche devient $X W^T$ : chaque ligne de $X$ est un exemple, chaque ligne de $W$ est un neurone, et la transposée aligne correctement les dimensions pour que les produits scalaires sortent du bon côté. Tu vas croiser cette notation partout dans PyTorch et NumPy.
+  Selon les conventions, on écrit la sortie d'une couche soit $W \mathbf{x}$ (entrées en colonne),
+  soit $\mathbf{x} W^T$ (entrées en ligne). Quand on traite un *batch* de plusieurs exemples empilés
+  dans une matrice $X$, l'écriture compacte de la couche devient $X W^T$ : chaque ligne de $X$ est
+  un exemple, chaque ligne de $W$ est un neurone, et la transposée aligne correctement les
+  dimensions pour que les produits scalaires sortent du bon côté. Tu vas croiser cette notation
+  partout dans PyTorch et NumPy.
 </Callout>
 
 ### Le produit matrice-matrice
@@ -272,7 +283,10 @@ $$
 **Condition de compatibilité** : le nombre de colonnes de $A$ doit être égal au nombre de lignes de $B$ (ici $n$ dans les deux cas). Sinon, le produit n'est pas défini.
 
 <Callout kind="tip" title="Lecture pratique">
-Chaque coefficient $(AB)_{ij}$ est le **produit scalaire** de la $i$-ième ligne de $A$ par la $j$-ième colonne de $B$. Autrement dit, le produit matriciel n'est rien d'autre qu'un tableau de produits scalaires faits en parallèle. Cette lecture est la même qu'au paragraphe « Empiler les neurones » plus bas, simplement étendue à plusieurs colonnes à droite.
+  Chaque coefficient $(AB)_{ij}$ est le **produit scalaire** de la $i$-ième ligne de $A$ par la
+  $j$-ième colonne de $B$. Autrement dit, le produit matriciel n'est rien d'autre qu'un tableau de
+  produits scalaires faits en parallèle. Cette lecture est la même qu'au paragraphe « Empiler les
+  neurones » plus bas, simplement étendue à plusieurs colonnes à droite.
 </Callout>
 
 Mini-exemple chiffré en dimensions $2 \times 2$ :
@@ -341,7 +355,10 @@ $$
 L'élément $w_{ji}$ se lit « ligne $j$, colonne $i$ ». Chaque ligne, prise comme un vecteur de dimension $n$, est elle-même un vecteur de $\mathbb{R}^n$.
 
 <Callout kind="tip" title="Convention d'indexation">
-Dans ce chapitre on choisit : $j$ = indice du neurone (la ligne), $i$ = indice de l'entrée (la colonne). L'élément $w_{ji}$ est donc le poids appliqué par le $j$-ième neurone sur la $i$-ième entrée. Cette convention rend l'écriture $\mathbf{w}_j \cdot \mathbf{x}$ naturelle pour la sortie du neurone $j$.
+  Dans ce chapitre on choisit : $j$ = indice du neurone (la ligne), $i$ = indice de l'entrée (la
+  colonne). L'élément $w_{ji}$ est donc le poids appliqué par le $j$-ième neurone sur la $i$-ième
+  entrée. Cette convention rend l'écriture $\mathbf{w}_j \cdot \mathbf{x}$ naturelle pour la sortie
+  du neurone $j$.
 </Callout>
 
 ### Du vecteur à la couche entière
@@ -363,7 +380,11 @@ $$
 C'est une opération qui prend un vecteur et en retourne un autre, où chaque coordonnée du résultat est un produit scalaire. On en reparlera en détail au chapitre 5 quand on construira un réseau multi-couches.
 
 <Callout kind="note" title="Pourquoi cette notation est partout">
-L'essentiel des réseaux profonds modernes s'exprime en algèbre linéaire : un réseau, c'est en première approche une succession de multiplications matrice-vecteur et d'applications de fonctions d'activation. C'est cette représentation compacte qui permet aux bibliothèques comme PyTorch ou TensorFlow d'exploiter le calcul matriciel parallèle des GPU. La maîtrise de la notation vectorielle n'est pas un luxe, c'est la langue de tout le domaine.
+  L'essentiel des réseaux profonds modernes s'exprime en algèbre linéaire : un réseau, c'est en
+  première approche une succession de multiplications matrice-vecteur et d'applications de fonctions
+  d'activation. C'est cette représentation compacte qui permet aux bibliothèques comme PyTorch ou
+  TensorFlow d'exploiter le calcul matriciel parallèle des GPU. La maîtrise de la notation
+  vectorielle n'est pas un luxe, c'est la langue de tout le domaine.
 </Callout>
 
 ## En une phrase
@@ -446,6 +467,7 @@ $$
 $$
 
 **Résultat.** $\mathbf{x} \cdot \mathbf{w} = -8$.
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 2 : norme d'un vecteur">
@@ -486,6 +508,7 @@ $$
 $$
 
 **Résultat.** $\|\mathbf{u}\| = 5$. On reconnaît le triangle rectangle 3-4-5, le classique de la géométrie.
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 3 : produit scalaire et orthogonalité">
@@ -520,6 +543,7 @@ $$
 $$
 
 **Résultat.** $a = -\dfrac{1}{2}$. Les deux vecteurs sont alors orthogonaux. ✓
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 4 : démontrer $(AB)^T = B^T A^T$ sur du concret">
@@ -594,21 +618,20 @@ $$
 $$
 
 **Résultat.** L'égalité $(AB)^T = B^T A^T$ est vérifiée sur ce cas concret. ✓ Noter que si l'on avait calculé $A^T B^T$ (mauvais ordre), on aurait obtenu une autre matrice : c'est l'ordre inversé qui est crucial.
+
 </Callout>
 
 ## Sources
 
-- Anton, H. & Rorres, C. (2010). *Elementary Linear Algebra*, 10e édition. Wiley. Chapitres 1 à 3 pour la base.
-- Strang, G. (2016). *Introduction to Linear Algebra*, 5e édition. Wellesley-Cambridge Press. [Cours en ligne MIT OCW](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) gratuit et excellent.
-- Wikipedia (consulté 2026). « Produit scalaire ». [fr.wikipedia.org/wiki/Produit_scalaire](https://fr.wikipedia.org/wiki/Produit_scalaire)
-
+- Anton, H. & Rorres, C. (2010). _Elementary Linear Algebra_, 10e édition. Wiley. Chapitres 1 à 3 pour la base.
+- Strang, G. (2016). _Introduction to Linear Algebra_, 5e édition. Wellesley-Cambridge Press. [Cours en ligne MIT OCW](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/) gratuit et excellent.
 ### Pour aller plus loin
 
-- Strang, G. (cours en ligne MIT 18.06 *Linear Algebra*). Vidéos accessibles à tout niveau, le standard de l'enseignement de l'algèbre linéaire dans les grandes écoles. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
-- 3Blue1Brown, série *Essence of Linear Algebra*. Visualisations remarquables des concepts clés, francophone via les sous-titres. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
-- Goodfellow, I., Bengio, Y. & Courville, A. (2016). *Deep Learning*. MIT Press. Chapitre 2 sur l'algèbre linéaire spécifique au ML. [deeplearningbook.org](https://www.deeplearningbook.org/)
-- Lay, D. C., Lay, S. R. & McDonald, J. J. (2021). *Linear Algebra and Its Applications*, 6e édition. Pearson. Référence classique pour l'algèbre linéaire appliquée, équilibrée entre théorie et exercices.
-- Axler, S. (2024). *Linear Algebra Done Right*, 4e édition. Springer. Approche conceptuelle qui évite les déterminants jusqu'au plus tard possible et insiste sur la structure des espaces vectoriels. [PDF gratuit en open access](https://linear.axler.net/)
+- Strang, G. (cours en ligne MIT 18.06 _Linear Algebra_). Vidéos accessibles à tout niveau, le standard de l'enseignement de l'algèbre linéaire dans les grandes écoles. [ocw.mit.edu](https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/)
+- 3Blue1Brown, série _Essence of Linear Algebra_. Visualisations remarquables des concepts clés, francophone via les sous-titres. [youtube.com/playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 2 sur l'algèbre linéaire spécifique au ML. [deeplearningbook.org](https://www.deeplearningbook.org/)
+- Lay, D. C., Lay, S. R. & McDonald, J. J. (2021). _Linear Algebra and Its Applications_, 6e édition. Pearson. Référence classique pour l'algèbre linéaire appliquée, équilibrée entre théorie et exercices.
+- Axler, S. (2024). _Linear Algebra Done Right_, 4e édition. Springer. Approche conceptuelle qui évite les déterminants jusqu'au plus tard possible et insiste sur la structure des espaces vectoriels. [PDF gratuit en open access](https://linear.axler.net/)
 
 <InteractivePrint
   label="Quiz : récapitulatif du chapitre 2 (interactif)"
@@ -619,73 +642,69 @@ $$
     submitLabel="Vérifier"
     resetLabel="Recommencer"
     scoreLabel="Score"
-  questions={[
-    {
-      q: "Que représente le produit scalaire de deux vecteurs ?",
-      options: [
-        "Un vecteur de même dimension que les opérandes",
-        "Un seul nombre réel, la somme des produits coordonnée par coordonnée",
-        "Une matrice carrée",
-        "L'angle géométrique entre les deux vecteurs",
-      ],
-      answer: 1,
-      explain: "Le produit scalaire retourne UN scalaire, calculé comme Σ xᵢ wᵢ. La formulation géométrique (longueurs et angle) est une seconde lecture du même nombre, pas un autre résultat.",
-    },
-    {
-      q: "Si deux vecteurs sont orthogonaux, leur produit scalaire vaut :",
-      options: [
-        "1",
-        "-1",
-        "0",
-        "ça dépend de leurs longueurs",
-      ],
-      answer: 2,
-      explain: "Orthogonal signifie angle de 90°. Comme cos(90°) = 0, la formulation géométrique x·w = ‖x‖ ‖w‖ cos(θ) donne 0, peu importe les normes.",
-    },
-    {
-      q: "La norme d'un vecteur x = (x₁, x₂, ..., xₙ) est :",
-      options: [
-        "La somme x₁ + x₂ + ... + xₙ",
-        "Le maximum des xᵢ",
-        "La racine carrée de la somme des carrés Σ xᵢ²",
-        "Le produit x₁ · x₂ · ... · xₙ",
-      ],
-      answer: 2,
-      explain: "C'est la généralisation du théorème de Pythagore : ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).",
-    },
-    {
-      q: "Pourquoi les poids d'un neurone ont-ils la même dimension que ses entrées ?",
-      options: [
-        "C'est une convention arbitraire",
-        "Pour que le produit scalaire wᵢ xᵢ soit défini, il faut une coordonnée de poids par coordonnée d'entrée",
-        "Pour économiser de la mémoire",
-        "Pour respecter le théorème de Pythagore",
-      ],
-      answer: 1,
-      explain: "Le produit scalaire n'est défini que pour deux vecteurs de même dimension. Sinon il manque ou il y a un appariement coordonnée-coordonnée. Pas d'appariement = pas de somme pondérée.",
-    },
-    {
-      q: "Que calcule l'opération matrice-vecteur W·x où W est de taille m×n et x de dimension n ?",
-      options: [
-        "Un scalaire",
-        "Une matrice de taille n×m",
-        "Un vecteur de dimension m, où chaque coordonnée est un produit scalaire entre une ligne de W et x",
-        "Une matrice diagonale",
-      ],
-      answer: 2,
-      explain: "Chaque ligne wⱼ de W est un vecteur de dimension n. Le produit Wx prend en parallèle m produits scalaires wⱼ · x, donc le résultat est un vecteur de m coordonnées. C'est la base d'une couche de m neurones.",
-    },
-    {
-      q: "Si A est une matrice 3×4 et B une matrice 4×2, quelle est la dimension du produit AB ?",
-      options: [
-        "2×3",
-        "3×2",
-        "4×4",
-        "Le produit n'est pas défini",
-      ],
-      answer: 1,
-      explain: "La règle de compatibilité : le nombre de colonnes de A (4) doit égaler le nombre de lignes de B (4), ce qui est le cas. La dimension du résultat est alors lignes de A × colonnes de B, soit 3×2.",
-    },
-  ]}
+    questions={[
+      {
+        q: 'Que représente le produit scalaire de deux vecteurs ?',
+        options: [
+          'Un vecteur de même dimension que les opérandes',
+          'Un seul nombre réel, la somme des produits coordonnée par coordonnée',
+          'Une matrice carrée',
+          "L'angle géométrique entre les deux vecteurs",
+        ],
+        answer: 1,
+        explain:
+          'Le produit scalaire retourne UN scalaire, calculé comme Σ xᵢ wᵢ. La formulation géométrique (longueurs et angle) est une seconde lecture du même nombre, pas un autre résultat.',
+      },
+      {
+        q: 'Si deux vecteurs sont orthogonaux, leur produit scalaire vaut :',
+        options: ['1', '-1', '0', 'ça dépend de leurs longueurs'],
+        answer: 2,
+        explain:
+          'Orthogonal signifie angle de 90°. Comme cos(90°) = 0, la formulation géométrique x·w = ‖x‖ ‖w‖ cos(θ) donne 0, peu importe les normes.',
+      },
+      {
+        q: "La norme d'un vecteur x = (x₁, x₂, ..., xₙ) est :",
+        options: [
+          'La somme x₁ + x₂ + ... + xₙ',
+          'Le maximum des xᵢ',
+          'La racine carrée de la somme des carrés Σ xᵢ²',
+          'Le produit x₁ · x₂ · ... · xₙ',
+        ],
+        answer: 2,
+        explain:
+          "C'est la généralisation du théorème de Pythagore : ‖x‖ = √(x · x) = √(x₁² + x₂² + ... + xₙ²).",
+      },
+      {
+        q: "Pourquoi les poids d'un neurone ont-ils la même dimension que ses entrées ?",
+        options: [
+          "C'est une convention arbitraire",
+          "Pour que le produit scalaire wᵢ xᵢ soit défini, il faut une coordonnée de poids par coordonnée d'entrée",
+          'Pour économiser de la mémoire',
+          'Pour respecter le théorème de Pythagore',
+        ],
+        answer: 1,
+        explain:
+          "Le produit scalaire n'est défini que pour deux vecteurs de même dimension. Sinon il manque ou il y a un appariement coordonnée-coordonnée. Pas d'appariement = pas de somme pondérée.",
+      },
+      {
+        q: "Que calcule l'opération matrice-vecteur W·x où W est de taille m×n et x de dimension n ?",
+        options: [
+          'Un scalaire',
+          'Une matrice de taille n×m',
+          'Un vecteur de dimension m, où chaque coordonnée est un produit scalaire entre une ligne de W et x',
+          'Une matrice diagonale',
+        ],
+        answer: 2,
+        explain:
+          "Chaque ligne wⱼ de W est un vecteur de dimension n. Le produit Wx prend en parallèle m produits scalaires wⱼ · x, donc le résultat est un vecteur de m coordonnées. C'est la base d'une couche de m neurones.",
+      },
+      {
+        q: 'Si A est une matrice 3×4 et B une matrice 4×2, quelle est la dimension du produit AB ?',
+        options: ['2×3', '3×2', '4×4', "Le produit n'est pas défini"],
+        answer: 1,
+        explain:
+          'La règle de compatibilité : le nombre de colonnes de A (4) doit égaler le nombre de lignes de B (4), ce qui est le cas. La dimension du résultat est alors lignes de A × colonnes de B, soit 3×2.',
+      },
+    ]}
   />
 </InteractivePrint>
