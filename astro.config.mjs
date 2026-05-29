@@ -9,7 +9,7 @@ import remarkMath from 'remark-math';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://pierrick.fonquerne.dev',
+  site: 'https://pierrick.fonquerne.com',
   i18n: {
     defaultLocale: 'fr',
     locales: ['fr', 'en'],
