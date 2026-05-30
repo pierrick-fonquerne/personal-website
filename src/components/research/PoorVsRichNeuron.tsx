@@ -10,6 +10,9 @@ export interface PoorVsRichLabels {
   injectLabel?: string;
   resetLabel?: string;
   spikeLabel?: string;
+  pulsesLabel?: string;
+  pulseSingularLabel?: string;
+  noSpikeLabel?: string;
 }
 
 export interface PoorVsRichNeuronProps {
@@ -189,15 +192,18 @@ export default function PoorVsRichNeuron({
 }: PoorVsRichNeuronProps): JSX.Element {
   const helpText =
     labels.helpText ??
-    "Injecte des impulsions trop faibles pour declencher seules. Le neurone pauvre ne voit que l'instant et ne reagit jamais. Le neurone riche integre dans le temps et finit par decharger.";
-  const poorLabel = labels.poorLabel ?? 'Neurone pauvre (sans etat)';
+    "Injecte des impulsions trop faibles pour déclencher seules. Le neurone pauvre ne voit que l'instant et ne réagit jamais. Le neurone riche intègre dans le temps et finit par décharger.";
+  const poorLabel = labels.poorLabel ?? 'Neurone pauvre (sans état)';
   const richLabel = labels.richLabel ?? 'Neurone riche (potentiel, fuite, seuil)';
   const potentialLabel = labels.potentialLabel ?? 'Potentiel';
   const thresholdLabel = labels.thresholdLabel ?? 'Seuil';
-  const energyLabel = labels.energyLabel ?? 'Energie';
+  const energyLabel = labels.energyLabel ?? 'Énergie';
   const injectLabel = labels.injectLabel ?? 'Injecter une impulsion';
-  const resetLabel = labels.resetLabel ?? 'Reinitialiser';
-  const spikeLabel = labels.spikeLabel ?? 'Decharge';
+  const resetLabel = labels.resetLabel ?? 'Réinitialiser';
+  const spikeLabel = labels.spikeLabel ?? 'Décharge';
+  const pulsesLabel = labels.pulsesLabel ?? 'impulsions';
+  const pulseSingularLabel = labels.pulseSingularLabel ?? 'impulsion';
+  const noSpikeLabel = labels.noSpikeLabel ?? 'pas de spike';
 
   const [train, setTrain] = useState<readonly number[]>(
     () => Array<number>(N_STEPS).fill(0),
@@ -229,8 +235,8 @@ export default function PoorVsRichNeuron({
   const buttonClass =
     'rounded-sm border border-[var(--color-line)] px-3 py-1.5 font-mono text-[12px] tracking-[0.04em] text-[var(--color-fg)] transition-colors duration-200 hover:border-[var(--color-line-strong)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40';
 
-  const poorAriaLabel = `${poorLabel} - ${N_STEPS} pas de temps, aucun spike detecte avec amplitude ${PULSE_AMPLITUDE}`;
-  const richAriaLabel = `${richLabel} - potentiel courant: ${result.finalRich.potential.toFixed(2)}, decharges: ${result.finalRich.spikeCount}`;
+  const poorAriaLabel = `${poorLabel} - ${N_STEPS} pas de temps, aucun spike détecté avec amplitude ${PULSE_AMPLITUDE}`;
+  const richAriaLabel = `${richLabel} - potentiel courant : ${result.finalRich.potential.toFixed(2)}, décharges : ${result.finalRich.spikeCount}`;
 
   const pulseCount = train.filter((v) => v > 0).length;
 
@@ -263,7 +269,7 @@ export default function PoorVsRichNeuron({
           {poorLabel}
         </span>
         <span className="font-mono text-[11px] text-[var(--color-fg-dim)]">
-          {pulseCount} impulsion{pulseCount !== 1 ? 's' : ''} - pas de spike
+          {pulseCount} {pulseCount === 1 ? pulseSingularLabel : pulsesLabel} - {noSpikeLabel}
         </span>
       </div>
 

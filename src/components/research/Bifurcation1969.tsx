@@ -27,7 +27,7 @@ const DEFAULT_NODES: HistoryNode[] = [
   {
     id: 'mcculloch-pitts',
     year: '1943',
-    label: 'McCulloch et Pitts : le neurone logique, sans etat',
+    label: 'McCulloch et Pitts : le neurone logique, sans état',
     branch: 'trunk',
   },
   {
@@ -51,7 +51,7 @@ const DEFAULT_NODES: HistoryNode[] = [
   {
     id: 'backprop',
     year: '1986',
-    label: 'Retropropagation (Rumelhart, Hinton, Williams)',
+    label: 'Rétropropagation (Rumelhart, Hinton, Williams)',
     branch: 'response1',
   },
   {
@@ -63,7 +63,7 @@ const DEFAULT_NODES: HistoryNode[] = [
   {
     id: 'llm',
     year: '2020',
-    label: 'LLM et modeles de fondation',
+    label: 'LLM et modèles de fondation',
     branch: 'response1',
   },
   {
@@ -75,7 +75,7 @@ const DEFAULT_NODES: HistoryNode[] = [
   {
     id: 'spiking',
     year: '2010',
-    label: 'Reseaux spiking auto-organises',
+    label: 'Réseaux spiking auto-organisés',
     branch: 'response2',
   },
   {
@@ -87,7 +87,7 @@ const DEFAULT_NODES: HistoryNode[] = [
   {
     id: 'jepa',
     year: '2022',
-    label: 'LeCun : world model concu (JEPA)',
+    label: 'LeCun : world model conçu (JEPA)',
     branch: 'response3',
   },
 ];
@@ -109,12 +109,12 @@ export default function Bifurcation1969({
 
   const helpText =
     labels.helpText ??
-    'En 1969, le champ bifurque. Choisis une branche pour suivre son chemin. SOAG explore la reponse 2, longtemps laissee de cote.';
-  const response1Title = labels.response1Title ?? 'Reponse 1 : empiler des couches';
-  const response2Title = labels.response2Title ?? 'Reponse 2 : enrichir le composant';
-  const response3Title = labels.response3Title ?? 'Reponse 3 : world model concu';
+    'En 1969, le champ bifurque. Choisis une branche pour suivre son chemin. SOAG explore la réponse 2, longtemps laissée de côté.';
+  const response1Title = labels.response1Title ?? 'Réponse 1 : empiler des couches';
+  const response2Title = labels.response2Title ?? 'Réponse 2 : enrichir le composant';
+  const response3Title = labels.response3Title ?? 'Réponse 3 : world model conçu';
   const soagMarker = labels.soagMarker ?? 'SOAG';
-  const resetLabel = labels.resetLabel ?? 'Reinitialiser';
+  const resetLabel = labels.resetLabel ?? 'Réinitialiser';
 
   const branchTitles: Record<HistoryBranch, string> = {
     trunk: '',

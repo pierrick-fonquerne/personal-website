@@ -10,6 +10,12 @@ export interface DenseVsSparseLabels {
   costLabel?: string;
   tickLabel?: string;
   resetLabel?: string;
+  pauseLabel?: string;
+  autoLabel?: string;
+  runLabel?: string;
+  modeGroupLabel?: string;
+  gridLabel?: string;
+  ratioLabel?: string;
 }
 
 export interface DenseVsSparseComputeProps {
@@ -133,13 +139,19 @@ export default function DenseVsSparseCompute({
 
   const helpText =
     labels.helpText ??
-    'Un LLM calcule tout, partout, tout le temps. Le cerveau ne calcule que le strict necessaire. Avance les ticks et regarde le cout diverger.';
+    'Un LLM calcule tout, partout, tout le temps. Le cerveau ne calcule que le strict nécessaire. Avance les ticks et regarde le coût diverger.';
   const denseLabel = labels.denseLabel ?? 'Tout, partout (dense)';
-  const sparseLabel = labels.sparseLabel ?? 'Le strict necessaire (creux)';
+  const sparseLabel = labels.sparseLabel ?? 'Le strict nécessaire (creux)';
   const activeLabel = labels.activeLabel ?? 'Cellules actives';
-  const costLabel = labels.costLabel ?? 'Cout cumule';
+  const costLabel = labels.costLabel ?? 'Coût cumulé';
   const tickLabel = labels.tickLabel ?? 'Tick';
-  const resetLabel = labels.resetLabel ?? 'Reinitialiser';
+  const resetLabel = labels.resetLabel ?? 'Réinitialiser';
+  const pauseLabel = labels.pauseLabel ?? 'Pause';
+  const autoLabel = labels.autoLabel ?? 'Auto';
+  const runLabel = labels.runLabel ?? 'Lancer';
+  const modeGroupLabel = labels.modeGroupLabel ?? 'Mode de calcul';
+  const gridLabel = labels.gridLabel ?? 'Grille';
+  const ratioLabel = labels.ratioLabel ?? 'en faveur du creux';
 
   const total = gridSize * gridSize;
   const activeCellsCount = sim.activeCells.size;
@@ -165,14 +177,14 @@ export default function DenseVsSparseCompute({
     );
   };
 
-  const gridAriaLabel = `Grille ${gridSize}x${gridSize}, mode ${mode === 'dense' ? denseLabel : sparseLabel}, tick ${sim.tick}, ${activeCellsCount} cellules actives`;
+  const gridAriaLabel = `${gridLabel} ${gridSize}x${gridSize}, mode ${mode === 'dense' ? denseLabel : sparseLabel}, tick ${sim.tick}, ${activeCellsCount} cellules actives`;
 
   return (
     <figure className="my-6 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-5">
       <div className="flex flex-col gap-5">
         <p className="text-[14px] leading-[1.55] text-[var(--color-fg-muted)]">{helpText}</p>
 
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Mode de calcul">
+        <div className="flex flex-wrap gap-2" role="group" aria-label={modeGroupLabel}>
           <button
             type="button"
             className={modeButtonClass('dense')}
@@ -252,7 +264,7 @@ export default function DenseVsSparseCompute({
               <p className="text-[12px] leading-[1.5] text-[var(--color-fg-muted)]">
                 {mode === 'dense'
                   ? `Dense: ${currentCost} vs creux: ${otherCost}. Ratio: x${(currentCost / Math.max(otherCost, 1)).toFixed(1)}.`
-                  : `Creux: ${currentCost} vs dense: ${otherCost}. Ratio: x${(otherCost / Math.max(currentCost, 1)).toFixed(1)} en faveur du creux.`}
+                  : `Creux: ${currentCost} vs dense: ${otherCost}. Ratio: x${(otherCost / Math.max(currentCost, 1)).toFixed(1)} ${ratioLabel}.`}
               </p>
             )}
 
@@ -269,9 +281,9 @@ export default function DenseVsSparseCompute({
                 type="button"
                 className={buttonClass}
                 onClick={toggleRunning}
-                aria-label={running ? 'Pause' : 'Lecture automatique'}
+                aria-label={running ? pauseLabel : runLabel}
               >
-                {running ? 'Pause' : 'Auto'}
+                {running ? pauseLabel : autoLabel}
               </button>
               <button
                 type="button"

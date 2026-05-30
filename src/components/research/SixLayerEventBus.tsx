@@ -52,12 +52,12 @@ export default function SixLayerEventBus({ labels = {} }: SixLayerEventBusProps)
 
   const helpText =
     labels.helpText ??
-    'Emets un evenement sensoriel et regarde-le remonter les couches, transforme a chaque etage.';
+    'Émets un événement sensoriel et regarde-le remonter les couches, transformé à chaque étage.';
 
   const emitTouchLabel = labels.emitTouch ?? 'Toucher';
   const emitSoundLabel = labels.emitSound ?? 'Entendre';
   const emitVisionLabel = labels.emitVision ?? 'Voir';
-  const resetLabel = labels.resetLabel ?? 'Reinitialiser';
+  const resetLabel = labels.resetLabel ?? 'Réinitialiser';
 
   const defaultLayerNames: Record<AeifLayer, string> = {
     events: 'aei-events',
@@ -69,12 +69,12 @@ export default function SixLayerEventBus({ labels = {} }: SixLayerEventBusProps)
   };
 
   const defaultTransforms: Record<AeifLayer, string> = {
-    events: 'Evenement brut horodate',
-    neural: 'Signal propage',
-    perception: 'Percept structure',
-    memory: 'Souvenir encode',
-    cognition: 'Decision formee',
-    identity: 'Trait renforce',
+    events: 'Événement brut horodaté',
+    neural: 'Signal propagé',
+    perception: 'Percept structuré',
+    memory: 'Souvenir encodé',
+    cognition: 'Décision formée',
+    identity: 'Trait renforcé',
   };
 
   const layerNames: Record<AeifLayer, string> = {
