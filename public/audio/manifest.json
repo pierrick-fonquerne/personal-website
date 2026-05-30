@@ -6,5 +6,77 @@
   "en/neural-networks-foundations/00-foreword": {
     "url": "/audio/en/neural-networks-foundations/00-foreword.mp3",
     "chars": 5584
+  },
+  "fr/neural-networks-foundations/01-le-neurone-artificiel": {
+    "url": "/audio/fr/neural-networks-foundations/01-le-neurone-artificiel.mp3",
+    "chars": 7943
+  },
+  "fr/neural-networks-foundations/02-algebre-vectorielle": {
+    "url": "/audio/fr/neural-networks-foundations/02-algebre-vectorielle.mp3",
+    "chars": 9498
+  },
+  "fr/neural-networks-foundations/03-fonctions-d-activation": {
+    "url": "/audio/fr/neural-networks-foundations/03-fonctions-d-activation.mp3",
+    "chars": 8759
+  },
+  "fr/neural-networks-foundations/04-le-perceptron": {
+    "url": "/audio/fr/neural-networks-foundations/04-le-perceptron.mp3",
+    "chars": 12104
+  },
+  "fr/neural-networks-foundations/05-reseau-multi-couches": {
+    "url": "/audio/fr/neural-networks-foundations/05-reseau-multi-couches.mp3",
+    "chars": 7821
+  },
+  "en/neural-networks-foundations/01-the-artificial-neuron": {
+    "url": "/audio/en/neural-networks-foundations/01-the-artificial-neuron.mp3",
+    "chars": 7509
+  },
+  "en/neural-networks-foundations/02-vector-algebra": {
+    "url": "/audio/en/neural-networks-foundations/02-vector-algebra.mp3",
+    "chars": 8795
+  },
+  "en/neural-networks-foundations/03-activation-functions": {
+    "url": "/audio/en/neural-networks-foundations/03-activation-functions.mp3",
+    "chars": 8233
+  },
+  "en/neural-networks-foundations/04-the-perceptron": {
+    "url": "/audio/en/neural-networks-foundations/04-the-perceptron.mp3",
+    "chars": 11231
+  },
+  "en/neural-networks-foundations/05-multi-layer-network": {
+    "url": "/audio/en/neural-networks-foundations/05-multi-layer-network.mp3",
+    "chars": 7205
+  },
+  "fr/research/plasticite-structurelle": {
+    "url": "/audio/fr/research/plasticite-structurelle.mp3",
+    "chars": 6116
+  },
+  "en/research/plasticite-structurelle": {
+    "url": "/audio/en/research/plasticite-structurelle.mp3",
+    "chars": 5571
+  },
+  "fr/neural-networks-foundations/06-forward-pass-cout": {
+    "url": "/audio/fr/neural-networks-foundations/06-forward-pass-cout.mp3",
+    "chars": 6151
+  },
+  "en/neural-networks-foundations/06-forward-pass-loss": {
+    "url": "/audio/en/neural-networks-foundations/06-forward-pass-loss.mp3",
+    "chars": 5755
+  },
+  "fr/research/introduction-aeif": {
+    "url": "/audio/fr/research/introduction-aeif.mp3",
+    "chars": 6987
+  },
+  "fr/research/introduction-soag": {
+    "url": "/audio/fr/research/introduction-soag.mp3",
+    "chars": 6976
+  },
+  "en/research/introduction-aeif": {
+    "url": "/audio/en/research/introduction-aeif.mp3",
+    "chars": 6365
+  },
+  "en/research/introduction-soag": {
+    "url": "/audio/en/research/introduction-soag.mp3",
+    "chars": 6142
   }
 }
