@@ -14,7 +14,7 @@ interface Dictionary {
   readonly caption: string;
   readonly convergeNote: string;
   readonly descHalfPlane: string;
-  readonly descWedge: string;
+  readonly descStrip: string;
   readonly descPolygon: (k: number) => string;
 }
 
@@ -29,7 +29,7 @@ const DICT: Record<Locale, Dictionary> = {
     convergeNote:
       'Augmente k : le polygone circonscrit se rapproche du cercle. Avec assez de neurones, la frontière devient une courbe quelconque.',
     descHalfPlane: 'k = 1 : un seul demi-plan, exactement comme un perceptron.',
-    descWedge: 'k = 2 : un coin, intersection de deux demi-plans.',
+    descStrip: 'k = 2 : une bande, intersection de deux demi-plans parallèles.',
     descPolygon: (k) => `k = ${k} : un polygone convexe à ${k} côtés.`,
   },
   en: {
@@ -42,7 +42,7 @@ const DICT: Record<Locale, Dictionary> = {
     convergeNote:
       'Increase k: the circumscribed polygon gets closer to the circle. With enough neurons, the boundary becomes an arbitrary curve.',
     descHalfPlane: 'k = 1: a single half-plane, exactly like a perceptron.',
-    descWedge: 'k = 2: a wedge, the intersection of two half-planes.',
+    descStrip: 'k = 2: a strip, the intersection of two parallel half-planes.',
     descPolygon: (k) => `k = ${k}: a convex polygon with ${k} sides.`,
   },
 };
@@ -163,7 +163,7 @@ export default function DecisionRegionComposer({
   const region = useMemo(() => regionPolygon(k, CENTER.x, CENTER.y, RADIUS, VIEW_RECT), [k]);
 
   const circleR = (RADIUS / D_RANGE) * INNER;
-  const desc = k === 1 ? t.descHalfPlane : k === 2 ? t.descWedge : t.descPolygon(k);
+  const desc = k === 1 ? t.descHalfPlane : k === 2 ? t.descStrip : t.descPolygon(k);
 
   return (
     <div

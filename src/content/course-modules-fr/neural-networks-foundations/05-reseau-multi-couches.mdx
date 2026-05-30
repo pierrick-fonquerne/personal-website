@@ -90,7 +90,7 @@ Formalisons. La <Term slug="frontiere-de-decision">frontière de décision</Term
 
 Trois choses à observer en jouant :
 
-- Avec $k = 1$, la frontière est une simple droite, exactement comme un perceptron. Avec $k = 2$, c'est un coin. À partir de $k = 3$, c'est un polygone fermé.
+- Avec $k = 1$, la frontière est une simple droite, exactement comme un perceptron. Avec $k = 2$, c'est une bande. À partir de $k = 3$, c'est un polygone fermé.
 - Plus tu ajoutes de neurones cachés, plus le polygone a de côtés et plus il épouse le cercle. La frontière passe de linéaire à polygonale, puis tend vers une courbe.
 - Chaque neurone caché n'apporte qu'une seule droite. C'est leur combinaison par la couche suivante qui crée la richesse des formes.
 
@@ -110,11 +110,11 @@ Cette équation se lit : on multiplie le vecteur d'entrée $x$ par la matrice de
   client:visible
   caption="Un réseau à une couche cachée : deux entrées, une couche cachée, une sortie"
   definition={`graph LR
-    x1["x₁"] --> h1["a⁽¹⁾"]
+    x1["x₁"] --> h1["h₁"]
     x2["x₂"] --> h1
-    x1 --> h2["a⁽¹⁾"]
+    x1 --> h2["h₂"]
     x2 --> h2
-    h1 --> y["a⁽²⁾"]
+    h1 --> y["y"]
     h2 --> y`}
 />
 
@@ -141,9 +141,11 @@ Une couche cachée fait exactement cela : chaque neurone caché fabrique une mar
 C'est le contenu du <Term slug="theoreme-approximation-universelle">théorème d'approximation universelle</Term>.
 
 <Callout kind="note" title="Esquisse semi-formelle (sans démonstration complète)">
-**Énoncé (Cybenko, 1989 ; Hornik, Stinchcombe et White, 1989).** Soit $f$ une fonction continue sur un domaine borné de $\mathbb{R}^n$, et soit $\varepsilon > 0$ aussi petit qu'on veut. Alors il existe un réseau à **une seule couche cachée**, avec un nombre fini de neurones et une fonction d'activation non polynomiale, qui approche $f$ partout sur ce domaine à moins de $\varepsilon$ près.
+**Énoncé (Cybenko, 1989 ; Hornik, Stinchcombe et White, 1989).** Soit $f$ une fonction continue sur un domaine borné de $\mathbb{R}^n$, et soit $\varepsilon > 0$ aussi petit qu'on veut. Alors il existe un réseau à **une seule couche cachée**, avec un nombre fini de neurones et une fonction d'activation sigmoïdale (plus généralement, une fonction squashing : monotone et bornée), qui approche $f$ partout sur ce domaine à moins de $\varepsilon$ près.
 
 **Idée de la preuve.** On montre que les combinaisons de neurones cachés (des fonctions de la forme $\sum_i \alpha_i \, \sigma(w_i \cdot x + b_i)$) forment un ensemble dense dans l'espace des fonctions continues sur le domaine. Cybenko utilise un argument d'analyse fonctionnelle (le théorème de Hahn-Banach et une propriété des mesures) ; Hornik et ses coauteurs en donnent une version par les fonctions caractéristiques. Aucune des deux preuves ne dit combien de neurones il faut, ni comment trouver leurs poids.
+
+**Au-delà de la sigmoïde.** La condition exacte est venue plus tard : un réseau à une couche cachée est un approximateur universel si et seulement si sa fonction d'activation n'est pas polynomiale (Leshno, Lin, Pinkus et Schocken, 1993). La sigmoïde, la tangente hyperbolique ou ReLU conviennent donc toutes.
 
 </Callout>
 
@@ -341,4 +343,5 @@ La première brique de la réponse est de savoir mesurer à quel point le résea
 - Cybenko, G. (1989). « Approximation by superpositions of a sigmoidal function. » _Mathematics of Control, Signals and Systems_ 2(4), 303-314. [DOI 10.1007/BF02551274](https://doi.org/10.1007/BF02551274)
 - Hornik, K., Stinchcombe, M. & White, H. (1989). « Multilayer feedforward networks are universal approximators. » _Neural Networks_ 2(5), 359-366. [DOI 10.1016/0893-6080(89)90020-8](<https://doi.org/10.1016/0893-6080(89)90020-8>)
 - Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Leshno, M., Lin, V. Y., Pinkus, A. & Schocken, S. (1993). « Multilayer feedforward networks with a nonpolynomial activation function can approximate any function. » _Neural Networks_ 6(6), 861-867. [DOI 10.1016/S0893-6080(05)80131-5](<https://doi.org/10.1016/S0893-6080(05)80131-5>)
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_, chapitre 6. MIT Press. [deeplearningbook.org](https://www.deeplearningbook.org/)

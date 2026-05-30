@@ -90,7 +90,7 @@ Let us formalize. The <Term slug="frontiere-de-decision">decision boundary</Term
 
 Three things to watch while playing:
 
-- With $k = 1$, the boundary is a single line, exactly like a perceptron. With $k = 2$, it is a wedge. From $k = 3$ on, it is a closed polygon.
+- With $k = 1$, the boundary is a single line, exactly like a perceptron. With $k = 2$, it is a strip. From $k = 3$ on, it is a closed polygon.
 - The more hidden neurons you add, the more sides the polygon has and the more closely it hugs the circle. The boundary goes from linear to polygonal, then tends toward a curve.
 - Each hidden neuron contributes only one line. It is their combination by the next layer that creates the richness of shapes.
 
@@ -110,11 +110,11 @@ This equation reads: we multiply the input vector $x$ by the weight matrix $W$, 
   client:visible
   caption="A network with one hidden layer: two inputs, one hidden layer, one output"
   definition={`graph LR
-    x1["x₁"] --> h1["a⁽¹⁾"]
+    x1["x₁"] --> h1["h₁"]
     x2["x₂"] --> h1
-    x1 --> h2["a⁽¹⁾"]
+    x1 --> h2["h₂"]
     x2 --> h2
-    h1 --> y["a⁽²⁾"]
+    h1 --> y["y"]
     h2 --> y`}
 />
 
@@ -141,9 +141,11 @@ A single hidden layer does exactly that: each hidden neuron builds a step, and t
 This is the content of the <Term slug="theoreme-approximation-universelle">universal approximation theorem</Term>.
 
 <Callout kind="note" title="Semi-formal sketch (without a full proof)">
-**Statement (Cybenko, 1989; Hornik, Stinchcombe and White, 1989).** Let $f$ be a continuous function on a bounded domain of $\mathbb{R}^n$, and let $\varepsilon > 0$ be as small as we like. Then there exists a network with **a single hidden layer**, with finitely many neurons and a non-polynomial activation function, that approximates $f$ everywhere on that domain to within $\varepsilon$.
+**Statement (Cybenko, 1989; Hornik, Stinchcombe and White, 1989).** Let $f$ be a continuous function on a bounded domain of $\mathbb{R}^n$, and let $\varepsilon > 0$ be as small as we like. Then there exists a network with **a single hidden layer**, with finitely many neurons and a sigmoidal activation function (more generally, a squashing function: monotone and bounded), that approximates $f$ everywhere on that domain to within $\varepsilon$.
 
 **Idea of the proof.** One shows that combinations of hidden neurons (functions of the form $\sum_i \alpha_i \, \sigma(w_i \cdot x + b_i)$) form a dense set in the space of continuous functions on the domain. Cybenko uses a functional-analysis argument (the Hahn-Banach theorem and a property of measures); Hornik and his coauthors give a version via characteristic functions. Neither proof says how many neurons are needed, nor how to find their weights.
+
+**Beyond the sigmoid.** The exact condition came later: a one-hidden-layer network is a universal approximator if and only if its activation function is non-polynomial (Leshno, Lin, Pinkus and Schocken, 1993). The sigmoid, the hyperbolic tangent and ReLU all qualify.
 
 </Callout>
 
@@ -340,4 +342,5 @@ The first building block of the answer is being able to measure how wrong the ne
 - Cybenko, G. (1989). "Approximation by superpositions of a sigmoidal function." _Mathematics of Control, Signals and Systems_ 2(4), 303-314. [DOI 10.1007/BF02551274](https://doi.org/10.1007/BF02551274)
 - Hornik, K., Stinchcombe, M. and White, H. (1989). "Multilayer feedforward networks are universal approximators." _Neural Networks_ 2(5), 359-366. [DOI 10.1016/0893-6080(89)90020-8](<https://doi.org/10.1016/0893-6080(89)90020-8>)
 - Rumelhart, D. E., Hinton, G. E. and Williams, R. J. (1986). "Learning representations by back-propagating errors." _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Leshno, M., Lin, V. Y., Pinkus, A. and Schocken, S. (1993). "Multilayer feedforward networks with a nonpolynomial activation function can approximate any function." _Neural Networks_ 6(6), 861-867. [DOI 10.1016/S0893-6080(05)80131-5](<https://doi.org/10.1016/S0893-6080(05)80131-5>)
 - Goodfellow, I., Bengio, Y. and Courville, A. (2016). _Deep Learning_, chapter 6. MIT Press. [deeplearningbook.org](https://www.deeplearningbook.org/)
