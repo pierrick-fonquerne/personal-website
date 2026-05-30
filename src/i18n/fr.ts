@@ -354,6 +354,7 @@ const fr: Translations = {
     elsewhereTitle: '// Ailleurs',
     contactTitle: '// Contact',
     legalLink: 'Mentions légales',
+    rssLabel: 'Flux RSS',
   },
   consent: {
     message:

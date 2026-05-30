@@ -237,6 +237,7 @@ export interface Translations {
     elsewhereTitle: string;
     contactTitle: string;
     legalLink: string;
+    rssLabel: string;
   };
   consent: {
     message: string;
@@ -609,6 +610,7 @@ const en: Translations = {
     elsewhereTitle: '// Elsewhere',
     contactTitle: '// Contact',
     legalLink: 'Legal',
+    rssLabel: 'RSS feed',
   },
   consent: {
     message: 'This site uses Umami Analytics to measure audience anonymously, without cookies.',

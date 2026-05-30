@@ -5,6 +5,7 @@ import Github from '../ui/icons/Github.astro';
 import LinkedIn from '../ui/icons/LinkedIn.astro';
 import Mail from '../ui/icons/Mail.astro';
 import Crates from '../ui/icons/Crates.astro';
+import Rss from '../ui/icons/Rss.astro';
 
 interface Props {
   locale: Locale;
@@ -81,6 +82,16 @@ const siteVersion = 'v2026.05';
           >
             <Crates class="h-[14px] w-[14px] opacity-70" />
             {SITE.cratesHandle}
+          </a>
+        </li>
+        <li>
+          <a
+            href="/rss.xml"
+            type="application/rss+xml"
+            class="inline-flex items-center gap-2 transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            <Rss class="h-[14px] w-[14px] opacity-70" />
+            {t.footer.rssLabel}
           </a>
         </li>
       </ul>
