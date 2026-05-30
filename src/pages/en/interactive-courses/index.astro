@@ -4,10 +4,12 @@ import Eyebrow from '../../../components/ui/Eyebrow.astro';
 import { listCourses } from '../../../lib/courses';
 import { localizedPath, useTranslations } from '../../../lib/i18n';
 import { SUBTHEMES_BY_THEME, THEMES } from '../../../lib/taxonomy';
+import { listTracks } from '../../../lib/tracks';
 
 const locale = 'en' as const;
 const t = useTranslations(locale);
 const courses = await listCourses(locale);
+const hasTracks = (await listTracks()).length > 0;
 
 const groups = THEMES.map((theme) => ({
   theme,
@@ -39,12 +41,24 @@ const groups = THEMES.map((theme) => ({
       {t.courses.indexLead}
     </p>
 
-    <a
-      href="/en/glossary"
-      class="mt-6 inline-block font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase hover:underline"
-    >
-      {t.courses.glossaryLink}
-    </a>
+    <div class="mt-6 flex flex-wrap gap-5">
+      <a
+        href="/en/glossary"
+        class="inline-block font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase hover:underline"
+      >
+        {t.courses.glossaryLink}
+      </a>
+      {
+        hasTracks && (
+          <a
+            href={localizedPath('/tracks', locale)}
+            class="inline-block font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase hover:underline"
+          >
+            {t.courses.tracksLink}
+          </a>
+        )
+      }
+    </div>
 
     <aside
       class="mt-8 rounded-md border border-l-4 border-[var(--color-line)] border-l-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-4 text-[13px] leading-relaxed text-[var(--color-fg-muted)]"

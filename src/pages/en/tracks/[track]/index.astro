@@ -1,0 +1,115 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { localizedPath, useTranslations } from '../../../../lib/i18n';
+import { resolveStages, courseCountOf } from '../../../../lib/tracks';
+
+export const getStaticPaths = (async () => {
+  const tracks = (await getCollection('tracks')).filter(
+    (entry) => !import.meta.env.PROD || entry.data.published !== false,
+  );
+  return tracks.map((track) => ({ params: { track: track.data.slug }, props: { track } }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { track } = Astro.props as Props;
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const content = track.data.en;
+const stages = await resolveStages(track, locale);
+const courseCount = courseCountOf(track);
+---
+
+<BaseLayout
+  title={`${content.title} · Pierrick Fonquerne`}
+  description={content.tagline}
+  current="/tracks"
+  locale={locale}
+>
+  <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
+    <a
+      href={localizedPath('/tracks', locale)}
+      class="inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.tracks.backToList}
+    </a>
+
+    <header class="mt-10 border-t border-[var(--color-line)] pt-10">
+      <h1
+        class="font-display text-[clamp(36px,6vw,64px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[var(--color-fg)]"
+      >
+        {content.title}
+      </h1>
+      <p
+        class="mt-5 max-w-[60ch] text-[clamp(17px,3.5vw,22px)] leading-[1.5] text-[var(--color-fg-muted)]"
+      >
+        {content.tagline}
+      </p>
+      <p class="mt-6 max-w-[68ch] text-[17px] leading-[1.6] text-[var(--color-fg)]">
+        {content.summary}
+      </p>
+      <p class="mt-4 max-w-[68ch] text-[14px] leading-relaxed text-[var(--color-fg-dim)]">
+        <span class="font-mono text-[11px] tracking-[0.14em] uppercase"
+          >{t.tracks.audienceLabel}</span
+        >{' '}
+        {content.audience}
+      </p>
+      <p class="mt-6 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
+        {courseCount}
+        {t.tracks.coursesUnit}
+      </p>
+    </header>
+
+    <div class="mt-16 space-y-14">
+      {
+        stages.map((stage) => (
+          <section aria-labelledby={`stage-${stage.stage}`}>
+            <h2
+              id={`stage-${stage.stage}`}
+              class="font-display mb-6 border-b border-[var(--color-line)] pb-3 text-[clamp(22px,4vw,30px)] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+            >
+              {t.stages[stage.stage]}
+            </h2>
+            <ul class="space-y-3">
+              {stage.courses.map((course) => (
+                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-4 py-3">
+                  <div class="flex items-baseline gap-3">
+                    <span class="text-[15px] text-[var(--color-fg)]">
+                      {course.status === 'published' ? (
+                        <a
+                          href={localizedPath(`/interactive-courses/${course.slug}`, locale)}
+                          class="transition-colors hover:text-[var(--color-accent)]"
+                        >
+                          {course.title}
+                        </a>
+                      ) : (
+                        course.title
+                      )}
+                    </span>
+                    {!course.required && (
+                      <span class="font-mono text-[10px] tracking-[0.1em] text-[var(--color-fg-dim)] uppercase">
+                        {t.tracks.optionalBadge}
+                      </span>
+                    )}
+                  </div>
+                  <div class="flex items-center gap-3 font-mono text-[10px] tracking-[0.1em] uppercase">
+                    <span class="text-[var(--color-fg-dim)]">
+                      {t.subthemes[course.subtheme] ?? course.subtheme}
+                    </span>
+                    {course.status === 'upcoming' && (
+                      <span class="rounded border border-[var(--color-line)] px-2 py-0.5 text-[var(--color-fg-dim)]">
+                        {t.tracks.upcomingBadge}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
+  </article>
+</BaseLayout>

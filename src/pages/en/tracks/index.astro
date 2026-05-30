@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Eyebrow from '../../../components/ui/Eyebrow.astro';
+import TrackCard from '../../../components/tracks/TrackCard.astro';
+import { listTracks, courseCountOf } from '../../../lib/tracks';
+import { localizedPath, useTranslations } from '../../../lib/i18n';
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const tracks = await listTracks();
+---
+
+<BaseLayout
+  title={`${t.tracks.indexTitle} · Pierrick Fonquerne`}
+  description={t.tracks.indexLead}
+  current="/tracks"
+  locale={locale}
+>
+  <section class="container-page py-16">
+    <Eyebrow text={t.tracks.eyebrow} />
+    <h1
+      class="font-display mt-4 text-[clamp(28px,6vw,44px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {t.tracks.indexTitle}
+    </h1>
+    <p class="mt-4 max-w-[68ch] text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+      {t.tracks.indexLead}
+    </p>
+
+    {
+      tracks.length === 0 ? (
+        <p class="mt-16 text-[15px] text-[var(--color-fg-muted)]">{t.tracks.emptyState}</p>
+      ) : (
+        <ul class="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {tracks.map((track) => (
+            <li>
+              <TrackCard
+                track={track}
+                locale={locale}
+                href={localizedPath(`/tracks/${track.data.slug}`, locale)}
+                courseCount={courseCountOf(track)}
+              />
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</BaseLayout>
