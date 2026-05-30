@@ -7,12 +7,10 @@
   max-width: 1280px;
   padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
   @media (min-width: 640px) {
-    padding-inline: max(1.5rem, env(safe-area-inset-left))
-      max(1.5rem, env(safe-area-inset-right));
+    padding-inline: max(1.5rem, env(safe-area-inset-left)) max(1.5rem, env(safe-area-inset-right));
   }
   @media (min-width: 1024px) {
-    padding-inline: max(3.5rem, env(safe-area-inset-left))
-      max(3.5rem, env(safe-area-inset-right));
+    padding-inline: max(3.5rem, env(safe-area-inset-left)) max(3.5rem, env(safe-area-inset-right));
   }
 }
 
@@ -171,4 +169,150 @@ body::before {
   box-shadow:
     0 0 0 2px var(--color-accent),
     0 0 0 4px var(--color-bg);
+}
+
+/* Research article typography. The MDX body is wrapped in .prose-research;
+   without these rules the raw markdown renders flat (no heading hierarchy,
+   no paragraph rhythm, no list markers). */
+.prose-research {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--color-fg-muted);
+}
+.prose-research > * + * {
+  margin-top: 1.35em;
+}
+.prose-research h2 {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3.4vw, 32px);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+  margin-top: 2.6em;
+  margin-bottom: 0.2em;
+  padding-top: 1.5em;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-fg);
+}
+.prose-research h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.prose-research h3 {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.4vw, 22px);
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 1.8em;
+  margin-bottom: 0.1em;
+  color: var(--color-fg);
+}
+.prose-research p {
+  color: var(--color-fg-muted);
+}
+.prose-research strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}
+.prose-research em {
+  font-style: italic;
+}
+.prose-research a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-thickness 0.15s ease;
+}
+.prose-research a:hover {
+  text-decoration-thickness: 2px;
+}
+.prose-research ul,
+.prose-research ol {
+  padding-left: 1.5em;
+  color: var(--color-fg-muted);
+}
+.prose-research ul {
+  list-style: disc;
+}
+.prose-research ol {
+  list-style: decimal;
+}
+.prose-research li {
+  margin-top: 0.55em;
+  padding-left: 0.25em;
+}
+.prose-research li::marker {
+  color: var(--color-fg-dim);
+}
+.prose-research blockquote {
+  border-left: 2px solid var(--color-accent);
+  padding: 0.6em 0 0.6em 1.3em;
+  color: var(--color-fg-muted);
+  font-style: italic;
+}
+.prose-research blockquote p {
+  margin-top: 0;
+}
+.prose-research code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-line);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  color: var(--color-fg);
+}
+.prose-research pre {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  padding: 1.1em 1.3em;
+  overflow-x: auto;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.prose-research pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: inherit;
+}
+.prose-research hr {
+  border: none;
+  border-top: 1px solid var(--color-line);
+  margin: 2.6em 0;
+}
+.prose-research figure {
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+.prose-research .katex-display {
+  margin: 1.7em 0;
+  padding: 0.4em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.prose-research table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  display: block;
+  overflow-x: auto;
+}
+.prose-research th,
+.prose-research td {
+  border: 1px solid var(--color-line);
+  padding: 0.55em 0.85em;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-research th {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-fg-dim);
+  font-weight: 500;
 }
