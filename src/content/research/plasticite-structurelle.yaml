@@ -1,0 +1,29 @@
+slug: plasticite-structurelle
+type: concept
+theme: ai
+status: draft
+publishedAt: 2026-05-30
+tags:
+  - plasticite-structurelle
+  - topologie
+  - neuroevolution
+  - auto-organisation
+papers:
+  - title: 'Generalization emerges from local optimization in a self-organized learning network'
+    authors: 'Barland & Gil (2024)'
+    href: 'https://arxiv.org/abs/2410.02590'
+  - title: 'Self-Motivated Growing Neural Network for Adaptive Architecture via Local Structural Plasticity'
+    authors: 'Chen et al. (2025)'
+    href: 'https://arxiv.org/abs/2512.12713'
+  - title: 'MorphSNN: Adaptive Graph Diffusion and Structural Plasticity for Spiking Neural Networks'
+    authors: 'Liu et al. (2026)'
+    href: 'https://arxiv.org/abs/2603.14285'
+published: false
+fr:
+  title: 'Plasticité structurelle : quand le réseau réécrit sa propre architecture'
+  tagline: "Créer et supprimer neurones et connexions pendant le fonctionnement, au lieu de figer la topologie avant l'entraînement."
+  summary: "La plupart des réseaux de neurones ont une forme fixée d'avance : seuls les poids changent. La plasticité structurelle inverse cette règle en faisant de la topologie une variable vivante. Un concept partagé entre les programmes SOAG et AEIF."
+en:
+  title: 'Structural plasticity: when the network rewrites its own architecture'
+  tagline: 'Creating and removing neurons and connections at runtime, instead of freezing the topology before training.'
+  summary: 'Most neural networks have a shape fixed in advance: only the weights change. Structural plasticity flips that rule by turning topology into a living variable. A concept shared between the SOAG and AEIF programs.'
