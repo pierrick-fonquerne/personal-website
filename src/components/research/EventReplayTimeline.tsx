@@ -28,11 +28,11 @@ export interface EventReplayTimelineProps {
 const DEFAULT_EVENTS: LivedEvent[] = [
   { id: 'e0', t: 0, kind: 'sensory', label: 'Je vois une flamme orange' },
   { id: 'e1', t: 1, kind: 'sensory', label: 'Je tends la main vers le feu' },
-  { id: 'e2', t: 2, kind: 'pain', label: 'Douleur vive a la main' },
-  { id: 'e3', t: 3, kind: 'emotion', label: 'Peur associee au feu' },
+  { id: 'e2', t: 2, kind: 'pain', label: 'Douleur vive à la main' },
+  { id: 'e3', t: 3, kind: 'emotion', label: 'Peur associée au feu' },
   { id: 'e4', t: 4, kind: 'sensory', label: 'Je revois une flamme' },
   { id: 'e5', t: 5, kind: 'emotion', label: 'Recul instinctif' },
-  { id: 'e6', t: 6, kind: 'consolidation', label: 'Le feu brule : souvenir consolide' },
+  { id: 'e6', t: 6, kind: 'consolidation', label: 'Le feu brûle : souvenir consolidé' },
 ];
 
 const KIND_COLOR: Record<LivedEventKind, string> = {
@@ -45,7 +45,7 @@ const KIND_COLOR: Record<LivedEventKind, string> = {
 const KIND_BADGE: Record<LivedEventKind, string> = {
   sensory: 'sensoriel',
   pain: 'douleur',
-  emotion: 'emotion',
+  emotion: 'émotion',
   consolidation: 'consolidation',
 };
 
@@ -72,14 +72,14 @@ export default function EventReplayTimeline({
 
   const helpText =
     labels.helpText ??
-    'Fais glisser le temps. Chaque experience est un evenement immuable qui nourrit la memoire et fait emerger un trait.';
+    'Fais glisser le temps. Chaque expérience est un événement immuable qui nourrit la mémoire et fait émerger un trait.';
   const playLabel = labels.playLabel ?? 'Rejouer';
   const replayLabel = labels.replayLabel ?? 'Rejouer';
   const timeLabel = labels.timeLabel ?? 'Temps';
-  const episodicLabel = labels.episodicLabel ?? 'Memoire episodique';
-  const traitLabel = labels.traitLabel ?? 'Trait emergent';
+  const episodicLabel = labels.episodicLabel ?? 'Mémoire épisodique';
+  const traitLabel = labels.traitLabel ?? 'Trait émergent';
   const traitName = labels.traitName ?? 'Peur du feu';
-  const emptyEpisodic = labels.emptyEpisodic ?? 'Aucun evenement vecu pour l\'instant.';
+  const emptyEpisodic = labels.emptyEpisodic ?? 'Aucun événement vécu pour l\'instant.';
 
   const stopAnimation = useCallback((): void => {
     if (rafRef.current !== null) {
@@ -123,7 +123,7 @@ export default function EventReplayTimeline({
     };
   }, [stopAnimation]);
 
-  const visibleEvents = sorted.filter((ev) => ev.t < cursor);
+  const visibleEvents = sorted.slice(0, cursor);
 
   const totalWeighted = sorted.filter(
     (ev) => ev.kind === 'pain' || ev.kind === 'emotion' || ev.kind === 'consolidation',

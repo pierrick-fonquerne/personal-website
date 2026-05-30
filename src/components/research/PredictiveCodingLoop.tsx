@@ -21,6 +21,7 @@ const LEARNING_RATE = 0.5;
 const AXIS_WIDTH = 320;
 const AXIS_HEIGHT = 48;
 const MARKER_HALF = 10;
+const INSET = 12;
 
 export default function PredictiveCodingLoop({
   initialPrediction = 0.5,
@@ -35,16 +36,16 @@ export default function PredictiveCodingLoop({
 
   const helpText =
     labels.helpText ??
-    "Regle l'observation, puis itere. Le reseau apprend en reduisant l'ecart entre ce qu'il predit et ce qu'il observe.";
-  const predictLabel = labels.predictLabel ?? 'Prediction';
+    "Règle l'observation, puis itère. Le réseau apprend en réduisant l'écart entre ce qu'il prédit et ce qu'il observe.";
+  const predictLabel = labels.predictLabel ?? 'Prédiction';
   const observeLabel = labels.observeLabel ?? 'Observation';
   const surpriseLabel = labels.surpriseLabel ?? 'Surprise';
   const highSurpriseLabel =
-    labels.highSurprise ?? 'Surprise forte: modifier le reseau';
+    labels.highSurprise ?? 'Surprise forte : modifier le réseau';
   const lowSurpriseLabel =
-    labels.lowSurprise ?? 'Surprise faible: renforcer le modele';
-  const iterateLabel = labels.iterateLabel ?? 'Iterer';
-  const resetLabel = labels.resetLabel ?? 'Reinitialiser';
+    labels.lowSurprise ?? 'Surprise faible : renforcer le modèle';
+  const iterateLabel = labels.iterateLabel ?? 'Itérer';
+  const resetLabel = labels.resetLabel ?? 'Réinitialiser';
 
   const handleIterate = (): void => {
     setPrediction((prev) => prev + LEARNING_RATE * (observation - prev));
@@ -58,8 +59,8 @@ export default function PredictiveCodingLoop({
   const buttonClass =
     'rounded-sm border border-[var(--color-line)] px-3 py-1.5 font-mono text-[12px] tracking-[0.04em] text-[var(--color-fg)] transition-colors duration-200 hover:border-[var(--color-line-strong)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40';
 
-  const predX = prediction * AXIS_WIDTH;
-  const obsX = observation * AXIS_WIDTH;
+  const predX = INSET + prediction * (AXIS_WIDTH - 2 * INSET);
+  const obsX = INSET + observation * (AXIS_WIDTH - 2 * INSET);
   const bandLeft = Math.min(predX, obsX);
   const bandWidth = Math.abs(obsX - predX);
   const midY = AXIS_HEIGHT / 2;
