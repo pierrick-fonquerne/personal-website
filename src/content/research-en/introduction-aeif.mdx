@@ -1,0 +1,229 @@
+---
+slug: introduction-aeif
+---
+
+import EventReplayTimeline from '../../components/research/EventReplayTimeline.tsx';
+import SixLayerEventBus from '../../components/research/SixLayerEventBus.tsx';
+import PredictiveCodingLoop from '../../components/research/PredictiveCodingLoop.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+A child does not read ten billion words to learn what fire is. It reaches out toward a flame, feels the pain, and builds knowledge anchored in its own lived experience: timestamped, emotional, sensory, irreducibly its own. AEIF asks a simple, vertiginous question: could an intelligence be built that way too?
+
+## The problem with LLMs
+
+Large language models are impressive, but their intelligence rests on a particular bet that we have to face squarely.
+
+- They predict **tokens**, not **concepts**: they estimate the most likely next word, without necessarily manipulating the idea behind it.
+- Once trained, they are **frozen**: their weights no longer move, they no longer learn from their interactions.
+- Their personality is **simulated by a prompt**: we dictate a role to them, they did not become it.
+- They have **no body and no grounding**: their words are tied to no sensory experience, and lacking any grip on the real, they hallucinate.
+
+Hence the thesis that guides all of AEIF: **intelligence is born of lived experience, not of statistics over corpora.**
+
+## Everything is an event
+
+The heart of AEIF is a shift in perspective. **Event sourcing**, usually a mere software pattern, becomes here a **cognitive** mechanism.
+
+Each experience becomes an immutable, timestamped, typed **event**. That event never disappears: it is stored in **episodic memory**, it consolidates **semantic memory**, it modifies the **neural network**, it colors the **emotional state**, and it reinforces or weakens **personality traits**.
+
+The unique payoff of this approach: you can **replay** the formation of a belief, a trait, a fear. The "why" of a behavior stops being a black box. It becomes **traceable**.
+
+## Replaying a belief
+
+Before theory, the feel of it. Here is the memory of an agent discovering fire, event after event.
+
+<EventReplayTimeline
+  client:visible
+  labels={{
+    helpText:
+      'Drag through time. Each experience is an immutable event that feeds memory and makes a trait emerge.',
+    playLabel: 'Replay',
+    replayLabel: 'Replay',
+    timeLabel: 'Time',
+    episodicLabel: 'Episodic memory',
+    traitLabel: 'Emergent trait',
+    traitName: 'Fear of fire',
+    emptyEpisodic: 'No event lived yet.',
+  }}
+/>
+
+The "fear of fire" trait was written nowhere. It **emerges** solely from the accumulated events: remove them, and the trait fades. Nothing is hard-coded, everything is lived.
+
+## The six-layer architecture
+
+AEIF is organized into six layers that communicate **only through events**. None knows the inside of the others: they share only a bus and a protocol. From the bottom up:
+
+- **aei-events**: the shared event protocol and bus, foundation of everything else.
+- **aei-neural**: from-scratch neural compute in Rust, with dynamic topology and Hebbian learning.
+- **aei-perception** and **aei-motor**: the senses and the body, the interface with the world.
+- **aei-memory**: episodic, semantic, procedural and emotional memory, with consolidation, selective forgetting and associative recall.
+- **aei-cognition**: reasoning, planning, attention, emotions, motivations and decision.
+- **aei-identity**: traits, preferences, values, self-awareness and narrative continuity.
+
+Emit a sensory event and watch it climb the layers, transformed at each stage.
+
+<SixLayerEventBus
+  client:visible
+  labels={{
+    helpText:
+      'Emit a sensory event and watch it climb the layers, transformed at each stage.',
+    emitTouch: 'Touch',
+    emitSound: 'Hear',
+    emitVision: 'See',
+    resetLabel: 'Reset',
+    layerNames: {
+      events: 'aei-events',
+      neural: 'aei-neural',
+      perception: 'aei-perception',
+      memory: 'aei-memory',
+      cognition: 'aei-cognition',
+      identity: 'aei-identity',
+    },
+    transforms: {
+      events: 'Raw timestamped event',
+      neural: 'Propagated signal',
+      perception: 'Structured percept',
+      memory: 'Encoded memory',
+      cognition: 'Decision formed',
+      identity: 'Trait reinforced',
+    },
+  }}
+/>
+
+## Learning from surprise
+
+How does such an architecture learn? Through **predictive coding** (Friston). The cycle is clear: **predict**, **observe**, **compare**, then **learn from the error**.
+
+When surprise is **low**, the observation confirms the model, which is **reinforced**. When surprise is **high**, the observation contradicts the model, which must **change**. The crucial point: the learning signal is **intrinsic surprise**, not an external reward as in reinforcement learning. The agent does not wait to be praised, it corrects itself.
+
+<PredictiveCodingLoop
+  client:visible
+  labels={{
+    helpText:
+      'Set the observation, then iterate. The network learns by shrinking the gap between what it predicts and what it observes.',
+    predictLabel: 'Prediction',
+    observeLabel: 'Observation',
+    surpriseLabel: 'Surprise',
+    highSurprise: 'High surprise: change the network',
+    lowSurprise: 'Low surprise: reinforce the model',
+    iterateLabel: 'Iterate',
+    resetLabel: 'Reset',
+  }}
+/>
+
+Set the observation far from the prediction to trigger high surprise, then iterate several times: you will watch the gap shrink as the model moves toward the real.
+
+## A topology that rewrites itself
+
+The AEIF network has no fixed shape. It practices **neuroplasticity**: neurons and synapses are **created** when new concepts appear, **reinforced** by repetition (Hebb's rule), **pruned** by disuse. It is not only the weights that change: it is the **topology itself** that evolves.
+
+This is where AEIF meets another of my programs. **AEIF provides the substrate**: a network where every structural mutation is an immutable, traced, replayable event. But its mutations stay **random**: it knows how to mutate, not yet how to choose. The missing engine, those local rules that decide what to grow and what to let die, is the subject of the **SOAG** program. To dig into this junction, see the shared concept of [structural plasticity](/en/research/plasticite-structurelle).
+
+## A minimal formalization
+
+Let us state things cleanly. A **lived event** is a triple $e = (t, \tau, \rho)$: a timestamp $t$, a type $\tau$, and a payload $\rho$.
+
+The **agent state** at time $t$ is a fold over the event history, starting from an initial state $S_0$:
+
+$$
+S_t = \mathrm{fold}(S_0, \{e_i : t_i \le t\})
+$$
+
+Learning is driven by **surprise**, the gap between observation $o$ and prediction $\hat{o}$:
+
+$$
+\sigma = \lVert o - \hat{o} \rVert
+$$
+
+When $\sigma$ is small, the model is confirmed and reinforced; when $\sigma$ is large, the network must change.
+
+## Where AEIF sits
+
+AEIF is not alone in seeking a grounded intelligence. Placing it against two other families brings out its own bet.
+
+| Property       | LLMs                     | World Models (JEPA)                | AEIF                            |
+| -------------- | ------------------------ | ---------------------------------- | ------------------------------- |
+| Source         | massive text corpora     | real-world data                    | lived events                    |
+| Learning       | frozen pre-training      | self-supervised on video+physics   | continuous, by experience       |
+| Architecture   | static transformer       | designed JEPA hierarchy            | dynamic networks from scratch   |
+| Memory         | context window           | persistent                         | event-sourced, multi-type       |
+| Personality    | simulated by a prompt    | not addressed                      | emergent from experience        |
+| Grounding      | none                     | physical                           | sensorimotor and emotional      |
+
+Each column is a coherent bet. AEIF's is the least explored of the three.
+
+## Limits and open questions
+
+It would be dishonest to present all this as solved. The open work is plentiful.
+
+- **Representation**: neural only, or hybrid neural-symbolic?
+- **Quantifying surprise**: which metric holds, and over which space?
+- **Forming hypotheses**: how does the agent generate them, and how does it test them?
+- **Consolidating or forgetting**: when to engrave a memory, when to let it fade?
+- **What to predict, and when**: over which modality and at what horizon?
+- **Grounding concepts**: how to tie an abstract idea to the experience that founds it?
+- **Time and causality**: how to reason about the order and the causes of events?
+- **Emergence of personality**: how does a trait really arise from events? This is the final goal.
+
+## Test your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'What makes an event immutable, and why does it matter?',
+      options: [
+        'It can no longer be modified once recorded, which makes the agent\'s history traceable and replayable',
+        'It is encrypted, which protects it from attacks',
+        'It is stored twice, for safety',
+        'It disappears after use, to save memory',
+      ],
+      answer: 0,
+      explain:
+        'An immutable, timestamped event is never rewritten: you can replay the formation of a belief or a trait, and the "why" of a behavior stays traceable.',
+    },
+    {
+      q: 'What is the difference between intrinsic surprise and external reward?',
+      options: [
+        'None, they are two names for the same signal',
+        'Surprise is the gap between prediction and observation, generated by the agent itself; reward comes from outside',
+        'Reward is faster to compute',
+        'Surprise only concerns emotional memory',
+      ],
+      answer: 1,
+      explain:
+        'AEIF learns by shrinking the gap between what it predicts and what it observes: the signal is internal, unlike the external reward of reinforcement learning.',
+    },
+    {
+      q: 'What does AEIF still lack?',
+      options: [
+        'A way to store events',
+        'A network able to change topology',
+        'The criterion that orients mutation: it knows how to mutate, not yet how to choose what to grow',
+        'An episodic memory',
+      ],
+      answer: 2,
+      explain:
+        'AEIF provides the traceable substrate and already mutates its structure, but its mutations stay random. The engine that orients them is the subject of the SOAG program.',
+    },
+    {
+      q: 'Which layer hosts the emergent personality traits?',
+      options: [
+        'aei-events',
+        'aei-neural',
+        'aei-memory',
+        'aei-identity',
+      ],
+      answer: 3,
+      explain:
+        'aei-identity gathers traits, preferences, values, self-awareness and narrative continuity: this is where personality emerges from accumulated events.',
+    },
+  ]}
+/>
+
+## A personal note
+
+> Personal note (draft to rewrite): building AEIF is what made me feel, physically, the distance between making a system work and understanding why it works. Watching an agent accumulate events and slowly take on a shape of its own is both unsettling and addictive. I do not always know what I am building, and it is precisely that vertigo that keeps me in front of the screen.

@@ -1,0 +1,160 @@
+---
+slug: introduction-soag
+---
+
+import DenseVsSparseCompute from '../../components/research/DenseVsSparseCompute.tsx';
+import Bifurcation1969 from '../../components/research/Bifurcation1969.tsx';
+import PoorVsRichNeuron from '../../components/research/PoorVsRichNeuron.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Les premiers essais de vol imitaient le battement d'ailes des oiseaux : des ornithoptères qui tournaient à la force brute et au mimétisme superficiel. Le vol efficace n'est venu qu'une fois identifié le principe de la portance (une aile fixe, l'aérodynamique), qui ne doit rien à l'imitation du vivant et tout à la compréhension de la raison pour laquelle cela fonctionne. Les modèles de langage d'aujourd'hui sont peut-être dans la phase du battement d'ailes : ils marchent, mais à la force brute, en empilant des paramètres comme on empilait jadis la puissance moteur sur des conceptions inefficaces. La question motrice de SOAG est simple : quel est le principe de portance de l'intelligence ?
+
+## L'hypothese fondamentale
+
+L'hypothèse tient en une phrase, et je la pose en gras parce que tout le reste en découle : **le cerveau ne calcule que ce qui est nécessaire, là où c'est nécessaire, quand c'est nécessaire.** La parcimonie, les décharges, la localité, la plasticité, l'inhibition et les oscillations ne sont pas des mécanismes indépendants : ce sont autant de conséquences de ce principe unique. Un modèle de langage fait exactement l'inverse : il calcule tout, partout, tout le temps.
+
+L'écart se voit mieux qu'il ne se décrit. Lance les deux modes ci-dessous et regarde le coût cumulé diverger : le mode dense paie le réseau entier à chaque pas, le mode creux ne paie que le voisinage stimulé.
+
+<DenseVsSparseCompute client:visible />
+
+## La bifurcation de 1969
+
+L'histoire éclaire le pari. En **1943**, McCulloch et Pitts proposent le neurone logique, sans état : une porte qui voit le présent et rien d'autre. En **1949**, Hebb formule sa règle, les neurones qui s'activent ensemble se renforcent. En **1958**, Rosenblatt construit le perceptron, une machine qui apprend. Puis en **1969**, Minsky et Papert démontrent que le perceptron ne sait pas apprendre le XOR, et déclenchent le premier hiver de l'IA.
+
+Le champ se sépare alors. **Réponse 1** : ajouter des couches. C'est la rétropropagation (1986), puis l'apprentissage profond (2012), puis les grands modèles. **Réponse 2** : enrichir le composant lui-même. C'est la STDP (1998), les réseaux à décharges auto-organisés, et SOAG. **Réponse 3**, plus tardive : concevoir un modèle du monde (LeCun, 2022, JEPA).
+
+<Bifurcation1969 client:visible />
+
+La question motrice de ce dossier, en gras : **la réponse 1 est-elle la seule possible, ou seulement la plus facile compte tenu des outils de 1986 ?**
+
+## Enrichir le composant
+
+C'est le premier axe de SOAG. Un neurone pauvre, à la McCulloch-Pitts, est **sans état** : il ne voit que l'instant présent, et la même entrée donne toujours la même sortie. Un neurone riche porte au contraire un **état interne** dans le temps (potentiel de membrane, fuite, seuil adaptatif, énergie), et son sens émerge de l'interaction collective. Le même train d'entrée produit, dans le neurone riche, une **intégration temporelle** que le pauvre est tout simplement incapable d'exprimer.
+
+Injecte ci-dessous des impulsions trop faibles pour déclencher seules une décharge. Le neurone pauvre ne réagit jamais. Le neurone riche, lui, intègre impulsion après impulsion jusqu'à franchir son seuil et décharger.
+
+<PoorVsRichNeuron client:visible />
+
+## Les six axes
+
+Le programme explore six axes complémentaires. Les quatre premiers forment le noyau irréductible (SOAG-v0).
+
+- **(1) Redéfinir le neurone** : une unité à riche état interne (potentiel, seuil adaptatif, énergie), et non une simple somme pondérée suivie d'une non-linéarité.
+- **(2) Redéfinir la synapse** comme le lieu principal du traitement : typée, dotée de sa propre dynamique temporelle, gouvernée par des règles d'apprentissage purement locales (STDP, apprentissage à trois facteurs).
+- **(3) L'inhibition** comme mécanisme de calcul de première classe, nécessaire à la parcimonie, à la sélection compétitive et à la stabilité dynamique.
+- **(4) Les mécanismes de stabilité** : des contraintes locales (budget d'énergie, homéostasie, mortalité, oubli) qui empêchent la divergence sans aucun contrôle global.
+
+Deux extensions complètent le noyau.
+
+- **(5) L'organisation spatiale émergente** : un espace fonctionnel continu où la distance façonne la connectivité et où les amas émergent de l'activité.
+- **(6) La dynamique temporelle multi-échelle** : chaque composant a sa propre constante de temps, de la décharge (millisecondes) à la réorganisation structurelle (heures ou jours).
+
+## Le moteur manquant
+
+Voici le lien avec mes autres travaux. **SOAG cherche le moteur manquant** de la plasticité structurelle : les règles locales qui décident quoi faire grandir et quoi laisser mourir, sans aucun contrôle central. La relation est nette : AEIF fournit un substrat traçable qui mute au hasard, et SOAG vise à être le critère qui oriente ces mutations.
+
+Ce moteur est précisément la charnière décrite dans le concept transverse de [plasticite structurelle](/research/plasticite-structurelle).
+
+## Une formalisation minimale
+
+Posons les choses proprement. Une règle d'apprentissage locale ne dépend que du décalage temporel relatif entre deux décharges (STDP) :
+
+$$
+\Delta w = f(t_{\text{post}} - t_{\text{pre}})
+$$
+
+La stabilité vient d'un budget d'énergie local plutôt que d'une perte globale. Chaque unité dépense pour décharger et doit rester sous un budget :
+
+$$
+\sum_{k} a_k \le B
+$$
+
+où $a_k$ est l'activité de l'unité $k$ et $B$ le budget. Une phrase suffit à résumer l'esprit : rien ici ne lit un signal d'erreur global, chaque décision est locale.
+
+## Tableau comparatif
+
+Chaque propriété de SOAG existe déjà, isolément, dans la littérature. Le tableau le montre colonne par colonne.
+
+| Propriété                              | Barland & Gil | SMGrNN | MorphSNN | SNN+STDP | Predictive Coding | Infomorphic | SOAG |
+| -------------------------------------- | ------------- | ------ | -------- | -------- | ----------------- | ----------- | ---- |
+| Apprentissage local sans backprop      | oui           | non    | non      | oui      | oui               | oui         | oui  |
+| Topologie émergente                    | oui           | oui    | oui      | non      | non               | non         | oui  |
+| Synapse enrichie, typée et temporelle  | non           | non    | non      | non      | non               | non         | oui  |
+| Inhibition native                      | non           | non    | non      | oui      | non               | non         | oui  |
+| Temporalité multi-échelle              | non           | non    | oui      | non      | non               | non         | oui  |
+| Espace fonctionnel                     | non           | non    | non      | non      | non               | non         | oui  |
+| Neurone à état ou énergie              | non           | non    | oui      | oui      | non               | oui         | oui  |
+| Calcul adaptatif                       | non           | non    | non      | oui      | non               | non         | oui  |
+
+Chaque propriété existe isolément dans la littérature : les réunir dans un cadre unique et cohérent est l'espace de recherche propre de SOAG.
+
+## Ce que SOAG dessine
+
+Ce que dessine ce programme ne ressemble plus à un réseau de neurones au sens classique. C'est un **écosystème computationnel** : un système adaptatif distribué, piloté par les événements, à topologie plastique et à régulation locale. Quatre implications en découlent.
+
+- L'intelligence est un comportement émergent, pas une fonction optimisée.
+- L'architecture est un résultat, pas un choix.
+- Le temps est le médium du calcul, pas une dimension de la représentation.
+- La mémoire est une dynamique, pas un stockage.
+
+Le programme explore jusqu'où cette métaphore peut aller, et où elle cesse d'être productive.
+
+## Teste ta comprehension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Que signifie l'analogie du principe de portance pour l'IA ?",
+      options: [
+        'Que les modèles actuels marchent déjà de façon optimale',
+        "Qu'il faut imiter le cerveau au plus près, neurone par neurone",
+        "Qu'on cherche le principe qui explique pourquoi cela fonctionne, pas une imitation superficielle",
+        'Que la puissance de calcul finira toujours par suffire',
+      ],
+      answer: 2,
+      explain:
+        "La portance ne doit rien à l'imitation des oiseaux et tout à la compréhension du pourquoi. SOAG cherche ce principe pour l'intelligence, pas un mimétisme de surface ni de la force brute.",
+    },
+    {
+      q: 'Que veut dire « le cerveau ne calcule que ce qui est nécessaire » face à un modèle de langage ?',
+      options: [
+        'Le cerveau calcule tout en permanence, comme le modèle',
+        'Le modèle calcule tout, partout, tout le temps, alors que le cerveau reste parcimonieux',
+        'Le cerveau est simplement plus lent que le modèle',
+        "La parcimonie n'a aucun effet sur le coût de calcul",
+      ],
+      answer: 1,
+      explain:
+        'Parcimonie, décharges, localité et inhibition découlent du même principe. Le modèle dense paie le réseau entier à chaque pas, le cerveau ne paie que le voisinage utile.',
+    },
+    {
+      q: 'Quelle est la différence entre un neurone pauvre et un neurone riche ?',
+      options: [
+        'Le pauvre porte un état interne, le riche est sans mémoire',
+        "Le pauvre est sans état et ne voit que l'instant, le riche intègre dans le temps via un état interne",
+        'Les deux sont équivalents, seul le nom change',
+        'Le riche est juste un pauvre avec un seuil plus élevé',
+      ],
+      answer: 1,
+      explain:
+        'Le neurone pauvre (McCulloch-Pitts) est sans état. Le riche porte potentiel, fuite, seuil adaptatif et énergie, ce qui lui permet une intégration temporelle impossible au pauvre.',
+    },
+    {
+      q: "Qu'est-ce qui distingue la réponse 1 de la réponse 2 après 1969 ?",
+      options: [
+        "La réponse 1 enrichit le composant, la réponse 2 empile des couches",
+        "La réponse 1 empile des couches (backprop, profond), la réponse 2 enrichit le composant (STDP, décharges)",
+        'Les deux réponses empilent des couches de la même façon',
+        "La réponse 2 abandonne tout apprentissage local",
+      ],
+      answer: 1,
+      explain:
+        "Réponse 1 : ajouter des couches, jusqu'aux grands modèles. Réponse 2 : enrichir le neurone et la synapse par des règles locales comme la STDP. SOAG explore la seconde.",
+    },
+  ]}
+/>
+
+## Note personnelle
+
+> Note personnelle (brouillon a reecrire) : SOAG est mon pari le plus spéculatif, et miser sur la branche que presque tout le monde a quittée est inconfortable. Je ne suis pas sûr que cela mène quelque part. Mais les questions que ce programme me force à poser (pourquoi le cerveau dépense vingt watts et un modèle cent mégawatts ?) sont précisément celles qui me tiennent éveillé et qui me font lire. Tant que la question reste honnête, je préfère la creuser que la fuir.

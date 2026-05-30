@@ -1,0 +1,268 @@
+---
+slug: introduction-soag
+---
+
+import DenseVsSparseCompute from '../../components/research/DenseVsSparseCompute.tsx';
+import Bifurcation1969 from '../../components/research/Bifurcation1969.tsx';
+import PoorVsRichNeuron from '../../components/research/PoorVsRichNeuron.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Early flight imitated the flapping wings of birds: ornithopters that ran on brute force and superficial mimicry. Efficient flight came only once we identified the principle of lift (a fixed wing, aerodynamics), which owes nothing to imitating biology and everything to understanding why it works. Today's language models may be in the flapping-wings phase: they work, but by brute force, stacking parameters the way we once stacked engine power onto inefficient designs. The motive question of SOAG is simple: what is the lift principle of intelligence?
+
+## The founding hypothesis
+
+The hypothesis fits in one sentence, and I put it in bold because everything else follows from it: **the brain computes only what is necessary, where it is necessary, when it is necessary.** Sparsity, spikes, locality, plasticity, inhibition and oscillations are not independent mechanisms: they are all consequences of this single principle. A language model does the exact opposite: it computes everything, everywhere, all the time.
+
+The gap is easier to see than to describe. Run both modes below and watch the cumulative cost diverge: the dense mode pays for the whole network at every step, the sparse mode pays only for the stimulated neighborhood.
+
+<DenseVsSparseCompute
+  client:visible
+  labels={{
+    helpText:
+      'A language model computes everything, everywhere, all the time. The brain computes only what is strictly necessary. Advance the ticks and watch the cost diverge.',
+    denseLabel: 'Everything, everywhere (dense)',
+    sparseLabel: 'Only what is necessary (sparse)',
+    activeLabel: 'Active cells',
+    costLabel: 'Cumulative cost',
+    tickLabel: 'Tick',
+    resetLabel: 'Reset',
+  }}
+/>
+
+## The 1969 bifurcation
+
+History clarifies the bet. In **1943**, McCulloch and Pitts proposed the logical, stateless neuron: a gate that sees the present and nothing else. In **1949**, Hebb formulated his rule, neurons that fire together wire together. In **1958**, Rosenblatt built the perceptron, a machine that learns. Then in **1969**, Minsky and Papert proved that the perceptron cannot learn XOR, triggering the first AI winter.
+
+The field then split. **Response 1**: add layers. That is backpropagation (1986), then deep learning (2012), then large models. **Response 2**: enrich the component itself. That is STDP (1998), self-organized spiking networks, and SOAG. **Response 3**, later: a designed world model (LeCun, 2022, JEPA).
+
+<Bifurcation1969
+  client:visible
+  nodes={[
+    {
+      id: 'mcculloch-pitts',
+      year: '1943',
+      label: 'McCulloch and Pitts: the logical, stateless neuron',
+      branch: 'trunk',
+    },
+    {
+      id: 'hebb',
+      year: '1949',
+      label: 'Hebb: neurons that fire together wire together',
+      branch: 'trunk',
+    },
+    {
+      id: 'rosenblatt',
+      year: '1958',
+      label: 'Rosenblatt: the learning perceptron',
+      branch: 'trunk',
+    },
+    {
+      id: 'minsky-papert',
+      year: '1969',
+      label: 'Minsky and Papert: the perceptron cannot learn XOR',
+      branch: 'trunk',
+    },
+    {
+      id: 'backprop',
+      year: '1986',
+      label: 'Backpropagation (Rumelhart, Hinton, Williams)',
+      branch: 'response1',
+    },
+    {
+      id: 'alexnet',
+      year: '2012',
+      label: 'Deep learning (AlexNet)',
+      branch: 'response1',
+    },
+    {
+      id: 'llm',
+      year: '2020',
+      label: 'Large language and foundation models',
+      branch: 'response1',
+    },
+    {
+      id: 'stdp',
+      year: '1998',
+      label: 'STDP (Bi and Poo)',
+      branch: 'response2',
+    },
+    {
+      id: 'spiking',
+      year: '2010',
+      label: 'Self-organized spiking networks',
+      branch: 'response2',
+    },
+    {
+      id: 'soag',
+      year: '2024',
+      label: 'SOAG ?',
+      branch: 'response2',
+    },
+    {
+      id: 'jepa',
+      year: '2022',
+      label: 'LeCun: a designed world model (JEPA)',
+      branch: 'response3',
+    },
+  ]}
+  labels={{
+    helpText:
+      'In 1969, the field bifurcates. Pick a branch to follow its path. SOAG explores response 2, long left aside.',
+    response1Title: 'Response 1: stack layers',
+    response2Title: 'Response 2: enrich the component',
+    response3Title: 'Response 3: a designed world model',
+    soagMarker: 'SOAG',
+    resetLabel: 'Reset',
+  }}
+/>
+
+The motive question of this piece, in bold: **is response 1 the only possibility, or just the easiest one given the tools of 1986?**
+
+## Enriching the component
+
+This is SOAG's first axis. A poor neuron, McCulloch-Pitts style, is **stateless**: it sees only the present instant, and the same input always yields the same output. A rich neuron instead carries **internal state** over time (membrane potential, leak, adaptive threshold, energy), and its meaning emerges from collective interaction. The same input train produces, in the rich neuron, a **temporal integration** that the poor one simply cannot express.
+
+Below, inject pulses too weak to fire alone. The poor neuron never reacts. The rich one integrates pulse after pulse until it crosses its threshold and spikes.
+
+<PoorVsRichNeuron
+  client:visible
+  labels={{
+    helpText:
+      'Inject pulses too weak to fire on their own. The poor neuron only sees the instant and never reacts. The rich neuron integrates over time and eventually spikes.',
+    poorLabel: 'Poor neuron (stateless)',
+    richLabel: 'Rich neuron (potential, leak, threshold)',
+    potentialLabel: 'Potential',
+    thresholdLabel: 'Threshold',
+    energyLabel: 'Energy',
+    injectLabel: 'Inject a pulse',
+    resetLabel: 'Reset',
+    spikeLabel: 'Spike',
+  }}
+/>
+
+## The six axes
+
+The program explores six complementary axes. The first four form the irreducible core (SOAG-v0).
+
+- **(1) Redefine the neuron**: a unit with rich internal state (potential, adaptive threshold, energy), not a mere weighted sum followed by a nonlinearity.
+- **(2) Redefine the synapse** as the main locus of processing: typed, with its own temporal dynamics, governed by purely local learning rules (STDP, three-factor learning).
+- **(3) Inhibition** as a first-class computational mechanism, needed for sparsity, competitive selection and dynamic stability.
+- **(4) Stability mechanisms**: local constraints (energy budget, homeostasis, mortality, forgetting) that prevent divergence without any global control.
+
+Two extensions complete the core.
+
+- **(5) Emergent spatial organization**: a continuous functional space where distance shapes connectivity and clusters emerge from activity.
+- **(6) Multi-scale temporal dynamics**: each component with its own time constant, from the spike (milliseconds) to structural reorganization (hours or days).
+
+## The missing engine
+
+Here is the link with my other work. **SOAG looks for the missing engine** of structural plasticity: the local rules that decide what to grow and what to let die, with no central control. The relationship is sharp: AEIF provides a traceable substrate that mutates at random, and SOAG aims to be the criterion that orients those mutations.
+
+This engine is exactly the hinge described in the cross-cutting concept of [structural plasticity](/en/research/plasticite-structurelle).
+
+## A minimal formalization
+
+Let us state things cleanly. A local learning rule depends only on the relative timing of two spikes (STDP):
+
+$$
+\Delta w = f(t_{\text{post}} - t_{\text{pre}})
+$$
+
+Stability comes from a local energy budget rather than a global loss. Each unit spends to fire and must stay under a budget:
+
+$$
+\sum_{k} a_k \le B
+$$
+
+where $a_k$ is the activity of unit $k$ and $B$ the budget. One sentence captures the spirit: nothing here reads a global error signal, every decision is local.
+
+## A comparative table
+
+Every property of SOAG already exists, in isolation, in the literature. The table shows it column by column.
+
+| Property                                | Barland & Gil | SMGrNN | MorphSNN | SNN+STDP | Predictive Coding | Infomorphic | SOAG |
+| --------------------------------------- | ------------- | ------ | -------- | -------- | ----------------- | ----------- | ---- |
+| Local learning without backprop         | yes           | no     | no       | yes      | yes               | yes         | yes  |
+| Emergent topology                       | yes           | yes    | yes      | no       | no                | no          | yes  |
+| Enriched synapse, typed and temporal    | no            | no     | no       | no       | no                | no          | yes  |
+| Native inhibition                       | no            | no     | no       | yes      | no                | no          | yes  |
+| Multi-scale temporal                    | no            | no     | yes      | no       | no                | no          | yes  |
+| Functional space                        | no            | no     | no       | no       | no                | no          | yes  |
+| Neuron with state or energy             | no            | no     | yes      | yes      | no                | yes         | yes  |
+| Adaptive compute                        | no            | no     | no       | yes      | no                | no          | yes  |
+
+Each property exists in isolation in the literature: unifying them in one coherent framework is SOAG's research space.
+
+## What SOAG draws
+
+What this program draws no longer looks like a neural network in the classical sense. It is a **computational ecosystem**: a distributed, event-driven adaptive system with plastic topology and local regulation. Four implications follow.
+
+- Intelligence is an emergent behavior, not an optimized function.
+- Architecture is a result, not a choice.
+- Time is the medium of computation, not a dimension of representation.
+- Memory is a dynamic, not a storage.
+
+The program explores how far this metaphor can go, and where it stops being productive.
+
+## Test your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'What does the lift-principle analogy mean for AI?',
+      options: [
+        'That current models already work optimally',
+        'That we must imitate the brain as closely as possible, neuron by neuron',
+        'That we seek the principle explaining why it works, not a superficial imitation',
+        'That compute power will always end up being enough',
+      ],
+      answer: 2,
+      explain:
+        'Lift owes nothing to imitating birds and everything to understanding why. SOAG seeks that principle for intelligence, not surface mimicry nor brute force.',
+    },
+    {
+      q: 'What does "the brain computes only what is necessary" imply versus a language model?',
+      options: [
+        'The brain computes everything constantly, like the model',
+        'The model computes everything, everywhere, all the time, while the brain stays sparse',
+        'The brain is simply slower than the model',
+        'Sparsity has no effect on compute cost',
+      ],
+      answer: 1,
+      explain:
+        'Sparsity, spikes, locality and inhibition follow from the same principle. The dense model pays for the whole network at every step, the brain pays only for the useful neighborhood.',
+    },
+    {
+      q: 'What is the difference between a poor and a rich neuron?',
+      options: [
+        'The poor one carries internal state, the rich one has no memory',
+        'The poor one is stateless and sees only the instant, the rich one integrates over time via internal state',
+        'They are equivalent, only the name changes',
+        'The rich one is just a poor one with a higher threshold',
+      ],
+      answer: 1,
+      explain:
+        'The poor neuron (McCulloch-Pitts) is stateless. The rich one carries potential, leak, adaptive threshold and energy, allowing a temporal integration impossible for the poor one.',
+    },
+    {
+      q: 'What distinguishes response 1 from response 2 after 1969?',
+      options: [
+        'Response 1 enriches the component, response 2 stacks layers',
+        'Response 1 stacks layers (backprop, deep), response 2 enriches the component (STDP, spikes)',
+        'Both responses stack layers in the same way',
+        'Response 2 abandons all local learning',
+      ],
+      answer: 1,
+      explain:
+        'Response 1: add layers, up to large models. Response 2: enrich the neuron and synapse through local rules like STDP. SOAG explores the second.',
+    },
+  ]}
+/>
+
+## A personal note
+
+> Personal note (draft to rewrite): SOAG is my most speculative bet, and betting on the branch almost everyone left behind is uncomfortable. I am not sure it leads anywhere. But the questions this program forces me to ask (why does the brain spend twenty watts and a model a hundred megawatts?) are exactly the ones that keep me up at night and keep me reading. As long as the question stays honest, I would rather dig into it than run from it.

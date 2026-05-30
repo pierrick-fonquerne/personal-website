@@ -1,0 +1,33 @@
+slug: introduction-aeif
+type: exploration
+theme: ai
+subtheme: AEIF
+status: draft
+publishedAt: 2026-05-30
+tags:
+  - aeif
+  - event-sourcing
+  - neuroplasticite
+  - apprentissage-continu
+  - predictive-coding
+  - personnalite-emergente
+  - from-scratch
+papers:
+  - title: 'The free-energy principle: a unified brain theory?'
+    authors: 'Karl Friston (2010)'
+    href: 'https://www.nature.com/articles/nrn2787'
+  - title: 'Evolving Neural Networks through Augmenting Topologies (NEAT)'
+    authors: 'Stanley & Miikkulainen (2002)'
+    href: 'https://doi.org/10.1162/106365602320169811'
+  - title: 'A Path Towards Autonomous Machine Intelligence'
+    authors: 'Yann LeCun (2022)'
+    href: 'https://openreview.net/forum?id=BZ5a1r-kVsf'
+published: false
+fr:
+  title: "AEIF : une intelligence qui naît de son vécu"
+  tagline: "Construire un esprit par accumulation d'événements vécus, immuables et rejouables, au lieu de l'entraîner une fois pour toutes sur des corpus."
+  summary: "AEIF est mon programme d'intelligence incarnée : pas de pré-entraînement figé, mais un agent qui apprend en vivant. Chaque expérience devient un événement horodaté qui nourrit sa mémoire, modifie son réseau et forge peu à peu une personnalité traçable."
+en:
+  title: 'AEIF: an intelligence born from its own experience'
+  tagline: 'Building a mind by accumulating lived, immutable, replayable events, instead of training it once and for all on corpora.'
+  summary: 'AEIF is my embodied-intelligence program: no frozen pre-training, but an agent that learns by living. Each experience becomes a timestamped event that feeds its memory, reshapes its network, and slowly forges a traceable personality.'

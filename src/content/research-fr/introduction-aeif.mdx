@@ -1,0 +1,174 @@
+---
+slug: introduction-aeif
+---
+
+import EventReplayTimeline from '../../components/research/EventReplayTimeline.tsx';
+import SixLayerEventBus from '../../components/research/SixLayerEventBus.tsx';
+import PredictiveCodingLoop from '../../components/research/PredictiveCodingLoop.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Un enfant ne lit pas dix milliards de mots pour apprendre ce qu'est le feu. Il tend la main vers une flamme, ressent la douleur, et construit un savoir ancré dans sa propre expérience vécue : horodatée, émotionnelle, sensorielle, irréductiblement la sienne. AEIF pose une question simple et vertigineuse : pourrait-on bâtir une intelligence de cette manière, elle aussi ?
+
+## Le probleme des LLM
+
+Les grands modèles de langage sont impressionnants, mais leur intelligence repose sur un pari particulier qu'il faut regarder en face.
+
+- Ils prédisent des **tokens**, pas des **concepts** : ils estiment le mot suivant le plus probable, sans nécessairement manipuler l'idée qui se cache derrière.
+- Une fois entraînés, ils sont **figés** : leurs poids ne bougent plus, ils n'apprennent plus de leurs interactions.
+- Leur personnalité est **simulée par un prompt** : on leur dicte un rôle, ils ne le sont pas devenus.
+- Ils n'ont **ni corps ni ancrage** : leurs mots ne sont reliés à aucune expérience sensorielle, et faute de prise sur le réel, ils hallucinent.
+
+D'où la thèse qui guide tout AEIF : **l'intelligence naît de l'expérience vécue, pas de la statistique sur des corpus.**
+
+## Tout est evenement
+
+Le cœur d'AEIF est un déplacement de regard. L'**event sourcing**, d'ordinaire un simple motif logiciel, y devient un mécanisme **cognitif**.
+
+Chaque expérience devient un **événement** immuable, horodaté et typé. Cet événement ne disparaît jamais : il est stocké dans la **mémoire épisodique**, il consolide la **mémoire sémantique**, il modifie le **réseau de neurones**, il colore l'**état émotionnel**, et il renforce ou affaiblit des **traits de personnalité**.
+
+Le gain unique de cette approche : on peut **rejouer** la formation d'une croyance, d'un trait, d'une peur. Le « pourquoi » d'un comportement cesse d'être une boîte noire. Il devient **traçable**.
+
+## Rejouer une croyance
+
+Avant la théorie, la sensation. Voici la mémoire d'un agent qui découvre le feu, événement après événement.
+
+<EventReplayTimeline client:visible />
+
+Le trait « peur du feu » n'a été écrit nulle part. Il **émerge** uniquement des événements accumulés : retire-les, et le trait s'efface. Rien n'est codé en dur, tout est vécu.
+
+## L'architecture en six couches
+
+AEIF s'organise en six couches qui ne communiquent **que par événements**. Aucune ne connaît l'intérieur des autres : elles ne partagent qu'un bus et un protocole. De bas en haut :
+
+- **aei-events** : le protocole et le bus d'événements partagés, fondation de tout le reste.
+- **aei-neural** : le calcul neuronal codé à la main en Rust, à topologie dynamique, avec apprentissage hebbien.
+- **aei-perception** et **aei-motor** : les sens et le corps, l'interface avec le monde.
+- **aei-memory** : les mémoires épisodique, sémantique, procédurale et émotionnelle, avec consolidation, oubli sélectif et rappel associatif.
+- **aei-cognition** : le raisonnement, la planification, l'attention, les émotions, les motivations et la décision.
+- **aei-identity** : les traits, les préférences, les valeurs, la conscience de soi et la continuité narrative.
+
+Émets un événement sensoriel et regarde-le remonter les couches, transformé à chaque étage.
+
+<SixLayerEventBus client:visible />
+
+## Apprendre de la surprise
+
+Comment une telle architecture apprend-elle ? Par le **codage prédictif** (Friston). Le cycle est limpide : **prédire**, **observer**, **comparer**, puis **apprendre de l'erreur**.
+
+Quand la surprise est **faible**, l'observation confirme le modèle, qui se **renforce**. Quand la surprise est **forte**, l'observation contredit le modèle, qui doit **se modifier**. Point crucial : le signal d'apprentissage est la **surprise intrinsèque**, pas une récompense externe comme en apprentissage par renforcement. L'agent n'attend pas qu'on le félicite, il se corrige de lui-même.
+
+<PredictiveCodingLoop client:visible />
+
+Place l'observation loin de la prédiction pour provoquer une surprise forte, puis itère plusieurs fois : tu verras l'écart fondre à mesure que le modèle se rapproche du réel.
+
+## Une topologie qui se reecrit
+
+Le réseau d'AEIF n'a pas une forme fixe. Il pratique la **neuroplasticité** : des neurones et des synapses sont **créés** quand de nouveaux concepts apparaissent, **renforcés** par la répétition (règle de Hebb), **élagués** par le désuétude. Ce n'est pas seulement les poids qui changent : c'est la **topologie elle-même** qui évolue.
+
+C'est ici qu'AEIF rencontre un autre de mes programmes. **AEIF fournit le substrat** : un réseau où chaque mutation de structure est un événement immuable, tracé et rejouable. Mais ses mutations restent **aléatoires** : il sait muter, pas encore choisir. Le moteur manquant, ces règles locales qui décident quoi faire grandir et quoi laisser mourir, c'est l'objet du programme **SOAG**. Pour creuser ce point de jonction, voir le concept partagé de [plasticite structurelle](/research/plasticite-structurelle).
+
+## Une formalisation minimale
+
+Posons les choses proprement. Un **événement vécu** est un triplet $e = (t, \tau, \rho)$ : un horodatage $t$, un type $\tau$, et une charge utile $\rho$.
+
+L'**état de l'agent** à l'instant $t$ est un pli (un _fold_) sur l'historique des événements, à partir d'un état initial $S_0$ :
+
+$$
+S_t = \mathrm{fold}(S_0, \{e_i : t_i \le t\})
+$$
+
+L'apprentissage, lui, est gouverné par la **surprise**, l'écart entre l'observation $o$ et la prédiction $\hat{o}$ :
+
+$$
+\sigma = \lVert o - \hat{o} \rVert
+$$
+
+Quand $\sigma$ est petit, le modèle est confirmé et se renforce ; quand $\sigma$ est grand, le réseau doit changer.
+
+## Trois paris, trois familles
+
+AEIF n'est pas seul à chercher une intelligence ancrée. Le situer face à deux autres familles éclaire son pari propre.
+
+| Propriété          | LLMs                       | World Models (JEPA)              | AEIF                              |
+| ------------------ | -------------------------- | -------------------------------- | --------------------------------- |
+| Source             | corpus de textes massifs   | données du monde réel            | événements vécus                  |
+| Apprentissage      | pré-entraînement figé      | auto-supervisé sur vidéo+physique | continu, par expérience           |
+| Architecture       | transformeur statique      | hiérarchie JEPA conçue           | réseaux dynamiques codés à la main |
+| Mémoire            | fenêtre de contexte        | persistante                      | event-sourcée, multi-types        |
+| Personnalité       | simulée par un prompt      | non traitée                      | émergente de l'expérience         |
+| Ancrage            | aucun                      | physique                         | sensorimoteur et émotionnel       |
+
+Chaque colonne est un pari cohérent. Celui d'AEIF est le moins exploré des trois.
+
+## Limites et questions ouvertes
+
+Il serait malhonnête de présenter tout cela comme résolu. Les chantiers ouverts sont nombreux.
+
+- **Représentation** : tout neuronal, ou hybride neuro-symbolique ?
+- **Quantifier la surprise** : quelle métrique fait foi, et sur quel espace ?
+- **Former des hypothèses** : comment l'agent en génère-t-il, et comment les teste-t-il ?
+- **Consolider ou oublier** : quand graver un souvenir, quand le laisser s'effacer ?
+- **Quoi prédire, et quand** : sur quelle modalité et à quel horizon porter la prédiction ?
+- **Ancrer les concepts** : comment relier une idée abstraite à l'expérience qui la fonde ?
+- **Temps et causalité** : comment raisonner sur l'ordre et les causes des événements ?
+- **Émergence de la personnalité** : comment un trait naît-il vraiment des événements ? C'est le but final.
+
+## Teste ta comprehension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Qu'est-ce qui rend un événement immuable, et pourquoi est-ce important ?",
+      options: [
+        "Il ne peut plus être modifié une fois enregistré, ce qui rend l'histoire de l'agent traçable et rejouable",
+        'Il est chiffré, ce qui le protège des attaques',
+        'Il est stocké deux fois, par sécurité',
+        'Il disparaît après usage, pour économiser la mémoire',
+      ],
+      answer: 0,
+      explain:
+        "Un événement immuable et horodaté ne se réécrit jamais : on peut rejouer la formation d'une croyance ou d'un trait, et le « pourquoi » d'un comportement reste traçable.",
+    },
+    {
+      q: 'Quelle est la différence entre surprise intrinsèque et récompense externe ?',
+      options: [
+        'Aucune, ce sont deux noms du même signal',
+        "La surprise est l'écart entre prédiction et observation, généré par l'agent lui-même ; la récompense vient de l'extérieur",
+        "La récompense est plus rapide à calculer",
+        'La surprise ne concerne que la mémoire émotionnelle',
+      ],
+      answer: 1,
+      explain:
+        "AEIF apprend en réduisant l'écart entre ce qu'il prédit et ce qu'il observe : le signal est interne, contrairement à la récompense externe de l'apprentissage par renforcement.",
+    },
+    {
+      q: "Que manque-t-il encore à AEIF ?",
+      options: [
+        'Un moyen de stocker des événements',
+        'Un réseau capable de changer de topologie',
+        "Le critère qui oriente la mutation : il sait muter, pas encore choisir quoi faire grandir",
+        'Une mémoire épisodique',
+      ],
+      answer: 2,
+      explain:
+        "AEIF fournit le substrat traçable et mute déjà sa structure, mais ses mutations restent aléatoires. Le moteur qui les oriente est l'objet du programme SOAG.",
+    },
+    {
+      q: 'Quelle couche héberge les traits de personnalité émergents ?',
+      options: [
+        'aei-events',
+        'aei-neural',
+        'aei-memory',
+        'aei-identity',
+      ],
+      answer: 3,
+      explain:
+        "aei-identity rassemble traits, préférences, valeurs, conscience de soi et continuité narrative : c'est là que la personnalité émerge des événements accumulés.",
+    },
+  ]}
+/>
+
+## Note personnelle
+
+> Note personnelle (brouillon a reecrire) : construire AEIF est ce qui m'a fait sentir, physiquement, la distance entre faire marcher un système et comprendre pourquoi il marche. Regarder un agent accumuler des événements et prendre lentement une forme qui lui est propre est à la fois troublant et addictif. Je ne sais pas toujours ce que je suis en train de fabriquer, et c'est précisément ce vertige qui me retient devant l'écran.
