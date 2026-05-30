@@ -2,21 +2,360 @@
 course: neural-networks-foundations
 order: 6
 title: Forward pass and loss functions
-subtitle: 'From input to prediction, then how to measure the error.'
-estimatedMinutes: 12
+subtitle: 'From input to prediction, then how to give it a score.'
+estimatedMinutes: 20
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import ForwardPassStepper from '../../../components/learning/ForwardPassStepper.tsx';
+import LossComparator from '../../../components/learning/LossComparator.tsx';
+import LossLandscape from '../../../components/learning/LossLandscape.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 5, we saw that a multilayer network can express almost any function, provided its weights are set well. For XOR, we set them by hand. But by hand does not scale: a real network has millions of weights. So we want to set them automatically.
+
+The very first building block of that automation is to know two things: how to compute the network's output for a given input, then how to give that output a score that says how wrong it is. Learning, for a network, will be the search to improve that score. This chapter builds those two bricks. It does not yet compute any weight correction: it sets the playing field on which, from chapter 7 on, the gradient will operate.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the matrix and the matrix-vector product (chapter 2), the activation functions ReLU, sigmoid and softmax (chapter 3), the notation of a layer $a = f(Wx + b)$ (chapter 5).
+
+**What you do not need to know**: derivatives (chapter 7), backpropagation (chapter 8) and gradient descent (chapter 9). Here we compute and we score, but we do not correct yet.
+
+**Level of rigour**: one numerical example carried through in full, three loss functions defined and justified, a geometric reading of learning as a descent into a landscape, four pen-and-paper exercises with detailed solutions.
+
 </Callout>
 
-## What you will learn
+## Act 1: computing the prediction
 
-- Forward propagation: chaining computations layer by layer
-- MSE and cross-entropy: when to use which
-- Loss surfaces and the geometric intuition of learning
+The <Term slug="forward-pass">forward pass</Term> is the computation that turns an input into a prediction, traversing the network layer by layer, from input to output. Each layer applies its formula $a = f(Wx + b)$, and its output becomes the input of the next.
 
-The forward pass produces a prediction. The loss function measures how wrong it is. Together they set the playing field on which the gradient operates.
+Take a small 3-class classifier: two inputs, a hidden layer of two neurons, an output layer of three neurons. Feed it the input $x = (1, 2)$.
+
+**The hidden layer.** Its weights and biases are
+
+$$
+W^{(1)} = \begin{pmatrix} 0.5 & -0.5 \\ 1 & 0.5 \end{pmatrix}, \qquad b^{(1)} = \begin{pmatrix} 0 \\ -1 \end{pmatrix}.
+$$
+
+We first compute the weighted sum of each neuron, the pre-activation $z^{(1)} = W^{(1)}x + b^{(1)}$:
+
+$$
+z^{(1)}_1 = 0.5 \cdot 1 - 0.5 \cdot 2 + 0 = -0.5,
+$$
+
+$$
+z^{(1)}_2 = 1 \cdot 1 + 0.5 \cdot 2 - 1 = 1.
+$$
+
+Then we apply the activation. With ReLU, which replaces every negative by zero:
+
+$$
+h = \mathrm{ReLU}(z^{(1)}) = \big(\max(0, -0.5),\; \max(0, 1)\big) = (0,\; 1).
+$$
+
+The first hidden neuron switched off, the second stayed active.
+
+**The output layer.** Its weights and biases are
+
+$$
+W^{(2)} = \begin{pmatrix} 1 & 0 \\ 0 & 2 \\ 1 & 1 \end{pmatrix}, \qquad b^{(2)} = \begin{pmatrix} 0 \\ 0 \\ -1 \end{pmatrix}.
+$$
+
+We compute the three pre-activations, here called the logits $z^{(2)} = W^{(2)}h + b^{(2)}$:
+
+$$
+z^{(2)} = (\,0,\; 2,\; 0\,).
+$$
+
+**From scores to probabilities.** Three logits are three arbitrary numbers. For a classifier we want three probabilities, positive and summing to $1$. That is the role of the <Term slug="softmax">softmax</Term> function:
+
+$$
+\mathrm{softmax}(z)_k = \frac{e^{z_k}}{\sum_j e^{z_j}}.
+$$
+
+On our logits $(0, 2, 0)$:
+
+$$
+\hat{y} = \frac{(\,e^{0},\; e^{2},\; e^{0}\,)}{e^{0} + e^{2} + e^{0}} = \frac{(\,1,\; e^{2},\; 1\,)}{2 + e^{2}} \approx (0.11,\; 0.79,\; 0.11).
+$$
+
+The network predicts class 2 with about $79\%$ confidence. That is a full forward pass: from $x$ to a probability distribution.
+
+Step through it yourself, and toggle the hidden activation between ReLU and sigmoid to see how each one transforms the same input.
+
+<ForwardPassStepper client:visible locale="en" />
+
+Three things to watch while playing:
+
+- At each step, the active layer lights up in the diagram. Information always moves from input to output, never backward.
+- Toggle from ReLU to sigmoid: the same input produces different hidden values $h$, but the predicted class stays 2. The network's structure matters as much as the exact values.
+- The last step, softmax, turns three arbitrary logits into three probabilities that sum to $1$.
+
+## Act 2: giving a score
+
+We can compute a prediction. It remains to say how good it is. A <Term slug="fonction-cout">loss function</Term> takes the prediction and the target, and returns a single number: the score. The larger the number, the more wrong the network. Learning will be making that number smaller.
+
+Not all tasks are scored the same way. Let us look at the two big families.
+
+### Regression: mean squared error
+
+When we predict a continuous quantity (a price, a temperature), it is regression. The natural score is the <Term slug="erreur-quadratique-moyenne">mean squared error</Term> (MSE), the average of the squared gaps between prediction and target:
+
+$$
+\mathrm{MSE} = \frac{1}{n} \sum_{i=1}^{n} (\hat{y}_i - y_i)^2.
+$$
+
+Why the square, and not the absolute value? For two reasons. First, the square penalizes large gaps far more than small ones: being off by $10$ costs a hundred times more than being off by $1$, not ten times. Second, the square is smooth, differentiable everywhere, whereas the absolute value has a sharp corner at zero. That smoothness will be precious in chapter 7, when we look for the slope.
+
+### Classification: cross-entropy
+
+In classification, the target is not a number but a class. The prediction, on the other hand, is a probability. Could we reuse the MSE between the predicted probability and the target? We could, but it would be a poor choice, and the reason is instructive.
+
+Imagine a binary task (target $t$ equal to $0$ or $1$) where the model predicts the probability $p$ that the target is $1$. If the true answer is $1$ and the model announces $p = 0.01$, it is wrong with total confidence. We would want a score that blows up in that case. Yet the MSE caps out: $(0.01 - 1)^2 \approx 0.98$, barely less than for a hesitation at $p = 0.5$.
+
+The <Term slug="entropie-croisee">cross-entropy</Term> for the binary case fixes this:
+
+$$
+H = -\big[\,t \ln p + (1 - t) \ln(1 - p)\,\big].
+$$
+
+When the target is $1$, it reduces to $H = -\ln p$. If $p$ is close to $1$, $H$ is close to $0$: right answer, small score. But if $p$ tends to $0$, $-\ln p$ tends to infinity: the score explodes. That is exactly the punishment we wanted for confident error.
+
+### Several classes: softmax and one-hot target
+
+For our 3-class classifier, the output is the softmax distribution $\hat{y}$ from Act 1. The target is encoded one-hot: a vector that is $1$ on the correct class and $0$ elsewhere. For a true class 2, the target is $y = (0, 1, 0)$.
+
+The multiclass cross-entropy generalizes the binary version:
+
+$$
+H = -\sum_{k} y_k \ln \hat{y}_k = -\ln \hat{y}_c,
+$$
+
+where $c$ is the true class. Since the target is one-hot, all terms vanish except the one for the correct class. The score therefore depends only on the probability the model gave to the right answer. On our example, $-\ln(0.79) \approx 0.24$: small score, the network was right and confident. Had the true class been 1, the score would have been $-\ln(0.11) \approx 2.2$.
+
+Compare the two scores side by side. Drag the prediction and watch which one explodes.
+
+<LossComparator client:visible locale="en" />
+
+Three things to watch while playing:
+
+- In binary classification, push $p$ toward the wrong end: cross-entropy heads to infinity, while MSE caps out around $1$. That is why we prefer cross-entropy for classifying.
+- The "confident and wrong" banner lights up when the model asserts a wrong answer with confidence. The score must punish it severely, and it does.
+- In 3-class mode, change the logits: softmax redistributes the probabilities, and cross-entropy looks only at the one for the true class.
+
+## Act 3: the cost landscape
+
+We have a score. But what does that score depend on? The training data is fixed once and for all. What can change is the network's weights. The score is therefore a function of the weights.
+
+Imagine a network with only two weights, $w_1$ and $w_2$. To each pair $(w_1, w_2)$ corresponds a score. We can plot that score as an altitude above the plane of weights: we get a landscape, a <Term slug="surface-de-cout">cost surface</Term>. Good networks sit in the valleys, bad ones on the peaks.
+
+Learning then takes on a clear geometric meaning: it is descending toward a valley of this landscape. The map below shows the cost surface of a small two-weight model. Move the point and read the score.
+
+<LossLandscape client:visible locale="en" />
+
+Three things to watch while playing:
+
+- The landscape is a bowl: a single valley, marked with a cross. It is the weight pair that minimizes the score.
+- Move the point: the farther from the valley, the higher the score. It depends only on the weights, the data staying fixed.
+- This chapter shows the scenery. Knowing which direction to descend to reach the valley is the subject of chapters 7 to 9.
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line.
+
+**Exercise 1.** Reuse the network from Act 1 (same $W^{(1)}, b^{(1)}, W^{(2)}, b^{(2)}$, ReLU hidden activation), but with the input $x = (2, 0)$. Compute $z^{(1)}$, then $h$, then the logits $z^{(2)}$, and give the predicted class (the largest logit, no need to compute the softmax).
+
+<Callout kind="tip" title="Solution to exercise 1: a forward pass by hand">
+**Step 1.** Hidden pre-activations.
+
+$$
+z^{(1)}_1 = 0.5 \cdot 2 - 0.5 \cdot 0 + 0 = 1,
+$$
+
+$$
+z^{(1)}_2 = 1 \cdot 2 + 0.5 \cdot 0 - 1 = 1.
+$$
+
+**Step 2.** ReLU activation. Both values are positive, so they pass through unchanged.
+
+$$
+h = (\,1,\; 1\,).
+$$
+
+**Step 3.** Output logits.
+
+$$
+z^{(2)} = (\,1 \cdot 1 + 0 \cdot 1 + 0,\;\; 0 \cdot 1 + 2 \cdot 1 + 0,\;\; 1 \cdot 1 + 1 \cdot 1 - 1\,) = (\,1,\; 2,\; 1\,).
+$$
+
+**Result.** The largest logit is the second one: the network predicts class 2.
+
+</Callout>
+
+**Exercise 2.** A regression model predicts $\hat{y} = (3, 5, 2)$ for three examples whose targets are $y = (2, 5, 4)$. Compute the mean squared error.
+
+<Callout kind="tip" title="Solution to exercise 2: a mean squared error">
+**Step 1.** The gaps, one per example.
+
+$$
+3 - 2 = 1, \qquad 5 - 5 = 0, \qquad 2 - 4 = -2.
+$$
+
+**Step 2.** The squares.
+
+$$
+1^2 = 1, \qquad 0^2 = 0, \qquad (-2)^2 = 4.
+$$
+
+**Step 3.** The average.
+
+$$
+\mathrm{MSE} = \frac{1 + 0 + 4}{3} = \frac{5}{3}.
+$$
+
+**Result.** $\mathrm{MSE} = \tfrac{5}{3} \approx 1.67$.
+
+</Callout>
+
+**Exercise 3.** Target $t = 1$. Compute the binary cross-entropy $H = -\ln p$ for $p = 0.9$, then for $p = 0.1$, then for $p = 0.01$. Each time compare with the MSE $(p - 1)^2$. What does cross-entropy punish that MSE lets slide?
+
+<Callout kind="tip" title="Solution to exercise 3: why not MSE for classifying">
+**Step 1.** Case $p = 0.9$ (right answer, confident).
+
+$$
+H = -\ln(0.9) \approx 0.11, \qquad (0.9 - 1)^2 = 0.01.
+$$
+
+**Step 2.** Case $p = 0.1$ (wrong answer, fairly confident).
+
+$$
+H = -\ln(0.1) \approx 2.30, \qquad (0.1 - 1)^2 = 0.81.
+$$
+
+**Step 3.** Case $p = 0.01$ (wrong answer, very confident).
+
+$$
+H = -\ln(0.01) \approx 4.61, \qquad (0.01 - 1)^2 \approx 0.98.
+$$
+
+**Result.** As the model is wrong with growing confidence, cross-entropy climbs without bound ($0.11$, then $2.30$, then $4.61$), while MSE caps out below $1$. Cross-entropy punishes confident error, MSE almost ignores it.
+
+</Callout>
+
+**Exercise 4.** A 3-class classifier produces the logits $z = (2, 1, 0)$. Compute the softmax probabilities, then the cross-entropy if the true class is class 1 (one-hot $y = (1, 0, 0)$).
+
+<Callout kind="tip" title="Solution to exercise 4: softmax then cross-entropy">
+**Step 1.** The exponentials of the logits.
+
+$$
+e^{2} \approx 7.39, \qquad e^{1} \approx 2.72, \qquad e^{0} = 1.
+$$
+
+**Step 2.** Their sum, the denominator.
+
+$$
+7.39 + 2.72 + 1 = 11.11.
+$$
+
+**Step 3.** The softmax probabilities.
+
+$$
+\hat{y} \approx \Big(\tfrac{7.39}{11.11},\; \tfrac{2.72}{11.11},\; \tfrac{1}{11.11}\Big) \approx (0.67,\; 0.24,\; 0.09).
+$$
+
+**Step 4.** Cross-entropy looks only at the true class, class 1.
+
+$$
+H = -\ln(\hat{y}_1) = -\ln(0.67) \approx 0.41.
+$$
+
+**Result.** Probabilities $\approx (0.67,\; 0.24,\; 0.09)$, cross-entropy $\approx 0.41$.
+
+</Callout>
+
+## In one sentence
+
+The forward pass computes the prediction by propagating the input layer by layer, the loss function gives it a score, and all of learning will be finding the weights that minimize that score in the cost landscape.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'In a forward pass, which way does information flow?',
+      options: [
+        'From input to output, layer after layer',
+        'From output to input',
+        'In both directions at once',
+        'Only inside the hidden layer',
+      ],
+      answer: 0,
+      explain:
+        'The forward pass propagates the input toward the output, one layer after another. The reverse direction will be backpropagation, in chapter 8.',
+    },
+    {
+      q: 'What is the softmax function for at the output of a classifier?',
+      options: [
+        'To compute the derivative of the loss',
+        'To turn arbitrary scores into probabilities that sum to 1',
+        'To make the network deeper',
+        'To remove useless neurons',
+      ],
+      answer: 1,
+      explain:
+        'Softmax turns real-valued logits into a probability distribution: positive values whose sum is 1.',
+    },
+    {
+      q: 'Why do we prefer cross-entropy over MSE for classification?',
+      options: [
+        'It is faster to compute',
+        'It does not need a target',
+        'It punishes a confident, wrong prediction far more',
+        'It always returns zero',
+      ],
+      answer: 2,
+      explain:
+        'Cross-entropy tends to infinity when the model gives a near-zero probability to the correct class, where MSE stays bounded.',
+    },
+    {
+      q: 'On the cost surface, what varies from one point to another?',
+      options: [
+        'The number of layers',
+        'The training data',
+        'The network weights',
+        'The activation function',
+      ],
+      answer: 2,
+      explain:
+        'We fix the data and vary the weights. A point altitude is the cost obtained with those weights.',
+    },
+    {
+      q: 'What does the valley (the minimum) of the cost surface represent?',
+      options: [
+        'The most frequent class',
+        'The weight set that minimizes the cost',
+        'The deepest network',
+        'The ideal learning rate',
+      ],
+      answer: 1,
+      explain:
+        'The valley is the weight set of minimal cost. Reaching it is the goal of learning, through gradient descent (chapters 7 to 9).',
+    },
+  ]}
+  submitLabel="Submit"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Toward chapter 7
+
+We now know how to compute a network's score and read it as an altitude in the cost landscape. The decisive question remains: in which direction should we change each weight to lower that score? We need to know which way the surface tilts around the current point. That is exactly what a derivative measures. Chapter 7 introduces derivatives and the chain rule, the tool that will turn this static landscape into a path of descent.
+
+## Sources
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapters 5 and 6. https://www.deeplearningbook.org
+- Bishop, C. M. (2006). _Pattern Recognition and Machine Learning_. Springer. Chapters 4 and 5 (cross-entropy).
+- Bridle, J. S. (1990). Probabilistic interpretation of feedforward classification network outputs, with relationships to statistical pattern recognition. In _Neurocomputing_, Springer. DOI 10.1007/978-3-642-76153-9_28 (origin of softmax).

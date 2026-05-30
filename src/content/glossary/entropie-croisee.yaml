@@ -1,0 +1,13 @@
+slug: entropie-croisee
+fr:
+  term: Entropie croisée
+  definition: Fonction de coût pour la classification qui mesure l'écart entre la distribution prédite et la distribution cible. Elle vaut moins le logarithme de la probabilité attribuée à la bonne classe, donc elle explose quand le modèle est confiant et se trompe. Couplée à la fonction softmax, c'est le coût standard du multi-classe.
+  source: Bishop, 2006
+en:
+  term: Cross-entropy
+  definition: A classification loss that measures the gap between the predicted distribution and the target distribution. It equals minus the logarithm of the probability assigned to the correct class, so it blows up when the model is confident and wrong. Paired with the softmax function, it is the standard multiclass loss.
+  source: Bishop, 2006
+seeAlso:
+  - fonction-cout
+  - softmax
+  - classification

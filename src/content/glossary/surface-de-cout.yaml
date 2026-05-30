@@ -1,0 +1,12 @@
+slug: surface-de-cout
+fr:
+  term: Surface de coût
+  definition: Graphe du coût vu comme une fonction des poids du réseau, les données étant fixées. Chaque jeu de poids est un point, et son altitude est le coût correspondant. Apprendre revient à descendre vers un creux de ce relief, ce que feront les chapitres sur le gradient.
+  source: Goodfellow, Bengio & Courville, 2016
+en:
+  term: Cost surface
+  definition: The graph of the cost seen as a function of the network weights, with the data held fixed. Each set of weights is a point whose altitude is the corresponding cost. Learning amounts to descending toward a valley of this landscape, which the gradient chapters will do.
+  source: Goodfellow, Bengio and Courville, 2016
+seeAlso:
+  - fonction-cout
+  - descente-de-gradient

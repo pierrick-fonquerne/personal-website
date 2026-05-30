@@ -1,0 +1,12 @@
+slug: erreur-quadratique-moyenne
+fr:
+  term: Erreur quadratique moyenne
+  definition: Fonction de coût qui moyenne le carré de l'écart entre la prédiction et la cible. Le carré pénalise fortement les grands écarts et rend le coût dérivable partout. Notée MSE (mean squared error), elle est le choix naturel pour la régression.
+  source: Goodfellow, Bengio & Courville, 2016
+en:
+  term: Mean squared error
+  definition: A loss function that averages the square of the gap between the prediction and the target. The square penalizes large gaps heavily and makes the cost differentiable everywhere. Written MSE, it is the natural choice for regression.
+  source: Goodfellow, Bengio and Courville, 2016
+seeAlso:
+  - fonction-cout
+  - regression
