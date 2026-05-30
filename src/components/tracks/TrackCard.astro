@@ -1,28 +1,47 @@
 ---
 import { useTranslations, type Locale } from '../../lib/i18n';
 import type { Track } from '../../lib/tracks';
+import StagePill from './StagePill.astro';
 
 interface Props {
   track: Track;
   locale: Locale;
   href: string;
   courseCount: number;
+  featured?: boolean;
 }
 
-const { track, locale, href, courseCount } = Astro.props;
+const { track, locale, href, courseCount, featured = false } = Astro.props;
 const t = useTranslations(locale);
 const content = track.data[locale];
-const stagesLabel = track.data.stages.map((stage) => t.stages[stage.stage]).join(' · ');
+const stages = track.data.stages.map((stage) => stage.stage);
 ---
 
 <article
-  class="group flex h-full flex-col rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-6 transition-colors hover:border-[var(--color-line-strong)]"
+  class:list={[
+    'group flex h-full flex-col rounded-md border bg-[var(--color-bg-elevated)] p-6 transition-colors',
+    featured
+      ? 'border-[var(--color-accent)]'
+      : 'border-[var(--color-line)] hover:border-[var(--color-line-strong)]',
+  ]}
 >
-  <span class="font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
-    {stagesLabel}
-  </span>
+  <div class="flex flex-wrap items-center gap-1.5">
+    {
+      featured && (
+        <span class="text-[13px] text-[var(--color-accent)]" aria-hidden="true">
+          ⚡
+        </span>
+      )
+    }
+    {stages.map((stage) => <StagePill stage={stage} label={t.stages[stage]} />)}
+  </div>
 
-  <h3 class="font-display mt-3 text-[22px] font-bold tracking-[-0.01em] text-[var(--color-fg)]">
+  <h3
+    class:list={[
+      'font-display mt-3 font-bold tracking-[-0.01em] text-[var(--color-fg)]',
+      featured ? 'text-[26px]' : 'text-[22px]',
+    ]}
+  >
     <a
       href={href}
       class="transition-colors group-hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
@@ -48,7 +67,10 @@ const stagesLabel = track.data.stages.map((stage) => t.stages[stage.stage]).join
       {t.tracks.coursesUnit}
     </span>
     <span
-      class="font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase opacity-0 transition-opacity group-hover:opacity-100"
+      class:list={[
+        'font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase transition-opacity',
+        featured ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+      ]}
     >
       {t.tracks.cardCta} →
     </span>

@@ -8,6 +8,8 @@ import { localizedPath, useTranslations } from '../../../lib/i18n';
 const locale = 'en' as const;
 const t = useTranslations(locale);
 const tracks = await listTracks();
+const aiTrack = tracks.find((track) => track.data.slug === 'track-ai');
+const academicTracks = tracks.filter((track) => track.data.slug !== 'track-ai');
 ---
 
 <BaseLayout
@@ -31,18 +33,31 @@ const tracks = await listTracks();
       tracks.length === 0 ? (
         <p class="mt-16 text-[15px] text-[var(--color-fg-muted)]">{t.tracks.emptyState}</p>
       ) : (
-        <ul class="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {tracks.map((track) => (
-            <li>
-              <TrackCard
-                track={track}
-                locale={locale}
-                href={localizedPath(`/tracks/${track.data.slug}`, locale)}
-                courseCount={courseCountOf(track)}
-              />
-            </li>
-          ))}
-        </ul>
+        <div class="mt-16 space-y-6">
+          {aiTrack && (
+            <TrackCard
+              track={aiTrack}
+              locale={locale}
+              href={localizedPath(`/tracks/${aiTrack.data.slug}`, locale)}
+              courseCount={courseCountOf(aiTrack)}
+              featured
+            />
+          )}
+          {academicTracks.length > 0 && (
+            <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {academicTracks.map((track) => (
+                <li>
+                  <TrackCard
+                    track={track}
+                    locale={locale}
+                    href={localizedPath(`/tracks/${track.data.slug}`, locale)}
+                    courseCount={courseCountOf(track)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )
     }
   </section>

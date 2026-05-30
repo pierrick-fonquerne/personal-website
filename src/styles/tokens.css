@@ -17,6 +17,10 @@
   --color-success: #22c55e;
   --color-hover: rgba(255, 255, 255, 0.04);
   --color-row-hover: rgba(255, 255, 255, 0.015);
+  --color-stage-lycee: #94a3b8;
+  --color-stage-prepa: #38bdf8;
+  --color-stage-licence: #38bdf8;
+  --color-stage-master: #ff6b35;
 
   color-scheme: dark;
 }
@@ -34,6 +38,10 @@
   --color-success: #16a34a;
   --color-hover: rgba(0, 0, 0, 0.03);
   --color-row-hover: rgba(0, 0, 0, 0.015);
+  --color-stage-lycee: #475569;
+  --color-stage-prepa: #0284c7;
+  --color-stage-licence: #0284c7;
+  --color-stage-master: #d94e1f;
 
   color-scheme: light;
 }
@@ -50,6 +58,10 @@
   --color-accent: var(--color-accent);
   --color-success: var(--color-success);
   --color-hover: var(--color-hover);
+  --color-stage-lycee: var(--color-stage-lycee);
+  --color-stage-prepa: var(--color-stage-prepa);
+  --color-stage-licence: var(--color-stage-licence);
+  --color-stage-master: var(--color-stage-master);
 
   --font-display: var(--font-geist), system-ui, sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;

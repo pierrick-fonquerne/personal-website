@@ -2,6 +2,7 @@
 import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import StagePill from '../../../../components/tracks/StagePill.astro';
 import { localizedPath, useTranslations } from '../../../../lib/i18n';
 import { resolveStages, courseCountOf } from '../../../../lib/tracks';
 
@@ -65,17 +66,25 @@ const courseCount = courseCountOf(track);
     <div class="mt-16 space-y-14">
       {
         stages.map((stage) => (
-          <section aria-labelledby={`stage-${stage.stage}`}>
-            <h2
-              id={`stage-${stage.stage}`}
-              class="font-display mb-6 border-b border-[var(--color-line)] pb-3 text-[clamp(22px,4vw,30px)] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
-            >
-              {t.stages[stage.stage]}
-            </h2>
+          <section aria-label={t.stages[stage.stage]}>
+            <div class="mb-6 flex items-center gap-3 border-b border-[var(--color-line)] pb-3">
+              <StagePill stage={stage.stage} label={t.stages[stage.stage]} size="md" />
+              <span class="font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
+                {stage.courses.length} {t.tracks.coursesUnit}
+              </span>
+            </div>
             <ul class="space-y-3">
-              {stage.courses.map((course) => (
-                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-4 py-3">
+              {stage.courses.map((course, index) => (
+                <li
+                  class:list={[
+                    'flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] px-4 py-3',
+                    course.status === 'upcoming' && 'opacity-60',
+                  ]}
+                >
                   <div class="flex items-baseline gap-3">
+                    <span class="font-mono text-[12px] text-[var(--color-fg-dim)]">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                     <span class="text-[15px] text-[var(--color-fg)]">
                       {course.status === 'published' ? (
                         <a
