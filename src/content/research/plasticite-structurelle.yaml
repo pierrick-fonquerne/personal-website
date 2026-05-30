@@ -8,6 +8,9 @@ tags:
   - topologie
   - neuroevolution
   - auto-organisation
+  - elagage
+  - apprentissage-local
+  - sparse-training
 papers:
   - title: 'Generalization emerges from local optimization in a self-organized learning network'
     authors: 'Barland & Gil (2024)'

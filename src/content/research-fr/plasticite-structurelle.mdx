@@ -3,63 +3,181 @@ slug: plasticite-structurelle
 ---
 
 import StructuralPlasticityGraph from '../../components/research/StructuralPlasticityGraph.tsx';
+import MutationVsSelectionLab from '../../components/research/MutationVsSelectionLab.tsx';
+import PruningVisualizer from '../../components/research/PruningVisualizer.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
 
-## Une forme figée contre une forme vivante
+Un cerveau humain ne se contente pas d'ajuster la force de ses connexions : il en crée de nouvelles, en détruit d'autres, fait naître et mourir des neurones tout au long de la vie. Sa forme est mouvante. Un réseau de neurones artificiel classique, lui, reçoit son architecture une fois pour toutes avant l'entraînement et n'y touche plus jamais. Ce dossier explore ce que l'on gagne, et ce que l'on ne comprend pas encore, quand on rend la forme du réseau elle-même apprenante.
 
-Dans un réseau de neurones classique, l'architecture est décidée avant l'entraînement et ne bouge plus. On fixe le nombre de couches, le nombre de neurones et le schéma des connexions, puis l'apprentissage se contente d'ajuster les poids. La forme est un plan figé ; seuls les curseurs internes tournent.
+## Deux plasticités à ne pas confondre
 
-Le cerveau procède à l'inverse. Il crée de nouvelles synapses, en élimine d'autres, fait apparaître et disparaître des connexions tout au long de la vie. Sa topologie n'est jamais figée : elle est le produit continu de l'activité.
+Le mot **plasticité** recouvre deux mécanismes très différents, qu'il faut séparer nettement pour ne pas tourner en rond.
 
-La plasticité structurelle, c'est cette capacité d'un réseau à remodeler sa propre architecture pendant qu'il fonctionne. La topologie cesse d'être une décision prise une fois pour toutes ; elle devient une variable du système, au même titre que les poids.
+- **Plasticité synaptique** : la force (le poids) d'une connexion qui existe déjà change. C'est exactement ce que fait la rétropropagation : ajuster des nombres sur un graphe figé.
+- **Plasticité structurelle** : le graphe lui-même change. On crée et on supprime des neurones et des connexions. La topologie cesse d'être un décor pour devenir une variable.
 
-## Pourquoi cela change tout
+La première répond à la question « combien ». La seconde répond à la question « qui parle à qui ». Tout ce dossier porte sur la seconde.
 
-Trois conséquences rendent cette idée intéressante :
+## Ce que fait le cerveau
 
-- Apprentissage continu. Un réseau dont la forme peut évoluer n'a pas besoin d'être gelé après l'entraînement : il continue de s'adapter à mesure que son environnement change.
-- Efficacité. Si la structure se construit là où l'activité le justifie, le réseau n'alloue des ressources qu'aux endroits utiles, au lieu de tout calculer partout en permanence.
-- Auto-organisation. La forme devient un résultat plutôt qu'un choix imposé d'avance. Le déplacement est profond : on ne conçoit plus l'architecture, on définit les règles qui la font émerger.
+La plasticité structurelle n'est pas une bizarrerie d'ingénieur : c'est le régime normal du vivant.
 
-## À toi de jouer
+- **Synaptogenèse** : la formation de nouvelles synapses, intense pendant le développement et jamais totalement arrêtée.
+- **Élagage synaptique** : l'adolescence humaine élimine une part massive des synapses formées dans l'enfance. Le cerveau se sculpte autant en retirant qu'en ajoutant.
+- **Neurogenèse adulte** : de nouveaux neurones apparaissent encore à l'âge adulte, notamment dans l'hippocampe.
+- **Périodes critiques** : des fenêtres temporelles où la topologie est particulièrement malléable, puis se stabilise.
 
-Voici un petit réseau dont tu peux modifier la structure en direct. Ajoute ou retire des neurones et des connexions, et observe la topologie se réorganiser.
+La leçon est nette : une bonne architecture n'est pas posée d'avance, elle est trouvée par croissance et destruction guidées par l'activité (Kandel et al., 2013).
 
-<StructuralPlasticityGraph
-  client:visible
-  initialHidden={3}
-  labels={{
-    addNeuron: 'Ajouter un neurone',
-    removeNeuron: 'Retirer un neurone',
-    addSynapse: 'Ajouter une synapse',
-    removeSynapse: 'Retirer une synapse',
-    reset: 'Réinitialiser',
-    neuronsLabel: 'Neurones',
-    synapsesLabel: 'Synapses',
-    helpText:
-      'Modifie la structure du réseau en direct. Tout est ajouté ou retiré au hasard, sans aucun critère.',
-  }}
-/>
+## Manipuler la topologie soi-même
 
-Garde une chose en tête en jouant : ici, tout se fait au hasard. On ajoute, on retire, sans aucun critère. Retiens cette sensation, on y revient plus bas.
+Avant la théorie, la sensation. Voici un petit réseau dont tu peux changer la structure en direct. Ajoute et retire des neurones et des connexions, et regarde la forme se réorganiser.
+
+<StructuralPlasticityGraph client:visible />
+
+Tu remarques vite une chose : ajouter et retirer au hasard ne construit rien d'utile. Garde cette impression, elle est le cœur du dossier.
+
+## Pourquoi rendre la forme apprenante
+
+Trois gains motivent l'idée de faire de la topologie une variable :
+
+- **Apprentissage continu** : un réseau dont la forme peut évoluer n'a pas besoin d'être gelé après l'entraînement. Il s'adapte à mesure que son monde change.
+- **Efficacité** : si la structure ne se construit que là où l'activité le justifie, le réseau n'alloue des ressources qu'aux endroits utiles, au lieu de tout calculer partout en permanence.
+- **Auto-organisation** : la forme devient un résultat plutôt qu'un choix imposé d'avance. On ne dessine plus l'architecture, on définit les règles qui la font émerger.
+
+## Le piège central : muter n'est pas apprendre
+
+Voici l'expérience la plus importante du dossier. Deux réseaux partent du même point et subissent des mutations de structure. La seule différence : à gauche, on **garde chaque mutation au hasard** ; à droite, on **ne garde que celles qui améliorent** une mesure de performance.
+
+<MutationVsSelectionLab client:visible />
+
+Le hasard seul erre indéfiniment. Dès qu'un critère trie les mutations, la performance grimpe. C'est toute la différence entre **agiter** une structure et la faire **apprendre**. Ce critère peut prendre deux formes :
+
+- une **pression de sélection** globale, comme dans un algorithme évolutionnaire ;
+- une **règle locale**, comme la STDP biologique, où une connexion se renforce quand elle participe à la causalité d'une décharge voisine.
+
+Retiens cette phrase, c'est le fil rouge : la plasticité structurelle ne vaut que par le critère qui l'oriente.
+
+## L'autre face : élaguer
+
+Grandir n'est que la moitié de l'histoire. L'autre moitié, c'est **retirer**. Un réseau dense contient beaucoup de connexions presque inutiles ; supprimer les plus faibles allège le calcul sans casser la fonction.
+
+<PruningVisualizer client:visible />
+
+Ce principe porte un nom dans la recherche récente : l'**entraînement creux dynamique** (_dynamic sparse training_). On y découvre qu'un sous-réseau bien choisi, parfois appelé _billet gagnant_ (_lottery ticket_), atteint la performance du réseau complet avec une fraction de ses connexions.
 
 ## Ce que dit la recherche
 
-La plasticité structurelle n'est pas une vue de l'esprit. Plusieurs travaux récents montrent qu'une topologie peut être pilotée par des règles locales, sans plan central :
+La plasticité structurelle pilotée par des règles locales n'est pas spéculative. Plusieurs familles de travaux la rendent concrète :
 
-- Barland et Gil (2024) construisent un réseau dont la topologie s'auto-organise par scission et fusion de nœuds, gouverné uniquement par des règles locales, sans fonction d'erreur globale. La généralisation y émerge de ces règles, jusqu'à reproduire le phénomène de grokking.
-- SMGrNN (Chen et al., 2025) décide l'insertion et l'élagage de neurones à partir de statistiques locales d'activation : la structure suit l'usage réel du réseau.
-- MorphSNN (Liu et al., 2026) intègre la plasticité structurelle dans un cadre spiking événementiel, où la réorganisation des connexions se joue à l'échelle de la milliseconde.
+| Approche                             | Idée clé                                                | Topologie      | Apprentissage      |
+| ------------------------------------ | ------------------------------------------------------- | -------------- | ------------------ |
+| NEAT (Stanley & Miikkulainen, 2002)  | évoluer poids + structure par algorithme génétique      | émergente      | sélection globale  |
+| SET / RigL (Mocanu 2018 ; Evci 2020) | démarrer creux, retirer puis ré-ajouter selon l'utilité | dynamique      | gradient + critère |
+| Barland & Gil (2024)                 | scission et fusion de nœuds, sans erreur globale        | auto-organisée | règles locales     |
+| SMGrNN (Chen et al., 2025)           | insertion et élagage sur statistiques locales           | en ligne       | local + gradient   |
+| MorphSNN (Liu et al., 2026)          | réorganisation à l'échelle de la milliseconde           | spiking        | événementiel       |
 
-Le fil commun : la topologie peut devenir une variable gouvernée localement, et non un gabarit imposé de l'extérieur.
+Le fil commun : la topologie peut devenir une variable gouvernée localement, et non un gabarit imposé de l'extérieur. Fait notable, Barland et Gil obtiennent la généralisation, et même le phénomène de _grokking_, à partir de règles purement locales, sans aucune fonction d'erreur globale.
 
-## Le piège : muter n'est pas apprendre
+## Une formalisation minimale
 
-Reviens à ta partie dans le bac à sable. Tu as pu faire grossir le réseau autant que tu voulais : cela ne l'a rendu ni meilleur, ni plus intelligent. C'est le point crucial. Modifier la structure au hasard ne mène nulle part. Une marche aléatoire dans l'espace des topologies ne converge vers rien.
+Posons les choses proprement. Un réseau est un graphe $G_t = (V_t, E_t)$ qui évolue dans le temps : $V_t$ est l'ensemble des neurones, $E_t$ celui des connexions. La plasticité structurelle, ce sont quatre opérations sur ce graphe : ajouter ou retirer un neurone, ajouter ou retirer une connexion.
 
-Ce qui sépare une plasticité utile d'une simple agitation, c'est la présence d'un critère qui oriente les changements : une pression de sélection (comme dans un algorithme évolutionnaire) ou une règle d'apprentissage locale (comme la STDP, où une connexion se renforce quand elle participe à la causalité d'une activation).
+Une règle de **croissance locale** peut s'appuyer sur la corrélation d'activité entre deux neurones :
 
-C'est exactement la frontière entre deux de mes programmes de recherche. AEIF fournit le substrat : un réseau dont chaque mutation de structure est tracée et rejouable, mais où les mutations restent aléatoires. SOAG cherche le moteur manquant : les règles locales qui devraient décider quoi faire grandir et quoi laisser mourir. La plasticité structurelle est le terrain où les deux se rejoignent, et « muter n'est pas apprendre » est la question qui les sépare. Elle mérite son propre développement.
+$$
+\Delta_{ij} = \langle a_i \, a_j \rangle_t
+$$
+
+On crée la connexion $(i, j)$ quand $\Delta_{ij}$ dépasse un seuil : deux unités qui s'activent ensemble gagnent à se parler. Une règle d'**élagage** retire au contraire une connexion dont le poids reste négligeable :
+
+$$
+\text{retirer } e \quad \text{si} \quad |w_e| < \theta
+$$
+
+Le tout peut se lire comme une optimisation jointe de la fonction et de la forme, sous une pression de parcimonie :
+
+$$
+\min_{G,\; w} \; \mathcal{L}(w;\, G) \; + \; \lambda \, |E|
+$$
+
+Le terme $\lambda \, |E|$ pénalise chaque connexion : c'est lui qui pousse le réseau à rester creux, donc efficace. Croissance, élagage et parcimonie ne sont que trois facettes de la même question : quelle forme mérite d'exister ?
+
+## Place dans mes programmes de recherche
+
+Ce concept est la charnière exacte entre deux de mes programmes.
+
+- **AEIF** fournit le **substrat** : un réseau dont chaque mutation de structure est un événement immuable, tracé et rejouable. Mais ses mutations restent aléatoires : il sait muter, pas encore choisir.
+- **SOAG** cherche le **moteur manquant** : les règles locales qui décident quoi faire grandir et quoi laisser mourir, sans contrôle central.
+
+Le lab « muter n'est pas apprendre » plus haut résume leur relation : AEIF est le panneau de gauche, SOAG vise le panneau de droite.
+
+## Limites et questions ouvertes
+
+Il serait malhonnête de présenter tout cela comme résolu.
+
+- **Stabilité contre plasticité** : une topologie qui change en permanence peut diverger ou tout oublier. Trouver le bon équilibre est un problème ouvert.
+- **Passage à l'échelle** : les démonstrations actuelles restent sur de petits problèmes, loin des grands modèles.
+- **Théorie incomplète** : on manque d'un cadre général qui dise quelle règle locale produit quelle capacité.
+- **Mesure** : comparer des réseaux de topologies différentes est délicat, car on ne compare plus seulement des nombres mais des formes.
+
+## Teste ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Quelle est la différence entre plasticité synaptique et structurelle ?',
+      options: [
+        'La synaptique change les poids, la structurelle change la topologie',
+        'La structurelle change les poids, la synaptique change la topologie',
+        'Ce sont deux noms pour la même chose',
+        'La synaptique ne concerne que les neurones inhibiteurs',
+      ],
+      answer: 0,
+      explain:
+        'La plasticité synaptique ajuste la force de connexions existantes ; la structurelle crée ou supprime neurones et connexions.',
+    },
+    {
+      q: 'Pourquoi muter une topologie au hasard ne suffit-il pas à apprendre ?',
+      options: [
+        'Parce que le hasard est trop lent',
+        "Parce qu'il manque un critère qui retient les bonnes mutations",
+        'Parce que la topologie ne peut pas changer',
+        'Parce que les poids restent gelés',
+      ],
+      answer: 1,
+      explain:
+        'Sans pression de sélection ni règle locale, les mutations forment une marche aléatoire qui ne converge vers rien.',
+    },
+    {
+      q: "Que montre l'élagage (pruning) d'un réseau ?",
+      options: [
+        'Que retirer des connexions casse toujours le réseau',
+        "Qu'on peut retirer beaucoup de connexions faibles sans perdre la fonction",
+        'Que la sparsité augmente le coût de calcul',
+        'Que tous les poids sont également importants',
+      ],
+      answer: 1,
+      explain:
+        'Un sous-réseau bien choisi atteint la performance du réseau complet avec une fraction des connexions (dynamic sparse training).',
+    },
+    {
+      q: 'Dans mes programmes, quel rôle joue AEIF vis-à-vis de la plasticité structurelle ?',
+      options: [
+        'Il fournit le moteur de décision local',
+        'Il fournit le substrat traçable, mais mute encore au hasard',
+        'Il remplace la rétropropagation par du gradient',
+        "Il n'a aucun rapport avec la topologie",
+      ],
+      answer: 1,
+      explain:
+        'AEIF trace et rejoue chaque mutation de structure, mais le critère qui devrait les orienter (SOAG) reste à construire.',
+    },
+  ]}
+/>
 
 ## Note personnelle
 
-> Je ne suis pas chercheur de métier, et ce concept est précisément celui qui m'a fait sentir la différence entre construire un outil et comprendre un principe. AEIF marchait : il ajoutait et retirait des neurones sans broncher, et pourtant il n'apprenait rien. Ce sont des soirées passées à regarder un graphe muter pour rien qui m'ont poussé vers la littérature sur l'apprentissage local. Parfois, c'est en voyant clairement ce qui ne marche pas qu'on devine où regarder ensuite.
+> Je ne suis pas chercheur de métier, et ce concept est précisément celui qui m'a fait sentir la différence entre construire un outil et comprendre un principe. AEIF marchait : il ajoutait et retirait des neurones sans broncher, et pourtant il n'apprenait rien. Ce sont des soirées passées à regarder un graphe muter pour rien qui m'ont poussé vers la littérature sur l'apprentissage local. Parfois, voir clairement ce qui ne marche pas est la meilleure façon de deviner où regarder ensuite.
