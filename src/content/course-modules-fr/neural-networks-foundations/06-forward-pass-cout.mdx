@@ -2,21 +2,360 @@
 course: neural-networks-foundations
 order: 6
 title: Forward pass et fonctions de coût
-subtitle: "De l'entrée à la prédiction, puis comment mesurer l'erreur."
-estimatedMinutes: 12
+subtitle: "De l'entrée à la prédiction, puis comment lui donner une note."
+estimatedMinutes: 20
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import ForwardPassStepper from '../../../components/learning/ForwardPassStepper.tsx';
+import LossComparator from '../../../components/learning/LossComparator.tsx';
+import LossLandscape from '../../../components/learning/LossLandscape.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 5, on a vu qu'un réseau multi-couches peut exprimer presque n'importe quelle fonction, à condition de bien régler ses poids. Pour XOR, on les a posés à la main. Mais à la main, ça ne passe pas l'échelle : un réseau réel compte des millions de poids. On veut donc les régler automatiquement.
+
+La toute première brique de cet automatisme, c'est de savoir deux choses : calculer la sortie du réseau pour une entrée donnée, puis donner à cette sortie une note qui dit à quel point elle est fausse. Apprendre, pour un réseau, ce sera chercher à améliorer cette note. Ce chapitre construit ces deux briques. Il ne calcule encore aucune correction de poids : il pose le terrain de jeu sur lequel, à partir du chapitre 7, le gradient va opérer.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : la matrice et le produit matrice-vecteur (chapitre 2), les fonctions d'activation ReLU, sigmoïde et softmax (chapitre 3), la notation d'une couche $a = f(Wx + b)$ (chapitre 5).
+
+**Ce qu'il n'est pas nécessaire de connaître** : les dérivées (chapitre 7), la rétropropagation (chapitre 8) et la descente de gradient (chapitre 9). Ici, on calcule et on note, mais on ne corrige pas encore.
+
+**Niveau de rigueur** : un exemple chiffré déroulé entièrement, trois fonctions de coût définies et justifiées, une lecture géométrique de l'apprentissage comme descente dans un relief, quatre exercices papier-crayon avec corrigés détaillés.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : calculer la prédiction
 
-- Propagation avant : enchaîner les calculs couche par couche
-- MSE et cross-entropy : quand utiliser quoi
-- Surfaces de coût et intuition géométrique de l'apprentissage
+Le <Term slug="forward-pass">passage avant</Term> (forward pass) est le calcul qui transforme une entrée en prédiction, en traversant le réseau couche par couche, de l'entrée vers la sortie. Chaque couche applique sa formule $a = f(Wx + b)$, et sa sortie devient l'entrée de la suivante.
 
-Le forward pass produit une prédiction. La fonction de coût mesure à quel point elle est fausse. Ces deux briques posent le terrain de jeu sur lequel le gradient va opérer.
+Prenons un petit classifieur à 3 classes : deux entrées, une couche cachée de deux neurones, une couche de sortie de trois neurones. Donnons-lui l'entrée $x = (1, 2)$.
+
+**La couche cachée.** Ses poids et biais sont
+
+$$
+W^{(1)} = \begin{pmatrix} 0{,}5 & -0{,}5 \\ 1 & 0{,}5 \end{pmatrix}, \qquad b^{(1)} = \begin{pmatrix} 0 \\ -1 \end{pmatrix}.
+$$
+
+On calcule d'abord la somme pondérée de chaque neurone, ce qu'on appelle la pré-activation $z^{(1)} = W^{(1)}x + b^{(1)}$ :
+
+$$
+z^{(1)}_1 = 0{,}5 \cdot 1 - 0{,}5 \cdot 2 + 0 = -0{,}5,
+$$
+
+$$
+z^{(1)}_2 = 1 \cdot 1 + 0{,}5 \cdot 2 - 1 = 1.
+$$
+
+Puis on applique l'activation. Avec ReLU, qui remplace tout négatif par zéro :
+
+$$
+h = \mathrm{ReLU}(z^{(1)}) = \big(\max(0, -0{,}5),\; \max(0, 1)\big) = (0,\; 1).
+$$
+
+Le premier neurone caché s'est éteint, le second est resté actif.
+
+**La couche de sortie.** Ses poids et biais sont
+
+$$
+W^{(2)} = \begin{pmatrix} 1 & 0 \\ 0 & 2 \\ 1 & 1 \end{pmatrix}, \qquad b^{(2)} = \begin{pmatrix} 0 \\ 0 \\ -1 \end{pmatrix}.
+$$
+
+On calcule les trois pré-activations, appelées ici les logits $z^{(2)} = W^{(2)}h + b^{(2)}$ :
+
+$$
+z^{(2)} = (\,0,\; 2,\; 0\,).
+$$
+
+**De scores à probabilités.** Trois logits, ce sont trois nombres quelconques. Pour un classifieur, on veut trois probabilités, positives et de somme $1$. C'est le rôle de la fonction <Term slug="softmax">softmax</Term> :
+
+$$
+\mathrm{softmax}(z)_k = \frac{e^{z_k}}{\sum_j e^{z_j}}.
+$$
+
+Sur nos logits $(0, 2, 0)$ :
+
+$$
+\hat{y} = \frac{(\,e^{0},\; e^{2},\; e^{0}\,)}{e^{0} + e^{2} + e^{0}} = \frac{(\,1,\; e^{2},\; 1\,)}{2 + e^{2}} \approx (0{,}11,\; 0{,}79,\; 0{,}11).
+$$
+
+Le réseau prédit la classe 2 avec une confiance d'environ $79\%$. Voilà un forward pass complet : de $x$ à une distribution de probabilité.
+
+Déroule-le toi-même, étape par étape, et bascule l'activation cachée entre ReLU et sigmoïde pour voir comment chacune transforme la même entrée.
+
+<ForwardPassStepper client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- À chaque étape, la couche active s'allume dans le schéma. L'information avance toujours de l'entrée vers la sortie, jamais en arrière.
+- Bascule de ReLU à sigmoïde : la même entrée produit des valeurs cachées $h$ différentes, mais la classe prédite reste la 2. La structure du réseau compte autant que les valeurs exactes.
+- La dernière étape, softmax, transforme trois logits quelconques en trois probabilités qui somment à $1$.
+
+## Acte 2 : mettre une note
+
+On sait calculer une prédiction. Reste à dire à quel point elle est bonne. Une <Term slug="fonction-cout">fonction de coût</Term> prend la prédiction et la cible, et renvoie un seul nombre : la note. Plus le nombre est grand, plus le réseau s'est trompé. Apprendre, ce sera faire baisser ce nombre.
+
+Toutes les tâches ne se notent pas de la même façon. Voyons les deux grandes familles.
+
+### Régresser : l'erreur quadratique moyenne
+
+Quand on prédit une grandeur continue (un prix, une température), c'est de la régression. La note naturelle est l'<Term slug="erreur-quadratique-moyenne">erreur quadratique moyenne</Term> (MSE), la moyenne des carrés des écarts entre prédiction et cible :
+
+$$
+\mathrm{MSE} = \frac{1}{n} \sum_{i=1}^{n} (\hat{y}_i - y_i)^2.
+$$
+
+Pourquoi le carré, et pas la valeur absolue ? Pour deux raisons. D'abord, le carré pénalise beaucoup plus les grands écarts que les petits : se tromper de $10$ coûte cent fois plus que se tromper de $1$, pas dix fois. Ensuite, le carré est lisse, dérivable partout, alors que la valeur absolue a un coin anguleux en zéro. Cette douceur sera précieuse au chapitre 7, quand on cherchera la pente.
+
+### Classer : l'entropie croisée
+
+En classification, la cible n'est pas un nombre mais une classe. La prédiction, elle, est une probabilité. Pourrait-on réutiliser la MSE entre la probabilité prédite et la cible ? On pourrait, mais ce serait un mauvais choix, et la raison est instructive.
+
+Imaginons une tâche binaire (cible $t$ qui vaut $0$ ou $1$) où le modèle prédit la probabilité $p$ que la cible vaille $1$. Si la vraie réponse est $1$ et que le modèle annonce $p = 0{,}01$, il se trompe avec une assurance totale. On voudrait une note qui explose dans ce cas. Or la MSE plafonne : $(0{,}01 - 1)^2 \approx 0{,}98$, à peine moins que pour une hésitation à $p = 0{,}5$.
+
+L'<Term slug="entropie-croisee">entropie croisée</Term> binaire règle ce problème :
+
+$$
+H = -\big[\,t \ln p + (1 - t) \ln(1 - p)\,\big].
+$$
+
+Quand la cible vaut $1$, elle se réduit à $H = -\ln p$. Si $p$ est proche de $1$, $H$ est proche de $0$ : bonne réponse, petite note. Mais si $p$ tend vers $0$, $-\ln p$ tend vers l'infini : la note explose. C'est exactement la punition qu'on cherchait pour la confiance erronée.
+
+### Plusieurs classes : softmax et cible one-hot
+
+Pour notre classifieur à 3 classes, la sortie est la distribution softmax $\hat{y}$ de l'Acte 1. La cible se code en one-hot : un vecteur qui vaut $1$ sur la bonne classe et $0$ ailleurs. Pour une vraie classe 2, la cible est $y = (0, 1, 0)$.
+
+L'entropie croisée multi-classe généralise la version binaire :
+
+$$
+H = -\sum_{k} y_k \ln \hat{y}_k = -\ln \hat{y}_c,
+$$
+
+où $c$ est la vraie classe. Comme la cible est one-hot, tous les termes s'annulent sauf celui de la bonne classe. La note ne dépend donc que de la probabilité que le modèle a accordée à la bonne réponse. Sur notre exemple, $-\ln(0{,}79) \approx 0{,}24$ : petite note, le réseau avait raison et avec confiance. Si la vraie classe avait été la 1, la note aurait été $-\ln(0{,}11) \approx 2{,}2$.
+
+Compare les deux notes côte à côte. Fais glisser la prédiction et regarde laquelle explose.
+
+<LossComparator client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- En classification binaire, pousse $p$ vers la mauvaise extrémité : l'entropie croisée part vers l'infini, alors que la MSE plafonne autour de $1$. Voilà pourquoi on préfère l'entropie croisée pour classer.
+- Le bandeau « confiant et faux » s'allume quand le modèle affirme une réponse fausse avec assurance. La note doit le punir sévèrement, et elle le fait.
+- En mode 3 classes, change les logits : softmax redistribue les probabilités, et l'entropie croisée ne regarde que celle de la classe vraie.
+
+## Acte 3 : le paysage de coût
+
+On tient une note. Mais cette note dépend de quoi, au juste ? Les données d'entraînement sont fixées une fois pour toutes. Ce qui peut changer, ce sont les poids du réseau. La note est donc une fonction des poids.
+
+Imaginons un réseau qui n'aurait que deux poids, $w_1$ et $w_2$. À chaque couple $(w_1, w_2)$ correspond une note. On peut tracer cette note comme une altitude au-dessus du plan des poids : on obtient un relief, une <Term slug="surface-de-cout">surface de coût</Term>. Les bons réseaux sont dans les vallées, les mauvais sur les sommets.
+
+Apprendre prend alors un sens géométrique limpide : c'est descendre vers un creux de ce paysage. La carte ci-dessous montre la surface de coût d'un petit modèle à deux poids. Déplace le point et lis la note.
+
+<LossLandscape client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Le relief est un bol : un seul creux, marqué d'une croix. C'est le couple de poids qui minimise la note.
+- Déplace le point : plus tu t'éloignes du creux, plus la note grimpe. Elle ne dépend que des poids, les données restant fixées.
+- Ce chapitre montre le décor. Savoir dans quelle direction descendre pour atteindre le creux, c'est l'objet des chapitres 7 à 9.
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne.
+
+**Exercice 1.** Reprends le réseau de l'Acte 1 (mêmes $W^{(1)}, b^{(1)}, W^{(2)}, b^{(2)}$, activation cachée ReLU), mais avec l'entrée $x = (2, 0)$. Calcule $z^{(1)}$, puis $h$, puis les logits $z^{(2)}$, et donne la classe prédite (celle du plus grand logit, inutile de calculer le softmax).
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : un forward pass à la main">
+**Étape 1.** Pré-activations cachées.
+
+$$
+z^{(1)}_1 = 0{,}5 \cdot 2 - 0{,}5 \cdot 0 + 0 = 1,
+$$
+
+$$
+z^{(1)}_2 = 1 \cdot 2 + 0{,}5 \cdot 0 - 1 = 1.
+$$
+
+**Étape 2.** Activation ReLU. Les deux valeurs sont positives, elles passent telles quelles.
+
+$$
+h = (\,1,\; 1\,).
+$$
+
+**Étape 3.** Logits de sortie.
+
+$$
+z^{(2)} = (\,1 \cdot 1 + 0 \cdot 1 + 0,\;\; 0 \cdot 1 + 2 \cdot 1 + 0,\;\; 1 \cdot 1 + 1 \cdot 1 - 1\,) = (\,1,\; 2,\; 1\,).
+$$
+
+**Résultat.** Le plus grand logit est le deuxième : le réseau prédit la classe 2.
+
+</Callout>
+
+**Exercice 2.** Un modèle de régression prédit $\hat{y} = (3, 5, 2)$ pour trois exemples dont les cibles sont $y = (2, 5, 4)$. Calcule l'erreur quadratique moyenne.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : une erreur quadratique moyenne">
+**Étape 1.** Les écarts, un par exemple.
+
+$$
+3 - 2 = 1, \qquad 5 - 5 = 0, \qquad 2 - 4 = -2.
+$$
+
+**Étape 2.** Les carrés.
+
+$$
+1^2 = 1, \qquad 0^2 = 0, \qquad (-2)^2 = 4.
+$$
+
+**Étape 3.** La moyenne.
+
+$$
+\mathrm{MSE} = \frac{1 + 0 + 4}{3} = \frac{5}{3}.
+$$
+
+**Résultat.** $\mathrm{MSE} = \tfrac{5}{3} \approx 1{,}67$.
+
+</Callout>
+
+**Exercice 3.** Cible $t = 1$. Calcule l'entropie croisée binaire $H = -\ln p$ pour $p = 0{,}9$, puis pour $p = 0{,}1$, puis pour $p = 0{,}01$. Compare chaque fois avec la MSE $(p - 1)^2$. Que punit l'entropie croisée que la MSE laisse passer ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : pourquoi pas la MSE pour classer">
+**Étape 1.** Cas $p = 0{,}9$ (bonne réponse, confiante).
+
+$$
+H = -\ln(0{,}9) \approx 0{,}11, \qquad (0{,}9 - 1)^2 = 0{,}01.
+$$
+
+**Étape 2.** Cas $p = 0{,}1$ (mauvaise réponse, assez confiante).
+
+$$
+H = -\ln(0{,}1) \approx 2{,}30, \qquad (0{,}1 - 1)^2 = 0{,}81.
+$$
+
+**Étape 3.** Cas $p = 0{,}01$ (mauvaise réponse, très confiante).
+
+$$
+H = -\ln(0{,}01) \approx 4{,}61, \qquad (0{,}01 - 1)^2 \approx 0{,}98.
+$$
+
+**Résultat.** Quand le modèle se trompe avec de plus en plus d'assurance, l'entropie croisée grimpe sans limite ($0{,}11$, puis $2{,}30$, puis $4{,}61$), alors que la MSE plafonne sous $1$. L'entropie croisée punit la confiance erronée, la MSE l'ignore presque.
+
+</Callout>
+
+**Exercice 4.** Un classifieur à 3 classes produit les logits $z = (2, 1, 0)$. Calcule les probabilités softmax, puis l'entropie croisée si la classe vraie est la classe 1 (one-hot $y = (1, 0, 0)$).
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : softmax puis entropie croisée">
+**Étape 1.** Les exponentielles des logits.
+
+$$
+e^{2} \approx 7{,}39, \qquad e^{1} \approx 2{,}72, \qquad e^{0} = 1.
+$$
+
+**Étape 2.** Leur somme, le dénominateur.
+
+$$
+7{,}39 + 2{,}72 + 1 = 11{,}11.
+$$
+
+**Étape 3.** Les probabilités softmax.
+
+$$
+\hat{y} \approx \Big(\tfrac{7{,}39}{11{,}11},\; \tfrac{2{,}72}{11{,}11},\; \tfrac{1}{11{,}11}\Big) \approx (0{,}67,\; 0{,}24,\; 0{,}09).
+$$
+
+**Étape 4.** L'entropie croisée ne regarde que la classe vraie, la 1.
+
+$$
+H = -\ln(\hat{y}_1) = -\ln(0{,}67) \approx 0{,}41.
+$$
+
+**Résultat.** Probabilités $\approx (0{,}67,\; 0{,}24,\; 0{,}09)$, entropie croisée $\approx 0{,}41$.
+
+</Callout>
+
+## En une phrase
+
+Le forward pass calcule la prédiction en propageant l'entrée couche par couche, la fonction de coût lui donne une note, et tout l'apprentissage consistera à trouver les poids qui minimisent cette note dans le paysage de coût.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Dans un forward pass, dans quel sens circule l'information ?",
+      options: [
+        "De l'entrée vers la sortie, couche après couche",
+        "De la sortie vers l'entrée",
+        'Dans les deux sens en même temps',
+        'Uniquement à l’intérieur de la couche cachée',
+      ],
+      answer: 0,
+      explain:
+        "Le forward pass propage l'entrée vers la sortie, une couche après l'autre. Le sens inverse sera la rétropropagation, au chapitre 8.",
+    },
+    {
+      q: 'À quoi sert la fonction softmax en sortie d’un classifieur ?',
+      options: [
+        'À calculer la dérivée du coût',
+        'À transformer des scores quelconques en probabilités qui somment à 1',
+        'À rendre le réseau plus profond',
+        'À supprimer les neurones inutiles',
+      ],
+      answer: 1,
+      explain:
+        'Softmax change des logits réels en une distribution de probabilité : des valeurs positives dont la somme vaut 1.',
+    },
+    {
+      q: 'Pourquoi préfère-t-on l’entropie croisée à la MSE pour la classification ?',
+      options: [
+        'Elle est plus rapide à calculer',
+        'Elle ne nécessite pas de cible',
+        'Elle punit beaucoup plus une prédiction confiante et fausse',
+        'Elle donne toujours zéro',
+      ],
+      answer: 2,
+      explain:
+        "L'entropie croisée tend vers l'infini quand le modèle donne une probabilité quasi nulle à la bonne classe, là où la MSE reste bornée.",
+    },
+    {
+      q: "Sur la surface de coût, qu'est-ce qui varie d'un point à l'autre ?",
+      options: [
+        'Le nombre de couches',
+        "Les données d'entraînement",
+        'Les poids du réseau',
+        "La fonction d'activation",
+      ],
+      answer: 2,
+      explain:
+        "On fixe les données et on fait varier les poids. L'altitude d'un point est le coût obtenu avec ces poids.",
+    },
+    {
+      q: 'Que représente le creux (le minimum) de la surface de coût ?',
+      options: [
+        'La classe la plus fréquente',
+        'Le jeu de poids qui minimise le coût',
+        'Le réseau le plus profond',
+        "Le taux d'apprentissage idéal",
+      ],
+      answer: 1,
+      explain:
+        "Le creux est le jeu de poids de coût minimal. L'atteindre est le but de l'apprentissage, par la descente de gradient (chapitres 7 à 9).",
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 7
+
+On sait maintenant calculer la note d'un réseau et la lire comme une altitude dans le paysage de coût. Reste la question décisive : dans quelle direction modifier chaque poids pour faire baisser cette note ? Il faut savoir de quel côté penche la surface autour du point courant. C'est exactement ce que mesure une dérivée. Le chapitre 7 introduit les dérivées et la règle de la chaîne, l'outil qui transformera ce paysage statique en un chemin de descente.
+
+## Sources
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitres 5 et 6. https://www.deeplearningbook.org
+- Bishop, C. M. (2006). _Pattern Recognition and Machine Learning_. Springer. Chapitres 4 et 5 (entropie croisée).
+- Bridle, J. S. (1990). Probabilistic interpretation of feedforward classification network outputs, with relationships to statistical pattern recognition. Dans _Neurocomputing_, Springer. DOI 10.1007/978-3-642-76153-9_28 (origine de softmax).
