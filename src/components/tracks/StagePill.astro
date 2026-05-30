@@ -1,0 +1,30 @@
+---
+import type { AcademicStage } from '../../lib/taxonomy';
+
+interface Props {
+  stage: AcademicStage;
+  label: string;
+  size?: 'sm' | 'md';
+}
+
+const { stage, label, size = 'sm' } = Astro.props;
+
+const STAGE_CLASS: Record<AcademicStage, string> = {
+  lycee: 'border-stage-lycee/30 bg-stage-lycee/10 text-stage-lycee',
+  prepa: 'border-stage-prepa/30 bg-stage-prepa/10 text-stage-prepa',
+  licence: 'border-stage-licence/30 bg-stage-licence/10 text-stage-licence',
+  master: 'border-stage-master/30 bg-stage-master/10 text-stage-master',
+};
+
+const sizeClass = size === 'md' ? 'px-3 py-1 text-[12px]' : 'px-2 py-0.5 text-[10px]';
+---
+
+<span
+  class:list={[
+    'inline-flex items-center rounded-full border font-mono tracking-[0.1em] uppercase',
+    sizeClass,
+    STAGE_CLASS[stage],
+  ]}
+>
+  {label}
+</span>
