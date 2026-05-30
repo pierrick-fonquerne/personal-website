@@ -2,6 +2,8 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro:schema';
 import { glob } from 'astro/loaders';
 
+import { ACADEMIC_STAGES, THEMES } from './lib/taxonomy';
+
 const courseSchema = z.object({
   slug: z.string(),
   title: z.string(),
@@ -164,6 +166,38 @@ const researchEn = defineCollection({
   schema: researchBodySchema,
 });
 
+const trackStageSchema = z.object({
+  stage: z.enum(ACADEMIC_STAGES),
+  courses: z.array(
+    z.object({
+      course: z.string(),
+      required: z.boolean().default(true),
+    }),
+  ),
+});
+
+const trackLocaleSchema = z.object({
+  title: z.string(),
+  tagline: z.string(),
+  summary: z.string(),
+  audience: z.string(),
+});
+
+const trackSchema = z.object({
+  slug: z.string(),
+  theme: z.enum(THEMES),
+  stages: z.array(trackStageSchema),
+  fr: trackLocaleSchema,
+  en: trackLocaleSchema,
+  published: z.boolean().default(false),
+  publishedAt: z.coerce.date().optional(),
+});
+
+const tracks = defineCollection({
+  loader: glob({ base: './src/content/tracks', pattern: '**/*.{yaml,yml}' }),
+  schema: trackSchema,
+});
+
 export const collections = {
   'courses-fr': coursesFr,
   'courses-en': coursesEn,
@@ -174,4 +208,5 @@ export const collections = {
   research,
   'research-fr': researchFr,
   'research-en': researchEn,
+  tracks,
 };

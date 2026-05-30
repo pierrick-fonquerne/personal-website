@@ -1,0 +1,59 @@
+slug: track-ai
+theme: math
+published: false
+
+fr:
+  title: Mathématiques pour l'intelligence artificielle
+  tagline: Le socle mathématique du machine learning, des vecteurs à l'optimisation.
+  summary: >-
+    Un parcours transversal qui rassemble, dans l'ordre où l'on en a besoin,
+    toutes les mathématiques nécessaires pour comprendre et construire des
+    modèles d'apprentissage : algèbre linéaire, calcul différentiel,
+    probabilités, statistiques, optimisation et théorie de l'information.
+  audience: >-
+    Développeurs et autodidactes qui visent le machine learning et veulent des
+    bases mathématiques solides, du niveau lycée au niveau master.
+
+en:
+  title: Mathematics for Artificial Intelligence
+  tagline: The mathematical backbone of machine learning, from vectors to optimization.
+  summary: >-
+    A cross-cutting track that gathers, in the order you actually need them, all
+    the mathematics required to understand and build learning models: linear
+    algebra, differential calculus, probability, statistics, optimization and
+    information theory.
+  audience: >-
+    Developers and self-taught learners aiming for machine learning who want
+    solid mathematical foundations, from high school to graduate level.
+
+stages:
+  - stage: lycee
+    courses:
+      - course: vectors-analytic-geometry
+      - course: discrete-probability
+  - stage: prepa
+    courses:
+      - course: linear-systems-matrices
+      - course: vector-spaces-linear-maps
+      - course: eigen-reduction
+      - course: riemann-integration
+      - course: random-variables-continuous
+  - stage: licence
+    courses:
+      - course: euclidean-spaces-svd
+      - course: multivariable-calculus
+      - course: limit-theorems
+      - course: measure-lebesgue
+      - course: inferential-statistics
+      - course: numerical-analysis
+      - course: graph-theory
+  - stage: master
+    courses:
+      - course: bayesian-statistics
+      - course: convex-optimization
+      - course: stochastic-optimization
+      - course: information-theory
+      - course: hilbert-banach-spaces
+        required: false
+      - course: curves-surfaces-manifolds
+        required: false

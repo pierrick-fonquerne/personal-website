@@ -1,0 +1,38 @@
+slug: track-master
+theme: math
+published: false
+
+fr:
+  title: Master de mathématiques
+  tagline: L'analyse avancée et la spécialisation, du M1 au M2.
+  summary: >-
+    Le niveau expert : analyse fonctionnelle, géométrie différentielle,
+    équations aux dérivées partielles, chaînes de Markov, statistique bayésienne,
+    optimisation et théorie de l'information. La porte vers la recherche et les
+    applications de pointe.
+  audience: >-
+    Étudiants en master de mathématiques, ou chercheurs et ingénieurs visant les
+    outils mathématiques avancés, notamment pour l'intelligence artificielle.
+
+en:
+  title: Master's in Mathematics
+  tagline: Advanced analysis and specialization, from first to second year.
+  summary: >-
+    The expert level: functional analysis, differential geometry, partial
+    differential equations, Markov chains, Bayesian statistics, optimization and
+    information theory. The gateway to research and cutting-edge applications.
+  audience: >-
+    Master's mathematics students, or researchers and engineers seeking advanced
+    mathematical tools, notably for artificial intelligence.
+
+stages:
+  - stage: master
+    courses:
+      - course: partial-differential-equations
+      - course: hilbert-banach-spaces
+      - course: curves-surfaces-manifolds
+      - course: markov-chains
+      - course: bayesian-statistics
+      - course: convex-optimization
+      - course: stochastic-optimization
+      - course: information-theory
