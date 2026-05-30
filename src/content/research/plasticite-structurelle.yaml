@@ -1,7 +1,7 @@
 slug: plasticite-structurelle
 type: concept
 theme: ai
-status: draft
+status: published
 publishedAt: 2026-05-30
 tags:
   - plasticite-structurelle
@@ -18,7 +18,7 @@ papers:
   - title: 'MorphSNN: Adaptive Graph Diffusion and Structural Plasticity for Spiking Neural Networks'
     authors: 'Liu et al. (2026)'
     href: 'https://arxiv.org/abs/2603.14285'
-published: false
+published: true
 fr:
   title: 'Plasticité structurelle : quand le réseau réécrit sa propre architecture'
   tagline: "Créer et supprimer neurones et connexions pendant le fonctionnement, au lieu de figer la topologie avant l'entraînement."
