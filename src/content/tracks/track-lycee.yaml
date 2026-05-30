@@ -1,0 +1,36 @@
+slug: track-lycee
+theme: math
+published: false
+
+fr:
+  title: Mathématiques du lycée
+  tagline: Le socle scientifique, de la seconde à la terminale.
+  summary: >-
+    Le tronc commun de remise à niveau : calcul algébrique, fonctions, géométrie
+    vectorielle, suites et probabilités. Les fondations indispensables avant
+    d'aborder la prépa ou la licence.
+  audience: >-
+    Toute personne qui reprend les mathématiques depuis la base, ou qui veut
+    consolider le niveau lycée scientifique avant de monter.
+
+en:
+  title: High School Mathematics
+  tagline: The scientific foundation, from grade 10 to graduation.
+  summary: >-
+    The common refresher core: algebraic computation, functions, vector
+    geometry, sequences and probability. The groundwork needed before tackling
+    preparatory or undergraduate studies.
+  audience: >-
+    Anyone restarting mathematics from scratch, or consolidating a scientific
+    high school level before moving on.
+
+stages:
+  - stage: lycee
+    courses:
+      - course: logic-sets-proofs
+      - course: combinatorics-counting
+      - course: vectors-analytic-geometry
+      - course: sequences-limits
+      - course: continuity-differentiation
+      - course: discrete-probability
+      - course: euclidean-affine-geometry
