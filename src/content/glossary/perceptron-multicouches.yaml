@@ -1,0 +1,14 @@
+slug: perceptron-multicouches
+fr:
+  term: Perceptron multicouches
+  definition: Réseau de neurones organisé en couches successives (entrée, une ou plusieurs couches cachées, sortie), où chaque neurone applique une combinaison affine suivie d'une fonction d'activation. En empilant des neurones, il dépasse la limite du perceptron simple et réalise des fonctions non linéairement séparables comme XOR.
+  source: Rumelhart, Hinton & Williams, 1986
+en:
+  term: Multilayer perceptron
+  definition: A neural network organised in successive layers (input, one or more hidden layers, output), where each neuron applies an affine combination followed by an activation function. By stacking neurons it overcomes the single perceptron limit and computes non-linearly-separable functions such as XOR.
+  source: Rumelhart, Hinton & Williams, 1986
+seeAlso:
+  - couche-cachee
+  - perceptron
+  - xor
+  - composition-de-fonctions

@@ -7,3 +7,5 @@ en:
   definition: An intermediate layer in a neural network, sitting between the input layer and the output layer. Its neurons neither receive raw data nor produce the final prediction, they compute intermediate representations. A "deep" network has several hidden layers.
 seeAlso:
   - fonction-activation
+  - perceptron-multicouches
+  - pouvoir-expressif

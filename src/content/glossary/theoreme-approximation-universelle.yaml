@@ -1,0 +1,13 @@
+slug: theoreme-approximation-universelle
+fr:
+  term: Théorème d'approximation universelle
+  definition: Résultat (Cybenko 1989, Hornik 1989) établissant qu'un réseau à une seule couche cachée, avec assez de neurones et une activation non polynomiale, peut approcher d'aussi près qu'on veut n'importe quelle fonction continue sur un domaine borné. Il garantit l'existence d'un tel réseau, pas qu'on sache l'apprendre.
+  source: Cybenko, 1989 ; Hornik, 1989
+en:
+  term: Universal approximation theorem
+  definition: A result (Cybenko 1989, Hornik 1989) stating that a network with a single hidden layer, given enough neurons and a non-polynomial activation, can approximate any continuous function on a bounded domain to arbitrary accuracy. It guarantees that such a network exists, not that we can learn it.
+  source: Cybenko, 1989 ; Hornik, 1989
+seeAlso:
+  - perceptron-multicouches
+  - pouvoir-expressif
+  - couche-cachee

@@ -1,0 +1,13 @@
+slug: frontiere-de-decision
+fr:
+  term: Frontière de décision
+  definition: Lieu des points de l'espace d'entrée où le modèle bascule d'une classe à l'autre, c'est-à-dire où sa sortie change. Pour un neurone seul c'est un hyperplan ; pour un réseau multi-couches elle peut devenir polygonale, puis courbe.
+  source: Bishop, 2006
+en:
+  term: Decision boundary
+  definition: The set of input-space points where the model switches from one class to another, that is, where its output flips. For a single neuron it is a hyperplane ; for a multilayer network it can become polygonal, then curved.
+  source: Bishop, 2006
+seeAlso:
+  - hyperplan
+  - lineairement-separable
+  - perceptron-multicouches
