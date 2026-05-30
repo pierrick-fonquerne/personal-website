@@ -4,6 +4,7 @@ import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../../lib/i18n';
 import ExternalLink from '../../../components/ui/icons/ExternalLink.astro';
+import ChapterAudioPlayer from '../../../components/learning/ChapterAudioPlayer';
 
 export const getStaticPaths = (async () => {
   const entries = (await getCollection('research'))
@@ -21,6 +22,32 @@ const { entry } = Astro.props as Props;
 const locale = 'en' as const;
 const t = useTranslations(locale);
 const content = entry.data.en;
+
+const audioLabels = {
+  listen: t.toolbar.listen,
+  pause: t.toolbar.pause,
+  resume: t.toolbar.resume,
+  stop: t.toolbar.stop,
+  close: t.toolbar.close,
+  speed: t.toolbar.speed,
+  loading: t.toolbar.loading,
+  error: t.toolbar.error,
+  webSpeechBadge: t.toolbar.webSpeechBadge,
+  mp3Badge: t.toolbar.mp3Badge,
+  download: t.toolbar.download,
+  skipBack: t.toolbar.skipBack,
+  skipForward: t.toolbar.skipForward,
+  nextChapterIn: t.toolbar.nextChapterIn,
+  playNext: t.toolbar.playNext,
+  cancel: t.toolbar.cancel,
+  shortcuts: t.toolbar.shortcuts,
+  shortcutsTitle: t.toolbar.shortcutsTitle,
+  shortcutPlayPause: t.toolbar.shortcutPlayPause,
+  shortcutSkipBack: t.toolbar.shortcutSkipBack,
+  shortcutSkipForward: t.toolbar.shortcutSkipForward,
+  shortcutFineSeek: t.toolbar.shortcutFineSeek,
+  shortcutJump: t.toolbar.shortcutJump,
+};
 
 const body = await getEntry('research-en', entry.data.slug);
 const Body = body ? (await render(body)).Content : null;
@@ -104,6 +131,22 @@ const updatedAtLabel = entry.data.updatedAt ? dateFormatter.format(entry.data.up
             ))}
           </ul>
         </section>
+      )
+    }
+
+    {
+      Body && (
+        <div class="mt-12 flex flex-wrap justify-end" data-print="hide">
+          <ChapterAudioPlayer
+            client:idle
+            locale={locale}
+            courseSlug="research"
+            moduleSlug={entry.data.slug}
+            contentSelector=".prose-research"
+            labels={audioLabels}
+            chapterTitle={content.title}
+          />
+        </div>
       )
     }
 

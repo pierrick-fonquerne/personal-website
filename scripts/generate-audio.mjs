@@ -71,6 +71,8 @@ function moduleMatches(name) {
 const SOURCES = [
   { locale: 'fr', dir: resolve(ROOT, 'src', 'content', 'course-modules-fr') },
   { locale: 'en', dir: resolve(ROOT, 'src', 'content', 'course-modules-en') },
+  { locale: 'fr', dir: resolve(ROOT, 'src', 'content', 'research-fr'), course: 'research' },
+  { locale: 'en', dir: resolve(ROOT, 'src', 'content', 'research-en'), course: 'research' },
 ];
 
 const MAX_CHARS_PER_CHUNK = 3800;
@@ -110,11 +112,11 @@ async function* walkMdx(dir) {
   }
 }
 
-function parseRel(fp, sourceDir) {
+function parseRel(fp, sourceDir, courseOverride) {
   const rel = fp.slice(sourceDir.length + 1).replace(/\\/g, '/');
   const parts = rel.split('/');
   const moduleName = parts.pop().replace(/\.mdx$/, '');
-  const course = parts.join('/');
+  const course = courseOverride ?? parts.join('/');
   return { course, module: moduleName };
 }
 
@@ -240,12 +242,12 @@ async function main() {
   let skipped = 0;
   let dropped = 0;
 
-  for (const { locale, dir } of SOURCES) {
+  for (const { locale, dir, course: courseOverride } of SOURCES) {
     if (filterLocale && locale !== filterLocale) continue;
     if (!existsSync(dir)) continue;
 
     for await (const mdxPath of walkMdx(dir)) {
-      const { course, module: modName } = parseRel(mdxPath, dir);
+      const { course, module: modName } = parseRel(mdxPath, dir, courseOverride);
       if (filterCourse && course !== filterCourse) continue;
       if (!moduleMatches(modName)) continue;
       const key = `${locale}/${course}/${modName}`;
