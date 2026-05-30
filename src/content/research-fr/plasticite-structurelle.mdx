@@ -1,0 +1,65 @@
+---
+slug: plasticite-structurelle
+---
+
+import StructuralPlasticityGraph from '../../components/research/StructuralPlasticityGraph.tsx';
+
+## Une forme figée contre une forme vivante
+
+Dans un réseau de neurones classique, l'architecture est décidée avant l'entraînement et ne bouge plus. On fixe le nombre de couches, le nombre de neurones et le schéma des connexions, puis l'apprentissage se contente d'ajuster les poids. La forme est un plan figé ; seuls les curseurs internes tournent.
+
+Le cerveau procède à l'inverse. Il crée de nouvelles synapses, en élimine d'autres, fait apparaître et disparaître des connexions tout au long de la vie. Sa topologie n'est jamais figée : elle est le produit continu de l'activité.
+
+La plasticité structurelle, c'est cette capacité d'un réseau à remodeler sa propre architecture pendant qu'il fonctionne. La topologie cesse d'être une décision prise une fois pour toutes ; elle devient une variable du système, au même titre que les poids.
+
+## Pourquoi cela change tout
+
+Trois conséquences rendent cette idée intéressante :
+
+- Apprentissage continu. Un réseau dont la forme peut évoluer n'a pas besoin d'être gelé après l'entraînement : il continue de s'adapter à mesure que son environnement change.
+- Efficacité. Si la structure se construit là où l'activité le justifie, le réseau n'alloue des ressources qu'aux endroits utiles, au lieu de tout calculer partout en permanence.
+- Auto-organisation. La forme devient un résultat plutôt qu'un choix imposé d'avance. Le déplacement est profond : on ne conçoit plus l'architecture, on définit les règles qui la font émerger.
+
+## À toi de jouer
+
+Voici un petit réseau dont tu peux modifier la structure en direct. Ajoute ou retire des neurones et des connexions, et observe la topologie se réorganiser.
+
+<StructuralPlasticityGraph
+  client:visible
+  initialHidden={3}
+  labels={{
+    addNeuron: 'Ajouter un neurone',
+    removeNeuron: 'Retirer un neurone',
+    addSynapse: 'Ajouter une synapse',
+    removeSynapse: 'Retirer une synapse',
+    reset: 'Réinitialiser',
+    neuronsLabel: 'Neurones',
+    synapsesLabel: 'Synapses',
+    helpText:
+      'Modifie la structure du réseau en direct. Tout est ajouté ou retiré au hasard, sans aucun critère.',
+  }}
+/>
+
+Garde une chose en tête en jouant : ici, tout se fait au hasard. On ajoute, on retire, sans aucun critère. Retiens cette sensation, on y revient plus bas.
+
+## Ce que dit la recherche
+
+La plasticité structurelle n'est pas une vue de l'esprit. Plusieurs travaux récents montrent qu'une topologie peut être pilotée par des règles locales, sans plan central :
+
+- Barland et Gil (2024) construisent un réseau dont la topologie s'auto-organise par scission et fusion de nœuds, gouverné uniquement par des règles locales, sans fonction d'erreur globale. La généralisation y émerge de ces règles, jusqu'à reproduire le phénomène de grokking.
+- SMGrNN (Chen et al., 2025) décide l'insertion et l'élagage de neurones à partir de statistiques locales d'activation : la structure suit l'usage réel du réseau.
+- MorphSNN (Liu et al., 2026) intègre la plasticité structurelle dans un cadre spiking événementiel, où la réorganisation des connexions se joue à l'échelle de la milliseconde.
+
+Le fil commun : la topologie peut devenir une variable gouvernée localement, et non un gabarit imposé de l'extérieur.
+
+## Le piège : muter n'est pas apprendre
+
+Reviens à ta partie dans le bac à sable. Tu as pu faire grossir le réseau autant que tu voulais : cela ne l'a rendu ni meilleur, ni plus intelligent. C'est le point crucial. Modifier la structure au hasard ne mène nulle part. Une marche aléatoire dans l'espace des topologies ne converge vers rien.
+
+Ce qui sépare une plasticité utile d'une simple agitation, c'est la présence d'un critère qui oriente les changements : une pression de sélection (comme dans un algorithme évolutionnaire) ou une règle d'apprentissage locale (comme la STDP, où une connexion se renforce quand elle participe à la causalité d'une activation).
+
+C'est exactement la frontière entre deux de mes programmes de recherche. AEIF fournit le substrat : un réseau dont chaque mutation de structure est tracée et rejouable, mais où les mutations restent aléatoires. SOAG cherche le moteur manquant : les règles locales qui devraient décider quoi faire grandir et quoi laisser mourir. La plasticité structurelle est le terrain où les deux se rejoignent, et « muter n'est pas apprendre » est la question qui les sépare. Elle mérite son propre développement.
+
+## Note personnelle
+
+> Je ne suis pas chercheur de métier, et ce concept est précisément celui qui m'a fait sentir la différence entre construire un outil et comprendre un principe. AEIF marchait : il ajoutait et retirait des neurones sans broncher, et pourtant il n'apprenait rien. Ce sont des soirées passées à regarder un graphe muter pour rien qui m'ont poussé vers la littérature sur l'apprentissage local. Parfois, c'est en voyant clairement ce qui ne marche pas qu'on devine où regarder ensuite.

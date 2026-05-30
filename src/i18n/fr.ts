@@ -75,16 +75,17 @@ const fr: Translations = {
     eyebrow: 'RECHERCHE',
     indexTitle: 'Recherche',
     soon: 'Section en construction.',
-    lead: 'Un carnet de bord : études techniques, notes de lecture et explorations sur les sujets qui me tiennent à cœur.',
+    lead: 'Un carnet de bord : explorations, notes de lecture et concepts sur les sujets qui me tiennent à cœur.',
     disclaimer:
       "Je ne suis pas chercheur académique. Aucun doctorat, aucune prétention à publier des travaux à comité de lecture. Juste curieux, motivé et têtu. L'IA me permet aujourd'hui d'explorer et de prototyper des idées vite. Certaines sont probablement fausses. C'est aussi ça la recherche : se tromper en chemin pour se tromper un peu moins ensuite.",
     count: (n) => `${String(n).padStart(2, '0')} / notes`,
     emptyState: 'Aucune note publiée pour le moment. Reviens bientôt.',
     backToList: '← Retour aux notes',
+    freeFlow: 'Explorations & notes',
     types: {
-      'deep-dive': 'Étude technique',
-      'paper-synthesis': 'Note de lecture',
       exploration: 'Exploration',
+      paper: 'Note de lecture',
+      concept: 'Concept',
     },
     statuses: {
       draft: 'Brouillon',
@@ -321,7 +322,8 @@ const fr: Translations = {
     legalLink: 'Mentions légales',
   },
   consent: {
-    message: "Ce site utilise Umami Analytics pour mesurer l'audience de manière anonyme, sans cookie.",
+    message:
+      "Ce site utilise Umami Analytics pour mesurer l'audience de manière anonyme, sans cookie.",
     accept: 'Accepter',
     decline: 'Refuser',
     learnMore: 'En savoir plus',

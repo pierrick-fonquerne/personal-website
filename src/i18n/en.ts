@@ -90,10 +90,11 @@ export interface Translations {
     count: (n: number) => string;
     emptyState: string;
     backToList: string;
+    freeFlow: string;
     types: {
-      'deep-dive': string;
-      'paper-synthesis': string;
       exploration: string;
+      paper: string;
+      concept: string;
     };
     statuses: {
       draft: string;
@@ -311,16 +312,17 @@ const en: Translations = {
     eyebrow: 'RESEARCH',
     indexTitle: 'Research',
     soon: 'Section under construction.',
-    lead: 'A field notebook: deep dives, paper syntheses and explorations on the topics I care about.',
+    lead: 'A field notebook: explorations, reading notes and concepts on the topics I care about.',
     disclaimer:
       "I am not an academic researcher. No PhD, no claim to legitimacy or to publishing peer-reviewed work. Just curious, hands-on and stubborn. Today AI lets me explore and prototype ideas fast. Some are probably wrong. That's research: being wrong on the way to being a little less wrong.",
     count: (n) => `${String(n).padStart(2, '0')} / notes`,
     emptyState: 'No note published yet. Come back soon.',
     backToList: '← Back to notes',
+    freeFlow: 'Explorations & notes',
     types: {
-      'deep-dive': 'Deep dive',
-      'paper-synthesis': 'Paper synthesis',
       exploration: 'Exploration',
+      paper: 'Reading note',
+      concept: 'Concept',
     },
     statuses: {
       draft: 'Draft',

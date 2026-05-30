@@ -123,7 +123,7 @@ const researchPaperSchema = z.object({
 
 const researchSchema = z.object({
   slug: z.string(),
-  type: z.enum(['deep-dive', 'paper-synthesis', 'exploration']),
+  type: z.enum(['exploration', 'paper', 'concept']),
   theme: z.enum([
     'architecture',
     'math',

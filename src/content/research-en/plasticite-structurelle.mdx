@@ -1,0 +1,65 @@
+---
+slug: plasticite-structurelle
+---
+
+import StructuralPlasticityGraph from '../../components/research/StructuralPlasticityGraph.tsx';
+
+## A fixed shape versus a living one
+
+In a classical neural network, the architecture is decided before training and never moves. You set the number of layers, the number of neurons and the wiring pattern, then learning only adjusts the weights. The shape is a frozen blueprint; only the internal dials turn.
+
+The brain does the opposite. It grows new synapses, prunes others, and makes connections appear and disappear throughout life. Its topology is never fixed: it is the continuous product of activity.
+
+Structural plasticity is exactly this ability of a network to reshape its own architecture while it runs. Topology stops being a once-and-for-all decision; it becomes a variable of the system, just like the weights.
+
+## Why it changes everything
+
+Three consequences make the idea interesting:
+
+- Continual learning. A network whose shape can evolve does not need to be frozen after training: it keeps adapting as its environment changes.
+- Efficiency. If structure is built where activity justifies it, the network only allocates resources where they are useful, instead of computing everything everywhere all the time.
+- Self-organization. Shape becomes a result rather than a choice imposed in advance. The shift is deep: you no longer design the architecture, you define the rules that make it emerge.
+
+## Your turn
+
+Here is a small network whose structure you can change live. Add or remove neurons and connections, and watch the topology reorganize.
+
+<StructuralPlasticityGraph
+  client:visible
+  initialHidden={3}
+  labels={{
+    addNeuron: 'Add a neuron',
+    removeNeuron: 'Remove a neuron',
+    addSynapse: 'Add a synapse',
+    removeSynapse: 'Remove a synapse',
+    reset: 'Reset',
+    neuronsLabel: 'Neurons',
+    synapsesLabel: 'Synapses',
+    helpText:
+      'Change the network structure live. Everything is added or removed at random, with no criterion at all.',
+  }}
+/>
+
+Keep one thing in mind while you play: here, everything happens at random. We add, we remove, with no criterion. Remember that feeling, we come back to it below.
+
+## What the research says
+
+Structural plasticity is not wishful thinking. Several recent works show that a topology can be driven by local rules, with no central plan:
+
+- Barland and Gil (2024) build a network whose topology self-organizes through node splitting and merging, governed solely by local rules, with no global error function. Generalization emerges from those rules, going as far as reproducing the grokking phenomenon.
+- SMGrNN (Chen et al., 2025) decides neuron insertion and pruning from local activation statistics: the structure follows the actual usage of the network.
+- MorphSNN (Liu et al., 2026) embeds structural plasticity in an event-driven spiking framework, where connection reorganization happens on the millisecond scale.
+
+The common thread: topology can become a locally governed variable, not a template imposed from the outside.
+
+## The trap: mutating is not learning
+
+Go back to your run in the sandbox. You could grow the network as much as you wanted: it made it neither better nor smarter. That is the crucial point. Changing structure at random leads nowhere. A random walk in the space of topologies converges to nothing.
+
+What separates useful plasticity from mere agitation is the presence of a criterion that steers the changes: a selection pressure (as in an evolutionary algorithm) or a local learning rule (such as STDP, where a connection strengthens when it takes part in the causality of an activation).
+
+This is exactly the boundary between two of my research programs. AEIF provides the substrate: a network where every structural mutation is traced and replayable, but where the mutations stay random. SOAG looks for the missing engine: the local rules that should decide what to grow and what to let die. Structural plasticity is the ground where the two meet, and "mutating is not learning" is the question that separates them. It deserves its own piece.
+
+## Personal note
+
+> I am not a researcher by trade, and this concept is precisely the one that made me feel the difference between building a tool and understanding a principle. AEIF worked: it added and removed neurons without flinching, and yet it learned nothing. It was evenings spent watching a graph mutate for nothing that pushed me toward the literature on local learning. Sometimes, seeing clearly what does not work is how you guess where to look next.
