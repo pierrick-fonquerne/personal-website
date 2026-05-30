@@ -50,6 +50,8 @@ export const SUBTHEMES_BY_THEME = {
 
 export type Subtheme = (typeof SUBTHEMES_BY_THEME)[Theme][number];
 
+export type MathSubtheme = (typeof SUBTHEMES_BY_THEME)['math'][number];
+
 export function isKnownSubtheme(theme: Theme, subtheme: string): boolean {
   return (SUBTHEMES_BY_THEME[theme] as readonly string[]).includes(subtheme);
 }

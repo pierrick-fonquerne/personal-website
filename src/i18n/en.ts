@@ -116,6 +116,7 @@ export interface Translations {
     minutesUnit: string;
     comingSoon: string;
     glossaryLink: string;
+    tracksLink: string;
     personalNoteEyebrow: string;
   };
   themes: Record<
@@ -131,6 +132,24 @@ export interface Translations {
     string
   >;
   subthemes: Record<string, string>;
+  stages: {
+    lycee: string;
+    prepa: string;
+    licence: string;
+    master: string;
+  };
+  tracks: {
+    eyebrow: string;
+    indexTitle: string;
+    indexLead: string;
+    emptyState: string;
+    backToList: string;
+    coursesUnit: string;
+    upcomingBadge: string;
+    optionalBadge: string;
+    cardCta: string;
+    audienceLabel: string;
+  };
   module: {
     prev: string;
     next: string;
@@ -345,6 +364,7 @@ const en: Translations = {
     minutesUnit: 'min',
     comingSoon: 'Coming soon',
     glossaryLink: 'Glossary →',
+    tracksLink: 'Tracks →',
     personalNoteEyebrow: 'Personal note',
   },
   themes: {
@@ -392,6 +412,39 @@ const en: Translations = {
     'ci-self-hosted': 'Self-hosted CI',
     'polyglot-orchestration': 'Polyglot orchestration',
     'mcp-servers': 'MCP servers',
+    foundations: 'Foundations',
+    'abstract-algebra': 'Abstract algebra',
+    'number-theory': 'Number theory',
+    'real-analysis': 'Real analysis',
+    'complex-analysis': 'Complex analysis',
+    'differential-equations': 'Differential equations',
+    'measure-theory': 'Measure theory',
+    'functional-analysis': 'Functional analysis',
+    geometry: 'Geometry',
+    topology: 'Topology',
+    'differential-geometry': 'Differential geometry',
+    statistics: 'Statistics',
+    'numerical-methods': 'Numerical methods',
+    'graph-theory': 'Graph theory',
+  },
+  stages: {
+    lycee: 'High school',
+    prepa: 'Preparatory class',
+    licence: 'Bachelor',
+    master: 'Master',
+  },
+  tracks: {
+    eyebrow: 'TRACKS',
+    indexTitle: 'Mathematics tracks',
+    indexLead:
+      'Curated paths through mathematics, from high school to a master level, including a track tuned for AI. Each track assembles reusable courses, many of which are still to come.',
+    emptyState: 'No track published yet. Come back soon.',
+    backToList: '← Back to tracks',
+    coursesUnit: 'courses',
+    upcomingBadge: 'Coming soon',
+    optionalBadge: 'Optional',
+    cardCta: 'Explore the track',
+    audienceLabel: 'For',
   },
   module: {
     prev: 'Previous',

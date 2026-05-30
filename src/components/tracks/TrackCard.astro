@@ -1,0 +1,56 @@
+---
+import { useTranslations, type Locale } from '../../lib/i18n';
+import type { Track } from '../../lib/tracks';
+
+interface Props {
+  track: Track;
+  locale: Locale;
+  href: string;
+  courseCount: number;
+}
+
+const { track, locale, href, courseCount } = Astro.props;
+const t = useTranslations(locale);
+const content = track.data[locale];
+const stagesLabel = track.data.stages.map((stage) => t.stages[stage.stage]).join(' · ');
+---
+
+<article
+  class="group flex h-full flex-col rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-6 transition-colors hover:border-[var(--color-line-strong)]"
+>
+  <span class="font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
+    {stagesLabel}
+  </span>
+
+  <h3 class="font-display mt-3 text-[22px] font-bold tracking-[-0.01em] text-[var(--color-fg)]">
+    <a
+      href={href}
+      class="transition-colors group-hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
+    >
+      {content.title}
+    </a>
+  </h3>
+
+  <p class="mt-2 text-[14px] leading-relaxed text-[var(--color-fg-muted)]">
+    {content.tagline}
+  </p>
+
+  <p class="mt-4 text-[13px] leading-relaxed text-[var(--color-fg-dim)]">
+    <span class="font-mono text-[10px] tracking-[0.14em] uppercase">{t.tracks.audienceLabel}</span>{
+      ' '
+    }
+    {content.audience}
+  </p>
+
+  <div class="mt-auto flex items-center justify-between border-t border-[var(--color-line)] pt-4">
+    <span class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)] uppercase">
+      {courseCount}
+      {t.tracks.coursesUnit}
+    </span>
+    <span
+      class="font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase opacity-0 transition-opacity group-hover:opacity-100"
+    >
+      {t.tracks.cardCta} →
+    </span>
+  </div>
+</article>
