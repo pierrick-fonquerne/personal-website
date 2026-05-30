@@ -1,0 +1,37 @@
+slug: introduction-soag
+type: exploration
+theme: ai
+subtheme: SOAG
+status: draft
+publishedAt: 2026-05-30
+tags:
+  - soag
+  - auto-organisation
+  - apprentissage-local
+  - stdp
+  - sparsite
+  - inhibition
+  - neurone-riche
+  - ecosysteme-computationnel
+papers:
+  - title: 'Synaptic Modifications in Cultured Hippocampal Neurons (STDP)'
+    authors: 'Bi & Poo (1998)'
+    href: 'https://www.jneurosci.org/content/18/24/10464'
+  - title: 'Perceptrons: An Introduction to Computational Geometry'
+    authors: 'Minsky & Papert (1969)'
+    href: 'https://mitpress.mit.edu/9780262534772/perceptrons/'
+  - title: 'Generalization emerges from local optimization in a self-organized learning network'
+    authors: 'Barland & Gil (2024)'
+    href: 'https://arxiv.org/abs/2410.02590'
+  - title: 'A Path Towards Autonomous Machine Intelligence'
+    authors: 'Yann LeCun (2022)'
+    href: 'https://openreview.net/forum?id=BZ5a1r-kVsf'
+published: false
+fr:
+  title: "SOAG : l'intelligence comme auto-organisation, pas comme optimisation"
+  tagline: "Chercher le principe de portance de l'intelligence : des composants riches qui s'auto-organisent localement, plutôt que des composants pauvres optimisés globalement."
+  summary: "SOAG est mon programme le plus spéculatif. Et si la voie royale du deep learning, empiler des couches de neurones pauvres, n'était que la réponse la plus facile de 1986 ? SOAG explore l'autre branche : enrichir le composant lui-même, le rendre temporel, plastique et local."
+en:
+  title: 'SOAG: intelligence as self-organization, not optimization'
+  tagline: 'Searching for the lift principle of intelligence: rich components that self-organize locally, rather than poor components optimized globally.'
+  summary: 'SOAG is my most speculative program. What if the royal road of deep learning, stacking layers of poor neurons, was merely the easiest answer available in 1986? SOAG explores the other branch: enriching the component itself, making it temporal, plastic and local.'
