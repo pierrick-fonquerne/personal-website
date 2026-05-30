@@ -8,7 +8,6 @@ interface LossComparatorProps {
 
 interface Dictionary {
   readonly title: string;
-  readonly modeLabel: string;
   readonly mRegression: string;
   readonly mBinary: string;
   readonly mMulticlass: string;
@@ -32,7 +31,6 @@ interface Dictionary {
 const DICT: Record<Locale, Dictionary> = {
   fr: {
     title: 'MSE contre entropie croisée',
-    modeLabel: 'Tâche',
     mRegression: 'Régression',
     mBinary: 'Classif. binaire',
     mMulticlass: '3 classes (softmax)',
@@ -54,7 +52,6 @@ const DICT: Record<Locale, Dictionary> = {
   },
   en: {
     title: 'MSE versus cross-entropy',
-    modeLabel: 'Task',
     mRegression: 'Regression',
     mBinary: 'Binary classif.',
     mMulticlass: '3 classes (softmax)',

@@ -220,9 +220,6 @@ export default function LossLandscape({ locale = 'fr' }: LossLandscapeProps): JS
             stroke="var(--accent-violet, #a78bfa)"
             strokeWidth={3}
           />
-          <text x={PAD} y={VH - 7} fill="var(--text-muted, #64748b)" fontSize={10}>
-            w₁
-          </text>
           <text x={VW - PAD - 8} y={VH - 7} fill="var(--text-muted, #64748b)" fontSize={10}>
             w₁
           </text>
