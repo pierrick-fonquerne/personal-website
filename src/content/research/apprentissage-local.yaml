@@ -1,0 +1,36 @@
+slug: apprentissage-local
+type: concept
+theme: ai
+status: draft
+publishedAt: 2026-05-31
+tags:
+  - apprentissage-local
+  - retropropagation
+  - forward-forward
+  - predictive-coding
+  - stdp
+  - plasticite-hebbienne
+  - efficacite-energetique
+  - apprentissage-biologique
+papers:
+  - title: 'The Forward-Forward Algorithm: Some Preliminary Investigations'
+    authors: 'Geoffrey Hinton (2022)'
+    href: 'https://arxiv.org/abs/2212.13345'
+  - title: 'Predictive Coding Approximates Backprop Along Arbitrary Computation Graphs'
+    authors: 'Millidge, Tschantz & Buckley (2022)'
+    href: 'https://arxiv.org/abs/2006.04182'
+  - title: 'The combination of Hebbian and predictive plasticity learns invariant object representations in deep sensory networks'
+    authors: 'Halvagal & Zenke (2023)'
+    href: 'https://www.nature.com/articles/s41593-023-01460-y'
+  - title: 'Unsupervised learning of digit recognition using spike-timing-dependent plasticity'
+    authors: 'Diehl & Cook (2015)'
+    href: 'https://doi.org/10.3389/fncom.2015.00099'
+published: false
+fr:
+  title: "Apprentissage local : apprendre sans gradient global"
+  tagline: "Et si un réseau apprenait sans jamais propager d'erreur en arrière ? Trois familles de règles purement locales face à la rétropropagation."
+  summary: "La rétropropagation domine l'IA, mais elle est globale : elle exige un balayage arrière qui réutilise tous les poids et verrouille les mises à jour. Le cerveau, lui, apprend localement. Ce dossier confronte la rétropropagation à trois alternatives locales (Forward-Forward, predictive coding, STDP) et explore ce que l'on gagne quand chaque synapse décide seule."
+en:
+  title: 'Local learning: learning without a global gradient'
+  tagline: 'What if a network could learn without ever propagating an error backward? Three families of purely local rules against backpropagation.'
+  summary: 'Backpropagation dominates AI, but it is global: it requires a backward sweep that reuses every weight and locks all updates. The brain, by contrast, learns locally. This piece pits backpropagation against three local alternatives (Forward-Forward, predictive coding, STDP) and explores what we gain when each synapse decides on its own.'
