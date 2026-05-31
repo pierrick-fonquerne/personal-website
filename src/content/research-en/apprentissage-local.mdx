@@ -1,0 +1,223 @@
+---
+slug: apprentissage-local
+---
+
+import BackpropLocks from '../../components/research/BackpropLocks.tsx';
+import ForwardForwardLab from '../../components/research/ForwardForwardLab.tsx';
+import StdpTimingRule from '../../components/research/StdpTimingRule.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Training a large model costs on the order of a megawatt over weeks. The human brain, by contrast, reasons, learns continually and generalizes on about twenty watts. That gap of five to six orders of magnitude is not a hardware detail: it points to a different computational principle. At the heart of the difference, the artificial neuron is stateless (a weighted sum, effectively a logistic regression, Cox 1958), and the whole network is trained by one global mechanism, backpropagation. Depth creates non-linearity, not richness. The question of this piece fits in one sentence: **can we learn without propagating error backward?**
+
+## The three locks of backpropagation
+
+Backpropagation is remarkably effective, but it cannot be a local rule. Three reasons forbid it by construction.
+
+- **Weight transport**: the backward pass reuses the forward weights, transposed. To compute its error, a neuron would need to know the weights of the synapses downstream of it, which makes no biological sense: a synapse does not read the synapses of its neighbors.
+- **Update locking**: no layer updates until the full backward sweep completes. The whole network advances in lockstep, in a global lock.
+- **Two separate phases**: activity must first flow forward, then error must flow backward. The two phases never overlap.
+
+<BackpropLocks
+  client:visible
+  labels={{
+    helpText:
+      'Run a learning cycle. In global mode, the error sweeps the network backward. Switch on local mode to see the three locks disappear.',
+    forwardLabel: 'Forward pass',
+    backwardLabel: 'Backward pass',
+    weightTransportLabel: 'Weight transport',
+    updateLockingLabel: 'Update locking',
+    twoPhasesLabel: 'Two separate phases',
+    localModeLabel: 'Local mode',
+    verdictLocal: 'Local rule: each layer updates with its own information only.',
+    verdictGlobal: 'Backpropagation: non-local, it requires a global error signal.',
+    resetLabel: 'Reset',
+    runLabel: 'Run a cycle',
+    idleLabel: 'Idle',
+    svgLabel: 'Layered neural network',
+  }}
+/>
+
+The lesson is sharp: backpropagation is powerful, but **non-local by construction**. That is precisely what a local rule must give up.
+
+## Why aim for local
+
+If giving up backpropagation costs so much, why attempt it? Because locality promises four things the global mechanism cannot offer.
+
+- **Energy proportional to real activity**: only the units that fire spend, instead of a systematic global sweep.
+- **Continual learning**: no frozen phase, the network adapts on the move, without separating training and inference.
+- **Biological plausibility**: a local rule resembles what living systems actually do.
+- **Co-location of memory and computation**: the synapse is both where you store and where you compute, which removes the costly back-and-forth between memory and processor.
+
+The cost is clear: today, no local method matches backpropagation at scale. So this is a **research bet**, not a solved problem.
+
+## Forward-Forward: two passes, no backward
+
+Hinton (2022) proposes replacing the forward + backward pair with **two forward passes**. The first processes positive data (real), the second processes negative data (corrupted). Each layer locally adjusts a **goodness** (the sum of squared activities) so that it is high on positive data and low on negative data. There is no backward pass, no global error: each layer learns from its own local information only.
+
+<ForwardForwardLab
+  client:visible
+  labels={{
+    helpText:
+      'Two forward passes, never a backward pass. Each layer locally adjusts its goodness to be high on real data and low on corrupted data.',
+    positiveLabel: 'Positive data (real)',
+    negativeLabel: 'Negative data (corrupted)',
+    goodnessLabel: 'Goodness',
+    thresholdLabel: 'Threshold',
+    runPositiveLabel: 'Positive pass',
+    runNegativeLabel: 'Negative pass',
+    resetLabel: 'Reset',
+    layerLabel: 'Layer',
+    noBackwardLabel: 'No backward pass: learning is purely local.',
+  }}
+/>
+
+The limit is real: the architecture stays fixed, the synapses stay scalar, and the method remains below backpropagation on benchmarks. But it proves that a deep network can learn without ever sending error back.
+
+## Predictive coding: predicting to learn
+
+Another path flips the perspective: each layer **predicts** the activity of the next one and locally minimizes its prediction error. Millidge, Tschantz and Buckley (2022) showed that predictive coding can approximate backpropagation along arbitrary computation graphs, using only local error units.
+
+Write $\hat{x}_l$ for the prediction coming from layer $l+1$. The local prediction error is:
+
+$$
+\varepsilon_l = x_l - \hat{x}_l
+$$
+
+and the local update of a weight depends only on quantities available at the synapse:
+
+$$
+\Delta w_l \propto \varepsilon_l \, f(x_{l+1})
+$$
+
+It is currently seen as the most promising energy-based alternative to backpropagation.
+
+## STDP: causality through timing
+
+**STDP** (spike-timing-dependent plasticity) is a biologically documented local rule. The weight change depends only on the relative timing of the two spikes:
+
+$$
+\Delta t = t_{post} - t_{pre}
+$$
+
+If the pre spike fires before the post, the synapse strengthens (**potentiation**): it took part in the causality of the following spike. If the post spike fires before the pre, it weakens (**depression**). A third factor (a reward or a neuromodulator) can gate consolidation: this is **three-factor learning**. Diehl and Cook (2015) combine STDP with winner-take-all inhibition to recognize digits with no backpropagation at all; Halvagal and Zenke (2023) extend this line.
+
+<StdpTimingRule
+  client:visible
+  labels={{
+    helpText:
+      'Tune the timing difference between the two spikes. The synapse strengthens if the pre fires before the post, and weakens otherwise. Everything is local: only the relative timing matters.',
+    preLabel: 'Pre-synaptic',
+    postLabel: 'Post-synaptic',
+    beforeLabel: 'before',
+    deltaTLabel: 'Timing difference',
+    weightChangeLabel: 'Weight change',
+    potentiationLabel: 'Potentiation: the synapse strengthens',
+    depressionLabel: 'Depression: the synapse weakens',
+    thirdFactorLabel: 'Third factor (reward)',
+    firePreLabel: 'Fire pre',
+    firePostLabel: 'Fire post',
+    resetLabel: 'Reset',
+    deliverRewardLabel: 'Deliver the reward',
+    eligibilityLabel: 'Eligibility trace',
+    consolidatedWeightLabel: 'Consolidated weight',
+    currentWeightLabel: 'Current weight',
+  }}
+/>
+
+STDP connects directly to my own work: it is exactly the kind of local rule sought by the [SOAG](/en/research/introduction-soag) program, and the criterion that could steer the mutations described in [structural plasticity](/en/research/plasticite-structurelle).
+
+## A minimal formalization
+
+Let us cleanly contrast the global chain rule with a local rule. Backpropagation computes:
+
+$$
+\frac{\partial \mathcal{L}}{\partial w_{ij}} = \delta_j \, x_i, \qquad \delta_j = f'(a_j) \sum_k w_{jk}\,\delta_k
+$$
+
+where the sum over $k$ runs over all units downstream: the update of $w_{ij}$ depends on the entire rest of the network. A local rule replaces that global $\delta_j$ by a signal available at the synapse itself:
+
+$$
+\Delta w_{ij} = \eta \, g(x_i, x_j, m)
+$$
+
+with $m$ an optional global modulator (a reward). The whole debate is right there: can a local $g$ match the global $\delta$?
+
+## A comparative table
+
+| Property                    | Backprop | Forward-Forward | Predictive coding | STDP |
+| --------------------------- | -------- | --------------- | ----------------- | ---- |
+| Local learning              | no       | yes             | yes               | yes  |
+| No backward pass            | no       | yes             | partial           | yes  |
+| Biological plausibility     | no       | partial         | partial           | yes  |
+| Requires weight transport   | yes      | no              | no                | no   |
+| Online learning             | no       | partial         | partial           | yes  |
+
+Each alternative drops at least one lock of backpropagation, yet none matches it at scale.
+
+## Limits and open questions
+
+We should stay honest about the real state of the field.
+
+- Local methods still underperform backpropagation on large benchmarks.
+- We lack a theory saying which local rule yields which capability.
+- Comparing these methods is hard, because they optimize different objectives.
+- The open question remains: is locality a constraint to overcome, or the key to efficiency?
+
+## Test your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'What does "weight transport" mean, and why is it biologically implausible?',
+      options: [
+        'Physically moving neurons from one layer to another',
+        'The backward pass reuses the transposed forward weights, so a neuron would need to know the weights of its downstream synapses',
+        'Copying the weights to memory at every time step',
+        'Carrying the learning rate between layers',
+      ],
+      answer: 1,
+      explain:
+        'Backpropagation reuses the forward-pass weights, transposed, in the backward pass. A real synapse cannot read the weights of downstream synapses: this transport has no biological counterpart.',
+    },
+    {
+      q: 'What does Forward-Forward replace the backward pass with?',
+      options: [
+        'A second forward pass, on negative (corrupted) data',
+        'An accelerated stochastic gradient descent',
+        'A numerically approximated backward pass',
+        "A freezing of the first layers' weights",
+      ],
+      answer: 0,
+      explain:
+        'Hinton replaces the forward + backward pair with two forward passes: one on positive (real) data, one on negative (corrupted) data. Each layer locally adjusts its goodness, with no global error.',
+    },
+    {
+      q: 'In STDP, which way does the weight change if the pre fires before the post?',
+      options: [
+        'The weight weakens (depression)',
+        'The weight does not change',
+        'The weight strengthens (potentiation)',
+        'The weight flips sign',
+      ],
+      answer: 2,
+      explain:
+        'Pre before post means the pre took part in the causality of the following spike: the synapse strengthens, which is potentiation. Post before pre would instead give depression.',
+    },
+    {
+      q: 'What is the core claim of predictive coding?',
+      options: [
+        'That it removes the notion of synaptic weight entirely',
+        'That it needs no training data at all',
+        'That it can approximate backpropagation using only local error units',
+        'That it is strictly faster than backpropagation at all scales',
+      ],
+      answer: 2,
+      explain:
+        'Millidge, Tschantz and Buckley (2022) show that predictive coding can approximate backpropagation along arbitrary computation graphs, using only local error units.',
+    },
+  ]}
+/>

@@ -1,0 +1,166 @@
+---
+slug: apprentissage-local
+---
+
+import BackpropLocks from '../../components/research/BackpropLocks.tsx';
+import ForwardForwardLab from '../../components/research/ForwardForwardLab.tsx';
+import StdpTimingRule from '../../components/research/StdpTimingRule.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Entraîner un grand modèle coûte de l'ordre du mégawatt pendant des semaines. Le cerveau humain, lui, raisonne, apprend en continu et généralise avec environ vingt watts. Cet écart de cinq à six ordres de grandeur n'est pas un détail de matériel : il signale un principe de calcul différent. Au cœur de la différence, le neurone artificiel est sans état (une somme pondérée, en pratique une régression logistique, Cox 1958), et le réseau entier est entraîné par un mécanisme global unique, la rétropropagation. La profondeur crée de la non-linéarité, pas de la richesse. La question de ce dossier tient en une phrase : **peut-on apprendre sans propager d'erreur en arrière ?**
+
+## Les trois verrous de la rétropropagation
+
+La rétropropagation est remarquablement efficace, mais elle ne peut pas être une règle locale. Trois raisons l'en empêchent par construction.
+
+- **Transport de poids** : la passe arrière réutilise les poids de la passe avant, transposés. Pour calculer son erreur, un neurone devrait connaître les poids des synapses situées en aval de lui, ce qui n'a aucun sens biologique : une synapse ne lit pas les synapses de ses voisines.
+- **Verrouillage des mises à jour** : aucune couche ne se met à jour tant que le balayage arrière complet n'est pas terminé. Tout le réseau avance au pas cadencé, dans un verrou global.
+- **Deux phases séparées** : il faut d'abord propager l'activité vers l'avant, puis l'erreur vers l'arrière. Les deux phases ne se recouvrent jamais.
+
+<BackpropLocks client:visible />
+
+La leçon est nette : la rétropropagation est puissante, mais **non locale par construction**. C'est précisément ce qu'une règle locale doit abandonner.
+
+## Pourquoi viser le local
+
+Si renoncer à la rétropropagation coûte si cher, pourquoi le tenter ? Parce que le local promet quatre choses que le global ne sait pas offrir.
+
+- **Énergie proportionnelle à l'activité réelle** : seules les unités qui s'activent dépensent, au lieu d'un balayage global systématique.
+- **Apprentissage continu** : pas de phase gelée, le réseau s'adapte en marchant, sans séparer entraînement et inférence.
+- **Plausibilité biologique** : une règle locale ressemble à ce que le vivant sait réellement faire.
+- **Co-localisation mémoire et calcul** : la synapse est à la fois là où l'on stocke et là où l'on calcule, ce qui supprime le va-et-vient coûteux entre mémoire et processeur.
+
+Le prix à payer est lucide : aujourd'hui, aucune méthode locale n'égale la rétropropagation à grande échelle. C'est donc un **pari de recherche**, pas un problème résolu.
+
+## Forward-Forward : deux passes, zéro retour
+
+Hinton (2022) propose de remplacer le couple avant + arrière par **deux passes avant**. La première traite des données positives (réelles), la seconde des données négatives (corrompues). Chaque couche ajuste localement une **qualité** (la somme des carrés de ses activités) pour qu'elle soit haute sur le positif et basse sur le négatif. Il n'y a plus de passe arrière, plus d'erreur globale : chaque couche apprend avec sa seule information locale.
+
+<ForwardForwardLab client:visible />
+
+La limite est réelle : l'architecture reste fixe, les synapses restent scalaires, et la méthode demeure en dessous de la rétropropagation sur les bancs d'essai. Mais elle prouve qu'un réseau profond peut apprendre sans jamais remonter d'erreur.
+
+## Predictive coding : prédire pour apprendre
+
+Une autre voie renverse la perspective : chaque couche **prédit** l'activité de la suivante et minimise localement son erreur de prédiction. Millidge, Tschantz et Buckley (2022) ont montré que le predictive coding peut approcher la rétropropagation le long de graphes de calcul arbitraires, en n'utilisant que des unités d'erreur locales.
+
+Notons $\hat{x}_l$ la prédiction venue de la couche $l+1$. L'erreur locale de prédiction s'écrit :
+
+$$
+\varepsilon_l = x_l - \hat{x}_l
+$$
+
+et la mise à jour locale d'un poids ne dépend que de quantités disponibles à la synapse :
+
+$$
+\Delta w_l \propto \varepsilon_l \, f(x_{l+1})
+$$
+
+C'est aujourd'hui considéré comme l'alternative la plus prometteuse à la rétropropagation parmi les approches fondées sur l'énergie.
+
+## STDP : la causalité par le timing
+
+La **STDP** (spike-timing-dependent plasticity) est une règle locale documentée biologiquement. La variation du poids ne dépend que du timing relatif des deux décharges :
+
+$$
+\Delta t = t_{post} - t_{pre}
+$$
+
+Si la pré décharge avant la post, la synapse se renforce (**potentiation**) : elle a participé à la causalité de la décharge suivante. Si la post décharge avant la pré, elle s'affaiblit (**dépression**). Un troisième facteur (une récompense ou un neuromodulateur) peut conditionner la consolidation : c'est l'apprentissage **à trois facteurs**. Diehl et Cook (2015) combinent la STDP avec une inhibition de type « le gagnant rafle tout » pour reconnaître des chiffres sans aucune rétropropagation ; Halvagal et Zenke (2023) prolongent cette ligne.
+
+<StdpTimingRule client:visible />
+
+La STDP rejoint directement mon travail : c'est exactement le genre de règle locale que cherche le programme [SOAG](/research/introduction-soag), et le critère qui pourrait orienter les mutations décrites dans [plasticité structurelle](/research/plasticite-structurelle).
+
+## Une formalisation minimale
+
+Opposons proprement la règle de la chaîne globale et une règle locale. La rétropropagation calcule :
+
+$$
+\frac{\partial \mathcal{L}}{\partial w_{ij}} = \delta_j \, x_i, \qquad \delta_j = f'(a_j) \sum_k w_{jk}\,\delta_k
+$$
+
+où la somme sur $k$ parcourt toutes les unités situées en aval : la mise à jour de $w_{ij}$ dépend de tout le reste du réseau. Une règle locale remplace ce $\delta_j$ global par un signal disponible à la synapse elle-même :
+
+$$
+\Delta w_{ij} = \eta \, g(x_i, x_j, m)
+$$
+
+avec $m$ un modulateur global optionnel (une récompense). Tout le débat tient là : un $g$ local peut-il égaler le $\delta$ global ?
+
+## Tableau comparatif
+
+| Propriété                   | Rétropropagation | Forward-Forward | Predictive coding | STDP |
+| --------------------------- | ---------------- | --------------- | ----------------- | ---- |
+| Apprentissage local         | non              | oui             | oui               | oui  |
+| Sans passe arrière          | non              | oui             | partiel           | oui  |
+| Plausibilité biologique     | non              | partiel         | partiel           | oui  |
+| Transport de poids requis   | oui              | non             | non               | non  |
+| Apprentissage en ligne      | non              | partiel         | partiel           | oui  |
+
+Chaque alternative lève au moins un verrou de la rétropropagation, mais aucune ne l'égale encore à grande échelle.
+
+## Limites et questions ouvertes
+
+Il faut rester honnête sur l'état réel du domaine.
+
+- Les méthodes locales restent en dessous de la rétropropagation sur les grands bancs d'essai.
+- Il manque une théorie qui dise quelle règle locale produit quelle capacité.
+- Comparer ces méthodes est difficile, car elles optimisent des objectifs différents.
+- La question ouverte demeure : la localité est-elle une contrainte à surmonter, ou bien la clé de l'efficacité ?
+
+## Teste ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Que signifie le « transport de poids », et pourquoi est-il biologiquement implausible ?",
+      options: [
+        "Déplacer physiquement les neurones d'une couche à l'autre",
+        "La passe arrière réutilise les poids avant transposés, donc un neurone devrait connaître les poids de ses synapses en aval",
+        "Copier les poids vers la mémoire à chaque pas de temps",
+        "Transporter le taux d'apprentissage entre les couches",
+      ],
+      answer: 1,
+      explain:
+        "La rétropropagation réutilise les poids de la passe avant, transposés, dans la passe arrière. Une synapse réelle ne peut pas lire les poids des synapses situées en aval : ce transport n'a pas d'équivalent biologique.",
+    },
+    {
+      q: "Par quoi Forward-Forward remplace-t-il la passe arrière ?",
+      options: [
+        "Par une seconde passe avant, sur des données négatives (corrompues)",
+        "Par une descente de gradient stochastique accélérée",
+        "Par une passe arrière approximée numériquement",
+        "Par un gel des poids des premières couches",
+      ],
+      answer: 0,
+      explain:
+        "Hinton remplace le couple avant + arrière par deux passes avant : une sur les données positives (réelles), une sur les données négatives (corrompues). Chaque couche ajuste localement sa qualité, sans erreur globale.",
+    },
+    {
+      q: "En STDP, dans quel sens varie le poids si la pré décharge avant la post ?",
+      options: [
+        "Le poids s'affaiblit (dépression)",
+        "Le poids ne change pas",
+        "Le poids se renforce (potentiation)",
+        "Le poids s'inverse de signe",
+      ],
+      answer: 2,
+      explain:
+        "Pré avant post signifie que la pré a participé à la causalité de la décharge suivante : la synapse se renforce, c'est la potentiation. Post avant pré donnerait au contraire une dépression.",
+    },
+    {
+      q: "Quelle est l'affirmation centrale du predictive coding ?",
+      options: [
+        "Qu'il supprime totalement la notion de poids synaptique",
+        "Qu'il n'a besoin d'aucune donnée d'entraînement",
+        "Qu'il peut approcher la rétropropagation en n'utilisant que des unités d'erreur locales",
+        "Qu'il est strictement plus rapide que la rétropropagation à toutes les échelles",
+      ],
+      answer: 2,
+      explain:
+        "Millidge, Tschantz et Buckley (2022) montrent que le predictive coding peut approcher la rétropropagation le long de graphes de calcul arbitraires, en n'utilisant que des unités d'erreur locales.",
+    },
+  ]}
+/>
