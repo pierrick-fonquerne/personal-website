@@ -13,6 +13,9 @@ export interface BackpropLocksLabels {
   verdictLocal?: string;
   verdictGlobal?: string;
   resetLabel?: string;
+  runLabel?: string;
+  idleLabel?: string;
+  svgLabel?: string;
 }
 
 export interface BackpropLocksProps {
@@ -63,6 +66,9 @@ export default function BackpropLocks({ layers = 4, labels = {} }: BackpropLocks
     labels.verdictGlobal ??
     "Rétropropagation : non locale, elle exige un signal d'erreur global.";
   const resetLabel = labels.resetLabel ?? 'Réinitialiser';
+  const runLabel = labels.runLabel ?? 'Lancer';
+  const idleLabel = labels.idleLabel ?? 'En attente';
+  const svgLabel = labels.svgLabel ?? 'Réseau de neurones en couches';
 
   const neuronCounts: number[] = [];
   for (let i = 0; i < layers; i += 1) {
@@ -182,7 +188,7 @@ export default function BackpropLocks({ layers = 4, labels = {} }: BackpropLocks
     { key: 'twoPhases', label: twoPhasesLabel },
   ];
 
-  const svgDescription = `Réseau de ${layers} couches. ${anim.phase === 'forward' ? forwardLabel : anim.phase === 'backward' ? backwardLabel : 'En attente.'}`;
+  const svgDescription = `${svgLabel}. ${anim.phase === 'forward' ? forwardLabel : anim.phase === 'backward' ? backwardLabel : idleLabel}`;
 
   return (
     <figure className="my-6 rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-5">
@@ -298,13 +304,13 @@ export default function BackpropLocks({ layers = 4, labels = {} }: BackpropLocks
             className={buttonClass}
             onClick={runCycle}
             disabled={running}
-            aria-label="Lancer un cycle d'apprentissage"
+            aria-label={runLabel}
           >
             {running
               ? anim.phase === 'backward'
                 ? backwardLabel
                 : forwardLabel
-              : 'Lancer'}
+              : runLabel}
           </button>
           <button
             type="button"

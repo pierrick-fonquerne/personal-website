@@ -31,6 +31,9 @@ Backpropagation is remarkably effective, but it cannot be a local rule. Three re
     verdictLocal: 'Local rule: each layer updates with its own information only.',
     verdictGlobal: 'Backpropagation: non-local, it requires a global error signal.',
     resetLabel: 'Reset',
+    runLabel: 'Run a cycle',
+    idleLabel: 'Idle',
+    svgLabel: 'Layered neural network',
   }}
 />
 
@@ -64,6 +67,7 @@ Hinton (2022) proposes replacing the forward + backward pair with **two forward 
     runNegativeLabel: 'Negative pass',
     resetLabel: 'Reset',
     layerLabel: 'Layer',
+    noBackwardLabel: 'No backward pass: learning is purely local.',
   }}
 />
 
@@ -104,6 +108,7 @@ If the pre spike fires before the post, the synapse strengthens (**potentiation*
       'Tune the timing difference between the two spikes. The synapse strengthens if the pre fires before the post, and weakens otherwise. Everything is local: only the relative timing matters.',
     preLabel: 'Pre-synaptic',
     postLabel: 'Post-synaptic',
+    beforeLabel: 'before',
     deltaTLabel: 'Timing difference',
     weightChangeLabel: 'Weight change',
     potentiationLabel: 'Potentiation: the synapse strengthens',
@@ -184,7 +189,7 @@ We should stay honest about the real state of the field.
         'A second forward pass, on negative (corrupted) data',
         'An accelerated stochastic gradient descent',
         'A numerically approximated backward pass',
-        'A freezing of the first layers weights',
+        "A freezing of the first layers' weights",
       ],
       answer: 0,
       explain:

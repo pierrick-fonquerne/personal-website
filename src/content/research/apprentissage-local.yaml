@@ -1,7 +1,7 @@
 slug: apprentissage-local
 type: concept
 theme: ai
-status: draft
+status: published
 publishedAt: 2026-05-31
 tags:
   - apprentissage-local
@@ -25,7 +25,7 @@ papers:
   - title: 'Unsupervised learning of digit recognition using spike-timing-dependent plasticity'
     authors: 'Diehl & Cook (2015)'
     href: 'https://doi.org/10.3389/fncom.2015.00099'
-published: false
+published: true
 fr:
   title: "Apprentissage local : apprendre sans gradient global"
   tagline: "Et si un réseau apprenait sans jamais propager d'erreur en arrière ? Trois familles de règles purement locales face à la rétropropagation."

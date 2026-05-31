@@ -12,6 +12,7 @@ export interface ForwardForwardLabels {
   runNegativeLabel?: string;
   resetLabel?: string;
   layerLabel?: string;
+  noBackwardLabel?: string;
 }
 
 export interface ForwardForwardLabProps {
@@ -126,7 +127,7 @@ export default function ForwardForwardLab({
   const layerLabel = labels.layerLabel ?? 'Couche';
 
   const noBackwardNote =
-    "Aucune passe arrière : l'apprentissage est purement local.";
+    labels.noBackwardLabel ?? "Aucune passe arrière : l'apprentissage est purement local.";
 
   const buttonClass =
     'rounded-sm border border-[var(--color-line)] px-3 py-1.5 font-mono text-[12px] tracking-[0.04em] text-[var(--color-fg)] transition-colors duration-200 hover:border-[var(--color-line-strong)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-40';
@@ -191,7 +192,7 @@ export default function ForwardForwardLab({
             const pct = Math.min(1, Math.max(0, layer.goodness));
             const thresholdPct = threshold * 100;
             const barPct = pct * 100;
-            const aboveThreshold = pct >= threshold;
+            const aboveThreshold = pct > threshold;
             const barColor = aboveThreshold
               ? 'var(--color-accent)'
               : 'var(--color-fg-muted)';

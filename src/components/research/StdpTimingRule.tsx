@@ -4,6 +4,7 @@ export interface StdpTimingLabels {
   helpText?: string;
   preLabel?: string;
   postLabel?: string;
+  beforeLabel?: string;
   deltaTLabel?: string;
   weightChangeLabel?: string;
   potentiationLabel?: string;
@@ -80,6 +81,7 @@ export default function StdpTimingRule({
     "Règle la différence de timing entre les deux décharges. La synapse se renforce si la pré décharge avant la post, s'affaiblit sinon. Tout est local : seul le timing relatif compte.";
   const preLabel = labels.preLabel ?? 'Pré-synaptique';
   const postLabel = labels.postLabel ?? 'Post-synaptique';
+  const beforeLabel = labels.beforeLabel ?? 'avant';
   const deltaTLabel = labels.deltaTLabel ?? 'Différence de timing';
   const weightChangeLabel = labels.weightChangeLabel ?? 'Variation du poids';
   const potentiationLabel = labels.potentiationLabel ?? 'Potentiation : la synapse se renforce';
@@ -322,8 +324,8 @@ export default function StdpTimingRule({
               className="w-full accent-[var(--color-accent)]"
             />
             <div className="flex justify-between font-mono text-[10px] text-[var(--color-fg-dim)]">
-              <span>{preLabel} avant</span>
-              <span>avant {postLabel}</span>
+              <span>{preLabel} {beforeLabel}</span>
+              <span>{beforeLabel} {postLabel}</span>
             </div>
           </div>
 
