@@ -128,9 +128,17 @@ export interface Translations {
     | 'security'
     | 'network'
     | 'quant'
-    | 'tooling',
+    | 'tooling'
+    | 'physics'
+    | 'algorithms'
+    | 'cs-theory'
+    | 'electronics'
+    | 'signal'
+    | 'control'
+    | 'mechanics',
     string
   >;
+  disciplines: Record<'mathematics' | 'physics' | 'computer-science' | 'engineering', string>;
   subthemes: Record<string, string>;
   stages: {
     lycee: string;
@@ -378,6 +386,19 @@ const en: Translations = {
     network: 'Network',
     quant: 'Trading',
     tooling: 'Tooling',
+    physics: 'Physics',
+    algorithms: 'Algorithms',
+    'cs-theory': 'CS theory',
+    electronics: 'Electronics',
+    signal: 'Signal processing',
+    control: 'Control & robotics',
+    mechanics: 'Mechanics',
+  },
+  disciplines: {
+    mathematics: 'Mathematics',
+    physics: 'Physics',
+    'computer-science': 'Computer science',
+    engineering: 'Engineering sciences',
   },
   subthemes: {
     'clean-architecture': 'Clean Architecture',
@@ -427,6 +448,36 @@ const en: Translations = {
     statistics: 'Statistics',
     'numerical-methods': 'Numerical methods',
     'graph-theory': 'Graph theory',
+    'classical-mechanics': 'Classical mechanics',
+    electromagnetism: 'Electromagnetism',
+    thermodynamics: 'Thermodynamics',
+    'optics-waves': 'Optics and waves',
+    relativity: 'Relativity',
+    'quantum-physics': 'Quantum physics',
+    'statistical-physics': 'Statistical physics',
+    astronomy: 'Astronomy',
+    astrophysics: 'Astrophysics',
+    'data-structures': 'Data structures',
+    complexity: 'Complexity',
+    'graph-algorithms': 'Graph algorithms',
+    'dynamic-programming': 'Dynamic programming',
+    computability: 'Computability',
+    'automata-languages': 'Automata and languages',
+    logic: 'Logic',
+    'type-theory': 'Type theory',
+    'analog-circuits': 'Analog circuits',
+    'digital-electronics': 'Digital electronics',
+    microcontrollers: 'Microcontrollers',
+    'power-electronics': 'Power electronics',
+    'signals-systems': 'Signals and systems',
+    'fourier-analysis': 'Fourier analysis',
+    dsp: 'Digital signal processing',
+    'control-theory': 'Control theory',
+    'state-space': 'State-space representation',
+    robotics: 'Robotics',
+    'statics-dynamics': 'Statics and dynamics',
+    'strength-materials': 'Strength of materials',
+    'fluid-mechanics': 'Fluid mechanics',
   },
   stages: {
     lycee: 'High school',
