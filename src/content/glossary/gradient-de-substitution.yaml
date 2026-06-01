@@ -1,0 +1,12 @@
+slug: gradient-de-substitution
+fr:
+  term: Gradient de substitution
+  definition: Astuce d'entraînement des réseaux à impulsions. La décharge binaire n'étant pas dérivable, on remplace sa dérivée par une approximation douce lors de la rétropropagation, tout en gardant la dynamique à impulsions en passe avant. Formalisé par Neftci, Mostafa et Zenke (2019).
+  source: Neftci, Mostafa & Zenke (2019)
+en:
+  term: Surrogate gradient
+  definition: A training trick for spiking neural networks. Since the binary spike is not differentiable, its derivative is replaced by a smooth approximation during backpropagation, while the forward pass keeps the spiking dynamics. Formalized by Neftci, Mostafa and Zenke (2019).
+  source: Neftci, Mostafa & Zenke (2019)
+seeAlso:
+  - reseau-impulsionnel
+  - neuromorphique

@@ -1,0 +1,119 @@
+---
+slug: neurone-a-etat
+---
+
+import PoorVsRichNeuron from '../../components/research/PoorVsRichNeuron.tsx';
+import TemporalIntegrationLab from '../../components/research/TemporalIntegrationLab.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+Un perceptron regarde le monde comme une succession de photographies sans lien : à chaque instant il décide, puis oublie tout. Un neurone biologique, lui, se souvient de l'instant d'avant. Cette page porte sur une seule question, et elle est plus profonde qu'elle n'en a l'air : que peut calculer un neurone qui se souvient, qu'un neurone sans mémoire ne pourra jamais calculer ?
+
+<PoorVsRichNeuron client:visible />
+
+La distinction parait mince. Elle ne l'est pas. Tout l'écart entre une porte logique et une cellule vivante tient dans ce mot : **état**. Un neurone à état porte une variable interne qui évolue dans le temps et qui dépend de son histoire. Un neurone sans état n'a que l'instant présent. Nous allons voir, marche après marche, ce que cette mémoire interne débloque.
+
+## Le neurone sans état et sa borne
+
+Le premier modèle formel du neurone date de 1943. McCulloch et Pitts le décrivent comme une somme pondérée des entrées suivie d'un seuil. Sa propriété décisive, celle qui nous intéresse ici, est la suivante : **sa sortie à l'instant t ne dépend que des entrées à l'instant t**. Rien d'autre. Pas de trace du passé, pas de fatigue, pas d'adaptation.
+
+Rosenblatt enrichit ce schéma en 1958 avec le perceptron, qui apprend ses poids. Mais l'apprentissage porte sur les poids, pas sur la dynamique : une fois les poids fixés, on retrouve la même cellule sans mémoire. Ajuster des nombres ne crée pas d'histoire.
+
+La conséquence est une borne stricte, et c'est important de la formuler comme une impossibilité, pas comme une faiblesse : un neurone sans état ne peut représenter **aucune** fonction qui dépend de l'ordre ou du délai entre ses entrées. Si deux scénarios présentent les mêmes entrées au même instant, dans un ordre différent, le neurone sans mémoire produit rigoureusement la même sortie dans les deux cas. Il est aveugle au temps par construction.
+
+## Ce que l'état interne change
+
+L'idée d'un état interne est plus ancienne qu'on ne le croit. En 1907, bien avant l'informatique, Lapicque propose le modèle dit **integrate-and-fire** : le neurone accumule le courant entrant dans une capacité membranaire, avec une fuite (une constante de temps notée tau), et émet une impulsion quand le potentiel franchit un seuil. La variable d'état, ici, est le potentiel V(t). Pour la première fois, le neurone **intègre** ses entrées dans le temps au lieu de les juger une à une.
+
+En 1936, Hill va plus loin en couplant le seuil de tir au potentiel sous-seuil : c'est l'**accommodation**, le seuil monte quand le potentiel s'approche lentement. Une seconde variable d'état apparait, et avec elle une vérité simple : le seuil n'est pas une constante, il dépend de ce que le neurone vient de vivre.
+
+Le gain conceptuel est net. Dès qu'une variable interne décroit dans le temps, le neurone garde une **trace** de son passé récent. Et une trace, c'est précisément ce qu'il faut pour comparer deux instants. Le temps cesse d'être un décor : il entre dans le calcul.
+
+## Démonstration : ce que la mémoire débloque, par paliers
+
+Plutôt que de l'affirmer, jouons-le. La démonstration ci-dessous oppose deux unités qui reçoivent exactement le **même flux brut** de deux entrées, A et B. Seule la cellule riche possède une mémoire interne. Trois tâches, de difficulté temporelle croissante :
+
+<TemporalIntegrationLab client:visible />
+
+- **T0, simultanéité.** Décharger si A et B arrivent au même instant. L'unité sans état **réussit** : c'est un simple ET sur l'instant présent. Cette marche est notre contrôle d'équité, elle prouve que le neurone pauvre n'est pas un homme de paille truqué pour perdre. Il est compétent sur les tâches sans mémoire.
+- **T1, coïncidence dans une fenêtre.** Décharger si A et B arrivent à quelques millisecondes d'écart. L'unité sans état **échoue** : au moment de décider, une seule entrée est présente, l'autre appartient déjà au passé qu'elle ne peut pas voir. Le neurone à trace, lui, garde la première impulsion qui décroit, et la somme franchit le seuil.
+- **T2, ordre.** Décharger si A précède B, rester silencieux si B précède A. Le jeu des entrées est **identique** dans les deux cas, seul l'ordre change. Le neurone sans mémoire est donc **incapable** de les distinguer, par définition. Le neurone à trace, avec des délais asymétriques, y parvient.
+
+Posons la règle qui rend la démonstration honnête, et qui pourrait nous donner tort : si une unité sans état réussissait T1 ou T2 **à flux brut équivalent**, sans qu'on lui fournisse une variable temporelle déjà calculée, alors la thèse de cette page tomberait. Tout se joue sur ce point, et nous y revenons plus bas.
+
+## Panorama : la famille des neurones à état
+
+Le modele de Lapicque n'est qu'un début. Une famille entière de modèles enrichit l'état interne, du plus fidèle au plus économe.
+
+**Hodgkin et Huxley, 1952.** La référence biophysique. Quatre équations différentielles couplées décrivent le potentiel d'action de l'axone du calmar géant : le potentiel V et trois variables de grille (m, h, n) qui pilotent l'ouverture et l'inactivation des canaux sodium et potassium, chacune avec sa propre cinétique dépendante de la tension. C'est ce décalage temporel entre canaux qui produit la forme du spike et la période réfractaire, qu'un modèle sans état ne peut pas reproduire.
+
+**Izhikevich, 2003.** Hodgkin-Huxley est fidèle mais lourd. Izhikevich propose un compromis remarquable avec deux variables seulement, V et une variable de récupération u, et une non-linéarité quadratique. Avec ces deux nombres, le même neurone peut produire des décharges en bouffées, de l'adaptation de fréquence, des rebonds après inhibition. Un neurone à une seule variable d'état (le LIF simple) ne fait que des décharges régulières : il est aveugle à sa propre histoire.
+
+**Brette et Gerstner, 2005.** Le modèle AdEx ajoute une variable d'adaptation w, qui suit le potentiel et s'incrémente à chaque décharge, allongeant l'intervalle suivant. Le LIF simple en est le cas limite. Avec cette seule variable supplémentaire, on reproduit plus d'une douzaine de comportements électrophysiologiques observés in vivo.
+
+Ce que ces modèles débloquent au plan du calcul temporel se lit dans deux exemples canoniques :
+
+- **La coïncidence (Jeffress, 1948).** Pour localiser un son, certains neurones détectent la différence de temps d'arrivée entre les deux oreilles. Ils ne déchargent que si les deux signaux coïncident, à quelques centaines de microsecondes près. C'est une corrélation temporelle entre deux flux, impossible sans une fenêtre d'intégration interne.
+- **L'ordre et la direction (Hassenstein et Reichardt, 1956).** Pour détecter le mouvement, leur corrélateur multiplie un signal retardé par un signal voisin non retardé. Dans la direction préférée, le retard recale les deux signaux qui coïncident. Dans l'autre sens, ils se manquent. L'état interne, ici, c'est le signal retardé mémorisé : il crée l'asymétrie temporelle qui encode la direction.
+
+Et l'on monte encore d'un cran avec la question de la **puissance d'un seul neurone**.
+
+**Poirazi, Brannon et Mel, 2003.** Un neurone pyramidal, avec son arbre dendritique, se comporte comme un réseau à deux couches : chaque branche calcule une non-linéarité locale, le corps cellulaire agrège ces sorties. Un neurone à un seul compartiment ne peut pas calculer cette conjonction non-linéaire de groupes de synapses séparés.
+
+**Beniaguev, Segev et London, 2021.** Le résultat le plus frappant, et le pivot de toute cette page. Combien de couches faut-il à un réseau de neurones artificiel pour imiter un seul vrai neurone cortical, à la milliseconde près ? Réponse : entre cinq et huit couches cachées. Mais si l'on retire les récepteurs NMDA, qui portent une non-linéarité dépendant à la fois du signal reçu et du potentiel local, donc un état interne, alors **une seule couche suffit**. Autrement dit, l'état interne **est** la profondeur computationnelle. Retirez la mémoire du neurone, et vous le rabaissez d'un réseau profond à un perceptron.
+
+**Où en est la recherche, 2020-2025.** Les réseaux de neurones à impulsions (SNN) utilisent ces cellules à état, mais leur sortie binaire n'est pas différentiable, ce qui bloque la rétropropagation classique. La parade, les gradients de substitution (Neftci, Mostafa et Zenke, 2019), approxime la dérivée du spike par une fonction douce, et permet d'entrainer ces réseaux, le potentiel V jouant le rôle d'une mémoire temporelle naturelle. En parallèle, la plasticité dépendante du temps de décharge (STDP) propose un apprentissage purement local, que des travaux récents (e-prop, Bellec et collègues, 2020) réconcilient avec la rétropropagation via des traces d'éligibilité. Côté matériel, les processeurs neuromorphiques comme Loihi (Davies et collègues, 2018) exploitent l'état interne pour ne consommer de l'énergie qu'au moment d'une décharge. Le système Hala Point d'Intel (2024) pousse l'idée à 1,15 milliard de neurones pour 2600 watts, là où un perceptron doit recalculer sa sortie à chaque pas de temps.
+
+## L'honnêteté de la comparaison
+
+Une démonstration de ce genre tient ou s'effondre sur un point de méthode, et il faut le regarder en face. Si l'on autorisait l'unité sans état à recevoir des **variables temporelles déjà calculées** (par exemple le temps écoulé depuis la dernière impulsion de A), alors ce serait nous, et non le neurone, qui aurions fait le calcul du temps. La comparaison serait truquée en faveur du neurone pauvre, et ne prouverait rien.
+
+La règle d'or est donc simple : les deux unités reçoivent **le même flux brut**, et seul le neurone riche a le droit de posséder une mémoire interne. C'est sous cette contrainte, et sous elle seule, que la borne du neurone sans état devient une vraie impossibilité plutôt qu'un artefact de mise en scène.
+
+Et la condition de réfutation reste posée, noire sur blanc : qu'une unité sans état atteigne T1 ou T2 à flux brut équivalent, et la thèse de cette page est fausse.
+
+## Ce que cela ouvre
+
+Reprenons le fil. Un neurone sans mémoire est borné : il ne voit pas le temps. Un neurone à état le voit, et ce n'est pas un détail esthétique. Beniaguev nous a donné le chiffre : la mémoire interne d'une cellule vaut cinq à huit couches d'un réseau de neurones sans état. La richesse temporelle n'est pas un ornement biologique, c'est de la puissance de calcul à l'état pur.
+
+Cela laisse une question ouverte, que cette page ne prétend pas trancher. Si un seul neurone à état porte déjà une telle profondeur, que devient un réseau qui apprend à exploiter cette dimension temporelle, au lieu de l'aplatir comme le font les architectures dominantes ? C'est précisément le terrain d'un programme de recherche à venir, dont cette brique est la première fondation.
+
+## Vérifier sa compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Pourquoi un neurone sans état ne peut-il pas distinguer A avant B de B avant A ?",
+      options: [
+        "Parce qu'il n'a pas assez de poids synaptiques",
+        "Parce que le jeu des entrées est identique, seul l'ordre change, et il ne voit que l'instant présent sans trace du passé",
+        "Parce que son seuil de décharge est trop élevé",
+      ],
+      answer: 1,
+      explain:
+        "Les deux scénarios présentent les mêmes impulsions, seul leur ordre diffère. Sans mémoire interne, la sortie est rigoureusement identique dans les deux cas.",
+    },
+    {
+      q: "À quoi sert la tâche T0 (simultanéité) dans la démonstration ?",
+      options: [
+        "À prouver que le neurone à état est inutile",
+        "À mesurer la vitesse de calcul des deux unités",
+        "À servir de contrôle d'équité : elle montre que le neurone sans état est compétent sur les tâches sans mémoire",
+      ],
+      answer: 2,
+      explain:
+        "Si le neurone sans état échouait partout, on pourrait le croire truqué. T0 prouve qu'il réussit les tâches sans mémoire, ce qui rend honnête son échec sur T1 et T2.",
+    },
+    {
+      q: "Que montre le résultat de Beniaguev et collègues (2021) ?",
+      options: [
+        "Qu'un neurone biologique est équivalent à un perceptron simple",
+        "Qu'imiter un vrai neurone demande 5 à 8 couches, mais qu'en retirant l'état interne (récepteurs NMDA) une seule couche suffit",
+        "Que les réseaux profonds sont inutiles",
+      ],
+      answer: 1,
+      explain:
+        "L'état interne porté par les récepteurs NMDA est précisément ce qui confère au neurone sa profondeur computationnelle : le retirer ramène un réseau profond à une seule couche.",
+    },
+  ]}
+/>
