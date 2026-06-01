@@ -49,6 +49,12 @@ function sortEntries(items: CollectionEntry<'research'>[]) {
 
 const visibleEntries = entries.filter((e) => e.data.status !== 'archived');
 
+const dossierSlugs = new Set<string>();
+for (const program of programs) {
+  for (const entry of program.toc) dossierSlugs.add(entry.data.slug);
+  for (const entry of program.concepts) dossierSlugs.add(entry.data.slug);
+}
+
 interface DomainGroup {
   theme: Theme;
   free: CollectionEntry<'research'>[];
@@ -57,7 +63,9 @@ interface DomainGroup {
 
 const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
   const free = sortEntries(
-    visibleEntries.filter((e) => e.data.theme === theme && !e.data.subtheme),
+    visibleEntries.filter(
+      (e) => e.data.theme === theme && !e.data.subtheme && !dossierSlugs.has(e.data.slug),
+    ),
   );
   const themePrograms = programs.filter((p) => p.entry.data.theme === theme);
   return { theme: theme as Theme, free, programs: themePrograms };
@@ -78,7 +86,7 @@ const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
           <CategoryHeading
             id={`research-${group.theme}`}
             title={t.themes[group.theme]}
-            count={t.research.count(group.free.length)}
+            count={t.research.count(group.free.length + group.programs.length)}
           />
 
           {group.free.length > 0 && (
