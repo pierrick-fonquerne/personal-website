@@ -1,7 +1,6 @@
 ---
 import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import type { ResolvedProgram } from '../../lib/programs';
-import ResearchCard from './ResearchCard.astro';
 import ExternalLink from '../ui/icons/ExternalLink.astro';
 
 interface Props {
@@ -93,9 +92,19 @@ function primaryLink(links: { label: string; href: string; type: string }[]) {
       <h2 class="mb-6 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
         {t.research.conceptsLabel}
       </h2>
-      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         {program.concepts.map((entry) => (
-          <ResearchCard entry={entry} locale={locale} />
+          <a
+            href={localizedPath(`/research/${entry.data.slug}`, locale)}
+            class="group flex h-full flex-col gap-2 rounded-md border border-[var(--color-line)] p-5 transition-colors duration-200 hover:border-[var(--color-line-strong)]"
+          >
+            <h3 class="font-display text-[18px] leading-[1.25] font-bold tracking-[-0.01em] text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]">
+              {entry.data[locale].title}
+            </h3>
+            <p class="text-[14px] leading-[1.45] text-[var(--color-fg-muted)]">
+              {entry.data[locale].tagline}
+            </p>
+          </a>
         ))}
       </div>
     </section>
