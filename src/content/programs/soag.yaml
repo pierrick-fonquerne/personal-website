@@ -7,6 +7,19 @@ concepts:
   - plasticite-structurelle
   - apprentissage-local
 projects: []
+roadmap:
+  - fr: 'Le neurone enrichi'
+    en: 'The enriched neuron'
+  - fr: 'La synapse comme lieu de calcul'
+    en: 'The synapse as a computing site'
+  - fr: 'Inhibition et sparsité'
+    en: 'Inhibition and sparsity'
+  - fr: 'La stabilité sans contrôle central'
+    en: 'Stability without central control'
+  - fr: 'Organisation spatiale émergente'
+    en: 'Emergent spatial organization'
+  - fr: 'Dynamiques multi-échelles'
+    en: 'Multi-scale temporal dynamics'
 published: true
 fr:
   title: SOAG
