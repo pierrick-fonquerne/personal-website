@@ -1,0 +1,33 @@
+slug: neurone-a-etat
+type: concept
+theme: ai
+status: wip
+publishedAt: 2026-06-01
+tags:
+  - neurosciences-computationnelles
+  - spiking-neural-networks
+  - neurone-a-etat
+papers:
+  - title: 'Simple Model of Spiking Neurons'
+    authors: 'Izhikevich (2003)'
+    href: 'https://www.izhikevich.org/publications/spikes.pdf'
+  - title: 'Adaptive Exponential Integrate-and-Fire Model as an Effective Description of Neuronal Activity'
+    authors: 'Brette & Gerstner (2005)'
+    href: 'http://www.scholarpedia.org/article/Adaptive_exponential_integrate-and-fire_model'
+  - title: 'Pyramidal Neuron as Two-Layer Neural Network'
+    authors: 'Poirazi, Brannon & Mel (2003)'
+    href: 'https://www.sciencedirect.com/science/article/pii/S0896627303001491'
+  - title: 'Single Cortical Neurons as Deep Artificial Neural Networks'
+    authors: 'Beniaguev, Segev & London (2021)'
+    href: 'https://www.sciencedirect.com/science/article/pii/S0896627321005018'
+  - title: 'Surrogate Gradient Learning in Spiking Neural Networks'
+    authors: 'Neftci, Mostafa & Zenke (2019)'
+    href: 'https://ieeexplore.ieee.org/document/8891809'
+fr:
+  title: 'Le neurone à état'
+  tagline: "Ce que l'état interne d'un neurone permet de calculer qu'un neurone sans mémoire ne peut pas."
+  summary: "Synthèse et démonstration jouable : du neurone sans état de McCulloch-Pitts aux modèles à état interne (LIF, Hodgkin-Huxley, Izhikevich, AdEx), et ce que la mémoire interne débloque, jusqu'à l'équivalence d'un seul neurone avec un réseau profond."
+en:
+  title: 'The Stateful Neuron'
+  tagline: "What a neuron's internal state lets it compute that a memoryless neuron cannot."
+  summary: 'Synthesis and playable demonstration: from the stateless McCulloch-Pitts neuron to stateful models (LIF, Hodgkin-Huxley, Izhikevich, AdEx), and what internal memory unlocks, up to the equivalence of a single neuron with a deep network.'
