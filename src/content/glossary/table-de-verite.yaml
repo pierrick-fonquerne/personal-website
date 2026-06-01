@@ -1,0 +1,10 @@
+slug: table-de-verite
+fr:
+  term: Table de vérité
+  definition: Tableau qui donne la valeur de vérité d'une formule logique pour chacune des combinaisons possibles des valeurs de ses variables. Pour n variables, elle comporte 2ⁿ lignes.
+en:
+  term: Truth table
+  definition: A table giving the truth value of a logical formula for each possible combination of its variables' values. For n variables it has 2ⁿ rows.
+seeAlso:
+  - proposition
+  - connecteur-logique

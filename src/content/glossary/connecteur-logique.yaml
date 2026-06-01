@@ -1,0 +1,11 @@
+slug: connecteur-logique
+fr:
+  term: Connecteur logique
+  definition: Symbole qui combine une ou deux propositions pour en former une nouvelle. Les cinq connecteurs de base sont la négation (¬), la conjonction (∧), la disjonction (∨), l'implication (⇒) et l'équivalence (⇔).
+en:
+  term: Logical connective
+  definition: A symbol that combines one or two propositions into a new one. The five basic connectives are negation (¬), conjunction (∧), disjunction (∨), implication (⇒) and equivalence (⇔).
+seeAlso:
+  - proposition
+  - implication
+  - table-de-verite

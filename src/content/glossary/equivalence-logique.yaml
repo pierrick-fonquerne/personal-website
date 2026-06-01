@@ -1,0 +1,10 @@
+slug: equivalence-logique
+fr:
+  term: Équivalence logique
+  definition: Relation entre deux propositions qui ont la même valeur de vérité dans tous les cas possibles. Le connecteur associé, noté ⇔, se lit « si et seulement si » et équivaut à une double implication.
+en:
+  term: Logical equivalence
+  definition: A relation between two propositions that share the same truth value in every possible case. The associated connective, written ⇔, reads "if and only if" and amounts to a double implication.
+seeAlso:
+  - implication
+  - table-de-verite

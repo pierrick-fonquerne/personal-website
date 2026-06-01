@@ -1,0 +1,10 @@
+slug: proposition
+fr:
+  term: Proposition
+  definition: Énoncé mathématique dont on peut dire sans ambiguïté s'il est vrai ou s'il est faux, sans troisième possibilité. Ce principe, appelé bivalence, est le point de départ de toute la logique propositionnelle.
+en:
+  term: Proposition
+  definition: A mathematical statement that is unambiguously either true or false, with no third possibility. This principle, called bivalence, is the starting point of all propositional logic.
+seeAlso:
+  - connecteur-logique
+  - table-de-verite

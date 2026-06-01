@@ -1,0 +1,397 @@
+---
+course: logic-sets-proofs
+order: 1
+title: Propositions et connecteurs logiques
+subtitle: 'Le langage de la rigueur : comment des énoncés vrais ou faux se combinent en raisonnements, et pourquoi « faux implique vrai » est vrai.'
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import TruthTableBuilder from '../../../components/learning/truth-table/TruthTableBuilder.tsx';
+
+export const truthTableLabels = {
+  valueTrue: 'V',
+  valueFalse: 'F',
+  hiddenCell: '?',
+  rowLabel: 'Ligne',
+  inputLabel: 'Écris ta propre formule',
+  inputPlaceholder: 'ex. P ⇒ Q',
+  symbolsLabel: 'Symboles',
+  stepToggle: 'Révéler ligne par ligne',
+  revealNext: 'Ligne suivante',
+  revealAll: 'Tout afficher',
+  reset: 'Recommencer',
+  selectionLabel: 'Choisis les valeurs',
+  equivalent:
+    'Ces deux formules sont équivalentes : elles prennent la même valeur sur chaque ligne.',
+  errorPrefix: 'Formule invalide :',
+};
+
+Toutes les mathématiques reposent sur un geste : démontrer. Pas convaincre, pas illustrer, démontrer. Et démontrer suppose un langage où chaque phrase est soit vraie, soit fausse, sans zone grise. Ce langage, c'est la logique propositionnelle. C'est le tout premier outil à poser avant d'écrire la moindre démonstration sérieuse.
+
+À la fin de ce chapitre tu sauras répondre à trois questions : qu'est-ce qu'un énoncé qu'on a le droit d'appeler vrai ou faux, comment combiner de tels énoncés avec « non », « et », « ou », « si... alors », et pourquoi l'implication a un comportement qui surprend tout le monde la première fois.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : rien de plus que le collège. Aucune formule de calcul, aucune connaissance préalable en logique. Juste l'envie de raisonner proprement.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les quantificateurs « pour tout » et « il existe » (chapitre 2), la théorie des ensembles (chapitre 3), les techniques de démonstration formalisées (chapitre 4).
+
+**Niveau de rigueur** : ce chapitre fait des choix pédagogiques (analogies, manipulation interactive, prose accessible) mais ne sacrifie rien sur la précision. Les définitions sont formelles, les tables de vérité complètes, et chaque affirmation se vérifie.
+
+</Callout>
+
+## L'enquête : raisonner juste
+
+Imagine un détective sur une scène de crime. Il ne dispose que de faits, dont chacun est soit vrai, soit faux : « la fenêtre était verrouillée », « le suspect était en ville », « l'alarme s'est déclenchée ». À partir de ces faits, il enchaîne des déductions : _si_ la fenêtre était verrouillée _et_ l'alarme ne s'est pas déclenchée, _alors_ l'intrus avait une clé.
+
+Tout le raisonnement tient dans ces petits mots de liaison : **non**, **et**, **ou**, **si... alors**. La logique propositionnelle, c'est exactement ça, mais rendue assez précise pour qu'une machine puisse la vérifier. Le détective travaille à l'intuition. Nous, on va poser les règles noir sur blanc.
+
+## Qu'est-ce qu'une proposition
+
+Une <Term slug="proposition">proposition</Term> est un énoncé dont on peut dire sans ambiguïté s'il est vrai ou faux. C'est tout, mais c'est strict.
+
+- « 2 + 2 = 4 » est une proposition (vraie).
+- « 7 est un nombre pair » est une proposition (fausse).
+- « Quelle heure est-il ? » n'est **pas** une proposition : une question n'est ni vraie ni fausse.
+- « $x > 3$ » n'est **pas** une proposition tant que $x$ n'est pas fixé : sa valeur de vérité dépend de $x$. On en fera une vraie proposition au chapitre 2 grâce aux quantificateurs.
+
+Le principe qui dit qu'une proposition est soit vraie, soit fausse, sans troisième possibilité, s'appelle la **bivalence**. On note traditionnellement le vrai $V$ (ou $1$) et le faux $F$ (ou $0$). On désigne les propositions par des lettres : $P$, $Q$, $R$.
+
+## Joue avec une table de vérité
+
+Avant toute théorie, manipule. Le tableau ci-dessous est une <Term slug="table-de-verite">table de vérité</Term> : il donne la valeur de deux formules pour chaque combinaison possible de $P$ et $Q$. Bascule les valeurs de $P$ et $Q$ avec les boutons : la ligne correspondante se surligne. **Ta mission** : trouve la seule ligne où $P \land Q$ vaut $V$, puis la seule ligne où $P \lor Q$ vaut $F$.
+
+<InteractivePrint
+  label="Figure : table de vérité interactive de P ∧ Q et P ∨ Q"
+  description="Table de vérité à deux variables P et Q, ordonnée Vrai en premier (V,V puis V,F puis F,V puis F,F). Colonne P ∧ Q : V uniquement sur la ligne (V,V), F partout ailleurs. Colonne P ∨ Q : F uniquement sur la ligne (F,F), V partout ailleurs. Un champ de saisie permet d'écrire sa propre formule et de voir sa table apparaître."
+>
+  <TruthTableBuilder client:visible expressions={['P ∧ Q', 'P ∨ Q']} labels={truthTableLabels} />
+</InteractivePrint>
+
+Tu viens de rencontrer deux connecteurs : $\land$ (et) et $\lor$ (ou). Formalisons-les, avec leur petit frère $\lnot$ (non).
+
+## Les trois premiers connecteurs : non, et, ou
+
+Un <Term slug="connecteur-logique">connecteur logique</Term> est un symbole qui fabrique une nouvelle proposition à partir d'une ou deux propositions. On définit chacun par sa table de vérité, qui est sa définition complète : rien de caché.
+
+### La négation : ¬
+
+La négation inverse la valeur de vérité. $\lnot P$ se lit « non $P$ » et vaut $V$ exactement quand $P$ vaut $F$.
+
+| $P$ | $\lnot P$ |
+| --- | --------- |
+| V   | F         |
+| F   | V         |
+
+### La conjonction : ∧
+
+$P \land Q$ se lit « $P$ et $Q$ ». Elle vaut $V$ uniquement quand les deux sont vraies en même temps.
+
+| $P$ | $Q$ | $P \land Q$ |
+| --- | --- | ----------- |
+| V   | V   | V           |
+| V   | F   | F           |
+| F   | V   | F           |
+| F   | F   | F           |
+
+### La disjonction : ∨
+
+$P \lor Q$ se lit « $P$ ou $Q$ ». Attention au piège : c'est le **ou inclusif**. Il vaut $V$ dès qu'au moins une des deux est vraie, **y compris si les deux le sont**.
+
+| $P$ | $Q$ | $P \lor Q$ |
+| --- | --- | ---------- |
+| V   | V   | V          |
+| V   | F   | V          |
+| F   | V   | V          |
+| F   | F   | F          |
+
+<Callout kind="warn" title="Le « ou » des maths n'est pas celui du café">
+  Quand un serveur propose « fromage ou dessert », il sous-entend l'un _ou_ l'autre, pas les deux :
+  c'est un **ou exclusif**. En mathématiques, $\lor$ est **inclusif** par défaut : « les deux » fait
+  partie des cas vrais. Le ou exclusif existe aussi, il porte un nom que tu connais peut-être déjà
+  des circuits logiques, on le retrouvera plus bas.
+</Callout>
+
+## L'implication, le connecteur qui piège
+
+Voici le connecteur le plus important des mathématiques, et le plus contre-intuitif. L'<Term slug="implication">implication</Term> $P \Rightarrow Q$ se lit « si $P$ alors $Q$ ». Comme le neurone se lit de trois façons, l'implication aussi, et il faut connaître les trois :
+
+<Formula caption="Trois lectures équivalentes de P ⇒ Q">
+  si P alors Q | P suffit pour Q | Q est nécessaire pour P
+</Formula>
+
+Sa table de vérité réserve une surprise : $P \Rightarrow Q$ n'est **fausse que dans un seul cas**, celui où $P$ est vraie mais $Q$ fausse.
+
+| $P$ | $Q$ | $P \Rightarrow Q$ |
+| --- | --- | ----------------- |
+| V   | V   | V                 |
+| V   | F   | F                 |
+| F   | V   | V                 |
+| F   | F   | V                 |
+
+Les deux dernières lignes choquent : quand $P$ est fausse, $P \Rightarrow Q$ est vraie quoi qu'il arrive. On dit qu'une implication à prémisse fausse est **vraie par vacuité**.
+
+<Callout kind="tip" title="Pourquoi « faux implique vrai » est vrai">
+  Reste sur la scène de crime. Le détective pose une règle : « **si** le suspect est coupable,
+  **alors** ses empreintes sont sur l'arme. » Quand cette règle est-elle prise en défaut ? Uniquement
+  si le suspect est coupable et que ses empreintes ne sont pas sur l'arme (ligne 2). Si le suspect est
+  innocent (lignes 3 et 4), la règle ne dit rien de ce cas : on ne peut pas la contredire. Elle tient
+  donc, par défaut. L'implication encode exactement cette idée : on ne la met en défaut que lorsque la
+  condition est remplie et la conséquence absente.
+</Callout>
+
+L'implication cache une seconde surprise, plus utile encore : elle se réécrit sans le symbole $\Rightarrow$. Compare ci-dessous $P \Rightarrow Q$ et $\lnot P \lor Q$. Active « Tout afficher » : les deux colonnes sont identiques.
+
+<InteractivePrint
+  label="Figure : équivalence de P ⇒ Q et ¬P ∨ Q"
+  description="Table de vérité comparant P ⇒ Q et ¬P ∨ Q sur les quatre lignes (V,V),(V,F),(F,V),(F,F). Les deux colonnes valent V, F, V, V : elles sont identiques, ce qui prouve que l'implication P ⇒ Q équivaut à ¬P ∨ Q. Le composant affiche un bandeau confirmant l'équivalence."
+>
+  <TruthTableBuilder
+    client:visible
+    expressions={['P ⇒ Q', '¬P ∨ Q']}
+    labels={truthTableLabels}
+    highlightEquivalence
+  />
+</InteractivePrint>
+
+Cette réécriture $P \Rightarrow Q \equiv \lnot P \lor Q$ est un outil qu'on utilisera sans cesse pour manipuler les implications dans les démonstrations.
+
+## L'équivalence, les tautologies et les contradictions
+
+Quand deux propositions ont la même valeur de vérité dans tous les cas, on dit qu'elles sont en <Term slug="equivalence-logique">équivalence logique</Term>. Le connecteur $P \Leftrightarrow Q$ se lit « $P$ si et seulement si $Q$ ». Il vaut $V$ exactement quand $P$ et $Q$ ont la même valeur.
+
+| $P$ | $Q$ | $P \Leftrightarrow Q$ |
+| --- | --- | --------------------- |
+| V   | V   | V                     |
+| V   | F   | F                     |
+| F   | V   | F                     |
+| F   | F   | V                     |
+
+Deux familles de propositions méritent un nom :
+
+- Une <Term slug="tautologie">tautologie</Term> est vraie quelles que soient les valeurs de ses variables. L'exemple roi est le **tiers exclu** : $P \lor \lnot P$. Soit $P$ est vraie, soit $\lnot P$ l'est, jamais les deux, jamais aucune.
+- Une **contradiction** est toujours fausse. L'exemple roi est $P \land \lnot P$ : une proposition ne peut pas être vraie et fausse à la fois (principe de non-contradiction).
+
+## Les lois de De Morgan
+
+Comment nie-t-on un « et » ? Comment nie-t-on un « ou » ? La réponse, ce sont les deux lois de De Morgan, parmi les plus utilisées de toutes les mathématiques :
+
+<Formula caption="Lois de De Morgan">¬(P ∧ Q) ≡ ¬P ∨ ¬Q ¬(P ∨ Q) ≡ ¬P ∧ ¬Q</Formula>
+
+En clair : nier « les deux » revient à dire « au moins l'un des deux est faux » ; nier « au moins l'un » revient à dire « les deux sont faux ». Vérifie la première loi toi-même ci-dessous, colonne contre colonne.
+
+<InteractivePrint
+  label="Figure : loi de De Morgan ¬(P ∧ Q) ≡ ¬P ∨ ¬Q"
+  description="Table de vérité comparant ¬(P ∧ Q) et ¬P ∨ ¬Q sur les quatre lignes. Les deux colonnes valent F, V, V, V : elles coïncident, ce qui démontre la première loi de De Morgan. Le composant affiche un bandeau confirmant l'équivalence."
+>
+  <TruthTableBuilder
+    client:visible
+    expressions={['¬(P ∧ Q)', '¬P ∨ ¬Q']}
+    labels={truthTableLabels}
+    highlightEquivalence
+  />
+</InteractivePrint>
+
+Voici le tableau récapitulatif des cinq connecteurs. Garde-le sous les yeux : c'est ta carte du chapitre.
+
+| Symbole           | Nom         | Lecture                | Vrai quand...                       |
+| ----------------- | ----------- | ---------------------- | ----------------------------------- |
+| $\lnot$           | négation    | non P                  | $P$ est faux                        |
+| $\land$           | conjonction | P et Q                 | $P$ et $Q$ sont vrais tous les deux |
+| $\lor$            | disjonction | P ou Q                 | au moins un des deux est vrai       |
+| $\Rightarrow$     | implication | si P alors Q           | sauf si $P$ vrai et $Q$ faux        |
+| $\Leftrightarrow$ | équivalence | P si et seulement si Q | $P$ et $Q$ ont la même valeur       |
+
+## Toute formule est un arbre
+
+Une formule logique n'est pas une suite de symboles à plat : c'est une structure emboîtée, un arbre. Les connecteurs sont les nœuds, les variables sont les feuilles. Voici l'arbre de $(P \land Q) \Rightarrow R$ :
+
+<MermaidDiagram
+  client:visible
+  caption="Arbre syntaxique de (P ∧ Q) ⇒ R"
+  definition={`graph TD
+    imp["⇒"] --> and["∧"]
+    imp --> R["R"]
+    and --> P["P"]
+    and --> Q["Q"]`}
+/>
+
+Cet arbre dicte l'ordre d'évaluation : on calcule d'abord les feuilles, puis on remonte. Il dicte aussi la **priorité** des connecteurs, exactement comme la multiplication passe avant l'addition. La convention, du plus prioritaire au moins prioritaire : $\lnot$, puis $\land$, puis $\lor$, puis $\Rightarrow$, puis $\Leftrightarrow$. Ainsi $\lnot P \lor Q$ se lit $(\lnot P) \lor Q$, et non $\lnot (P \lor Q)$. En cas de doute, les parenthèses tranchent.
+
+## Une histoire : de Boole aux circuits
+
+L'idée que le raisonnement puisse devenir du calcul est récente à l'échelle des mathématiques.
+
+| Année | Événement                                                                                                                                                             |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1847  | **George Boole** publie une algèbre où le vrai et le faux se calculent comme des nombres. La logique devient mathématique.                                            |
+| 1879  | **Gottlob Frege** invente une notation pour les quantificateurs et fonde la logique moderne. On en récolte les fruits au chapitre 2.                                  |
+| 1937  | **Claude Shannon** montre dans son mémoire de master que les circuits à interrupteurs réalisent exactement l'algèbre de Boole. Naissance de l'électronique numérique. |
+
+<Callout kind="note" title="Pont avec les réseaux de neurones : et XOR">
+  Les connecteurs $\land$ et $\lor$ ne sont pas que des symboles : un circuit, ou un neurone, peut
+  les calculer. Dans le cours [Réseaux de
+  neurones](/interactive-courses/neural-networks-foundations/01-le-neurone-artificiel), tu verras
+  qu'un neurone à seuil unique sait calculer **ET** et **OU**, mais bute sur un troisième connecteur
+  : le **ou exclusif**, ce fameux <Term slug="xor">XOR</Term> qui vaut $V$ quand exactement une des
+  deux entrées est vraie. En logique, XOR s'écrit $(P \lor Q) \land \lnot(P \land Q)$. La raison
+  géométrique pour laquelle un seul neurone n'y arrive pas est l'un des résultats fondateurs de
+  l'histoire de l'IA.
+</Callout>
+
+## En une phrase
+
+La logique propositionnelle est un petit calcul exact : des propositions, vraies ou fausses, se combinent par cinq connecteurs, et la valeur de n'importe quelle formule se lit mécaniquement dans sa table de vérité.
+
+## Vers le chapitre 2
+
+On a soigneusement évité « $x > 3$ » en disant que ce n'était pas une proposition. C'est gênant : les mathématiques sont pleines d'énoncés qui dépendent d'une variable. Pour les rendre vrais ou faux, il faut dire « pour **tout** $x$ » ou « il **existe** un $x$ ». Ce sont les quantificateurs $\forall$ et $\exists$, le sujet du chapitre 2.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, regarde-les seulement après avoir essayé.
+
+### Exercice 1 : reconnaître une équivalence
+
+Dresser la table de vérité de $(P \Rightarrow Q) \land (Q \Rightarrow P)$, puis comparer avec $P \Leftrightarrow Q$. Que constate-t-on ?
+
+### Exercice 2 : nier une implication
+
+Montrer, par une table de vérité, que $\lnot(P \Rightarrow Q)$ est équivalente à $P \land \lnot Q$. Cette identité est précieuse : elle dit ce qu'il faut exhiber pour réfuter un « si... alors ».
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : reconnaître une équivalence">
+On évalue $(P \Rightarrow Q) \land (Q \Rightarrow P)$ ligne par ligne.
+
+**Ligne $(V, V)$.** $P \Rightarrow Q$ vaut $V$, et $Q \Rightarrow P$ vaut $V$. Leur conjonction vaut $V$.
+
+**Ligne $(V, F)$.** $P \Rightarrow Q$ vaut $F$ (prémisse vraie, conclusion fausse). La conjonction vaut donc $F$.
+
+**Ligne $(F, V)$.** Cette fois $Q \Rightarrow P$ vaut $F$. La conjonction vaut $F$.
+
+**Ligne $(F, F)$.** $P \Rightarrow Q$ vaut $V$ et $Q \Rightarrow P$ vaut $V$. La conjonction vaut $V$.
+
+On obtient la colonne $V, F, F, V$.
+
+**Comparaison.** C'est exactement la table de $P \Leftrightarrow Q$. On a donc démontré que :
+
+$$
+(P \Rightarrow Q) \land (Q \Rightarrow P) \equiv P \Leftrightarrow Q
+$$
+
+Autrement dit, l'équivalence n'est rien d'autre qu'une double implication. C'est pourquoi, pour prouver « $P$ si et seulement si $Q$ », on prouve les deux sens séparément.
+
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : nier une implication">
+On compare $\lnot(P \Rightarrow Q)$ et $P \land \lnot Q$ ligne par ligne.
+
+**Étape 1.** On part de la table de $P \Rightarrow Q$, qui vaut $V, F, V, V$ sur les lignes $(V,V), (V,F), (F,V), (F,F)$.
+
+**Étape 2.** On nie chaque valeur pour obtenir $\lnot(P \Rightarrow Q)$ :
+
+$$
+\lnot(P \Rightarrow Q) \ : \quad F, \ V, \ F, \ F
+$$
+
+**Étape 3.** On évalue $P \land \lnot Q$. Cette proposition n'est vraie que si $P$ est vraie et $Q$ fausse, donc uniquement sur la ligne $(V, F)$ :
+
+$$
+P \land \lnot Q \ : \quad F, \ V, \ F, \ F
+$$
+
+**Conclusion.** Les deux colonnes coïncident, donc :
+
+$$
+\lnot(P \Rightarrow Q) \equiv P \land \lnot Q
+$$
+
+**Lecture.** Pour réfuter une affirmation « si $P$ alors $Q$ », il faut et il suffit d'exhiber un cas où $P$ est vraie **et** $Q$ fausse. C'est précisément ce qu'est un contre-exemple, notion centrale du chapitre 4.
+
+</Callout>
+
+## Sources
+
+- Boole, G. (1854). _An Investigation of the Laws of Thought_. Walton and Maberly. [Archive.org](https://archive.org/details/investigationofl00boolrich)
+- Frege, G. (1879). _Begriffsschrift_. Louis Nebert.
+- Shannon, C. E. (1938). « A Symbolic Analysis of Relay and Switching Circuits. » _Transactions of the AIEE_ 57(12), 713-723. [DOI 10.1109/T-AIEE.1938.5057767](https://doi.org/10.1109/T-AIEE.1938.5057767)
+
+### Pour aller plus loin
+
+- Cori, R. & Lascar, D. (2003). _Logique mathématique, tome 1_. Dunod. Une référence française rigoureuse.
+- David, R., Nour, K. & Raffalli, C. (2003). _Introduction à la logique : théorie de la démonstration_. Dunod.
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Excellent pour passer de la logique aux démonstrations.
+
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 1 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : la définition d'une proposition, le ou inclusif, le seul cas où l'implication est fausse, la vacuité, et les lois de De Morgan. Cinq questions avec explication de la bonne réponse à la validation."
+>
+  <Quiz
+    client:visible
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Lequel de ces énoncés est une proposition ?',
+        options: [
+          'Quelle est la couleur du ciel ?',
+          'x + 1 = 5',
+          '17 est un nombre premier',
+          'Ferme la porte.',
+        ],
+        answer: 2,
+        explain:
+          "Une proposition est vraie ou fausse sans ambiguïté. « 17 est premier » est vraie. La question et l'ordre ne sont ni vrais ni faux, et « x + 1 = 5 » dépend de x.",
+      },
+      {
+        q: 'En mathématiques, P ∨ Q (P ou Q) est vraie quand...',
+        options: [
+          'exactement une des deux est vraie',
+          'au moins une des deux est vraie, les deux comprises',
+          'les deux sont vraies',
+          'aucune des deux',
+        ],
+        answer: 1,
+        explain:
+          'Le ou mathématique est inclusif : il suffit qu’au moins une soit vraie, et le cas où les deux le sont compte aussi.',
+      },
+      {
+        q: 'Dans quel cas l’implication P ⇒ Q est-elle FAUSSE ?',
+        options: [
+          'quand P est fausse',
+          'quand Q est fausse',
+          'quand P est vraie et Q est fausse',
+          'quand P et Q sont fausses',
+        ],
+        answer: 2,
+        explain:
+          'L’implication n’est fausse que sur la ligne (V, F) : prémisse vraie, conclusion fausse. Dans tous les autres cas elle est vraie.',
+      },
+      {
+        q: 'Que vaut P ⇒ Q quand P est fausse ?',
+        options: [
+          'toujours fausse',
+          'toujours vraie (vraie par vacuité)',
+          'cela dépend de Q',
+          'indéfinie',
+        ],
+        answer: 1,
+        explain:
+          'Une implication à prémisse fausse est vraie quoi qu’il arrive : on ne peut pas la mettre en défaut puisque la condition n’est pas remplie.',
+      },
+      {
+        q: 'À quoi est égale ¬(P ∧ Q) d’après la loi de De Morgan ?',
+        options: ['¬P ∧ ¬Q', '¬P ∨ ¬Q', 'P ∨ Q', '¬P ⇒ Q'],
+        answer: 1,
+        explain:
+          'Nier un « et » donne un « ou » de négations : ¬(P ∧ Q) ≡ ¬P ∨ ¬Q. Nier « les deux » revient à dire « au moins l’un est faux ».',
+      },
+    ]}
+  />
+</InteractivePrint>
