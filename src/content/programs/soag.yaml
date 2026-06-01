@@ -1,0 +1,18 @@
+slug: soag
+theme: ai
+order: 1
+toc:
+  - introduction-soag
+concepts:
+  - plasticite-structurelle
+  - apprentissage-local
+projects: []
+published: true
+fr:
+  title: SOAG
+  tagline: "L'intelligence comme auto-organisation, pas comme optimisation : des composants riches qui s'organisent localement."
+  summary: "SOAG est mon programme le plus spéculatif. Et si la voie royale du deep learning, empiler des couches de neurones pauvres, n'était que la réponse la plus facile de 1986 ? SOAG explore l'autre branche : enrichir le composant lui-même, le rendre temporel, plastique et local. Ce dossier rassemble les explorations et les concepts transverses qui structurent cette recherche."
+en:
+  title: SOAG
+  tagline: 'Intelligence as self-organization, not optimization: rich components that organize locally.'
+  summary: "SOAG is my most speculative program. What if the royal road of deep learning, stacking layers of poor neurons, was merely the easiest answer available in 1986? SOAG explores the other branch: enriching the component itself, making it temporal, plastic and local. This dossier gathers the explorations and transverse concepts that structure this research."

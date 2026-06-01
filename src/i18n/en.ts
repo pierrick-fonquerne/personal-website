@@ -105,6 +105,15 @@ export interface Translations {
     papersLabel: string;
     publishedAtLabel: string;
     updatedAtLabel: string;
+    programsLabel: string;
+    programEyebrow: string;
+    openDossier: string;
+    tocLabel: string;
+    conceptsLabel: string;
+    projectsLabel: string;
+    pagesUnit: (n: number) => string;
+    conceptsUnit: (n: number) => string;
+    projectsUnit: (n: number) => string;
   };
   courses: {
     eyebrow: string;
@@ -361,6 +370,15 @@ const en: Translations = {
     papersLabel: 'Sources',
     publishedAtLabel: 'Published',
     updatedAtLabel: 'Updated',
+    programsLabel: 'Dossiers',
+    programEyebrow: 'Program',
+    openDossier: 'Open dossier',
+    tocLabel: 'Contents',
+    conceptsLabel: 'Concepts',
+    projectsLabel: 'Projects',
+    pagesUnit: (n) => `${n} page${n === 1 ? '' : 's'}`,
+    conceptsUnit: (n) => `${n} concept${n === 1 ? '' : 's'}`,
+    projectsUnit: (n) => `${n} project${n === 1 ? '' : 's'}`,
   },
   courses: {
     eyebrow: 'INTERACTIVE COURSES',

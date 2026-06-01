@@ -146,6 +146,35 @@ const researchEn = defineCollection({
   schema: researchBodySchema,
 });
 
+const programLinkSchema = z.object({
+  label: z.string(),
+  href: z.string().url(),
+});
+
+const programLocaleSchema = z.object({
+  title: z.string(),
+  tagline: z.string(),
+  summary: z.string(),
+});
+
+const programSchema = z.object({
+  slug: z.string(),
+  theme: z.enum(THEMES),
+  order: z.number().int().default(0),
+  repo: programLinkSchema.optional(),
+  toc: z.array(z.string()).default([]),
+  concepts: z.array(z.string()).default([]),
+  projects: z.array(z.string()).default([]),
+  fr: programLocaleSchema,
+  en: programLocaleSchema,
+  published: z.boolean().default(true),
+});
+
+const programs = defineCollection({
+  loader: glob({ base: './src/content/programs', pattern: '**/*.{yaml,yml}' }),
+  schema: programSchema,
+});
+
 const trackStageSchema = z.object({
   stage: z.enum(ACADEMIC_STAGES),
   courses: z.array(
@@ -185,6 +214,7 @@ export const collections = {
   'course-modules-en': courseModulesEn,
   glossary,
   projects,
+  programs,
   research,
   'research-fr': researchFr,
   'research-en': researchEn,

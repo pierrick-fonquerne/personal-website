@@ -1,15 +1,18 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { useTranslations, type Locale } from '../../lib/i18n';
+import type { ResolvedProgram } from '../../lib/programs';
 import CategoryHeading from '../ui/CategoryHeading.astro';
 import ResearchCard from './ResearchCard.astro';
+import ProgramCard from './ProgramCard.astro';
 
 interface Props {
   entries: CollectionEntry<'research'>[];
+  programs: ResolvedProgram[];
   locale: Locale;
 }
 
-const { entries, locale } = Astro.props;
+const { entries, programs, locale } = Astro.props;
 const t = useTranslations(locale);
 
 const THEME_ORDER = [
@@ -46,37 +49,27 @@ function sortEntries(items: CollectionEntry<'research'>[]) {
 
 const visibleEntries = entries.filter((e) => e.data.status !== 'archived');
 
-interface ProgramGroup {
-  program: string;
-  items: CollectionEntry<'research'>[];
+const dossierSlugs = new Set<string>();
+for (const program of programs) {
+  for (const entry of program.toc) dossierSlugs.add(entry.data.slug);
+  for (const entry of program.concepts) dossierSlugs.add(entry.data.slug);
 }
 
 interface DomainGroup {
   theme: Theme;
-  total: number;
   free: CollectionEntry<'research'>[];
-  programs: ProgramGroup[];
+  programs: ResolvedProgram[];
 }
 
 const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
-  const inTheme = visibleEntries.filter((e) => e.data.theme === theme);
-  const free = sortEntries(inTheme.filter((e) => !e.data.subtheme));
-
-  const byProgram = new Map<string, CollectionEntry<'research'>[]>();
-  for (const entry of inTheme) {
-    const program = entry.data.subtheme;
-    if (!program) continue;
-    const bucket = byProgram.get(program) ?? [];
-    bucket.push(entry);
-    byProgram.set(program, bucket);
-  }
-
-  const programs: ProgramGroup[] = [...byProgram.entries()]
-    .map(([program, items]) => ({ program, items: sortEntries(items) }))
-    .sort((a, b) => a.program.localeCompare(b.program, locale));
-
-  return { theme: theme as Theme, total: inTheme.length, free, programs };
-}).filter((group) => group.total > 0);
+  const free = sortEntries(
+    visibleEntries.filter(
+      (e) => e.data.theme === theme && !e.data.subtheme && !dossierSlugs.has(e.data.slug),
+    ),
+  );
+  const themePrograms = programs.filter((p) => p.entry.data.theme === theme);
+  return { theme: theme as Theme, free, programs: themePrograms };
+}).filter((group) => group.free.length > 0 || group.programs.length > 0);
 ---
 
 {
@@ -93,7 +86,7 @@ const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
           <CategoryHeading
             id={`research-${group.theme}`}
             title={t.themes[group.theme]}
-            count={t.research.count(group.total)}
+            count={t.research.count(group.free.length + group.programs.length)}
           />
 
           {group.free.length > 0 && (
@@ -106,24 +99,21 @@ const groups: DomainGroup[] = THEME_ORDER.map((theme) => {
             </div>
           )}
 
-          {group.programs.map((prog) => (
+          {group.programs.length > 0 && (
             <div class="mt-12">
               <div class="mb-6 flex items-center gap-4">
                 <span class="font-mono text-[12px] tracking-[0.16em] text-[var(--color-fg)] uppercase">
-                  {prog.program}
+                  {t.research.programsLabel}
                 </span>
                 <span class="h-px flex-1 bg-[var(--color-line)]" />
-                <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
-                  {t.research.count(prog.items.length)}
-                </span>
               </div>
               <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {prog.items.map((entry) => (
-                  <ResearchCard entry={entry} locale={locale} />
+                {group.programs.map((program) => (
+                  <ProgramCard program={program} locale={locale} />
                 ))}
               </div>
             </div>
-          ))}
+          )}
         </section>
       ))}
     </div>

@@ -1,0 +1,79 @@
+---
+import { useTranslations, type Locale } from '../../lib/i18n';
+import { programPath, type ResolvedProgram } from '../../lib/programs';
+import ExternalLink from '../ui/icons/ExternalLink.astro';
+
+interface Props {
+  program: ResolvedProgram;
+  locale: Locale;
+}
+
+const { program, locale } = Astro.props;
+const t = useTranslations(locale);
+const content = program.entry.data[locale];
+const { repo } = program.entry.data;
+const { counts } = program;
+
+const href = programPath(program.entry.data.slug, locale);
+
+const countParts = [
+  counts.pages > 0 ? t.research.pagesUnit(counts.pages) : null,
+  counts.concepts > 0 ? t.research.conceptsUnit(counts.concepts) : null,
+  counts.projects > 0 ? t.research.projectsUnit(counts.projects) : null,
+].filter((part): part is string => Boolean(part));
+---
+
+<article
+  class="flex h-full flex-col gap-5 rounded-md border border-[var(--color-line)] p-6 transition-colors duration-200 hover:border-[var(--color-line-strong)]"
+>
+  <header class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-accent)] uppercase">
+        {t.research.programEyebrow}
+      </span>
+      {
+        repo && (
+          <a
+            href={repo.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+          >
+            {repo.label}
+            <ExternalLink class="h-[12px] w-[12px] opacity-70" />
+          </a>
+        )
+      }
+    </div>
+
+    <h4 class="font-display text-[26px] leading-[1.15] font-bold tracking-[-0.01em]">
+      <a
+        href={href}
+        class="text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
+      >
+        {content.title}
+      </a>
+    </h4>
+
+    <p class="text-[15px] leading-[1.5] text-[var(--color-fg-muted)]">
+      {content.tagline}
+    </p>
+  </header>
+
+  {
+    countParts.length > 0 && (
+      <p class="font-mono text-[12px] tracking-[0.08em] text-[var(--color-fg-dim)]">
+        {countParts.join(' · ')}
+      </p>
+    )
+  }
+
+  <footer class="mt-auto border-t border-[var(--color-line)] pt-4">
+    <a
+      href={href}
+      class="inline-flex items-center gap-2 font-mono text-[12px] tracking-[0.1em] text-[var(--color-fg)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.research.openDossier} →
+    </a>
+  </footer>
+</article>

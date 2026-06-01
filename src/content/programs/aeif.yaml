@@ -1,0 +1,22 @@
+slug: aeif
+theme: ai
+order: 0
+repo:
+  label: Code source
+  href: https://github.com/pierrick-fonquerne/aei-framework
+toc:
+  - introduction-aeif
+concepts:
+  - plasticite-structurelle
+  - apprentissage-local
+projects:
+  - aei-framework
+published: true
+fr:
+  title: AEIF
+  tagline: "Une intelligence qui naît de son vécu : apprendre en vivant, pas en s'entraînant une fois pour toutes."
+  summary: "AEIF est mon programme d'intelligence incarnée. Plutôt qu'un pré-entraînement figé sur des corpus, un agent qui accumule des événements vécus, immuables et rejouables : chaque expérience nourrit sa mémoire, modifie son réseau et forge peu à peu une personnalité traçable. Ce dossier rassemble les explorations, les concepts transverses et le code qui font avancer le programme."
+en:
+  title: AEIF
+  tagline: 'An intelligence born from its own experience: learning by living, not by training once and for all.'
+  summary: "AEIF is my embodied-intelligence program. Instead of frozen pre-training on corpora, an agent that accumulates lived, immutable, replayable events: each experience feeds its memory, reshapes its network and slowly forges a traceable personality. This dossier gathers the explorations, the transverse concepts and the code that move the program forward."

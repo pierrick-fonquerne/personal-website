@@ -1,0 +1,150 @@
+---
+import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
+import type { ResolvedProgram } from '../../lib/programs';
+import ExternalLink from '../ui/icons/ExternalLink.astro';
+
+interface Props {
+  program: ResolvedProgram;
+  locale: Locale;
+}
+
+const { program, locale } = Astro.props;
+const t = useTranslations(locale);
+const content = program.entry.data[locale];
+const { repo } = program.entry.data;
+
+const dateFormatter = new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+  year: 'numeric',
+  month: 'short',
+});
+
+function primaryLink(links: { label: string; href: string; type: string }[]) {
+  return links.find((l) => l.type === 'site') ?? links.find((l) => l.type === 'repo') ?? links[0];
+}
+---
+
+<header class="mt-10 border-t border-[var(--color-line)] pt-10">
+  <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-accent)] uppercase">
+      {t.research.programEyebrow}
+    </span>
+    {
+      repo && (
+        <a
+          href={repo.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+        >
+          {repo.label}
+          <ExternalLink class="h-[12px] w-[12px] opacity-70" />
+        </a>
+      )
+    }
+  </div>
+
+  <h1
+    class="font-display mt-5 text-[clamp(40px,6vw,72px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[var(--color-fg)]"
+  >
+    {content.title}
+  </h1>
+  <p class="mt-5 text-[clamp(17px,3.5vw,22px)] leading-[1.5] text-[var(--color-fg-muted)]">
+    {content.tagline}
+  </p>
+  <p class="mt-8 text-[18px] leading-[1.6] text-[var(--color-fg)]">
+    {content.summary}
+  </p>
+</header>
+
+{
+  program.toc.length > 0 && (
+    <section class="mt-16 border-t border-[var(--color-line)] pt-8">
+      <h2 class="mb-6 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.tocLabel}
+      </h2>
+      <ol class="flex flex-col">
+        {program.toc.map((entry, index) => (
+          <li class="border-t border-[var(--color-line)] first:border-t-0">
+            <a
+              href={localizedPath(`/research/${entry.data.slug}`, locale)}
+              class="group flex flex-wrap items-baseline gap-x-4 gap-y-1 py-4 transition-colors duration-200"
+            >
+              <span class="font-mono text-[13px] text-[var(--color-fg-dim)]">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span class="font-display text-[20px] leading-[1.3] font-bold text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]">
+                {entry.data[locale].title}
+              </span>
+              <span class="ml-auto font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase">
+                {t.research.types[entry.data.type]} · {dateFormatter.format(entry.data.publishedAt)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+{
+  program.concepts.length > 0 && (
+    <section class="mt-16 border-t border-[var(--color-line)] pt-8">
+      <h2 class="mb-6 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.conceptsLabel}
+      </h2>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {program.concepts.map((entry) => (
+          <a
+            href={localizedPath(`/research/${entry.data.slug}`, locale)}
+            class="group flex h-full flex-col gap-2 rounded-md border border-[var(--color-line)] p-5 transition-colors duration-200 hover:border-[var(--color-line-strong)]"
+          >
+            <h3 class="font-display text-[18px] leading-[1.25] font-bold tracking-[-0.01em] text-[var(--color-fg)] transition-colors duration-200 group-hover:text-[var(--color-accent)]">
+              {entry.data[locale].title}
+            </h3>
+            <p class="text-[14px] leading-[1.45] text-[var(--color-fg-muted)]">
+              {entry.data[locale].tagline}
+            </p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+{
+  program.projects.length > 0 && (
+    <section class="mt-16 border-t border-[var(--color-line)] pt-8">
+      <h2 class="mb-6 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.projectsLabel}
+      </h2>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {program.projects.map((project) => {
+          const link = primaryLink(project.data.links);
+          const projectContent = project.data[locale];
+          return (
+            <article class="flex h-full flex-col gap-3 rounded-md border border-[var(--color-line)] p-6 transition-colors duration-200 hover:border-[var(--color-line-strong)]">
+              <h3 class="font-display text-[20px] leading-[1.2] font-bold tracking-[-0.01em]">
+                {link ? (
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)]"
+                  >
+                    {projectContent.title}
+                    <ExternalLink class="h-[13px] w-[13px] opacity-70" />
+                  </a>
+                ) : (
+                  <span class="text-[var(--color-fg)]">{projectContent.title}</span>
+                )}
+              </h3>
+              <p class="text-[15px] leading-[1.5] text-[var(--color-fg-muted)]">
+                {projectContent.tagline}
+              </p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  )
+}
