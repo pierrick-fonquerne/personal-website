@@ -44,6 +44,18 @@ export function localizedPath(path: string, locale: Locale): string {
 }
 
 /**
+ * Translates the locale-specific research program segment. The French route
+ * uses /research/programme, the English route uses /research/program. The given
+ * path is already locale-stripped; this rewrites the segment to the target form.
+ */
+function translateProgramSegment(path: string, target: Locale): string {
+  if (target === DEFAULT_LOCALE) {
+    return path.replace(/^\/research\/program(\/|$)/, '/research/programme$1');
+  }
+  return path.replace(/^\/research\/programme(\/|$)/, '/research/program$1');
+}
+
+/**
  * Returns the equivalent path in the other locale, preserving the page.
  * Used by the language switcher in the nav.
  */
@@ -55,7 +67,7 @@ export function switchLocalePath(currentPath: string, current: Locale, target: L
   if (current !== DEFAULT_LOCALE) {
     stripped = stripped.replace(new RegExp(`^/${current}(/|$)`), '/');
   }
-  return localizedPath(stripped, target);
+  return localizedPath(translateProgramSegment(stripped, target), target);
 }
 
 /**
@@ -104,5 +116,5 @@ export async function resolveTranslatedPath(
     }
   }
 
-  return localizedPath(stripped, target);
+  return localizedPath(translateProgramSegment(stripped, target), target);
 }
