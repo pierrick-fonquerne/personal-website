@@ -5,10 +5,16 @@ import Eyebrow from '../../components/ui/Eyebrow.astro';
 import ResearchIntro from '../../components/research/ResearchIntro.astro';
 import ResearchList from '../../components/research/ResearchList.astro';
 import { useTranslations } from '../../lib/i18n';
+import { resolveProgram } from '../../lib/programs';
 
 const locale = 'fr' as const;
 const t = useTranslations(locale);
 const entries = (await getCollection('research')).filter((e) => e.data.published);
+const projectEntries = (await getCollection('projects')).filter((e) => e.data.published);
+const programs = (await getCollection('programs'))
+  .filter((p) => p.data.published)
+  .sort((a, b) => a.data.order - b.data.order || a.data.slug.localeCompare(b.data.slug))
+  .map((program) => resolveProgram(program, entries, projectEntries));
 ---
 
 <BaseLayout
@@ -33,7 +39,7 @@ const entries = (await getCollection('research')).filter((e) => e.data.published
     </div>
 
     <div class="mt-20">
-      <ResearchList entries={entries} locale={locale} />
+      <ResearchList entries={entries} programs={programs} locale={locale} />
     </div>
   </section>
 </BaseLayout>

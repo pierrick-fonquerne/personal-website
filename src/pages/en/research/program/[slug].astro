@@ -1,0 +1,43 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { localizedPath, useTranslations } from '../../../../lib/i18n';
+import { resolveProgram } from '../../../../lib/programs';
+import ProgramDossier from '../../../../components/research/ProgramDossier.astro';
+
+export const getStaticPaths = (async () => {
+  const programs = (await getCollection('programs')).filter((p) => p.data.published);
+  const research = (await getCollection('research')).filter((e) => e.data.published);
+  const projects = (await getCollection('projects')).filter((e) => e.data.published);
+  return programs.map((program) => ({
+    params: { slug: program.data.slug },
+    props: { program: resolveProgram(program, research, projects) },
+  }));
+}) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { program } = Astro.props as Props;
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const content = program.entry.data.en;
+---
+
+<BaseLayout
+  title={`${content.title} · Pierrick Fonquerne`}
+  description={content.tagline}
+  current="/research"
+  locale={locale}
+>
+  <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
+    <a
+      href={localizedPath('/research', locale)}
+      class="inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.research.backToList}
+    </a>
+
+    <ProgramDossier program={program} locale={locale} />
+  </article>
+</BaseLayout>
