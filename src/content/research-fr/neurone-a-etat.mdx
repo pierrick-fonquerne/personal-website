@@ -10,7 +10,7 @@ Un perceptron regarde le monde comme une succession de photographies sans lien :
 
 <PoorVsRichNeuron client:visible />
 
-La distinction parait mince. Elle ne l'est pas. Tout l'écart entre une porte logique et une cellule vivante tient dans ce mot : **état**. Un neurone à état porte une variable interne qui évolue dans le temps et qui dépend de son histoire. Un neurone sans état n'a que l'instant présent. Nous allons voir, marche après marche, ce que cette mémoire interne débloque.
+La distinction paraît mince. Elle ne l'est pas. Tout l'écart entre une porte logique et une cellule vivante tient dans ce mot : **état**. Un neurone à état porte une variable interne qui évolue dans le temps et qui dépend de son histoire. Un neurone sans état n'a que l'instant présent. Nous allons voir, marche après marche, ce que cette mémoire interne débloque.
 
 ## Le neurone sans état et sa borne
 
@@ -24,7 +24,7 @@ La conséquence est une borne stricte, et c'est important de la formuler comme u
 
 L'idée d'un état interne est plus ancienne qu'on ne le croit. En 1907, bien avant l'informatique, Lapicque propose le modèle dit **integrate-and-fire** : le neurone accumule le courant entrant dans une capacité membranaire, avec une fuite (une constante de temps notée tau), et émet une impulsion quand le potentiel franchit un seuil. La variable d'état, ici, est le potentiel V(t). Pour la première fois, le neurone **intègre** ses entrées dans le temps au lieu de les juger une à une.
 
-En 1936, Hill va plus loin en couplant le seuil de tir au potentiel sous-seuil : c'est l'**accommodation**, le seuil monte quand le potentiel s'approche lentement. Une seconde variable d'état apparait, et avec elle une vérité simple : le seuil n'est pas une constante, il dépend de ce que le neurone vient de vivre.
+En 1936, Hill va plus loin en couplant le seuil de tir au potentiel sous-seuil : c'est l'**accommodation**, le seuil monte quand le potentiel s'approche lentement. Une seconde variable d'état apparaît, et avec elle une vérité simple : le seuil n'est pas une constante, il dépend de ce que le neurone vient de vivre.
 
 Le gain conceptuel est net. Dès qu'une variable interne décroit dans le temps, le neurone garde une **trace** de son passé récent. Et une trace, c'est précisément ce qu'il faut pour comparer deux instants. Le temps cesse d'être un décor : il entre dans le calcul.
 
@@ -42,7 +42,7 @@ Posons la règle qui rend la démonstration honnête, et qui pourrait nous donne
 
 ## Panorama : la famille des neurones à état
 
-Le modele de Lapicque n'est qu'un début. Une famille entière de modèles enrichit l'état interne, du plus fidèle au plus économe.
+Le modèle de Lapicque n'est qu'un début. Une famille entière de modèles enrichit l'état interne, du plus fidèle au plus économe.
 
 **Hodgkin et Huxley, 1952.** La référence biophysique. Quatre équations différentielles couplées décrivent le potentiel d'action de l'axone du calmar géant : le potentiel V et trois variables de grille (m, h, n) qui pilotent l'ouverture et l'inactivation des canaux sodium et potassium, chacune avec sa propre cinétique dépendante de la tension. C'est ce décalage temporel entre canaux qui produit la forme du spike et la période réfractaire, qu'un modèle sans état ne peut pas reproduire.
 
