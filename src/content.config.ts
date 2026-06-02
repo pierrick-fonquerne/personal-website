@@ -165,6 +165,7 @@ const programSchema = z.object({
   toc: z.array(z.string()).default([]),
   concepts: z.array(z.string()).default([]),
   projects: z.array(z.string()).default([]),
+  roadmap: z.array(z.object({ fr: z.string(), en: z.string() })).default([]),
   fr: programLocaleSchema,
   en: programLocaleSchema,
   published: z.boolean().default(true),

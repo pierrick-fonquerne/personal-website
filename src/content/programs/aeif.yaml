@@ -11,6 +11,13 @@ concepts:
   - apprentissage-local
 projects:
   - aei-framework
+roadmap:
+  - fr: 'Event sourcing du neuronal'
+    en: 'Event sourcing in the neural substrate'
+  - fr: 'La mémoire : consolider et oublier'
+    en: 'Memory: consolidating and forgetting'
+  - fr: "L'identité émergente"
+    en: 'Emergent identity'
 published: true
 fr:
   title: AEIF

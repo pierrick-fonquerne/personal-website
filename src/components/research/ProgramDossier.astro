@@ -57,7 +57,7 @@ function primaryLink(links: { label: string; href: string; type: string }[]) {
 </header>
 
 {
-  program.toc.length > 0 && (
+  (program.toc.length > 0 || program.entry.data.roadmap.length > 0) && (
     <section class="mt-16 border-t border-[var(--color-line)] pt-8">
       <h2 class="mb-6 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
         {t.research.tocLabel}
@@ -79,6 +79,21 @@ function primaryLink(links: { label: string; href: string; type: string }[]) {
                 {t.research.types[entry.data.type]} · {dateFormatter.format(entry.data.publishedAt)}
               </span>
             </a>
+          </li>
+        ))}
+        {program.entry.data.roadmap.map((item, index) => (
+          <li class="border-t border-[var(--color-line)] first:border-t-0">
+            <div class="flex flex-wrap items-baseline gap-x-4 gap-y-1 py-4">
+              <span class="font-mono text-[13px] text-[var(--color-fg-dim)]">
+                {String(program.toc.length + index + 1).padStart(2, '0')}
+              </span>
+              <span class="font-display text-[20px] leading-[1.3] font-bold text-[var(--color-fg-dim)]">
+                {item[locale]}
+              </span>
+              <span class="ml-auto font-mono text-[11px] tracking-[0.12em] text-[var(--color-fg-dim)] uppercase">
+                {t.courses.comingSoon}
+              </span>
+            </div>
           </li>
         ))}
       </ol>
