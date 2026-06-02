@@ -1,0 +1,16 @@
+slug: logic-sets-proofs
+title: 'Logique, ensembles et démonstration'
+summary: 'Le premier cours de mathématiques : le langage de la rigueur. Logique propositionnelle, quantificateurs, théorie des ensembles, méthodes de démonstration et raisonnement par récurrence. La boîte à outils qui rend toute démonstration possible, accessible à un lecteur de niveau lycée scientifique.'
+tags:
+  - logique
+  - ensembles
+  - démonstration
+  - récurrence
+  - mathématiques
+theme: math
+subtheme: foundations
+level: intro
+estimatedMinutes: 150
+modules:
+  - 01-propositions-connecteurs
+published: false

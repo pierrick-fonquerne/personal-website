@@ -1,0 +1,10 @@
+slug: implication
+fr:
+  term: Implication
+  definition: 'Connecteur « si... alors... », noté ⇒. La proposition P ⇒ Q est fausse dans un seul cas : quand P est vraie et Q est fausse. En particulier, une implication dont la prémisse est fausse est toujours vraie.'
+en:
+  term: Implication
+  definition: 'The "if... then..." connective, written ⇒. The proposition P ⇒ Q is false in exactly one case: when P is true and Q is false. In particular, an implication with a false premise is always true.'
+seeAlso:
+  - connecteur-logique
+  - equivalence-logique

@@ -1,0 +1,16 @@
+slug: logic-sets-proofs
+title: 'Logic, sets and proofs'
+summary: 'The first mathematics course: the language of rigour. Propositional logic, quantifiers, set theory, proof methods and induction. The toolbox that makes every proof possible, accessible to a reader with a scientific high school background.'
+tags:
+  - logic
+  - sets
+  - proofs
+  - induction
+  - mathematics
+theme: math
+subtheme: foundations
+level: intro
+estimatedMinutes: 150
+modules:
+  - 01-propositions-connectives
+published: false

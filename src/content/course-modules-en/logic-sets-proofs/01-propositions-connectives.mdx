@@ -1,0 +1,380 @@
+---
+course: logic-sets-proofs
+order: 1
+title: Propositions and logical connectives
+subtitle: "The language of rigour: how true-or-false statements combine into reasoning, and why 'false implies true' is true."
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import TruthTableBuilder from '../../../components/learning/truth-table/TruthTableBuilder.tsx';
+
+export const truthTableLabels = {
+  valueTrue: 'T',
+  valueFalse: 'F',
+  hiddenCell: '?',
+  rowLabel: 'Row',
+  inputLabel: 'Write your own formula',
+  inputPlaceholder: 'e.g. P ⇒ Q',
+  symbolsLabel: 'Symbols',
+  stepToggle: 'Reveal row by row',
+  revealNext: 'Next row',
+  revealAll: 'Show all',
+  reset: 'Reset',
+  selectionLabel: 'Pick the values',
+  equivalent: 'These two formulas are equivalent: they take the same value on every row.',
+  errorPrefix: 'Invalid formula:',
+};
+
+All of mathematics rests on one gesture: proving. Not convincing, not illustrating, proving. And proving requires a language where every sentence is either true or false, with no grey area. That language is propositional logic. It is the very first tool to lay down before writing a single serious proof.
+
+By the end of this chapter you will be able to answer three questions: what counts as a statement we are allowed to call true or false, how to combine such statements with "not", "and", "or", "if... then", and why implication behaves in a way that surprises everyone the first time.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: nothing beyond middle school. No computation, no prior knowledge of logic. Just the desire to reason cleanly.
+
+**What you do not need to know**: the quantifiers "for all" and "there exists" (chapter 2), set theory (chapter 3), formalized proof techniques (chapter 4).
+
+**Level of rigour**: this chapter makes pedagogical choices (analogies, interactive manipulation, accessible prose) but sacrifices nothing on precision. The definitions are formal, the truth tables complete, and every claim can be checked.
+</Callout>
+
+## The investigation: reasoning correctly
+
+Picture a detective at a crime scene. They only have facts, each of which is either true or false: "the window was locked", "the suspect was in town", "the alarm went off". From these facts they chain deductions: _if_ the window was locked _and_ the alarm did not go off, _then_ the intruder had a key.
+
+The whole of reasoning lives in those little linking words: **not**, **and**, **or**, **if... then**. Propositional logic is exactly that, but made precise enough for a machine to check it. The detective works on intuition. We are going to write the rules down in black and white.
+
+## What is a proposition
+
+A <Term slug="proposition">proposition</Term> is a statement we can unambiguously call true or false. That is all, but it is strict.
+
+- "2 + 2 = 4" is a proposition (true).
+- "7 is an even number" is a proposition (false).
+- "What time is it?" is **not** a proposition: a question is neither true nor false.
+- "$x > 3$" is **not** a proposition as long as $x$ is not fixed: its truth value depends on $x$. We will turn it into a genuine proposition in chapter 2 using quantifiers.
+
+The principle stating that a proposition is either true or false, with no third possibility, is called **bivalence**. We traditionally write true as $T$ (or $1$) and false as $F$ (or $0$). We denote propositions by letters: $P$, $Q$, $R$.
+
+## Play with a truth table
+
+Before any theory, manipulate. The table below is a <Term slug="table-de-verite">truth table</Term>: it gives the value of two formulas for every possible combination of $P$ and $Q$. Toggle the values of $P$ and $Q$ with the buttons: the matching row is highlighted. **Your mission**: find the single row where $P \land Q$ is $T$, then the single row where $P \lor Q$ is $F$.
+
+<InteractivePrint
+  label="Figure: interactive truth table of P ∧ Q and P ∨ Q"
+  description="Truth table over two variables P and Q, ordered True first (T,T then T,F then F,T then F,F). Column P ∧ Q: T only on row (T,T), F everywhere else. Column P ∨ Q: F only on row (F,F), T everywhere else. An input field lets you write your own formula and see its table appear."
+>
+  <TruthTableBuilder
+    client:visible
+    expressions={['P ∧ Q', 'P ∨ Q']}
+    labels={truthTableLabels}
+  />
+</InteractivePrint>
+
+You have just met two connectives: $\land$ (and) and $\lor$ (or). Let us formalize them, together with their little sibling $\lnot$ (not).
+
+## The first three connectives: not, and, or
+
+A <Term slug="connecteur-logique">logical connective</Term> is a symbol that builds a new proposition from one or two propositions. We define each one by its truth table, which is its complete definition: nothing is hidden.
+
+### Negation: ¬
+
+Negation flips the truth value. $\lnot P$ reads "not $P$" and is $T$ exactly when $P$ is $F$.
+
+| $P$ | $\lnot P$ |
+| --- | --------- |
+| T   | F         |
+| F   | T         |
+
+### Conjunction: ∧
+
+$P \land Q$ reads "$P$ and $Q$". It is $T$ only when both are true at the same time.
+
+| $P$ | $Q$ | $P \land Q$ |
+| --- | --- | ----------- |
+| T   | T   | T           |
+| T   | F   | F           |
+| F   | T   | F           |
+| F   | F   | F           |
+
+### Disjunction: ∨
+
+$P \lor Q$ reads "$P$ or $Q$". Beware the trap: it is the **inclusive or**. It is $T$ as soon as at least one of the two is true, **including when both are**.
+
+| $P$ | $Q$ | $P \lor Q$ |
+| --- | --- | ---------- |
+| T   | T   | T          |
+| T   | F   | T          |
+| F   | T   | T          |
+| F   | F   | F          |
+
+<Callout kind="warn" title="The mathematical 'or' is not the café 'or'">
+When a waiter offers "cheese or dessert", they mean one or the other, not both: an **exclusive or**. In mathematics, $\lor$ is **inclusive** by default: "both" is among the true cases. The exclusive or exists too, it carries a name you may already know from logic circuits, and we will meet it below.
+</Callout>
+
+## Implication, the connective that traps you
+
+Here is the most important connective in mathematics, and the most counterintuitive. <Term slug="implication">Implication</Term> $P \Rightarrow Q$ reads "if $P$ then $Q$". Just as the neuron reads three ways, implication does too, and you need all three:
+
+<Formula caption="Three equivalent readings of P ⇒ Q">if P then Q   |   P is sufficient for Q   |   Q is necessary for P</Formula>
+
+Its truth table holds a surprise: $P \Rightarrow Q$ is **false in only one case**, the one where $P$ is true but $Q$ false.
+
+| $P$ | $Q$ | $P \Rightarrow Q$ |
+| --- | --- | ----------------- |
+| T   | T   | T                 |
+| T   | F   | F                 |
+| F   | T   | T                 |
+| F   | F   | T                 |
+
+The last two rows are shocking: when $P$ is false, $P \Rightarrow Q$ is true no matter what. We say an implication with a false premise is **vacuously true**.
+
+<Callout kind="tip" title="Why 'false implies true' is true">
+Stay at the crime scene. The detective states a rule: "**if** the suspect is guilty, **then** their fingerprints are on the weapon." When is this rule proven wrong? Only if the suspect is guilty and their fingerprints are not on the weapon (row 2). If the suspect is innocent (rows 3 and 4), the rule says nothing about that case: it cannot be contradicted. So it holds, by default. Implication encodes exactly this idea: it is only defeated when the condition is met and the consequence is missing.
+</Callout>
+
+Implication hides a second surprise, even more useful: it can be rewritten without the symbol $\Rightarrow$. Compare $P \Rightarrow Q$ and $\lnot P \lor Q$ below. Click "Show all": the two columns are identical.
+
+<InteractivePrint
+  label="Figure: equivalence of P ⇒ Q and ¬P ∨ Q"
+  description="Truth table comparing P ⇒ Q and ¬P ∨ Q over the four rows (T,T),(T,F),(F,T),(F,F). Both columns read T, F, T, T: they are identical, proving that implication P ⇒ Q is equivalent to ¬P ∨ Q. The component shows a banner confirming the equivalence."
+>
+  <TruthTableBuilder
+    client:visible
+    expressions={['P ⇒ Q', '¬P ∨ Q']}
+    labels={truthTableLabels}
+    highlightEquivalence
+  />
+</InteractivePrint>
+
+This rewriting $P \Rightarrow Q \equiv \lnot P \lor Q$ is a tool we will use constantly to manipulate implications inside proofs.
+
+## Equivalence, tautologies and contradictions
+
+When two propositions have the same truth value in every case, we say they are in <Term slug="equivalence-logique">logical equivalence</Term>. The connective $P \Leftrightarrow Q$ reads "$P$ if and only if $Q$". It is $T$ exactly when $P$ and $Q$ have the same value.
+
+| $P$ | $Q$ | $P \Leftrightarrow Q$ |
+| --- | --- | --------------------- |
+| T   | T   | T                     |
+| T   | F   | F                     |
+| F   | T   | F                     |
+| F   | F   | T                     |
+
+Two families of propositions deserve a name:
+
+- A <Term slug="tautologie">tautology</Term> is true whatever the values of its variables. The flagship example is the **law of excluded middle**: $P \lor \lnot P$. Either $P$ is true, or $\lnot P$ is, never both, never neither.
+- A **contradiction** is always false. The flagship example is $P \land \lnot P$: a proposition cannot be both true and false at once (law of non-contradiction).
+
+## De Morgan's laws
+
+How do we negate an "and"? How do we negate an "or"? The answer is De Morgan's two laws, among the most used in all of mathematics:
+
+<Formula caption="De Morgan's laws">¬(P ∧ Q) ≡ ¬P ∨ ¬Q        ¬(P ∨ Q) ≡ ¬P ∧ ¬Q</Formula>
+
+In plain words: negating "both" amounts to saying "at least one of the two is false"; negating "at least one" amounts to saying "both are false". Check the first law yourself below, column against column.
+
+<InteractivePrint
+  label="Figure: De Morgan's law ¬(P ∧ Q) ≡ ¬P ∨ ¬Q"
+  description="Truth table comparing ¬(P ∧ Q) and ¬P ∨ ¬Q over the four rows. Both columns read F, T, T, T: they coincide, proving De Morgan's first law. The component shows a banner confirming the equivalence."
+>
+  <TruthTableBuilder
+    client:visible
+    expressions={['¬(P ∧ Q)', '¬P ∨ ¬Q']}
+    labels={truthTableLabels}
+    highlightEquivalence
+  />
+</InteractivePrint>
+
+Here is the summary table of the five connectives. Keep it in sight: it is your map of the chapter.
+
+| Symbol           | Name        | Reading           | True when...                        |
+| ---------------- | ----------- | ----------------- | ----------------------------------- |
+| $\lnot$          | negation    | not P             | $P$ is false                        |
+| $\land$          | conjunction | P and Q           | $P$ and $Q$ are both true           |
+| $\lor$           | disjunction | P or Q            | at least one of the two is true     |
+| $\Rightarrow$    | implication | if P then Q       | except when $P$ true and $Q$ false  |
+| $\Leftrightarrow$ | equivalence | P if and only if Q | $P$ and $Q$ have the same value    |
+
+## Every formula is a tree
+
+A logical formula is not a flat string of symbols: it is a nested structure, a tree. The connectives are the nodes, the variables are the leaves. Here is the tree of $(P \land Q) \Rightarrow R$:
+
+<MermaidDiagram
+  client:visible
+  caption="Syntax tree of (P ∧ Q) ⇒ R"
+  definition={`graph TD
+    imp["⇒"] --> and["∧"]
+    imp --> R["R"]
+    and --> P["P"]
+    and --> Q["Q"]`}
+/>
+
+This tree dictates the order of evaluation: compute the leaves first, then climb back up. It also dictates the **precedence** of the connectives, exactly as multiplication comes before addition. The convention, from highest to lowest precedence: $\lnot$, then $\land$, then $\lor$, then $\Rightarrow$, then $\Leftrightarrow$. So $\lnot P \lor Q$ reads $(\lnot P) \lor Q$, not $\lnot (P \lor Q)$. When in doubt, parentheses settle it.
+
+## A history: from Boole to circuits
+
+The idea that reasoning could become computation is recent on the scale of mathematics.
+
+| Year | Event                                                                                                                                  |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1847 | **George Boole** publishes an algebra where true and false are computed like numbers. Logic becomes mathematical.                       |
+| 1879 | **Gottlob Frege** invents a notation for quantifiers and founds modern logic. We reap the rewards in chapter 2.                          |
+| 1937 | **Claude Shannon** shows in his master's thesis that switching circuits realize exactly Boolean algebra. Digital electronics is born.   |
+
+<Callout kind="note" title="Bridge to neural networks: and XOR">
+The connectives $\land$ and $\lor$ are not just symbols: a circuit, or a neuron, can compute them. In the [Neural networks](/en/interactive-courses/neural-networks-foundations/01-the-artificial-neuron) course, you will see that a single threshold neuron can compute **AND** and **OR**, but stumbles on a third connective: the **exclusive or**, that famous <Term slug="xor">XOR</Term> which is $T$ when exactly one of the two inputs is true. In logic, XOR is written $(P \lor Q) \land \lnot(P \land Q)$. The geometric reason a single neuron cannot handle it is one of the founding results in the history of AI.
+</Callout>
+
+## In one sentence
+
+Propositional logic is a small exact calculus: propositions, true or false, combine through five connectives, and the value of any formula can be read mechanically from its truth table.
+
+## Towards chapter 2
+
+We carefully avoided "$x > 3$", saying it was not a proposition. That is awkward: mathematics is full of statements that depend on a variable. To make them true or false, we must say "for **all** $x$" or "there **exists** an $x$". Those are the quantifiers $\forall$ and $\exists$, the subject of chapter 2.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, look at them only after trying.
+
+### Exercise 1: recognizing an equivalence
+
+Build the truth table of $(P \Rightarrow Q) \land (Q \Rightarrow P)$, then compare it with $P \Leftrightarrow Q$. What do you notice?
+
+### Exercise 2: negating an implication
+
+Show, using a truth table, that $\lnot(P \Rightarrow Q)$ is equivalent to $P \land \lnot Q$. This identity is precious: it says what you must exhibit to refute an "if... then".
+
+<Callout kind="tip" title="Solution to exercise 1: recognizing an equivalence">
+We evaluate $(P \Rightarrow Q) \land (Q \Rightarrow P)$ row by row.
+
+**Row $(T, T)$.** $P \Rightarrow Q$ is $T$, and $Q \Rightarrow P$ is $T$. Their conjunction is $T$.
+
+**Row $(T, F)$.** $P \Rightarrow Q$ is $F$ (true premise, false conclusion). The conjunction is therefore $F$.
+
+**Row $(F, T)$.** This time $Q \Rightarrow P$ is $F$. The conjunction is $F$.
+
+**Row $(F, F)$.** $P \Rightarrow Q$ is $T$ and $Q \Rightarrow P$ is $T$. The conjunction is $T$.
+
+We obtain the column $T, F, F, T$.
+
+**Comparison.** This is exactly the table of $P \Leftrightarrow Q$. We have therefore proved that:
+
+$$
+(P \Rightarrow Q) \land (Q \Rightarrow P) \equiv P \Leftrightarrow Q
+$$
+
+In other words, equivalence is nothing but a double implication. That is why, to prove "$P$ if and only if $Q$", we prove both directions separately.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: negating an implication">
+We compare $\lnot(P \Rightarrow Q)$ and $P \land \lnot Q$ row by row.
+
+**Step 1.** We start from the table of $P \Rightarrow Q$, which reads $T, F, T, T$ over the rows $(T,T), (T,F), (F,T), (F,F)$.
+
+**Step 2.** We negate each value to get $\lnot(P \Rightarrow Q)$:
+
+$$
+\lnot(P \Rightarrow Q) \ : \quad F, \ T, \ F, \ F
+$$
+
+**Step 3.** We evaluate $P \land \lnot Q$. This proposition is true only if $P$ is true and $Q$ false, so only on row $(T, F)$:
+
+$$
+P \land \lnot Q \ : \quad F, \ T, \ F, \ F
+$$
+
+**Conclusion.** The two columns coincide, so:
+
+$$
+\lnot(P \Rightarrow Q) \equiv P \land \lnot Q
+$$
+
+**Reading.** To refute a claim "if $P$ then $Q$", it is necessary and sufficient to exhibit a case where $P$ is true **and** $Q$ false. That is precisely what a counterexample is, a central notion of chapter 4.
+</Callout>
+
+## Sources
+
+- Boole, G. (1854). _An Investigation of the Laws of Thought_. Walton and Maberly. [Archive.org](https://archive.org/details/investigationofl00boolrich)
+- Frege, G. (1879). _Begriffsschrift_. Louis Nebert.
+- Shannon, C. E. (1938). "A Symbolic Analysis of Relay and Switching Circuits." _Transactions of the AIEE_ 57(12), 713-723. [DOI 10.1109/T-AIEE.1938.5057767](https://doi.org/10.1109/T-AIEE.1938.5057767)
+
+### Going further
+
+- Cori, R. & Lascar, D. (2000). _Mathematical Logic, volume 1_. Oxford University Press.
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Excellent for moving from logic to proofs.
+- Halmos, P. & Givant, S. (1998). _Logic as Algebra_. Mathematical Association of America.
+
+<InteractivePrint
+  label="Quiz: chapter 1 recap (interactive)"
+  description="Multiple-choice quiz checking the chapter's takeaways: the definition of a proposition, the inclusive or, the single case where implication is false, vacuity, and De Morgan's laws. Five questions with an explanation of the correct answer on submission."
+>
+  <Quiz
+    client:visible
+    submitLabel="Check"
+    resetLabel="Restart"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Which of these statements is a proposition?',
+        options: [
+          'What colour is the sky?',
+          'x + 1 = 5',
+          '17 is a prime number',
+          'Close the door.',
+        ],
+        answer: 2,
+        explain:
+          'A proposition is unambiguously true or false. "17 is prime" is true. The question and the command are neither true nor false, and "x + 1 = 5" depends on x.',
+      },
+      {
+        q: 'In mathematics, P ∨ Q (P or Q) is true when...',
+        options: [
+          'exactly one of the two is true',
+          'at least one of the two is true, both included',
+          'both are true',
+          'neither is true',
+        ],
+        answer: 1,
+        explain:
+          'The mathematical or is inclusive: it is enough that at least one is true, and the case where both are true counts too.',
+      },
+      {
+        q: 'In which case is the implication P ⇒ Q FALSE?',
+        options: [
+          'when P is false',
+          'when Q is false',
+          'when P is true and Q is false',
+          'when P and Q are both false',
+        ],
+        answer: 2,
+        explain:
+          'Implication is false only on row (T, F): true premise, false conclusion. In every other case it is true.',
+      },
+      {
+        q: 'What is P ⇒ Q when P is false?',
+        options: [
+          'always false',
+          'always true (vacuously true)',
+          'it depends on Q',
+          'undefined',
+        ],
+        answer: 1,
+        explain:
+          'An implication with a false premise is true no matter what: it cannot be defeated since the condition is not met.',
+      },
+      {
+        q: "What does ¬(P ∧ Q) equal by De Morgan's law?",
+        options: ['¬P ∧ ¬Q', '¬P ∨ ¬Q', 'P ∨ Q', '¬P ⇒ Q'],
+        answer: 1,
+        explain:
+          'Negating an "and" gives an "or" of negations: ¬(P ∧ Q) ≡ ¬P ∨ ¬Q. Negating "both" amounts to saying "at least one is false".',
+      },
+    ]}
+  />
+</InteractivePrint>

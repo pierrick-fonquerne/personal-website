@@ -1,0 +1,10 @@
+slug: tautologie
+fr:
+  term: Tautologie
+  definition: 'Proposition qui est vraie quelles que soient les valeurs de vérité de ses composantes. Exemple : P ∨ ¬P (principe du tiers exclu). Son opposée est la contradiction, toujours fausse.'
+en:
+  term: Tautology
+  definition: 'A proposition that is true regardless of the truth values of its components. Example: P ∨ ¬P (law of excluded middle). Its opposite is a contradiction, always false.'
+seeAlso:
+  - proposition
+  - table-de-verite

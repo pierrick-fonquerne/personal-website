@@ -65,18 +65,34 @@
   },
   "fr/research/introduction-aeif": {
     "url": "/audio/fr/research/introduction-aeif.mp3",
-    "chars": 6987
+    "chars": 7007
   },
   "fr/research/introduction-soag": {
     "url": "/audio/fr/research/introduction-soag.mp3",
-    "chars": 6976
+    "chars": 6992
   },
   "en/research/introduction-aeif": {
     "url": "/audio/en/research/introduction-aeif.mp3",
-    "chars": 6365
+    "chars": 6385
   },
   "en/research/introduction-soag": {
     "url": "/audio/en/research/introduction-soag.mp3",
-    "chars": 6142
+    "chars": 6158
+  },
+  "fr/logic-sets-proofs/01-propositions-connecteurs": {
+    "url": "/audio/fr/logic-sets-proofs/01-propositions-connecteurs.mp3",
+    "chars": 8523
+  },
+  "en/logic-sets-proofs/01-propositions-connectives": {
+    "url": "/audio/en/logic-sets-proofs/01-propositions-connectives.mp3",
+    "chars": 7771
+  },
+  "fr/research/apprentissage-local": {
+    "url": "/audio/fr/research/apprentissage-local.mp3",
+    "chars": 6824
+  },
+  "en/research/apprentissage-local": {
+    "url": "/audio/en/research/apprentissage-local.mp3",
+    "chars": 5988
   }
 }
