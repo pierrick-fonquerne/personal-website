@@ -5,6 +5,7 @@ import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
 import rehypeKatex from 'rehype-katex';
+import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 
 // https://astro.build/config
@@ -18,7 +19,7 @@ export default defineConfig({
     },
   },
   markdown: {
-    remarkPlugins: [remarkMath],
+    remarkPlugins: [remarkGfm, remarkMath],
     rehypePlugins: [rehypeKatex],
   },
   fonts: [
@@ -50,7 +51,7 @@ export default defineConfig({
   integrations: [
     react(),
     mdx({
-      remarkPlugins: [remarkMath],
+      remarkPlugins: [remarkGfm, remarkMath],
       rehypePlugins: [rehypeKatex],
     }),
     sitemap(),
