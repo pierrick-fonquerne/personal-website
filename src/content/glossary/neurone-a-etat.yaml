@@ -1,0 +1,10 @@
+slug: neurone-a-etat
+fr:
+  term: Neurone à état
+  definition: Neurone dont la sortie dépend d'une variable interne qui évolue dans le temps (potentiel de membrane, seuil adaptatif), et donc de son histoire récente. Par opposition au neurone sans état, dont la sortie ne dépend que de l'entrée instantanée.
+en:
+  term: Stateful neuron
+  definition: A neuron whose output depends on an internal variable that evolves over time (membrane potential, adaptive threshold), and thus on its recent history. As opposed to a stateless neuron, whose output depends only on the instantaneous input.
+seeAlso:
+  - integrate-and-fire
+  - reseau-impulsionnel

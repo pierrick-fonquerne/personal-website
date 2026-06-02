@@ -1,0 +1,12 @@
+slug: integrate-and-fire
+fr:
+  term: Integrate-and-fire (intègre-et-décharge)
+  definition: Modèle de neurone qui accumule le courant entrant dans un potentiel de membrane avec une fuite (constante de temps tau) et émet une impulsion quand un seuil est franchi. Première variable d'état d'un neurone, introduite par Lapicque en 1907.
+  source: Lapicque (1907)
+en:
+  term: Integrate-and-fire
+  definition: A neuron model that accumulates input current in a membrane potential with a leak (time constant tau) and emits a spike when a threshold is crossed. The first internal state variable of a neuron, introduced by Lapicque in 1907.
+  source: Lapicque (1907)
+seeAlso:
+  - neurone-a-etat
+  - reseau-impulsionnel

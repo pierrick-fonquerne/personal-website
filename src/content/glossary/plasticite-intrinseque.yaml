@@ -1,0 +1,9 @@
+slug: plasticite-intrinseque
+fr:
+  term: Plasticité intrinsèque
+  definition: Modification durable de l'excitabilité d'un neurone par sa propre dynamique interne (seuil adaptatif, accommodation), sans changement des poids synaptiques. Une forme d'apprentissage qui ne réside pas dans les connexions mais dans l'état du neurone.
+en:
+  term: Intrinsic plasticity
+  definition: A lasting change in a neuron's excitability through its own internal dynamics (adaptive threshold, accommodation), without changing synaptic weights. A form of learning that resides not in the connections but in the neuron's state.
+seeAlso:
+  - neurone-a-etat

@@ -1,0 +1,119 @@
+---
+slug: neurone-a-etat
+---
+
+import PoorVsRichNeuron from '../../components/research/PoorVsRichNeuron.tsx';
+import TemporalIntegrationLab from '../../components/research/TemporalIntegrationLab.tsx';
+import Quiz from '../../components/learning/Quiz.tsx';
+
+A perceptron sees the world as a series of unrelated snapshots: at each instant it decides, then forgets everything. A biological neuron, by contrast, remembers the instant before. This page is about a single question, deeper than it looks: what can a neuron that remembers compute, that a memoryless neuron never will?
+
+<PoorVsRichNeuron client:visible />
+
+The distinction seems thin. It is not. The whole gap between a logic gate and a living cell lies in one word: **state**. A stateful neuron carries an internal variable that evolves over time and depends on its history. A stateless neuron has only the present instant. We will see, step by step, what that internal memory unlocks.
+
+## The stateless neuron and its limit
+
+The first formal model of the neuron dates from 1943. McCulloch and Pitts describe it as a weighted sum of the inputs followed by a threshold. Its decisive property, the one we care about here, is this: **its output at time t depends only on the inputs at time t**. Nothing else. No trace of the past, no fatigue, no adaptation.
+
+Rosenblatt enriched this scheme in 1958 with the perceptron, which learns its weights. But the learning concerns the weights, not the dynamics: once the weights are fixed, we are back to the same memoryless cell. Adjusting numbers does not create a history.
+
+The consequence is a strict limit, and it matters to state it as an impossibility rather than a weakness: a stateless neuron can represent **no** function that depends on the order or the delay between its inputs. If two scenarios present the same inputs at the same instant in a different order, the memoryless neuron produces strictly the same output in both cases. It is blind to time by construction.
+
+## What the internal state changes
+
+The idea of an internal state is older than one might think. In 1907, long before computing, Lapicque proposed the **integrate-and-fire** model: the neuron accumulates the incoming current in a membrane capacitance, with a leak (a time constant noted tau), and emits a pulse when the potential crosses a threshold. The state variable here is the potential V(t). For the first time, the neuron **integrates** its inputs over time instead of judging them one by one.
+
+In 1936, Hill went further by coupling the firing threshold to the subthreshold potential: this is **accommodation**, the threshold rises as the potential approaches slowly. A second state variable appears, and with it a simple truth: the threshold is not a constant, it depends on what the neuron has just experienced.
+
+The conceptual gain is clear. As soon as an internal variable decays over time, the neuron keeps a **trace** of its recent past. And a trace is precisely what is needed to compare two instants. Time stops being a backdrop: it enters the computation.
+
+## Demonstration: what memory unlocks, step by step
+
+Rather than asserting it, let us play it. The demonstration below pits two units that receive exactly the **same raw stream** of two inputs, A and B. Only the rich cell has an internal memory. Three tasks, of increasing temporal difficulty:
+
+<TemporalIntegrationLab client:visible locale="en" />
+
+- **T0, simultaneity.** Fire if A and B arrive at the same instant. The stateless unit **succeeds**: it is a simple AND on the present instant. This step is our fairness control, it proves that the poor neuron is not a strawman rigged to lose. It is competent on memoryless tasks.
+- **T1, coincidence within a window.** Fire if A and B arrive a few milliseconds apart. The stateless unit **fails**: at the moment of deciding, only one input is present, the other already belongs to a past it cannot see. The trace neuron, however, keeps the first pulse as it decays, and the sum crosses the threshold.
+- **T2, order.** Fire if A precedes B, stay silent if B precedes A. The set of inputs is **identical** in both cases, only the order changes. The memoryless neuron is therefore **unable** to tell them apart, by definition. The trace neuron, with asymmetric delays, manages it.
+
+Let us state the rule that keeps the demonstration honest, and that could prove us wrong: if a stateless unit were to succeed at T1 or T2 **on an equivalent raw stream**, without being handed a pre-computed temporal variable, then the thesis of this page would fall. Everything hinges on this point, and we return to it below.
+
+## Panorama: the family of stateful neurons
+
+Lapicque's model is only a beginning. A whole family of models enriches the internal state, from the most faithful to the most frugal.
+
+**Hodgkin and Huxley, 1952.** The biophysical reference. Four coupled differential equations describe the action potential of the squid giant axon: the potential V and three gating variables (m, h, n) that drive the opening and inactivation of the sodium and potassium channels, each with its own voltage-dependent kinetics. It is this temporal offset between channels that produces the spike shape and the refractory period, which a stateless model cannot reproduce.
+
+**Izhikevich, 2003.** Hodgkin-Huxley is faithful but heavy. Izhikevich proposes a remarkable compromise with two variables only, V and a recovery variable u, and a quadratic non-linearity. With these two numbers, the same neuron can produce bursting, frequency adaptation, post-inhibitory rebounds. A neuron with a single state variable (the simple LIF) only fires regularly: it is blind to its own history.
+
+**Brette and Gerstner, 2005.** The AdEx model adds an adaptation variable w, which tracks the potential and increments at each discharge, lengthening the next interval. The simple LIF is its limiting case. With this single extra variable, more than a dozen electrophysiological behaviors observed in vivo are reproduced.
+
+What these models unlock for temporal computation shows in two canonical examples:
+
+- **Coincidence (Jeffress, 1948).** To localize a sound, some neurons detect the difference in arrival time between the two ears. They fire only if the two signals coincide, to within a few hundred microseconds. This is a temporal correlation between two streams, impossible without an internal integration window.
+- **Order and direction (Hassenstein and Reichardt, 1956).** To detect motion, their correlator multiplies a delayed signal by a neighboring non-delayed one. In the preferred direction, the delay realigns the two signals, which coincide. In the other direction, they miss each other. The internal state here is the memorized delayed signal: it creates the temporal asymmetry that encodes direction.
+
+And we climb one more rung with the question of the **power of a single neuron**.
+
+**Poirazi, Brannon and Mel, 2003.** A pyramidal neuron, with its dendritic tree, behaves like a two-layer network: each branch computes a local non-linearity, the cell body aggregates these outputs. A single-compartment neuron cannot compute this non-linear conjunction of separated groups of synapses.
+
+**Beniaguev, Segev and London, 2021.** The most striking result, and the pivot of this whole page. How many layers does an artificial neural network need to mimic a single real cortical neuron, to the millisecond? Answer: between five and eight hidden layers. But if the NMDA receptors are removed, which carry a non-linearity that depends both on the signal received and on the local potential, hence an internal state, then **a single layer suffices**. In other words, the internal state **is** the computational depth. Remove the neuron's memory, and you drop it from a deep network to a perceptron.
+
+**Where the research stands, 2020-2025.** Spiking neural networks (SNN) use these stateful cells, but their binary output is not differentiable, which blocks classical backpropagation. The workaround, surrogate gradients (Neftci, Mostafa and Zenke, 2019), approximates the spike derivative with a smooth function and makes it possible to train these networks, the potential V playing the role of a natural temporal memory. In parallel, spike-timing-dependent plasticity (STDP) proposes purely local learning, which recent work (e-prop, Bellec and colleagues, 2020) reconciles with backpropagation via eligibility traces. On the hardware side, neuromorphic processors such as Loihi (Davies and colleagues, 2018) exploit the internal state to consume energy only at the moment of a discharge. Intel's Hala Point system (2024) pushes the idea to 1.15 billion neurons for 2600 watts, where a perceptron must recompute its output at every time step.
+
+## The honesty of the comparison
+
+A demonstration of this kind stands or falls on one point of method, and it must be faced. If the stateless unit were allowed to receive **pre-computed temporal variables** (for instance the time elapsed since A's last pulse), then it would be us, not the neuron, who did the temporal computation. The comparison would be rigged in favor of the poor neuron, and would prove nothing.
+
+The golden rule is therefore simple: both units receive **the same raw stream**, and only the rich neuron is allowed an internal memory. It is under this constraint, and this one alone, that the limit of the stateless neuron becomes a true impossibility rather than a staging artifact.
+
+And the refutation condition remains posed, in black and white: let a stateless unit reach T1 or T2 on an equivalent raw stream, and the thesis of this page is false.
+
+## What this opens
+
+Let us pick up the thread. A memoryless neuron is bounded: it does not see time. A stateful neuron does, and this is not an aesthetic detail. Beniaguev gave us the number: the internal memory of a cell is worth five to eight layers of a stateless network. Temporal richness is not a biological ornament, it is raw computational power.
+
+This leaves an open question, one that this page does not claim to settle. If a single stateful neuron already carries such depth, what becomes of a network that learns to exploit this temporal dimension, instead of flattening it as the dominant architectures do? This is precisely the ground of a research program to come, of which this brick is the first foundation.
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Why can a stateless neuron not tell A before B from B before A?',
+      options: [
+        'Because it does not have enough synaptic weights',
+        'Because the set of inputs is identical, only the order changes, and it sees only the present instant with no trace of the past',
+        'Because its firing threshold is too high',
+      ],
+      answer: 1,
+      explain:
+        'Both scenarios present the same pulses, only their order differs. Without an internal memory, the output is strictly identical in both cases.',
+    },
+    {
+      q: 'What is the purpose of task T0 (simultaneity) in the demonstration?',
+      options: [
+        'To prove that the stateful neuron is useless',
+        'To measure the computation speed of the two units',
+        'To serve as a fairness control: it shows the stateless neuron is competent on memoryless tasks',
+      ],
+      answer: 2,
+      explain:
+        'If the stateless neuron failed everywhere, one might think it rigged. T0 proves it succeeds on memoryless tasks, which makes its failure on T1 and T2 honest.',
+    },
+    {
+      q: 'What does the result of Beniaguev and colleagues (2021) show?',
+      options: [
+        'That a biological neuron is equivalent to a simple perceptron',
+        'That mimicking a real neuron takes 5 to 8 layers, but removing the internal state (NMDA receptors) leaves a single layer enough',
+        'That deep networks are useless',
+      ],
+      answer: 1,
+      explain:
+        'The internal state carried by NMDA receptors is precisely what gives the neuron its computational depth: removing it drops a deep network to a single layer.',
+    },
+  ]}
+/>

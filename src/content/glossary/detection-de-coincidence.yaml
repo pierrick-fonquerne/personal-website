@@ -1,0 +1,11 @@
+slug: detection-de-coincidence
+fr:
+  term: Détection de coïncidence
+  definition: Capacité d'un neurone à état à décharger seulement quand deux entrées arrivent à un court intervalle l'une de l'autre. Sa fenêtre d'intégration interne rend ce calcul possible, là où un neurone sans mémoire en est incapable. Illustrée par le modèle de Jeffress (1948) pour la localisation sonore.
+  source: Jeffress (1948)
+en:
+  term: Coincidence detection
+  definition: The ability of a stateful neuron to fire only when two inputs arrive within a short interval of each other. Its internal integration window makes this computation possible, where a memoryless neuron cannot. Illustrated by the Jeffress model (1948) for sound localization.
+  source: Jeffress (1948)
+seeAlso:
+  - neurone-a-etat
