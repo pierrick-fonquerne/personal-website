@@ -1,0 +1,249 @@
+---
+course: service-architecture-models
+order: 2
+title: 'The federated model: control plane, local projections and reconciliation'
+subtitle: 'The synthesis that reconciles integration and autonomy: a control plane that owns the topology, services that own their resources, and a declarative convergence between the two.'
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import ReconciliationSimulator from '../../../components/learning/ReconciliationSimulator.tsx';
+
+export const simulatorData = {
+  entities: [
+    { key: 'shop-paris', name: 'shop-paris' },
+    { key: 'shop-lyon', name: 'shop-lyon' },
+    { key: 'shop-lille', name: 'shop-lille' },
+  ],
+  driftSuffix: '(locally modified)',
+  labels: {
+    controlPlane: 'Control plane (desired state)',
+    service: 'Payment service (local projection)',
+    reconcile: 'Reconcile',
+    reset: 'Reset',
+    driftAction: 'edit locally',
+    removeAction: 'remove',
+    restoreAction: 'restore',
+    inSync: 'in sync',
+    drifted: 'drifted',
+    missing: 'missing',
+    orphaned: 'orphaned',
+    logEmpty: 'No action yet. Cause some drift, then reconcile.',
+    logDrift: 'Local edit of {key}: the projection drifts from the desired state.',
+    logRemove: '{key} removed from the desired state: the local copy becomes orphaned.',
+    logRestore: '{key} restored in the desired state.',
+    logReconcile:
+      'Reconciliation: the desired state is replayed, drifts are erased, orphans are purged.',
+  },
+};
+
+The previous chapter ended on a dilemma: the integrated monolith provides consistency but forbids autonomy of the building blocks; autonomous services provide autonomy but give up consistency. This chapter presents the synthesis that reconciles both, under one non-negotiable condition: accepting that the same concept exists _several times_, at different levels of responsibility.
+
+By the end of this chapter, you will be able to describe the federated model, explain the split of responsibilities between control plane and services, manipulate a declarative reconciliation, and anticipate the model's failure modes: control plane outage, drift, deletion, adoption of existing systems.
+
+## The central idea: separating topology from resources
+
+The federated model rests on a precise sharing of sovereignty:
+
+- **The control plane** is the source of truth for the **organizational topology**: organizations, shops, who belongs to what, who has access to what.
+- **Each service** is the source of truth for **its business resources**: products for the catalog, transactions for payment, parcels for shipping.
+
+And the bridge between the two: each service maintains a **local projection** of the topological entities that concern it. The payment service has _its own_ `shop` table, minimal, which mirrors the central referential when a control plane exists, or gets filled manually when the service runs alone.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    CP[Control plane<br/><i>source of truth: Organization, Shop</i>]
+    CP -- "provisions / reconciles<br/>(idempotent APIs)" --> A
+    CP -- " " --> B
+    CP -- " " --> C
+    subgraph A[Catalog service]
+      A1[Shop*]
+      A2[Products ✦]
+    end
+    subgraph B[Payment service]
+      B1[Shop*]
+      B2[Transactions ✦]
+    end
+    subgraph C[Shipping service]
+      C1[Shop*]
+      C2[Parcels ✦]
+    end
+    style CP fill:#7c5cff,color:#fff`}
+  caption="* local projection of the referential — ✦ resources the service is the source of truth for"
+/>
+
+Read the diagram carefully: it shows the most important property of the model. **Each service remains complete and autonomous**: its local projection of `Shop` is enough to operate without a control plane. And **the whole remains consistent**: when the control plane exists, it is the one creating and synchronizing those projections. The same binary serves both scenarios: standalone product or integrated building block of a suite.
+
+This schema applies everywhere: replace "shop" with "project" and you get a development platform; with "workspace" and you get a collaboration suite; with "legal entity" and you get a multi-subsidiary management system.
+
+<Callout kind="warn" title="The acceptance condition">
+  The federated model requires giving up a dogma: "a piece of data must exist in only one place".
+  Here, the shop exists in the control plane AND in every service. This is not accidental
+  duplication, it is an **assumed projection**, with a clear owner (the control plane) and an
+  explicit convergence mechanism (reconciliation). Ungoverned duplication is debt; governed
+  projection is architecture.
+</Callout>
+
+## Mechanism 1: the opaque external reference
+
+How does the control plane find "its" shop inside each service? Through a dedicated field on each service's topological entities:
+
+```text
+Shop {
+  key:          "shop-paris"            // service-local identifier
+  name:         "Paris shop"
+  external_ref: "suite:org/acme/shop/shop-paris"   // optional
+  managed_by:   "control-plane"                     // optional
+}
+```
+
+`external_ref` is an identifier **set by the external system and never interpreted by the service**. The service indexes it (with a uniqueness constraint), returns it, but never reads its structure. It is the annotations pattern from container orchestration systems: a memo the external manager leaves to itself.
+
+Why opaque? Because any interpreted structure becomes coupling. If the payment service _parsed_ the URI to extract the organization name, the URI format would become a schema contract between all systems, impossible to evolve. Kept opaque, it remains a simple link: and a link, unlike a schema, never breaks.
+
+This is exactly the strategy of federated identity protocols: the subject identifier is defined as an opaque string. Twenty-five years of interoperability rest on that opacity.
+
+## Mechanism 2: the idempotent upsert and convergence
+
+The control plane does not "create" projections: it **reconciles**. Each service's API exposes an operation whose contract is: "make sure a shop with this `external_ref` exists and looks like this".
+
+- If no entity carries this reference: creation.
+- If an entity already carries it: update of the projected fields.
+- In all cases: **replaying the operation changes nothing**. That is the definition of idempotence.
+
+This property changes the nature of synchronization. No need to guarantee that a provisioning message arrives exactly once (a costly guarantee, often illusory in distributed systems): being able to replay it is enough. The control plane can re-declare the complete desired state at every startup, after every incident, periodically as a safety net. The services' state **converges** towards the declared state.
+
+<Callout kind="tip" title="Declarative rather than imperative">
+  Note the inversion: the control plane does not say "do this" (imperative, fragile,
+  order-dependent), it says "here is the desired state" (declarative, replayable, self-healing).
+  Every robust distributed system of the last twenty years made that choice: container orchestrators
+  with their reconciliation loop, infrastructure-as-code tools with their execution plan,
+  configuration managers with their manifests. The federated model applies the same physics to
+  business concepts.
+</Callout>
+
+## Manipulate the reconciliation
+
+The simulator below puts the control plane's desired state face to face with a service's local projection. **Your mission**: cause some drift (edit a shop locally), remove a shop from the desired state to create an orphan, then reconcile and watch the convergence.
+
+<InteractivePrint
+  label="Reconciliation simulator"
+  description="Interactive simulator with two panels: on the left the control plane's desired state (three shops), on the right the payment service's local projection. Buttons allow editing an entity locally (it switches to drifted state), removing an entity from the desired state (its local copy becomes orphaned), then running the reconciliation: drifts are overwritten by the desired state, orphans are purged, everything returns to in-sync. A journal lists each action."
+>
+  <ReconciliationSimulator
+    client:visible
+    entities={simulatorData.entities}
+    driftSuffix={simulatorData.driftSuffix}
+    labels={simulatorData.labels}
+  />
+</InteractivePrint>
+
+What you just observed has a name in distributed systems: **anti-entropy**. Disorder (drifts, orphans) accumulates naturally; a periodic loop absorbs it by replaying the desired state. No targeted corrective action, no diagnosis: you replay everything, and idempotence guarantees that what was already correct does not move.
+
+## Mechanism 3: the management marker
+
+Last piece: the `managed_by` field. It indicates _who_ governs the entity: the control plane, an infrastructure-as-code tool, or nobody (manual creation).
+
+Its role is first ergonomic: the service's interface can display "managed by the suite" and protect the entity against an accidental manual edit, doomed to be overwritten at the next reconciliation, exactly as you observed in the simulator. It is the answer to the classic problem of declarative systems: the local change silently reverted by the central manager, an endless source of confusion if nothing signals it.
+
+## The failure modes, and why they are acceptable
+
+An architecture model is judged by its failures as much as by its nominal operation. Let us review the three main ones.
+
+**Control plane outage.** This is the model's most beautiful property: _the services barely notice_. Each one keeps operating on its local projection; only topological operations (creating a shop, changing an attachment) are unavailable. Everyday availability is **decoupled** from the central referential's availability. Compare with the monolith: core down, everything down.
+
+**Drift.** Someone edits a local projection by hand, or a reconciliation fails halfway. The model's answer: the next anti-entropy pass erases the drift. The residual cost: between two passes, the system is _temporarily inconsistent_. That is the model's structural price: **eventual consistency**, not immediate consistency. For organizational topology (shops rarely change), this compromise is almost always acceptable; for transactional data it would not be, and that is why business resources stay in their service with their local guarantees.
+
+**Deletion.** The trickiest case. A shop disappears from the desired state: what does the service do with its attached transactions? Two policies exist, and the choice must be _explicit_: **cascade** (delete everything, irreversible and dangerous) or **orphaning** (mark the projection orphaned, freeze the resources, let a human or a retention policy decide). Most mature systems choose orphaning with deferred purge: a topology mistake is recoverable, a cascade deletion is not.
+
+## Adopting the existing: brownfield federation
+
+Last realistic scenario: the suite deploys its control plane while the services have been running for two years, full of manually created entities. The federated model handles this case with an **adoption** operation: the control plane discovers the existing local entities (by their key or name), proposes a pairing with its referential, then sets `external_ref` and `managed_by` _a posteriori_ on the confirmed entities.
+
+This is a major difference with the integrated monolith, where integrating an existing system means migrating its data into the core. Here, the data does not move: only a link is added. Adoption is progressive, reversible, and service by service.
+
+## The federation contract
+
+Let us recap what a service must expose to be "federable". It is remarkably little:
+
+1. Local topological entities (`Shop`, `Organization`...) carrying `external_ref` (unique, opaque) and `managed_by`.
+2. An idempotent upsert by `external_ref` on those entities.
+3. An explicit deletion policy (cascade or orphaning).
+4. A published, versioned, documented API for those operations.
+
+A service honoring this contract works alone, integrates with any control plane (the vendor's, an infrastructure-as-code tool, a homemade script), and the day a central referential is born, federation is _an API client to write_, not a migration.
+
+Notice the symmetry with chapter 1: the federated model reuses the normalized-identifier idea from autonomous services (the `external_ref` plays the role of the global resource name), but adds what was missing: a **contractual local entity** the service can rely on, and a **designated owner** of the topology. And it reuses the monolith's consistency, but recomputed through convergence rather than guaranteed by a shared database.
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "In the federated model, who is the source of truth for the 'shop' concept?",
+      options: [
+        'Each service, independently',
+        'The control plane for the topology; each service only keeps a local projection',
+        'A database shared by all services',
+        'The oldest service of the suite',
+      ],
+      answer: 1,
+      explain:
+        'The sharing of sovereignty is the heart of the model: the control plane owns the topology (organizations, shops), each service owns its business resources and maintains a local projection of the topology that concerns it.',
+    },
+    {
+      q: 'Why must external_ref stay opaque for the service storing it?',
+      options: [
+        'For security reasons: the URI contains secrets',
+        'Because databases cannot index structured strings',
+        'Because an interpreted identifier becomes a schema coupling between systems, impossible to evolve',
+        'To save storage space',
+      ],
+      answer: 2,
+      explain:
+        'As soon as a service parses the reference’s structure, its format becomes a contract shared by everyone: evolving it breaks everybody. Kept opaque, the reference is just a stable link, and a link never breaks.',
+    },
+    {
+      q: 'What happens to the services when the control plane goes down?',
+      options: [
+        'They stop immediately: their root has disappeared',
+        'They keep operating on their local projection; only topological operations are unavailable',
+        'They switch to read-only mode',
+        'They elect a new control plane among themselves',
+      ],
+      answer: 1,
+      explain:
+        'That is the availability decoupling property: the local projection is enough for everyday operation. The central referential is only needed to modify the topology, not to use it.',
+    },
+    {
+      q: 'Why is orphaning generally preferred over cascade deletion?',
+      options: [
+        'Because it executes faster',
+        'Because a topology mistake must stay recoverable: freezing then purging is reversible, cascade deletion is not',
+        'Because cascade is impossible to implement in distributed systems',
+        'Because orphaning saves storage',
+      ],
+      answer: 1,
+      explain:
+        'Deleting a topological entity can be a human error. Orphaning freezes the attached resources and lets a retention policy or a human decide; cascade destroys immediately and definitively.',
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- The federated model shares sovereignty: **the control plane owns the topology, each service owns its resources** and maintains a local projection of the topology.
+- An assumed projection is not duplication: it has a designated owner and an explicit convergence mechanism, **anti-entropy** through idempotent reconciliation.
+- Three mechanisms suffice: **opaque external reference**, **idempotent upsert**, **management marker**; plus an explicit **deletion policy** (orphaning preferred).
+- The model pays for its flexibility with **eventual consistency** on the topology: acceptable for concepts that rarely change, and compensated by availability decoupling.
+- **Adoption** federates an existing system without migration: you add a link, you do not move data.
+- One question remains: what do services actually share with each other, if neither code nor schema? The answer is conceptual, and Domain-Driven Design formulates it best. That is the subject of the next chapter.

@@ -1,0 +1,246 @@
+---
+course: service-architecture-models
+order: 2
+title: 'Le modèle fédéré : plan de contrôle, projections locales et réconciliation'
+subtitle: 'La synthèse qui réconcilie intégration et autonomie : un plan de contrôle qui possède la topologie, des services qui possèdent leurs ressources, et une convergence déclarative entre les deux.'
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import ReconciliationSimulator from '../../../components/learning/ReconciliationSimulator.tsx';
+
+export const simulatorData = {
+  entities: [
+    { key: 'boutique-paris', name: 'boutique-paris' },
+    { key: 'boutique-lyon', name: 'boutique-lyon' },
+    { key: 'boutique-lille', name: 'boutique-lille' },
+  ],
+  driftSuffix: '(modifié localement)',
+  labels: {
+    controlPlane: 'Plan de contrôle (état désiré)',
+    service: 'Service paiement (projection locale)',
+    reconcile: 'Réconcilier',
+    reset: 'Réinitialiser',
+    driftAction: 'modifier localement',
+    removeAction: 'retirer',
+    restoreAction: 'rétablir',
+    inSync: 'synchronisé',
+    drifted: 'dérive',
+    missing: 'manquant',
+    orphaned: 'orphelin',
+    logEmpty: 'Aucune action pour le moment. Provoque une dérive, puis réconcilie.',
+    logDrift: 'Édition locale de {key} : la projection dérive de l’état désiré.',
+    logRemove: '{key} retiré de l’état désiré : la copie locale devient orpheline.',
+    logRestore: '{key} rétabli dans l’état désiré.',
+    logReconcile:
+      'Réconciliation : l’état désiré est rejoué, les dérives sont effacées, les orphelins sont purgés.',
+  },
+};
+
+Le chapitre précédent s'est terminé sur un dilemme : le monolithe intégré donne la cohérence mais interdit l'autonomie des briques ; les services autonomes donnent l'autonomie mais abandonnent la cohérence. Ce chapitre présente la synthèse qui réconcilie les deux, à une condition non négociable : accepter que le même concept existe _plusieurs fois_, à des niveaux de responsabilité différents.
+
+À la fin de ce chapitre, tu sauras décrire le modèle fédéré, expliquer le partage des responsabilités entre plan de contrôle et services, manipuler une réconciliation déclarative, et anticiper les modes de défaillance du modèle : panne du plan de contrôle, dérive, suppression, adoption de l'existant.
+
+## L'idée centrale : séparer la topologie des ressources
+
+Le modèle fédéré repose sur un partage de souveraineté précis :
+
+- **Le plan de contrôle** (control plane) est la source de vérité de la **topologie organisationnelle** : les organisations, les boutiques, qui appartient à quoi, qui a accès à quoi.
+- **Chaque service** est la source de vérité de **ses ressources métier** : les produits pour le catalogue, les transactions pour le paiement, les colis pour l'expédition.
+
+Et le pont entre les deux : chaque service maintient une **projection locale** des entités topologiques qui le concernent. Le service de paiement a _sa_ table `boutique`, minimale, qui reflète le référentiel central quand un plan de contrôle existe, ou qui se remplit à la main quand le service tourne seul.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    CP[Plan de contrôle<br/><i>source de vérité : Organisation, Boutique</i>]
+    CP -- "provisionne / réconcilie<br/>(APIs idempotentes)" --> A
+    CP -- " " --> B
+    CP -- " " --> C
+    subgraph A[Service catalogue]
+      A1[Boutique*]
+      A2[Produits ✦]
+    end
+    subgraph B[Service paiement]
+      B1[Boutique*]
+      B2[Transactions ✦]
+    end
+    subgraph C[Service expédition]
+      C1[Boutique*]
+      C2[Colis ✦]
+    end
+    style CP fill:#7c5cff,color:#fff`}
+  caption="* projection locale du référentiel — ✦ ressources dont le service est la source de vérité"
+/>
+
+Relis bien le schéma : c'est la propriété la plus importante du modèle. **Chaque service reste complet et autonome** : sa projection locale de `Boutique` lui suffit pour fonctionner sans plan de contrôle. Et **l'ensemble reste cohérent** : quand le plan de contrôle existe, c'est lui qui crée et synchronise ces projections. Le même binaire sert les deux scénarios : produit autonome ou brique intégrée d'une suite.
+
+Ce schéma se décline partout : remplace « boutique » par « projet » et tu obtiens une plateforme de développement ; par « espace de travail » et tu obtiens une suite collaborative ; par « entité juridique » et tu obtiens un système de gestion multi-filiales.
+
+<Callout kind="warn" title="La condition d'acceptation">
+  Le modèle fédéré exige de renoncer à un dogme : « une donnée ne doit exister qu'à un seul endroit
+  ». Ici, la boutique existe dans le plan de contrôle ET dans chaque service. Ce n'est pas de la
+  duplication accidentelle, c'est une **projection assumée**, avec un propriétaire clair (le plan de
+  contrôle) et un mécanisme de convergence explicite (la réconciliation). La duplication non
+  gouvernée est une dette ; la projection gouvernée est une architecture.
+</Callout>
+
+## Mécanisme 1 : la référence externe opaque
+
+Comment le plan de contrôle retrouve-t-il « sa » boutique dans chaque service ? Par un champ dédié sur les entités topologiques de chaque service :
+
+```text
+Boutique {
+  key:          "boutique-paris"        // identifiant local du service
+  name:         "Boutique de Paris"
+  external_ref: "suite:org/acme/shop/boutique-paris"   // optionnel
+  managed_by:   "control-plane"                         // optionnel
+}
+```
+
+`external_ref` est un identifiant **posé par le système externe et jamais interprété par le service**. Le service l'indexe (avec une contrainte d'unicité), le restitue, mais n'en lit jamais la structure. C'est le pattern des annotations dans les systèmes d'orchestration de conteneurs : une mémoire que le gestionnaire externe se laisse à lui-même.
+
+Pourquoi opaque ? Parce que toute structure interprétée devient un couplage. Si le service de paiement _parsait_ l'URI pour en extraire le nom de l'organisation, le format de l'URI deviendrait un contrat de schéma entre tous les systèmes, impossible à faire évoluer. Opaque, il reste un simple lien : et un lien, contrairement à un schéma, ne casse jamais.
+
+C'est exactement la stratégie des protocoles d'identité fédérée : l'identifiant de sujet y est défini comme une chaîne opaque. Vingt-cinq ans d'interopérabilité reposent sur cette opacité.
+
+## Mécanisme 2 : l'upsert idempotent et la convergence
+
+Le plan de contrôle ne « crée » pas les projections : il **réconcilie**. L'API de chaque service expose une opération dont le contrat est : « assure-toi qu'une boutique avec cette `external_ref` existe et ressemble à ceci ».
+
+- Si aucune entité ne porte cette référence : création.
+- Si une entité la porte déjà : mise à jour des champs projetés.
+- Dans tous les cas : **rejouer l'opération ne change rien**. C'est la définition de l'idempotence.
+
+Cette propriété change la nature de la synchronisation. Plus besoin de garantir qu'un message de provisionnement arrive exactement une fois (garantie coûteuse, souvent illusoire en distribué) : il suffit de pouvoir le rejouer. Le plan de contrôle peut re-déclarer l'état désiré complet à chaque démarrage, après chaque incident, périodiquement par sécurité. L'état des services **converge** vers l'état déclaré.
+
+<Callout kind="tip" title="Déclaratif plutôt qu'impératif">
+  Note le renversement : le plan de contrôle ne dit pas « fais ceci » (impératif, fragile, dépendant
+  de l'ordre), il dit « voici l'état désiré » (déclaratif, rejouable, auto-réparant). Tous les
+  systèmes distribués robustes des vingt dernières années ont fait ce choix : les orchestrateurs de
+  conteneurs avec leur boucle de réconciliation, les outils d'infrastructure as code avec leur plan
+  d'exécution, les gestionnaires de configuration avec leurs manifestes. Le modèle fédéré applique
+  la même physique aux concepts métier.
+</Callout>
+
+## Manipule la réconciliation
+
+Le simulateur ci-dessous met face à face l'état désiré du plan de contrôle et la projection locale d'un service. **Ta mission** : provoque une dérive (modifie une boutique localement), retire une boutique de l'état désiré pour créer une orpheline, puis réconcilie et observe la convergence.
+
+<InteractivePrint
+  label="Simulateur de réconciliation"
+  description="Simulateur interactif avec deux panneaux : à gauche l'état désiré du plan de contrôle (trois boutiques), à droite la projection locale du service paiement. Des boutons permettent de modifier une entité localement (elle passe en état dérive), de retirer une entité de l'état désiré (sa copie locale devient orpheline), puis de lancer la réconciliation : les dérives sont écrasées par l'état désiré, les orphelines sont purgées, tout repasse en synchronisé. Un journal liste chaque action."
+>
+  <ReconciliationSimulator
+    client:visible
+    entities={simulatorData.entities}
+    driftSuffix={simulatorData.driftSuffix}
+    labels={simulatorData.labels}
+  />
+</InteractivePrint>
+
+Ce que tu viens d'observer a un nom dans les systèmes distribués : l'**anti-entropie**. Le désordre (dérives, orphelins) s'accumule naturellement ; une boucle périodique le résorbe en rejouant l'état désiré. Aucune action corrective ciblée, aucun diagnostic : on rejoue tout, et l'idempotence garantit que ce qui était déjà correct ne bouge pas.
+
+## Mécanisme 3 : le marquage de gestion
+
+Dernière pièce : le champ `managed_by`. Il indique _qui_ gouverne l'entité : le plan de contrôle, un outil d'infrastructure as code, ou personne (création manuelle).
+
+Son rôle est d'abord ergonomique : l'interface du service peut afficher « géré par la suite » et protéger l'entité contre une édition manuelle accidentelle, vouée à être écrasée à la prochaine réconciliation, exactement comme tu l'as constaté dans le simulateur. C'est la réponse au problème classique des systèmes déclaratifs : la modification locale silencieusement annulée par le gestionnaire central, source de confusion sans fin si rien ne la signale.
+
+## Les modes de défaillance, et pourquoi ils sont acceptables
+
+Un modèle d'architecture se juge à ses pannes autant qu'à son fonctionnement nominal. Passons en revue les trois principales.
+
+**Panne du plan de contrôle.** C'est la plus belle propriété du modèle : _les services ne s'en aperçoivent presque pas_. Chacun continue de fonctionner sur sa projection locale ; seules les opérations topologiques (créer une boutique, changer un rattachement) sont indisponibles. La disponibilité du quotidien est **découplée** de la disponibilité du référentiel central. Compare avec le monolithe : noyau en panne, tout est en panne.
+
+**Dérive (drift).** Quelqu'un modifie une projection locale à la main, ou une réconciliation échoue à mi-chemin. Réponse du modèle : la prochaine passe d'anti-entropie efface la dérive. Le coût résiduel : entre deux passes, le système est _temporairement incohérent_. C'est le prix structurel du modèle : une **cohérence à terme** (eventual consistency), pas une cohérence immédiate. Pour de la topologie organisationnelle (les boutiques changent rarement), ce compromis est presque toujours acceptable ; pour des données transactionnelles, il ne le serait pas, et c'est pourquoi les ressources métier, elles, restent dans leur service avec leurs garanties locales.
+
+**Suppression.** Le cas le plus délicat. Une boutique disparaît de l'état désiré : que fait le service de ses transactions rattachées ? Deux politiques existent, et le choix doit être _explicite_ : la **cascade** (tout supprimer, irréversible et dangereux) ou l'**orphelinage** (marquer la projection orpheline, geler les ressources, laisser un humain ou une politique de rétention décider). La plupart des systèmes matures choisissent l'orphelinage avec purge différée : l'erreur de topologie est rattrapable, la suppression en cascade ne l'est pas.
+
+## Adopter l'existant : la fédération brownfield
+
+Dernier scénario réaliste : la suite déploie son plan de contrôle alors que les services tournent depuis deux ans, remplis d'entités créées à la main. Le modèle fédéré gère ce cas avec une opération d'**adoption** : le plan de contrôle découvre les entités locales existantes (par leur clé ou leur nom), propose un appariement avec son référentiel, puis pose `external_ref` et `managed_by` _a posteriori_ sur les entités confirmées.
+
+C'est une différence majeure avec le monolithe intégré, où intégrer un système existant signifie migrer ses données dans le noyau. Ici, les données ne bougent pas : seul un lien s'ajoute. L'adoption est progressive, réversible, et service par service.
+
+## Le contrat de fédération
+
+Récapitulons ce qu'un service doit exposer pour être « fédérable ». C'est remarquablement peu :
+
+1. Des entités topologiques locales (`Boutique`, `Organisation`...) portant `external_ref` (unique, opaque) et `managed_by`.
+2. Un upsert idempotent par `external_ref` sur ces entités.
+3. Une politique de suppression explicite (cascade ou orphelinage).
+4. Une API publiée, versionnée et documentée pour ces opérations.
+
+Un service qui respecte ce contrat fonctionne seul, s'intègre à n'importe quel plan de contrôle (celui de l'éditeur, un outil d'infrastructure as code, un script maison), et le jour où un référentiel central naît, la fédération est _un client d'API à écrire_, pas une migration.
+
+Remarque la symétrie avec le chapitre 1 : le modèle fédéré reprend l'idée des identifiants normalisés des services autonomes (l'`external_ref` joue le rôle du nom de ressource global), mais il y ajoute ce qui manquait : une **entité locale contractuelle** sur laquelle le service peut s'appuyer, et un **propriétaire désigné** de la topologie. Et il reprend la cohérence du monolithe, mais recalculée par convergence plutôt que garantie par une base partagée.
+
+## Vérifie ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Dans le modèle fédéré, qui est la source de vérité du concept « boutique » ?',
+      options: [
+        'Chaque service, indépendamment',
+        "Le plan de contrôle pour la topologie ; chaque service n'en garde qu'une projection locale",
+        'Une base de données partagée par tous les services',
+        'Le service le plus ancien de la suite',
+      ],
+      answer: 1,
+      explain:
+        'Le partage de souveraineté est le cœur du modèle : le plan de contrôle possède la topologie (organisations, boutiques), chaque service possède ses ressources métier et maintient une projection locale de la topologie qui le concerne.',
+    },
+    {
+      q: 'Pourquoi external_ref doit-il rester opaque pour le service qui le stocke ?',
+      options: [
+        "Pour des raisons de sécurité : l'URI contient des secrets",
+        "Parce que les bases de données n'indexent pas les chaînes structurées",
+        "Parce qu'un identifiant interprété devient un couplage de schéma entre systèmes, impossible à faire évoluer",
+        "Pour économiser de l'espace de stockage",
+      ],
+      answer: 2,
+      explain:
+        "Dès qu'un service parse la structure de la référence, son format devient un contrat partagé par tous : le faire évoluer casse tout le monde. Opaque, la référence n'est qu'un lien stable, et un lien ne casse jamais.",
+    },
+    {
+      q: 'Que se passe-t-il pour les services quand le plan de contrôle tombe en panne ?',
+      options: [
+        "Ils s'arrêtent immédiatement : leur racine a disparu",
+        'Ils continuent de fonctionner sur leur projection locale ; seules les opérations topologiques sont indisponibles',
+        'Ils basculent en lecture seule',
+        'Ils élisent un nouveau plan de contrôle entre eux',
+      ],
+      answer: 1,
+      explain:
+        "C'est la propriété de découplage de disponibilité : la projection locale suffit au fonctionnement quotidien. Le référentiel central n'est nécessaire que pour modifier la topologie, pas pour l'utiliser.",
+    },
+    {
+      q: "Pourquoi l'orphelinage est-il généralement préféré à la suppression en cascade ?",
+      options: [
+        "Parce qu'il est plus rapide à exécuter",
+        "Parce qu'une erreur de topologie doit rester rattrapable : geler puis purger est réversible, supprimer en cascade ne l'est pas",
+        'Parce que la cascade est impossible à implémenter en distribué',
+        "Parce que l'orphelinage économise du stockage",
+      ],
+      answer: 1,
+      explain:
+        "La suppression d'une entité topologique peut être une erreur humaine. L'orphelinage gèle les ressources rattachées et laisse une politique de rétention ou un humain trancher ; la cascade détruit immédiatement et définitivement.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir
+
+- Le modèle fédéré partage la souveraineté : **le plan de contrôle possède la topologie, chaque service possède ses ressources** et maintient une projection locale de la topologie.
+- La projection assumée n'est pas de la duplication : elle a un propriétaire désigné et un mécanisme de convergence explicite, l'**anti-entropie** par réconciliation idempotente.
+- Trois mécanismes suffisent : **référence externe opaque**, **upsert idempotent**, **marquage de gestion** ; plus une **politique de suppression** explicite (orphelinage de préférence).
+- Le modèle paie sa flexibilité en **cohérence à terme** sur la topologie : acceptable pour des concepts qui changent rarement, et compensé par le découplage de disponibilité.
+- L'**adoption** permet de fédérer un existant sans migration : on ajoute un lien, on ne déplace pas les données.
+- Reste une question : que partagent réellement les services entre eux, si ce n'est ni du code ni un schéma ? La réponse est conceptuelle, et c'est le Domain-Driven Design qui la formule le mieux. C'est l'objet du prochain chapitre.

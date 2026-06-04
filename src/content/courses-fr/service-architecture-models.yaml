@@ -1,0 +1,21 @@
+slug: service-architecture-models
+title: "Modèles d'architecture de services : intégration, autonomie et fédération"
+summary: "Comment plusieurs services d'un même produit, d'une même suite ou d'un même écosystème doivent-ils organiser les concepts qu'ils partagent (client, organisation, boutique, projet) ? Ce cours d'architecture générale compare les trois grands modèles du marché : le monolithe intégré, les services autonomes et le modèle fédéré. Il les relie aux outils du Domain-Driven Design (bounded contexts, shared kernel, published language, anticorruption layer) et se termine par une grille de décision et des trajectoires de migration. Applicable aux suites logicielles, aux ERP, aux plateformes cloud comme aux écosystèmes de microservices internes."
+tags:
+  - architecture
+  - services
+  - plateforme
+  - ddd
+  - bounded-contexts
+  - microservices
+  - federation
+theme: architecture
+subtheme: ddd
+level: intermediate
+estimatedMinutes: 85
+modules:
+  - 01-monolithe-integre-services-autonomes
+  - 02-le-modele-federe
+  - 03-frontieres-et-contrats-ddd
+  - 04-choisir-et-migrer
+published: false

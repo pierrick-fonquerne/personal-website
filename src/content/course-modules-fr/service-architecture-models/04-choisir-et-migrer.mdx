@@ -1,0 +1,255 @@
+---
+course: service-architecture-models
+order: 4
+title: 'Choisir son modèle : grille de décision, signaux d’alerte et trajectoires de migration'
+subtitle: "Aucun des trois modèles n'est bon dans l'absolu : ils répondent à des stratégies différentes. Ce chapitre donne les critères de choix, les symptômes du mauvais choix, et les chemins de migration éprouvés."
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import ArchitectureDecisionGuide from '../../../components/learning/ArchitectureDecisionGuide.tsx';
+
+export const guideData = {
+  resultLabel: 'Tendance',
+  pendingLabel: 'Réponds aux cinq questions pour voir la recommandation.',
+  resetLabel: 'Recommencer',
+  tieLabel:
+    'Égalité : ton contexte est à la frontière entre deux modèles. Relis les critères dominants (distribution et équipes) : ce sont eux qui doivent trancher.',
+  models: [
+    {
+      id: 'monolith',
+      label: 'Monolithe (modulaire)',
+      recommendation:
+        'Tendance : monolithe modulaire. Ton produit est unique, ton équipe est petite et l’expérience intégrée prime. Garde des frontières logiques strictes entre modules : elles te coûtent peu aujourd’hui et préservent toutes les trajectoires de migration futures.',
+    },
+    {
+      id: 'autonomous',
+      label: 'Services autonomes',
+      recommendation:
+        'Tendance : services autonomes. Tes services ont des cycles de vie, des équipes et des marchés distincts, et la vue unifiée est secondaire. Investis tôt dans les conventions d’identifiants et de tags : c’est ta seule arme contre l’incohérence transverse.',
+    },
+    {
+      id: 'federated',
+      label: 'Modèle fédéré',
+      recommendation:
+        'Tendance : modèle fédéré. Tu veux des briques adoptables séparément ET une expérience intégrée. Commence par le contrat de fédération (références externes opaques, upsert idempotent, politique de suppression) sur chaque service, le plan de contrôle peut venir après.',
+    },
+  ],
+  questions: [
+    {
+      id: 'distribution',
+      text: 'Comment ton produit sera-t-il distribué ?',
+      options: [
+        { label: 'Un produit unique, vendu en bloc', scores: { monolith: 2 } },
+        { label: 'Des services indépendants, sans suite intégrée', scores: { autonomous: 2 } },
+        { label: 'Des briques à la découpe ET une suite intégrée', scores: { federated: 2 } },
+      ],
+    },
+    {
+      id: 'teams',
+      text: "Combien d'équipes feront évoluer le système ?",
+      options: [
+        { label: '1 à 2 équipes', scores: { monolith: 2 } },
+        { label: '3 à 6 équipes', scores: { federated: 1, autonomous: 1 } },
+        { label: 'Plus de 6 équipes', scores: { autonomous: 1, federated: 1 } },
+      ],
+    },
+    {
+      id: 'integration',
+      text: "Quelle importance a l'expérience intégrée (vue unifiée, navigation transverse) ?",
+      options: [
+        {
+          label: 'Critique : c’est le cœur de la proposition de valeur',
+          scores: { monolith: 2, federated: 1 },
+        },
+        { label: 'Utile mais secondaire', scores: { federated: 1, autonomous: 1 } },
+        {
+          label: 'Marginale : chaque service a ses propres utilisateurs',
+          scores: { autonomous: 2 },
+        },
+      ],
+    },
+    {
+      id: 'consistency',
+      text: 'Quel niveau de cohérence transverse est exigé sur les concepts partagés ?',
+      options: [
+        { label: 'Immédiate et garantie (contrainte forte)', scores: { monolith: 2 } },
+        {
+          label: 'À terme : quelques minutes de dérive sont acceptables',
+          scores: { federated: 2 },
+        },
+        { label: 'Best effort : des conventions suffisent', scores: { autonomous: 2 } },
+      ],
+    },
+    {
+      id: 'existing',
+      text: 'Quel est ton point de départ ?',
+      options: [
+        { label: 'Greenfield : rien d’existant', scores: { monolith: 1, federated: 1 } },
+        { label: 'Des services existants à faire coopérer', scores: { federated: 2 } },
+        { label: 'Un monolithe existant qui fonctionne bien', scores: { monolith: 2 } },
+      ],
+    },
+  ],
+};
+
+Les trois premiers chapitres ont décrit les modèles ; celui-ci répond à la question pratique : **lequel choisir, et comment changer d'avis sans tout casser ?** Car c'est la réalité des systèmes : on ne choisit pas une fois pour toutes, on choisit pour un contexte, et le contexte change.
+
+À la fin de ce chapitre, tu sauras pondérer les cinq critères qui dominent la décision, reconnaître les signaux d'alerte du mauvais choix, et dérouler les deux trajectoires de migration éprouvées vers le modèle fédéré.
+
+## Les cinq critères qui dominent la décision
+
+Des dizaines de facteurs influencent le choix, mais cinq écrasent tous les autres :
+
+1. **La stratégie de distribution.** Vendras-tu (ou ouvriras-tu) les services séparément ? C'est le critère le plus discriminant : s'il faut livrer à la découpe, le monolithe intégré est éliminé d'office, quelles que soient ses autres qualités.
+2. **Le nombre d'équipes.** La loi de Conway ne se négocie pas : une ou deux équipes vivent très bien dans un monolithe ; dix équipes sur un noyau partagé se paralysent mutuellement.
+3. **L'exigence d'intégration.** Si la vue unifiée est le produit (tableaux de bord transverses, navigation fluide entre domaines), il faut soit le monolithe, soit un plan de contrôle fédéré ; les services autonomes purs feront payer chaque écran intégré.
+4. **L'exigence de cohérence.** Cohérence immédiate garantie : monolithe. Cohérence à terme acceptable : fédéré. Conventions best effort suffisantes : autonomes.
+5. **L'existant.** Un monolithe sain qui fonctionne est un actif, pas une honte ; des services déjà éparpillés appellent une fédération, pas une réécriture centrale.
+
+## Éprouve la grille sur ton propre cas
+
+Réponds aux cinq questions pour ton système (réel ou imaginaire) et observe la tendance. **Ta mission** : trouve une combinaison de réponses qui élimine le monolithe dès la première question, puis une qui rend le fédéré incontournable.
+
+<InteractivePrint
+  label="Grille de décision interactive"
+  description="Questionnaire interactif à cinq questions : stratégie de distribution, nombre d'équipes, importance de l'expérience intégrée, exigence de cohérence transverse, point de départ. Chaque réponse attribue des points aux trois modèles (monolithe modulaire, services autonomes, fédéré). Une fois les cinq réponses données, des barres de score s'affichent et le modèle en tête est expliqué : la distribution à la découpe élimine le monolithe, la cohérence immédiate l'exige, la double exigence briques autonomes plus suite intégrée mène au fédéré."
+>
+  <ArchitectureDecisionGuide
+    client:visible
+    questions={guideData.questions}
+    models={guideData.models}
+    resultLabel={guideData.resultLabel}
+    pendingLabel={guideData.pendingLabel}
+    resetLabel={guideData.resetLabel}
+    tieLabel={guideData.tieLabel}
+  />
+</InteractivePrint>
+
+<Callout kind="note" title="Une grille, pas un oracle">
+  Cette grille donne une tendance, pas un verdict. Son vrai rôle est de forcer les cinq
+  conversations qui comptent : distribution, équipes, intégration, cohérence, existant. Si ton
+  comité d'architecture débat de la technologie de communication inter-services avant d'avoir
+  répondu à ces cinq questions, il débat dans le mauvais ordre.
+</Callout>
+
+## Les signaux d'alerte du mauvais choix
+
+Les architectures ratées préviennent. Voici les symptômes à reconnaître, chacun pointant vers un diagnostic précis :
+
+**Les déploiements en convoi (lockstep).** Tes services sont « indépendants » mais chaque release exige de les déployer ensemble, dans un ordre précis, après une réunion de coordination. Diagnostic : **monolithe distribué**, presque toujours causé par un shared kernel ou des contrats implicites. Tu paies le distribué sans l'autonomie ; il faut soit ré-assumer le monolithe, soit casser le noyau partagé.
+
+**Le backlog d'intégration qui enfle.** Chaque trimestre, de nouvelles demandes « vue consolidée », « rapport transverse », « suppression globale », et chaque demande est un projet. Diagnostic : services autonomes face à un besoin d'intégration sous-estimé. La réponse durable n'est pas le n-ième écran d'agrégation, c'est un plan de contrôle fédéré.
+
+**Les ressources orphelines et les tags incohérents.** Personne ne sait dire combien de « boutiques » existent vraiment, les audits trouvent des ressources sans propriétaire. Diagnostic : fédération par convention (tags) sans contrat. Il manque les références externes contractuelles et la réconciliation.
+
+**L'équipe-noyau goulot.** Toutes les autres équipes attendent les évolutions du module central ; le backlog du noyau a six mois de profondeur. Diagnostic : monolithe au-delà de son échelle organisationnelle. C'est le signal de départ d'une extraction.
+
+## Trajectoire 1 : du monolithe vers le fédéré
+
+La migration la plus fréquente, et la plus documentée. Elle suit le pattern du **figuier étrangleur** (strangler fig) : le nouveau système pousse _autour_ de l'ancien, qui continue de fonctionner jusqu'à devenir remplaçable.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    A["1. Monolithe<br/>spaghetti"] --> B["2. Monolithe<br/>modulaire<br/><i>frontières logiques</i>"]
+    B --> C["3. Extraction<br/>du 1er service<br/><i>+ projection locale</i>"]
+    C --> D["4. Contrat de<br/>fédération<br/><i>external_ref, upsert</i>"]
+    D --> E["5. Plan de contrôle<br/><i>le noyau restant<br/>devient le référentiel</i>"]
+    style E fill:#7c5cff,color:#fff`}
+  caption="Du monolithe au fédéré : cinq étapes, chacune utile même si la suivante n'arrive jamais"
+/>
+
+Les étapes, dans l'ordre :
+
+1. **Modulariser d'abord.** Tracer les frontières logiques _dans_ le monolithe (chapitre 1 : le monolithe modulaire). Aucune infrastructure nouvelle ; tout le travail est dans le code et les interfaces internes.
+2. **Extraire le module le plus autonome**, celui qui a le moins de dépendances entrantes. Lui donner sa propre projection locale du concept partagé, alimentée au début par des appels au monolithe.
+3. **Introduire le contrat de fédération** sur le service extrait : référence externe, upsert idempotent. Le monolithe devient son premier plan de contrôle de fait.
+4. **Répéter** module par module, en commençant toujours par le plus découplé.
+5. **Promouvoir le noyau restant en plan de contrôle** : quand il ne reste au centre que la topologie (organisations, boutiques, utilisateurs), le monolithe est devenu, sans bascule brutale, le référentiel central du modèle fédéré.
+
+La beauté de cette trajectoire : **chaque étape a de la valeur même si la migration s'arrête là**. Un monolithe modulaire est meilleur qu'un spaghetti ; un service extrait rend de l'autonomie à une équipe ; le contrat de fédération sert aussi aux outils d'infrastructure.
+
+## Trajectoire 2 : des services autonomes vers le fédéré
+
+Le chemin inverse, typique des écosystèmes qui ont grandi en mode best-of-breed et dont les clients réclament l'expérience unifiée.
+
+1. **Publier le langage commun** : le vocabulaire minimal et le schéma d'identifiants (chapitre 3). C'est une décision de gouvernance, pas du code.
+2. **Ajouter le contrat de fédération à chaque service** : champs `external_ref` et `managed_by`, upsert idempotent. Chaque service reste 100 % autonome ; il devient simplement _fédérable_.
+3. **Construire le plan de contrôle**, d'abord en lecture (inventaire consolidé), puis en écriture (provisionnement).
+4. **Adopter l'existant** : la procédure d'adoption du chapitre 2 apparie les entités historiques avec le référentiel, service par service, sans migration de données.
+
+<Callout kind="warn" title="Les deux pièges qui condamnent une migration">
+**Le big bang** : tout réécrire et basculer un week-end. L'histoire de l'industrie est un cimetière de big bangs ; la migration incrémentale n'est pas une option prudente, c'est la seule qui survit au contact du réel.
+
+**Le shared kernel « transitoire »** : « partageons les types juste le temps de la migration ». Aucun shared kernel transitoire n'est jamais mort de cause naturelle : le provisoire qui fonctionne devient permanent, et tu as construit un monolithe distribué en croyant migrer. Si tu dois partager quelque chose, partage le langage publié, jamais les types.
+
+</Callout>
+
+## Vérifie ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Quel critère élimine d'office le monolithe intégré, quelles que soient ses autres qualités ?",
+      options: [
+        'Plus de trois équipes de développement',
+        "La nécessité de vendre ou d'ouvrir les services séparément",
+        'Un besoin de haute disponibilité',
+        "Un budget d'infrastructure limité",
+      ],
+      answer: 1,
+      explain:
+        "La distribution à la découpe est structurellement incompatible avec l'entité centrale unique : un service sans racine autonome ne peut pas être livré seul. Les autres critères se négocient ; celui-là non.",
+    },
+    {
+      q: 'Que diagnostiquent des déploiements systématiquement coordonnés entre services « indépendants » ?',
+      options: [
+        'Une infrastructure de CI/CD insuffisante',
+        'Un monolithe distribué : des services techniquement séparés mais logiquement soudés',
+        'Un manque de tests automatisés',
+        'Une équipe trop petite',
+      ],
+      answer: 1,
+      explain:
+        'Le déploiement en convoi est LE symptôme du couplage logique : shared kernel, contrats implicites ou données partagées. La séparation technique sans autonomie de déploiement cumule les coûts des deux mondes.',
+    },
+    {
+      q: 'Pourquoi la trajectoire du figuier étrangleur est-elle préférée au big bang ?',
+      options: [
+        'Elle est plus rapide à exécuter',
+        'Chaque étape produit de la valeur seule, et le système fonctionne en continu pendant la migration',
+        'Elle ne nécessite aucune modification du monolithe',
+        "Elle évite d'avoir à former les équipes",
+      ],
+      answer: 1,
+      explain:
+        "Modulariser, extraire, fédérer : chaque étape améliore le système même si la migration s'arrête là. Le big bang, lui, ne produit aucune valeur avant la bascule finale, et concentre tout le risque sur un seul événement.",
+    },
+    {
+      q: 'Pourquoi le shared kernel « transitoire » est-il un piège de migration ?',
+      options: [
+        "Parce qu'il est trop coûteux à développer",
+        'Parce que le provisoire qui fonctionne devient permanent : on construit un monolithe distribué en croyant migrer',
+        "Parce qu'il empêche les tests unitaires",
+        "Parce qu'il oblige à utiliser le même langage de programmation",
+      ],
+      answer: 1,
+      explain:
+        "Un noyau partagé « temporaire » n'a aucune force qui pousse à sa disparition : il s'enracine. La discipline consiste à partager le langage publié (conventions, identifiants, contrats) dès le départ, jamais les types.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir, du cours entier
+
+- **Chapitre 1** : le monolithe intégré et les services autonomes optimisent des objectifs opposés (intégration et cohérence contre autonomie et échelle) ; le choix structure le produit ET l'organisation.
+- **Chapitre 2** : le modèle fédéré réconcilie les deux : plan de contrôle souverain sur la topologie, services souverains sur leurs ressources, convergence par réconciliation idempotente.
+- **Chapitre 3** : les bounded contexts légitiment les définitions locales ; entre eux circulent identifiants et messages d'un langage publié, jamais des types partagés.
+- **Chapitre 4** : on choisit avec cinq critères (distribution, équipes, intégration, cohérence, existant), on surveille les signaux d'alerte, et on migre par étapes qui ont chacune leur valeur propre : jamais en big bang, jamais via un noyau partagé « transitoire ».
+- La compétence durable n'est pas de connaître le « meilleur » modèle : c'est de savoir **lire la stratégie d'un produit dans son architecture**, et réciproquement.

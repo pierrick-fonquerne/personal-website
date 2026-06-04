@@ -1,0 +1,21 @@
+slug: service-architecture-models
+title: 'Service architecture models: integration, autonomy and federation'
+summary: 'How should several services of the same product, suite or ecosystem organize the concepts they share (customer, organization, shop, project)? This general architecture course compares the three big models on the market: the integrated monolith, autonomous services and the federated model. It connects them to the tools of Domain-Driven Design (bounded contexts, shared kernel, published language, anticorruption layer) and ends with a decision grid and migration trajectories. Applicable to software suites, ERPs, cloud platforms and internal microservice ecosystems alike.'
+tags:
+  - architecture
+  - services
+  - platform
+  - ddd
+  - bounded-contexts
+  - microservices
+  - federation
+theme: architecture
+subtheme: ddd
+level: intermediate
+estimatedMinutes: 85
+modules:
+  - 01-integrated-monolith-autonomous-services
+  - 02-the-federated-model
+  - 03-boundaries-and-contracts-ddd
+  - 04-choosing-and-migrating
+published: false

@@ -1,0 +1,316 @@
+---
+course: service-architecture-models
+order: 1
+title: 'Integrated monolith and autonomous services: two opposite answers to concept sharing'
+subtitle: 'Customer, shop, project, organization: when several services of the same product handle the same concepts, two architectures dominate the market, and they optimize incompatible goals.'
+estimatedMinutes: 22
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import ServiceModelExplorer from '../../../components/learning/ServiceModelExplorer.tsx';
+
+export const explorerData = {
+  scenarioLabel: 'Pick a scenario and compare the two models',
+  legend: { ok: 'painless', warn: 'costly', fail: 'blocking' },
+  models: [
+    {
+      id: 'monolith',
+      label: 'Integrated monolith',
+      description: 'A single central Shop entity, every feature depends on it.',
+    },
+    {
+      id: 'autonomous',
+      label: 'Autonomous services',
+      description: 'Each service owns its resources, no shared entity at all.',
+    },
+  ],
+  scenarios: [
+    {
+      id: 'evolve',
+      label: 'Evolve the shared concept',
+      outcomes: {
+        monolith: {
+          status: 'fail',
+          text: 'The central schema impacts every feature: each change to Shop must be approved by every team, then deployed as one block.',
+        },
+        autonomous: {
+          status: 'ok',
+          text: 'Each service evolves its internal model freely, as long as its identifiers stay stable.',
+        },
+      },
+    },
+    {
+      id: 'ship-alone',
+      label: 'Sell one service piece by piece',
+      outcomes: {
+        monolith: {
+          status: 'fail',
+          text: 'Impossible: the payment service cannot exist without the core that defines the Shop. It has no autonomous root.',
+        },
+        autonomous: {
+          status: 'ok',
+          text: 'Natural: the service deploys, versions and sells alone. That is exactly what this model is designed for.',
+        },
+      },
+    },
+    {
+      id: 'integrated-view',
+      label: 'Display a unified view',
+      outcomes: {
+        monolith: {
+          status: 'ok',
+          text: 'Native: everything is already joined in the same model. A shop page shows catalog, payments and shipments effortlessly.',
+        },
+        autonomous: {
+          status: 'warn',
+          text: 'To be built: an aggregation layer must query each service and rebuild the view. And maintain it at every evolution.',
+        },
+      },
+    },
+    {
+      id: 'consistency',
+      label: 'Guarantee cross-cutting consistency',
+      outcomes: {
+        monolith: {
+          status: 'ok',
+          text: 'Guaranteed by the schema: you cannot create a payment on a shop that does not exist, the constraint lives in the database.',
+        },
+        autonomous: {
+          status: 'warn',
+          text: 'Soft: groupings rely on labels that nothing enforces. Orphaned resources and inconsistent tags are everyday life.',
+        },
+      },
+    },
+    {
+      id: 'team-scale',
+      label: 'Grow from 2 to 10 teams',
+      outcomes: {
+        monolith: {
+          status: 'warn',
+          text: 'The team owning the core becomes the bottleneck of all the others: every cross-cutting evolution goes through it.',
+        },
+        autonomous: {
+          status: 'ok',
+          text: 'One team per service, independent cycles: this is the model that grew catalogs of hundreds of services.',
+        },
+      },
+    },
+  ],
+};
+
+Imagine an online commerce software suite: a catalog service, a payment service, a shipping service, a customer support service. Very quickly, something becomes obvious: all these services talk about the same things. A "shop". A "customer". An "order". The user, however, sees only one: _their_ shop, which has products, transactions, parcels and support tickets.
+
+This problem is in no way specific to commerce. An office suite shares the "document" and the "workspace" between editing, sharing and messaging. An ERP shares the "customer" and the "order" between sales, accounting and logistics. A development platform shares the "project" and the "environment" between code management, deployment and feature flags. A banking information system shares the "account" and the "holder" across dozens of applications. Everywhere, the same question shapes the architecture: **who owns the concepts everybody handles?**
+
+The answer commits everything: the ability to ship services separately, the smoothness of the integrated experience, the cost of evolving the system, and even the organization of teams. By the end of this chapter, you will be able to recognize the two canonical models that dominate the market, explain their strengths and weaknesses, manipulate their trade-offs on concrete scenarios, and understand why neither is enough when you want both autonomous building blocks and an integrated experience.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the basics of service-oriented architectures (a service exposes an API and owns its data) and the notion of an entity in a data model.
+
+**What you do not need to know**: Domain-Driven Design. Bounded contexts, shared kernel and published language are introduced in chapter 3.
+
+</Callout>
+
+## The problem of cross-cutting concepts
+
+Let us state the problem precisely, because it is more subtle than it looks.
+
+The payment service needs to attach its transactions to something: call it a _shop_. The catalog service organizes its products by _shop_ too. The shipping service attaches its parcels to orders, themselves placed in a _shop_. These concepts look extremely similar. Same name, same intuition, same position in the hierarchy: the organization owns shops, the shop contains resources.
+
+The temptation is immediate: "it is the same concept, let us model it once". That is exactly the temptation we need to examine, because the two big architecture families on the market answer it in opposite ways. And neither answer is a mistake: they are two coherent optimizations of different goals.
+
+## Model 1: the integrated monolith
+
+The first model is the one used by integrated software suites: ERPs, all-in-one development forges, management suites. The shared concept is **a single central entity**, stored once, on which every feature depends: the catalog hangs off the shop, the transactions hang off the shop, the shipments hang off the shop, the tickets hang off the shop.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    P[Shop<br/><i>single central entity</i>]
+    P --> R[Catalog / products]
+    P --> CI[Transactions / payments]
+    P --> E[Shipments / parcels]
+    P --> FF[Support tickets]
+    P --> I[Customers / accounts]
+    style P fill:#7c5cff,color:#fff`}
+  caption="The integrated monolith: a single central entity everything depends on"
+/>
+
+The benefits are real and immediate:
+
+- **Perfect integration.** A "shop" page shows products, sales, parcels and tickets without inter-service calls, without synchronization, without any possible inconsistency. Navigation is smooth because everything is _already_ joined.
+- **One model to learn.** For the user as for the developer, there is only one definition of "shop", with a single lifecycle.
+- **Trivial transactions.** Creating a shop and its default catalog in the same database transaction: no distributed protocol to invent.
+- **Consistency guaranteed by construction.** A transaction cannot reference a nonexistent shop: the integrity constraint lives in the schema.
+
+The cost is just as real, but deferred:
+
+- **Impossible to ship one building block separately.** The payment service cannot exist without the core that defines the shop. You cannot offer it as a standalone product, nor replace it with a better market component, nor open it to independent adoption.
+- **Evolution coupling.** Any change to the central entity potentially impacts every feature. The "shop" schema becomes the bottleneck of every team.
+- **Limited organizational scale.** Ten teams working on the same core step on each other.
+
+<Callout kind="note" title="Conway's law, the brutal version">
+  "Organizations design systems that mirror their communication structures." The integrated monolith
+  is its most direct illustration: as long as one team owns the core, all is well; as soon as
+  several teams must evolve it together, every change becomes a negotiation. Architecture is not
+  just a technical matter: choosing a service model is also choosing a team organization. If your
+  architecture and your org chart tell two different stories, the org chart wins.
+</Callout>
+
+### The disciplined variant: the modular monolith
+
+Before moving to the opposite model, let us mention an important variant: the **modular monolith**. Same single deliverable, same database, but strict _logical_ boundaries between modules: the payment module accesses the shop module only through an explicit internal interface, never by joining its tables directly.
+
+It is an excellent starting choice: it keeps the monolith's benefits (transactions, integration, operational simplicity) while preparing the boundaries that will allow, one day, extracting a module into a service. Most successful migrations to distributed models start from a modular monolith, not from a spaghetti one. Remember this idea: **logical boundaries precede physical boundaries**; we will come back to it in chapter 4.
+
+## Model 2: autonomous services
+
+The second model is the one used by the large public cloud providers and best-of-breed ecosystems. Here, each service owns **its own resources** and knows nothing about the others. The storage service has its buckets, the compute service has its instances, the database service has its clusters. There is **no global entity** shared across services.
+
+How does the user find their way? Through three _a posteriori_ federation mechanisms:
+
+1. **Normalized identifiers.** Every resource has a unique name structured by a global convention (a URI or hierarchical naming scheme). Any tool can designate any resource of any service without ambiguity.
+2. **Labels (tags).** Free key-value pairs attached to resources. The decentralized equivalent of grouping: you put `shop=my-shop` on your resources in each service, and a grouping tool finds them.
+3. **An aggregation console.** A presentation layer above the services, which queries each one and rebuilds a unified view. Integration is not in the data model: it is recomputed at display time.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    subgraph S1[Catalog service]
+      C[Products]
+    end
+    subgraph S2[Payment service]
+      V[Transactions]
+    end
+    subgraph S3[Shipping service]
+      D[Parcels]
+    end
+    CONSOLE[Aggregation console<br/><i>tags + normalized identifiers</i>]
+    CONSOLE -.queries.-> S1
+    CONSOLE -.queries.-> S2
+    CONSOLE -.queries.-> S3
+    style CONSOLE fill:#2d9d78,color:#fff`}
+  caption="Autonomous services: no shared entity, a federation recomputed on top"
+/>
+
+The benefits mirror the monolith's costs:
+
+- **Each service lives its own life.** It is designed, deployed, versioned and sold separately. One team per service, independent release cycles.
+- **Local evolution.** Changing a service's internal model impacts nobody, as long as identifiers stay stable.
+- **Replaceability.** The customer can compose their system with the best service of each category, and switch.
+- **Proven organizational scale.** This is the model that allowed catalogs of hundreds of services to grow for twenty years.
+
+And the costs mirror the monolith's benefits:
+
+- **The integrated experience is a permanent construction site.** Every cross-cutting view (billing per shop, deleting a whole shop, access rights per shop) must be built explicitly on top of the services, and maintained.
+- **Consistency is soft.** Nothing guarantees that a `shop=my-shop` label is set everywhere, or spelled the same. Orphaned resources and incomplete groupings are everyday life.
+- **The shared concept exists nowhere.** The "shop" is only a convention. No service can rely on it contractually.
+
+## Manipulate the trade-offs
+
+The theory is laid out; now put it to the test. For each scenario below, compare what happens in each of the two models. **Your mission**: find the scenario where the monolith clearly wins, then the one where it definitively loses.
+
+<InteractivePrint
+  label="Explorer: five scenarios, two models"
+  description="Interactive comparator. Five scenarios (evolve the shared concept, sell one service piece by piece, display a unified view, guarantee cross-cutting consistency, grow from 2 to 10 teams) evaluated for the integrated monolith and autonomous services. The monolith excels at the unified view and consistency but blocks on central schema evolution and piece-by-piece selling; autonomous services exactly invert those results."
+>
+  <ServiceModelExplorer
+    client:visible
+    models={explorerData.models}
+    scenarios={explorerData.scenarios}
+    scenarioLabel={explorerData.scenarioLabel}
+    legend={explorerData.legend}
+  />
+</InteractivePrint>
+
+## The fundamental incompatibility
+
+Put the two models side by side and the dilemma appears:
+
+|                           | Integrated monolith                 | Autonomous services          |
+| ------------------------- | ----------------------------------- | ---------------------------- |
+| Shared concept            | Single, central, contractual entity | Nonexistent (tag convention) |
+| Ship one block alone      | Impossible                          | Natural                      |
+| Integrated experience     | Native                              | Rebuilt, costly              |
+| Cross-cutting consistency | Guaranteed by the schema            | Soft, best effort            |
+| Evolving one service      | Coupled to the core                 | Free                         |
+| Organizational scale      | One core team as bottleneck         | One team per service         |
+
+If your strategy requires _both_: autonomous building blocks, adoptable and replaceable one by one, **and** an integrated experience where the shared concept really exists, then neither canonical model is enough. You need a third one, borrowing from both without inheriting their disqualifying flaws. That is the federated model, the subject of the next chapter.
+
+<Callout kind="tip" title="The reflex to remember">
+  In front of any multi-service system, ask the revealing question: "if I want to deploy this
+  service alone, without the rest, can I?" The answer immediately tells you which family you are in,
+  and therefore which structural costs you will pay.
+</Callout>
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'In the integrated monolith, why is it impossible to ship one building block separately?',
+      options: [
+        'Because the codebase is too large to extract',
+        'Because every feature structurally depends on the shared central entity',
+        'Because software licenses forbid it',
+        'Because the services have no API',
+      ],
+      answer: 1,
+      explain:
+        'The coupling is not about size but structure: every feature hangs off a central entity (the shop, the project, the customer) that only exists in the core. Without the core, the building block has no root anymore.',
+    },
+    {
+      q: 'What distinguishes the modular monolith from the classic monolith?',
+      options: [
+        'It is deployed in several containers',
+        'It has one database per module',
+        'Strict logical boundaries between modules, which communicate only through explicit interfaces',
+        'It is written in several languages',
+      ],
+      answer: 2,
+      explain:
+        'Same deliverable, same database, but disciplined logical boundaries: a module never accesses another module’s tables directly. That is what makes future extraction possible: logical boundaries precede physical boundaries.',
+    },
+    {
+      q: 'In the autonomous services model, how does the user group resources from different services?',
+      options: [
+        'Through an entity shared by all services',
+        'They cannot: resources are permanently isolated',
+        'Through normalized identifiers and labels, aggregated by a presentation layer',
+        'Through a database shared by all services',
+      ],
+      answer: 2,
+      explain:
+        'Federation is a posteriori: normalized identifiers, tags attached to resources, and a console that queries each service to rebuild the view. The grouping is a convention, not a contract.',
+    },
+    {
+      q: 'What does Conway’s law predict for a system whose core is shared between ten teams?',
+      options: [
+        'The system will be more robust thanks to cross reviews',
+        'Every core evolution will become an inter-team negotiation, and the core a bottleneck',
+        'The teams will naturally converge towards a single model',
+        'Conway’s law only applies to microservices',
+      ],
+      answer: 1,
+      explain:
+        'Systems mirror the communication structures that produce them. An artifact owned by ten teams demands permanent coordination: a centralized architecture imposes a centralized organization, whether you like it or not.',
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- Cross-cutting concepts (customer, shop, order, project) are **the** structuring question of any multi-service system: who owns them?
+- The **integrated monolith** centralizes: perfect integration and consistency, but no building block can live alone and the core becomes the bottleneck of evolutions and teams.
+- The **modular monolith** is the disciplined variant: same benefits, logical boundaries ready for a future extraction.
+- **Autonomous services** decentralize: each service is free, shippable and replaceable alone, but the integrated experience must be rebuilt and cross-cutting consistency stays soft.
+- The two models optimize opposite goals; when the strategy demands both at once, a third model is needed: **federation**, in the next chapter.
