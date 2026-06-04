@@ -1,0 +1,18 @@
+slug: platform-service-models
+title: 'Architecting a platform: integrated monolith, autonomous services, federation'
+summary: 'When several services of the same platform handle the same concepts (project, environment, organization), who owns them? Three models structure every answer on the market: the integrated monolith, autonomous services and the federated model. An architecture course on platform topology, read through the bounded contexts of Domain-Driven Design.'
+tags:
+  - architecture
+  - platform
+  - ddd
+  - bounded-contexts
+  - microservices
+theme: architecture
+subtheme: ddd
+level: intermediate
+estimatedMinutes: 60
+modules:
+  - 01-two-canonical-models
+  - 02-the-federated-model
+  - 03-a-ddd-reading
+published: false
