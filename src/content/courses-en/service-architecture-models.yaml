@@ -18,4 +18,5 @@ modules:
   - 02-the-federated-model
   - 03-boundaries-and-contracts-ddd
   - 04-choosing-and-migrating
-published: false
+published: true
+publishedAt: 2026-06-04

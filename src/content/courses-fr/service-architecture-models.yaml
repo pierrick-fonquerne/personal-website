@@ -18,4 +18,5 @@ modules:
   - 02-le-modele-federe
   - 03-frontieres-et-contrats-ddd
   - 04-choisir-et-migrer
-published: false
+published: true
+publishedAt: 2026-06-04
