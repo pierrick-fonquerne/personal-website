@@ -1,0 +1,255 @@
+---
+course: service-architecture-models
+order: 4
+title: 'Choosing your model: decision grid, warning signs and migration trajectories'
+subtitle: 'None of the three models is good in the absolute: they answer different strategies. This chapter gives the choice criteria, the symptoms of the wrong choice, and the proven migration paths.'
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import ArchitectureDecisionGuide from '../../../components/learning/ArchitectureDecisionGuide.tsx';
+
+export const guideData = {
+  resultLabel: 'Tendency',
+  pendingLabel: 'Answer the five questions to see the recommendation.',
+  resetLabel: 'Reset',
+  tieLabel:
+    'Tie: your context sits at the border between two models. Re-read the dominant criteria (distribution and teams): they are the ones that must decide.',
+  models: [
+    {
+      id: 'monolith',
+      label: 'Monolith (modular)',
+      recommendation:
+        'Tendency: modular monolith. Your product is single, your team is small and the integrated experience comes first. Keep strict logical boundaries between modules: they cost little today and preserve every future migration trajectory.',
+    },
+    {
+      id: 'autonomous',
+      label: 'Autonomous services',
+      recommendation:
+        'Tendency: autonomous services. Your services have distinct lifecycles, teams and markets, and the unified view is secondary. Invest early in identifier and tag conventions: they are your only weapon against cross-cutting inconsistency.',
+    },
+    {
+      id: 'federated',
+      label: 'Federated model',
+      recommendation:
+        'Tendency: federated model. You want building blocks adoptable separately AND an integrated experience. Start with the federation contract (opaque external references, idempotent upsert, deletion policy) on each service, the control plane can come later.',
+    },
+  ],
+  questions: [
+    {
+      id: 'distribution',
+      text: 'How will your product be distributed?',
+      options: [
+        { label: 'A single product, sold as one block', scores: { monolith: 2 } },
+        { label: 'Independent services, no integrated suite', scores: { autonomous: 2 } },
+        {
+          label: 'Building blocks piece by piece AND an integrated suite',
+          scores: { federated: 2 },
+        },
+      ],
+    },
+    {
+      id: 'teams',
+      text: 'How many teams will evolve the system?',
+      options: [
+        { label: '1 to 2 teams', scores: { monolith: 2 } },
+        { label: '3 to 6 teams', scores: { federated: 1, autonomous: 1 } },
+        { label: 'More than 6 teams', scores: { autonomous: 1, federated: 1 } },
+      ],
+    },
+    {
+      id: 'integration',
+      text: 'How important is the integrated experience (unified view, cross-domain navigation)?',
+      options: [
+        {
+          label: 'Critical: it is the heart of the value proposition',
+          scores: { monolith: 2, federated: 1 },
+        },
+        { label: 'Useful but secondary', scores: { federated: 1, autonomous: 1 } },
+        { label: 'Marginal: each service has its own users', scores: { autonomous: 2 } },
+      ],
+    },
+    {
+      id: 'consistency',
+      text: 'What level of cross-cutting consistency is required on the shared concepts?',
+      options: [
+        { label: 'Immediate and guaranteed (hard constraint)', scores: { monolith: 2 } },
+        { label: 'Eventual: a few minutes of drift are acceptable', scores: { federated: 2 } },
+        { label: 'Best effort: conventions are enough', scores: { autonomous: 2 } },
+      ],
+    },
+    {
+      id: 'existing',
+      text: 'What is your starting point?',
+      options: [
+        { label: 'Greenfield: nothing exists yet', scores: { monolith: 1, federated: 1 } },
+        { label: 'Existing services that must cooperate', scores: { federated: 2 } },
+        { label: 'An existing monolith that works well', scores: { monolith: 2 } },
+      ],
+    },
+  ],
+};
+
+The first three chapters described the models; this one answers the practical question: **which one to choose, and how to change your mind without breaking everything?** Because that is the reality of systems: you do not choose once and for all, you choose for a context, and the context changes.
+
+By the end of this chapter, you will be able to weigh the five criteria that dominate the decision, recognize the warning signs of the wrong choice, and walk through the two proven migration trajectories towards the federated model.
+
+## The five criteria that dominate the decision
+
+Dozens of factors influence the choice, but five crush all the others:
+
+1. **The distribution strategy.** Will you sell (or open) the services separately? This is the most discriminating criterion: if you must ship piece by piece, the integrated monolith is eliminated outright, whatever its other qualities.
+2. **The number of teams.** Conway's law is non-negotiable: one or two teams live very well in a monolith; ten teams on a shared core paralyze each other.
+3. **The integration requirement.** If the unified view is the product (cross-cutting dashboards, smooth navigation between domains), you need either the monolith or a federated control plane; pure autonomous services will make you pay for every integrated screen.
+4. **The consistency requirement.** Immediate guaranteed consistency: monolith. Acceptable eventual consistency: federated. Sufficient best-effort conventions: autonomous.
+5. **The existing system.** A healthy working monolith is an asset, not a shame; already scattered services call for federation, not a central rewrite.
+
+## Test the grid on your own case
+
+Answer the five questions for your system (real or imaginary) and watch the tendency. **Your mission**: find a combination of answers that eliminates the monolith from the first question, then one that makes the federated model unavoidable.
+
+<InteractivePrint
+  label="Interactive decision grid"
+  description="Interactive questionnaire with five questions: distribution strategy, number of teams, importance of the integrated experience, cross-cutting consistency requirement, starting point. Each answer grants points to the three models (modular monolith, autonomous services, federated). Once the five answers are given, score bars appear and the leading model is explained: piece-by-piece distribution eliminates the monolith, immediate consistency demands it, the double requirement of autonomous building blocks plus integrated suite leads to the federated model."
+>
+  <ArchitectureDecisionGuide
+    client:visible
+    questions={guideData.questions}
+    models={guideData.models}
+    resultLabel={guideData.resultLabel}
+    pendingLabel={guideData.pendingLabel}
+    resetLabel={guideData.resetLabel}
+    tieLabel={guideData.tieLabel}
+  />
+</InteractivePrint>
+
+<Callout kind="note" title="A grid, not an oracle">
+  This grid gives a tendency, not a verdict. Its real role is to force the five conversations that
+  matter: distribution, teams, integration, consistency, existing system. If your architecture
+  committee debates the inter-service communication technology before answering these five
+  questions, it debates in the wrong order.
+</Callout>
+
+## The warning signs of the wrong choice
+
+Failed architectures give warnings. Here are the symptoms to recognize, each pointing to a precise diagnosis:
+
+**Lockstep deployments.** Your services are "independent" but every release requires deploying them together, in a precise order, after a coordination meeting. Diagnosis: **distributed monolith**, almost always caused by a shared kernel or implicit contracts. You pay for distribution without autonomy; either re-assume the monolith, or break the shared core.
+
+**The swelling integration backlog.** Every quarter, new requests for "consolidated view", "cross-cutting report", "global deletion", and every request is a project. Diagnosis: autonomous services facing an underestimated integration need. The durable answer is not the nth aggregation screen, it is a federated control plane.
+
+**Orphaned resources and inconsistent tags.** Nobody can say how many "shops" really exist, audits find resources without owners. Diagnosis: federation by convention (tags) without contract. What is missing: contractual external references and reconciliation.
+
+**The core-team bottleneck.** All the other teams wait for the central module's evolutions; the core's backlog is six months deep. Diagnosis: monolith beyond its organizational scale. That is the starting signal for an extraction.
+
+## Trajectory 1: from the monolith to the federated model
+
+The most frequent migration, and the best documented. It follows the **strangler fig** pattern: the new system grows _around_ the old one, which keeps working until it becomes replaceable.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    A["1. Spaghetti<br/>monolith"] --> B["2. Modular<br/>monolith<br/><i>logical boundaries</i>"]
+    B --> C["3. Extraction<br/>of the 1st service<br/><i>+ local projection</i>"]
+    C --> D["4. Federation<br/>contract<br/><i>external_ref, upsert</i>"]
+    D --> E["5. Control plane<br/><i>the remaining core<br/>becomes the referential</i>"]
+    style E fill:#7c5cff,color:#fff`}
+  caption="From the monolith to the federated model: five steps, each useful even if the next never comes"
+/>
+
+The steps, in order:
+
+1. **Modularize first.** Draw the logical boundaries _inside_ the monolith (chapter 1: the modular monolith). No new infrastructure; all the work is in the code and internal interfaces.
+2. **Extract the most autonomous module**, the one with the fewest incoming dependencies. Give it its own local projection of the shared concept, fed at first by calls to the monolith.
+3. **Introduce the federation contract** on the extracted service: external reference, idempotent upsert. The monolith becomes its first de facto control plane.
+4. **Repeat** module by module, always starting with the most decoupled.
+5. **Promote the remaining core to control plane**: when only the topology remains at the center (organizations, shops, users), the monolith has become, without any brutal switch, the central referential of the federated model.
+
+The beauty of this trajectory: **each step has value even if the migration stops there**. A modular monolith is better than spaghetti; an extracted service gives a team back its autonomy; the federation contract also serves infrastructure tools.
+
+## Trajectory 2: from autonomous services to the federated model
+
+The reverse path, typical of ecosystems that grew best-of-breed and whose customers demand the unified experience.
+
+1. **Publish the common language**: the minimal vocabulary and the identifier scheme (chapter 3). It is a governance decision, not code.
+2. **Add the federation contract to each service**: `external_ref` and `managed_by` fields, idempotent upsert. Each service stays 100% autonomous; it simply becomes _federable_.
+3. **Build the control plane**, first read-only (consolidated inventory), then read-write (provisioning).
+4. **Adopt the existing**: the adoption procedure of chapter 2 pairs the historical entities with the referential, service by service, without data migration.
+
+<Callout kind="warn" title="The two traps that doom a migration">
+**The big bang**: rewriting everything and switching over one weekend. The industry's history is a graveyard of big bangs; incremental migration is not a cautious option, it is the only one that survives contact with reality.
+
+**The "transitional" shared kernel**: "let us share the types just for the duration of the migration". No transitional shared kernel ever died of natural causes: the temporary that works becomes permanent, and you have built a distributed monolith while believing you were migrating. If you must share something, share the published language, never the types.
+
+</Callout>
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  submitLabel="Submit"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'Which criterion eliminates the integrated monolith outright, whatever its other qualities?',
+      options: [
+        'More than three development teams',
+        'The need to sell or open the services separately',
+        'A high availability requirement',
+        'A limited infrastructure budget',
+      ],
+      answer: 1,
+      explain:
+        'Piece-by-piece distribution is structurally incompatible with the single central entity: a service without an autonomous root cannot be shipped alone. The other criteria can be negotiated; this one cannot.',
+    },
+    {
+      q: 'What do systematically coordinated deployments between "independent" services diagnose?',
+      options: [
+        'Insufficient CI/CD infrastructure',
+        'A distributed monolith: services technically separated but logically welded',
+        'A lack of automated tests',
+        'A team that is too small',
+      ],
+      answer: 1,
+      explain:
+        'Lockstep deployment is THE symptom of logical coupling: shared kernel, implicit contracts or shared data. Technical separation without deployment autonomy accumulates the costs of both worlds.',
+    },
+    {
+      q: 'Why is the strangler fig trajectory preferred over the big bang?',
+      options: [
+        'It executes faster',
+        'Each step produces value on its own, and the system keeps working throughout the migration',
+        'It requires no modification of the monolith',
+        'It avoids having to train the teams',
+      ],
+      answer: 1,
+      explain:
+        'Modularize, extract, federate: each step improves the system even if the migration stops there. The big bang produces no value before the final switch, and concentrates all the risk on a single event.',
+    },
+    {
+      q: 'Why is the "transitional" shared kernel a migration trap?',
+      options: [
+        'Because it is too costly to develop',
+        'Because the temporary that works becomes permanent: you build a distributed monolith while believing you are migrating',
+        'Because it prevents unit testing',
+        'Because it forces using the same programming language',
+      ],
+      answer: 1,
+      explain:
+        'A "temporary" shared core has no force pushing for its disappearance: it takes root. The discipline is to share the published language (conventions, identifiers, contracts) from the start, never the types.',
+    },
+  ]}
+/>
+
+## Key takeaways, from the whole course
+
+- **Chapter 1**: the integrated monolith and autonomous services optimize opposite goals (integration and consistency versus autonomy and scale); the choice shapes the product AND the organization.
+- **Chapter 2**: the federated model reconciles both: a control plane sovereign over the topology, services sovereign over their resources, convergence through idempotent reconciliation.
+- **Chapter 3**: bounded contexts legitimize local definitions; between them circulate identifiers and messages of a published language, never shared types.
+- **Chapter 4**: you choose with five criteria (distribution, teams, integration, consistency, existing system), you watch for the warning signs, and you migrate through steps that each carry their own value: never big bang, never via a "transitional" shared kernel.
+- The durable skill is not knowing the "best" model: it is knowing how to **read a product's strategy in its architecture**, and vice versa.
