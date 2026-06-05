@@ -6,6 +6,8 @@ import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ConsentBanner from '../components/layout/ConsentBanner.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
+import StructuredData from '../components/seo/StructuredData.astro';
+import type { Thing } from 'schema-dts';
 import { Font } from 'astro:assets';
 import {
   getLocaleFromUrl,
@@ -21,6 +23,7 @@ interface Props {
   ogImage?: string;
   current?: string;
   locale?: Locale;
+  schema?: Thing[];
 }
 
 const {
@@ -29,6 +32,7 @@ const {
   ogImage = '/og-default.png',
   current,
   locale = getLocaleFromUrl(Astro.url),
+  schema = [],
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
@@ -40,10 +44,7 @@ const resolvedDescription = description ?? t.meta.description;
 <html lang={locale} data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
 
     <Font cssVariable="--font-geist" preload />
@@ -53,6 +54,7 @@ const resolvedDescription = description ?? t.meta.description;
     <title>{title}</title>
     <meta name="description" content={resolvedDescription} />
     <link rel="canonical" href={canonicalURL} />
+    <StructuredData locale={locale} extra={schema} />
 
     {
       LOCALES.map((l) => (

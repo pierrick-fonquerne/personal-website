@@ -1,0 +1,15 @@
+---
+import type { Thing } from 'schema-dts';
+import type { Locale } from '../../lib/i18n';
+import { buildGraph, serializeGraph } from '../../lib/seo';
+
+interface Props {
+  locale: Locale;
+  extra?: Thing[];
+}
+
+const { locale, extra = [] } = Astro.props;
+const json = serializeGraph(buildGraph(locale, extra));
+---
+
+<script type="application/ld+json" set:html={json} is:inline />
