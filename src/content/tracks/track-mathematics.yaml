@@ -1,0 +1,79 @@
+slug: track-mathematics
+theme: math
+published: true
+
+fr:
+  title: Mathématiques
+  tagline: Le parcours complet, du calcul du lycée à l'analyse du master.
+  summary: >-
+    Un parcours mathématique intégral en quatre paliers : le socle du lycée
+    (algèbre, fonctions, probabilités), la rigueur de la prépa (algèbre
+    linéaire, analyse réelle), l'abstraction de la licence (groupes, topologie,
+    analyse complexe, Lebesgue) et la spécialisation du master (analyse
+    fonctionnelle, EDP, optimisation, théorie de l'information).
+  audience: >-
+    Toute personne qui apprend ou reprend les mathématiques : du débutant qui
+    consolide le lycée au chercheur ou à l'ingénieur visant les outils avancés,
+    notamment pour l'intelligence artificielle.
+
+en:
+  title: Mathematics
+  tagline: The complete journey, from high school calculus to graduate analysis.
+  summary: >-
+    A complete mathematics track in four stages: the high school foundation
+    (algebra, functions, probability), the rigor of preparatory classes (linear
+    algebra, real analysis), the abstraction of undergraduate studies (groups,
+    topology, complex analysis, Lebesgue) and graduate specialization
+    (functional analysis, PDEs, optimization, information theory).
+  audience: >-
+    Anyone learning or relearning mathematics: from beginners consolidating
+    high school level to researchers and engineers seeking advanced tools,
+    notably for artificial intelligence.
+
+stages:
+  - stage: lycee
+    courses:
+      - course: logic-sets-proofs
+      - course: combinatorics-counting
+      - course: vectors-analytic-geometry
+      - course: sequences-limits
+      - course: continuity-differentiation
+      - course: discrete-probability
+      - course: euclidean-affine-geometry
+  - stage: prepa
+    courses:
+      - course: integer-arithmetic
+      - course: polynomials
+      - course: linear-systems-matrices
+      - course: vector-spaces-linear-maps
+      - course: eigen-reduction
+      - course: numerical-series
+      - course: riemann-integration
+      - course: ordinary-differential-equations
+      - course: metric-spaces-topology
+      - course: random-variables-continuous
+  - stage: licence
+    courses:
+      - course: group-theory
+      - course: rings-fields
+      - course: number-theory-crypto
+      - course: euclidean-spaces-svd
+      - course: function-sequences-series
+      - course: multivariable-calculus
+      - course: complex-analysis
+      - course: measure-lebesgue
+      - course: projective-geometry
+      - course: limit-theorems
+      - course: inferential-statistics
+      - course: numerical-analysis
+      - course: graph-theory
+  - stage: master
+    courses:
+      - course: partial-differential-equations
+      - course: hilbert-banach-spaces
+      - course: curves-surfaces-manifolds
+      - course: markov-chains
+      - course: bayesian-statistics
+      - course: convex-optimization
+      - course: stochastic-optimization
+      - course: information-theory

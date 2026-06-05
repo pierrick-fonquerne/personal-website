@@ -21,7 +21,7 @@ export interface ResolvedStage {
 
 const PROD = import.meta.env.PROD;
 
-const TRACK_ORDER = ['track-lycee', 'track-prepa', 'track-licence', 'track-master', 'track-ai'];
+const TRACK_ORDER = ['track-mathematics', 'track-ai', 'track-astrophysics'];
 
 const isTrackVisible = <T extends { data: { published?: boolean } }>(entry: T): boolean =>
   !PROD || entry.data.published !== false;
@@ -32,8 +32,8 @@ const orderOf = (slug: string): number => {
 };
 
 /**
- * Returns the visible tracks, ordered from high school to AI. In production,
- * tracks marked published: false are hidden; in dev they are always shown.
+ * Returns the visible tracks, ordered by discipline. In production, tracks
+ * marked published: false are hidden; in dev they are always shown.
  */
 export async function listTracks(): Promise<Track[]> {
   const all = await getCollection('tracks');
