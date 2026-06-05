@@ -41,6 +41,28 @@ const KNOWS_ABOUT: readonly string[] = [
 ];
 
 /**
+ * Resolves a site-relative path against the canonical origin, tolerating
+ * a missing leading slash.
+ */
+function absoluteUrl(path: string): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${SITE_URL}${normalized}`;
+}
+
+/**
+ * Formats a duration in minutes as an ISO 8601 duration string,
+ * normalizing to hours and minutes.
+ */
+function isoDuration(totalMinutes: number): string {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) {
+    return `PT${minutes}M`;
+  }
+  return minutes === 0 ? `PT${hours}H` : `PT${hours}H${minutes}M`;
+}
+
+/**
  * Builds the Person node shared by every page of the site.
  * Stable @id lets search engines merge references across pages.
  */
@@ -104,7 +126,7 @@ export function buildBreadcrumb(items: readonly BreadcrumbItem[]): BreadcrumbLis
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: `${SITE_URL}${item.path}`,
+      item: absoluteUrl(item.path),
     })),
   };
 }
@@ -124,10 +146,10 @@ export interface CourseNodeInput {
 export function buildCourseNode(input: CourseNodeInput): Course {
   return {
     '@type': 'Course',
-    '@id': `${SITE_URL}${input.path}#course`,
+    '@id': `${absoluteUrl(input.path)}#course`,
     name: input.title,
     description: input.summary,
-    url: `${SITE_URL}${input.path}`,
+    url: absoluteUrl(input.path),
     inLanguage: IN_LANGUAGE[input.locale],
     author: { '@id': PERSON_ID },
     provider: {
@@ -145,7 +167,7 @@ export function buildCourseNode(input: CourseNodeInput): Course {
     hasCourseInstance: {
       '@type': 'CourseInstance',
       courseMode: 'Online',
-      courseWorkload: `PT${input.moduleCount * 30}M`,
+      courseWorkload: isoDuration(input.moduleCount * 30),
     },
   };
 }
@@ -164,12 +186,12 @@ export interface LearningResourceInput {
 export function buildLearningResourceNode(input: LearningResourceInput): LearningResource {
   return {
     '@type': 'LearningResource',
-    '@id': `${SITE_URL}${input.path}#resource`,
+    '@id': `${absoluteUrl(input.path)}#resource`,
     name: input.title,
-    url: `${SITE_URL}${input.path}`,
+    url: absoluteUrl(input.path),
     inLanguage: IN_LANGUAGE[input.locale],
     author: { '@id': PERSON_ID },
-    isPartOf: { '@id': `${SITE_URL}${input.coursePath}#course` },
+    isPartOf: { '@id': `${absoluteUrl(input.coursePath)}#course` },
   };
 }
 
@@ -187,10 +209,10 @@ export interface ArticleNodeInput {
 export function buildArticleNode(input: ArticleNodeInput): ScholarlyArticle {
   return {
     '@type': 'ScholarlyArticle',
-    '@id': `${SITE_URL}${input.path}#article`,
+    '@id': `${absoluteUrl(input.path)}#article`,
     headline: input.title,
     description: input.summary,
-    url: `${SITE_URL}${input.path}`,
+    url: absoluteUrl(input.path),
     inLanguage: IN_LANGUAGE[input.locale],
     author: { '@id': PERSON_ID },
     datePublished: input.publishedAt.toISOString().slice(0, 10),
@@ -198,11 +220,13 @@ export function buildArticleNode(input: ArticleNodeInput): ScholarlyArticle {
 }
 
 /**
- * Builds the ProfilePage node for the about pages.
+ * Builds the ProfilePage node for an about page.
  */
-export function buildProfilePageNode(locale: Locale): ProfilePage {
+export function buildProfilePageNode(locale: Locale, path: string): ProfilePage {
   return {
     '@type': 'ProfilePage',
+    '@id': absoluteUrl(path),
+    url: absoluteUrl(path),
     inLanguage: IN_LANGUAGE[locale],
     mainEntity: { '@id': PERSON_ID },
   };
