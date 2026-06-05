@@ -1,0 +1,54 @@
+slug: track-astrophysics
+theme: physics
+published: false
+
+fr:
+  title: Astrophysique
+  tagline: Du ciel observé à l'Univers compris, des constellations aux trous noirs.
+  summary: >-
+    Un parcours complet d'astrophysique, du lycée au master : astronomie de
+    position, mécanique céleste, rayonnement, physique stellaire, exoplanètes,
+    galaxies, relativité générale, cosmologie, objets compacts, astrophysique
+    des hautes énergies et simulation numérique.
+  audience: >-
+    Curieux du ciel et autodidactes. Les premiers stages sont accessibles dès
+    le lycée ; à partir du stage licence, le socle de physique généraliste
+    (mécanique, thermodynamique, électromagnétisme, quantique) est supposé
+    acquis — niveau bac+2/+3.
+
+en:
+  title: Astrophysics
+  tagline: From the observed sky to the understood Universe, from constellations to black holes.
+  summary: >-
+    A complete astrophysics track, from high school to graduate level:
+    positional astronomy, celestial mechanics, radiation, stellar physics,
+    exoplanets, galaxies, general relativity, cosmology, compact objects,
+    high-energy astrophysics and numerical simulation.
+  audience: >-
+    Sky enthusiasts and self-taught learners. The first stages are accessible
+    from high school; from the bachelor stage onward, general physics
+    (mechanics, thermodynamics, electromagnetism, quantum physics) is assumed
+    — roughly two to three years of undergraduate physics.
+
+stages:
+  - stage: lycee
+    courses:
+      - course: positional-astronomy
+      - course: solar-system-tour
+  - stage: prepa
+    courses:
+      - course: celestial-mechanics
+      - course: observational-astronomy
+  - stage: licence
+    courses:
+      - course: radiative-transfer
+      - course: stellar-physics
+      - course: planetology-exoplanets
+      - course: galaxies-interstellar-medium
+  - stage: master
+    courses:
+      - course: general-relativity
+      - course: compact-objects
+      - course: cosmology
+      - course: high-energy-multimessenger
+      - course: computational-astrophysics
