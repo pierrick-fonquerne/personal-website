@@ -108,7 +108,10 @@ export function buildGraph(locale: Locale, extra: readonly Thing[] = []): Graph 
  * escaped so user-provided text can never close the script element.
  */
 export function serializeGraph(graph: Graph): string {
-  return JSON.stringify(graph).replace(/</g, '\\u003c');
+  return JSON.stringify(graph)
+    .replace(/&/g, '\\u0026')
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e');
 }
 
 export interface BreadcrumbItem {

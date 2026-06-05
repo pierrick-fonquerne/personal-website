@@ -5,7 +5,7 @@ import { buildGraph, serializeGraph } from '../../lib/seo';
 
 interface Props {
   locale: Locale;
-  extra?: Thing[];
+  extra?: readonly Thing[];
 }
 
 const { locale, extra = [] } = Astro.props;
