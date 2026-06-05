@@ -3,6 +3,7 @@ import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../lib/i18n';
+import { buildArticleNode, buildBreadcrumb } from '../../lib/seo';
 import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
 import ChapterAudioPlayer from '../../components/learning/ChapterAudioPlayer';
 
@@ -22,6 +23,22 @@ const { entry } = Astro.props as Props;
 const locale = 'fr' as const;
 const t = useTranslations(locale);
 const content = entry.data.fr;
+
+const articlePath = localizedPath(`/research/${entry.data.slug}`, locale);
+const schema = [
+  buildArticleNode({
+    locale,
+    path: articlePath,
+    title: content.title,
+    summary: content.summary,
+    publishedAt: entry.data.publishedAt,
+  }),
+  buildBreadcrumb([
+    { name: t.nav.home, path: localizedPath('/', locale) },
+    { name: t.nav.research, path: localizedPath('/research', locale) },
+    { name: content.title, path: articlePath },
+  ]),
+];
 
 const audioLabels = {
   listen: t.toolbar.listen,
@@ -66,6 +83,7 @@ const updatedAtLabel = entry.data.updatedAt ? dateFormatter.format(entry.data.up
   description={content.tagline}
   current="/research"
   locale={locale}
+  schema={schema}
 >
   <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
     <a
