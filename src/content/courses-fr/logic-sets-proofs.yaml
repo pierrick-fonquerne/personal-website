@@ -13,4 +13,4 @@ level: intro
 estimatedMinutes: 150
 modules:
   - 01-propositions-connecteurs
-published: false
+published: true
