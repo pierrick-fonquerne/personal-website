@@ -13,6 +13,7 @@ import {
   neighbors,
 } from '../../../lib/courses';
 import { localizedPath, useTranslations } from '../../../lib/i18n';
+import { buildBreadcrumb, buildLearningResourceNode } from '../../../lib/seo';
 
 export async function getStaticPaths() {
   const courses = await listCourses('fr');
@@ -49,6 +50,23 @@ const sidebarModules = modules.map((m) => ({
   title: m.data.title,
   order: m.data.order,
 }));
+
+const coursePath = localizedPath(`/interactive-courses/${courseSlug}`, locale);
+const modulePath = localizedPath(`/interactive-courses/${courseSlug}/${moduleSlug}`, locale);
+const schema = [
+  buildLearningResourceNode({
+    locale,
+    path: modulePath,
+    title: current.data.title,
+    coursePath,
+  }),
+  buildBreadcrumb([
+    { name: t.nav.home, path: localizedPath('/', locale) },
+    { name: t.nav.courses, path: localizedPath('/interactive-courses', locale) },
+    { name: course.data.title, path: coursePath },
+    { name: current.data.title, path: modulePath },
+  ]),
+];
 ---
 
 <BaseLayout
@@ -56,6 +74,7 @@ const sidebarModules = modules.map((m) => ({
   description={current.data.subtitle ?? course.data.summary}
   current="/interactive-courses"
   locale={locale}
+  schema={schema}
 >
   <div class="container-page">
     <div class="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
