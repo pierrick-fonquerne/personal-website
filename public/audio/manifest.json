@@ -81,11 +81,11 @@
   },
   "fr/logic-sets-proofs/01-propositions-connecteurs": {
     "url": "/audio/fr/logic-sets-proofs/01-propositions-connecteurs.mp3",
-    "chars": 8523
+    "chars": 8571
   },
   "en/logic-sets-proofs/01-propositions-connectives": {
     "url": "/audio/en/logic-sets-proofs/01-propositions-connectives.mp3",
-    "chars": 7771
+    "chars": 7819
   },
   "fr/research/apprentissage-local": {
     "url": "/audio/fr/research/apprentissage-local.mp3",
@@ -94,5 +94,45 @@
   "en/research/apprentissage-local": {
     "url": "/audio/en/research/apprentissage-local.mp3",
     "chars": 5988
+  },
+  "fr/service-architecture-models/01-monolithe-integre-services-autonomes": {
+    "url": "/audio/fr/service-architecture-models/01-monolithe-integre-services-autonomes.mp3",
+    "chars": 8394
+  },
+  "fr/service-architecture-models/02-le-modele-federe": {
+    "url": "/audio/fr/service-architecture-models/02-le-modele-federe.mp3",
+    "chars": 9779
+  },
+  "fr/service-architecture-models/03-frontieres-et-contrats-ddd": {
+    "url": "/audio/fr/service-architecture-models/03-frontieres-et-contrats-ddd.mp3",
+    "chars": 8960
+  },
+  "fr/service-architecture-models/04-choisir-et-migrer": {
+    "url": "/audio/fr/service-architecture-models/04-choisir-et-migrer.mp3",
+    "chars": 7953
+  },
+  "en/service-architecture-models/01-integrated-monolith-autonomous-services": {
+    "url": "/audio/en/service-architecture-models/01-integrated-monolith-autonomous-services.mp3",
+    "chars": 7601
+  },
+  "en/service-architecture-models/02-the-federated-model": {
+    "url": "/audio/en/service-architecture-models/02-the-federated-model.mp3",
+    "chars": 9028
+  },
+  "en/service-architecture-models/03-boundaries-and-contracts-ddd": {
+    "url": "/audio/en/service-architecture-models/03-boundaries-and-contracts-ddd.mp3",
+    "chars": 8432
+  },
+  "en/service-architecture-models/04-choosing-and-migrating": {
+    "url": "/audio/en/service-architecture-models/04-choosing-and-migrating.mp3",
+    "chars": 7493
+  },
+  "fr/research/neurone-a-etat": {
+    "url": "/audio/fr/research/neurone-a-etat.mp3",
+    "chars": 6804
+  },
+  "en/research/neurone-a-etat": {
+    "url": "/audio/en/research/neurone-a-etat.mp3",
+    "chars": 6397
   }
 }
