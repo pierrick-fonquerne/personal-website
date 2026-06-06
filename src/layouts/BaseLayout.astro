@@ -5,7 +5,10 @@ import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ConsentBanner from '../components/layout/ConsentBanner.astro';
+import LanguageSuggestBanner from '../components/layout/LanguageSuggestBanner.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
+import StructuredData from '../components/seo/StructuredData.astro';
+import type { Thing } from 'schema-dts';
 import { Font } from 'astro:assets';
 import {
   getLocaleFromUrl,
@@ -21,6 +24,7 @@ interface Props {
   ogImage?: string;
   current?: string;
   locale?: Locale;
+  schema?: readonly Thing[];
 }
 
 const {
@@ -29,6 +33,7 @@ const {
   ogImage = '/og-default.png',
   current,
   locale = getLocaleFromUrl(Astro.url),
+  schema = [],
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
@@ -40,10 +45,7 @@ const resolvedDescription = description ?? t.meta.description;
 <html lang={locale} data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="generator" content={Astro.generator} />
 
     <Font cssVariable="--font-geist" preload />
@@ -53,6 +55,7 @@ const resolvedDescription = description ?? t.meta.description;
     <title>{title}</title>
     <meta name="description" content={resolvedDescription} />
     <link rel="canonical" href={canonicalURL} />
+    <StructuredData locale={locale} extra={schema} />
 
     {
       LOCALES.map((l) => (
@@ -81,10 +84,21 @@ const resolvedDescription = description ?? t.meta.description;
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:image" content={new URL(ogImage, Astro.site).toString()} />
     <meta property="og:locale" content={locale === 'fr' ? 'fr_FR' : 'en_US'} />
+    <meta property="og:site_name" content="Pierrick Fonquerne" />
+    {
+      ogImage === '/og-default.png' && (
+        <>
+          <meta property="og:image:width" content="1200" />
+          <meta property="og:image:height" content="630" />
+        </>
+      )
+    }
+    <meta property="og:image:alt" content={title} />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={resolvedDescription} />
+    <meta name="twitter:image" content={new URL(ogImage, Astro.site).toString()} />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="any" />
@@ -93,32 +107,6 @@ const resolvedDescription = description ?? t.meta.description;
     <meta name="theme-color" content="#fafaf7" media="(prefers-color-scheme: light)" />
 
     <ClientRouter />
-
-    {
-      /* First-visit language detection: redirect non-FR browsers from / to /en/.
-        After redirect or first FR visit, the choice is persisted in localStorage
-        so this block is a no-op on later loads (and the manual switcher always wins). */
-    }
-    <script is:inline>
-      (() => {
-        try {
-          if (localStorage.getItem('lang')) return;
-          const onEn = location.pathname.startsWith('/en');
-          const browserFr = (navigator.language || 'fr').toLowerCase().startsWith('fr');
-          if (browserFr) {
-            localStorage.setItem('lang', 'fr');
-            return;
-          }
-          localStorage.setItem('lang', 'en');
-          if (!onEn) {
-            const sub = location.pathname === '/' ? '/' : location.pathname;
-            location.replace('/en' + (sub === '/' ? '/' : sub));
-          }
-        } catch {
-          /* navigator or localStorage unavailable, do nothing */
-        }
-      })();
-    </script>
 
     {
       /* Apply the stored theme before paint and on every view-transition swap.
@@ -159,5 +147,6 @@ const resolvedDescription = description ?? t.meta.description;
       umamiSiteId={import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''}
       umamiUrl={import.meta.env.PUBLIC_UMAMI_URL ?? ''}
     />
+    <LanguageSuggestBanner locale={locale} />
   </body>
 </html>

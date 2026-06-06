@@ -5,6 +5,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import StagePill from '../../../components/tracks/StagePill.astro';
 import { localizedPath, useTranslations } from '../../../lib/i18n';
 import { resolveStages, courseCountOf } from '../../../lib/tracks';
+import { buildBreadcrumb } from '../../../lib/seo';
 
 export const getStaticPaths = (async () => {
   const tracks = (await getCollection('tracks')).filter(
@@ -21,6 +22,14 @@ const t = useTranslations(locale);
 const content = track.data.fr;
 const stages = await resolveStages(track, locale);
 const courseCount = courseCountOf(track);
+const trackPath = localizedPath(`/tracks/${track.data.slug}`, locale);
+const schema = [
+  buildBreadcrumb([
+    { name: t.nav.home, path: localizedPath('/', locale) },
+    { name: t.tracks.indexTitle, path: localizedPath('/tracks', locale) },
+    { name: content.title, path: trackPath },
+  ]),
+];
 ---
 
 <BaseLayout
@@ -28,6 +37,7 @@ const courseCount = courseCountOf(track);
   description={content.tagline}
   current="/tracks"
   locale={locale}
+  schema={schema}
 >
   <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
     <a

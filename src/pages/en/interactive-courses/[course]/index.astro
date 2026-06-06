@@ -3,6 +3,7 @@ import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import Eyebrow from '../../../../components/ui/Eyebrow.astro';
 import { getCourse, listCourses, listModulesOf, moduleSlugOf } from '../../../../lib/courses';
 import { localizedPath, useTranslations } from '../../../../lib/i18n';
+import { buildBreadcrumb, buildCourseNode } from '../../../../lib/seo';
 
 export async function getStaticPaths() {
   const courses = await listCourses('en');
@@ -20,6 +21,21 @@ if (!course) {
   return Astro.redirect(localizedPath('/interactive-courses', locale));
 }
 const modules = await listModulesOf(locale, courseSlug!);
+const coursePath = localizedPath(`/interactive-courses/${courseSlug}`, locale);
+const schema = [
+  buildCourseNode({
+    locale,
+    path: coursePath,
+    title: course.data.title,
+    summary: course.data.summary,
+    moduleCount: modules.length,
+  }),
+  buildBreadcrumb([
+    { name: t.nav.home, path: localizedPath('/', locale) },
+    { name: t.nav.courses, path: localizedPath('/interactive-courses', locale) },
+    { name: course.data.title, path: coursePath },
+  ]),
+];
 ---
 
 <BaseLayout
@@ -27,6 +43,7 @@ const modules = await listModulesOf(locale, courseSlug!);
   description={course.data.summary}
   current="/interactive-courses"
   locale={locale}
+  schema={schema}
 >
   <section class="container-page py-16">
     <Eyebrow text={t.courses.eyebrow} />

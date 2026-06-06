@@ -2,10 +2,12 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Eyebrow from '../../components/ui/Eyebrow.astro';
 import About from '../../components/about/About.astro';
-import { useTranslations } from '../../lib/i18n';
+import { localizedPath, useTranslations } from '../../lib/i18n';
+import { buildProfilePageNode } from '../../lib/seo';
 
 const locale = 'fr' as const;
 const t = useTranslations(locale);
+const schema = [buildProfilePageNode(locale, localizedPath('/about', locale))];
 ---
 
 <BaseLayout
@@ -13,6 +15,7 @@ const t = useTranslations(locale);
   description="Parcours, compétences et engagements de Pierrick Fonquerne, développeur full-stack basé à Limoux."
   current="/about"
   locale={locale}
+  schema={schema}
 >
   <section class="container-page py-16">
     <Eyebrow text={t.about.eyebrow} />

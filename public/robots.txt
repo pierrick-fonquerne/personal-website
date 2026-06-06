@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pierrick.fonquerne.com/sitemap-index.xml

@@ -14,6 +14,11 @@ export interface Translations {
   meta: {
     description: string;
   };
+  langBanner: {
+    message: string;
+    action: string;
+    dismiss: string;
+  };
   nav: {
     home: string;
     projects: string;
@@ -277,6 +282,11 @@ export interface Translations {
 const en: Translations = {
   meta: {
     description: 'Pierrick Fonquerne, passionate developer. Projects, writing and research.',
+  },
+  langBanner: {
+    message: 'This page is also available in English.',
+    action: 'View in English',
+    dismiss: 'Dismiss',
   },
   nav: {
     home: 'Home',

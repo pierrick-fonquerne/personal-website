@@ -51,8 +51,8 @@ const localeHrefs = await Promise.all(
 </div>
 
 <script>
-  // Persist the user's manual language choice so the first-visit auto-detect
-  // in BaseLayout becomes a no-op on future loads.
+  // Persist the user's manual language choice so the language suggestion
+  // banner stays hidden on future loads.
   document.addEventListener('click', (event) => {
     const target = event.target;
     if (!(target instanceof Element)) return;

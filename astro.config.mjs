@@ -54,7 +54,15 @@ export default defineConfig({
       remarkPlugins: [remarkGfm, remarkMath],
       rehypePlugins: [rehypeKatex],
     }),
-    sitemap(),
+    sitemap({
+      i18n: {
+        defaultLocale: 'fr',
+        locales: {
+          fr: 'fr-FR',
+          en: 'en-US',
+        },
+      },
+    }),
   ],
   vite: {
     plugins: [tailwindcss()],
