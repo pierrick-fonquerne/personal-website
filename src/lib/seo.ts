@@ -220,9 +220,7 @@ export function buildArticleNode(input: ArticleNodeInput): ScholarlyArticle {
     inLanguage: IN_LANGUAGE[input.locale],
     author: { '@id': PERSON_ID },
     datePublished: input.publishedAt.toISOString().slice(0, 10),
-    ...(input.updatedAt
-      ? { dateModified: input.updatedAt.toISOString().slice(0, 10) }
-      : {}),
+    dateModified: (input.updatedAt ?? input.publishedAt).toISOString().slice(0, 10),
   };
 }
 
