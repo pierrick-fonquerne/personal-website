@@ -32,6 +32,7 @@ const schema = [
     title: content.title,
     summary: content.summary,
     publishedAt: entry.data.publishedAt,
+    updatedAt: entry.data.updatedAt,
   }),
   buildBreadcrumb([
     { name: t.nav.home, path: localizedPath('/', locale) },
