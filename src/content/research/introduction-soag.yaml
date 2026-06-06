@@ -26,7 +26,7 @@ papers:
   - title: 'A Path Towards Autonomous Machine Intelligence'
     authors: 'Yann LeCun (2022)'
     href: 'https://openreview.net/forum?id=BZ5a1r-kVsf'
-published: true
+published: false
 fr:
   title: "SOAG : l'intelligence comme auto-organisation, pas comme optimisation"
   tagline: "Chercher le principe de portance de l'intelligence : des composants riches qui s'auto-organisent localement, plutôt que des composants pauvres optimisés globalement."

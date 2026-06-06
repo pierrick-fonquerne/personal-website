@@ -22,7 +22,7 @@ papers:
   - title: 'A Path Towards Autonomous Machine Intelligence'
     authors: 'Yann LeCun (2022)'
     href: 'https://openreview.net/forum?id=BZ5a1r-kVsf'
-published: true
+published: false
 fr:
   title: "AEIF : une intelligence qui naît de son vécu"
   tagline: "Construire un esprit par accumulation d'événements vécus, immuables et rejouables, au lieu de l'entraîner une fois pour toutes sur des corpus."
