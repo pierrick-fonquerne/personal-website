@@ -1,0 +1,129 @@
+---
+course: e2e-encrypted-vault
+order: 4
+title: "Le modèle de menace à l'épreuve"
+subtitle: "On devient le serveur malveillant et on attaque le système des trois premiers chapitres : ce qui tient, ce qui est assumé, et les disciplines d'ingénierie qui font tenir le tout dans la durée."
+estimatedMinutes: 20
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Un design cryptographique ne vaut que ce que vaut son **modèle de menace** : la liste explicite de ce contre quoi il protège, de ce qu'il assume, et de ce qu'il ne couvre pas. Les trois premiers chapitres ont construit un coffre-fort ; celui-ci l'attaque. Tu vas endosser le rôle le plus puissant du modèle : **le serveur malveillant**, qui détient tous les blobs, sert ce qu'il veut, et observe tout ce qui transite.
+
+À la fin de ce chapitre, tu sauras dérouler une revue d'attaques systématique sur un système de stockage chiffré, distinguer les menaces couvertes des menaces assumées, et nommer les disciplines d'ingénierie — typage, hygiène mémoire, vecteurs figés, tests par propriétés, fuzzing — sans lesquelles le meilleur design reste théorique.
+
+## L'exercice : tu es le serveur
+
+Le serveur détient : tous les morceaux chiffrés, tous les manifestes, tous les objets d'arbre, les enveloppes de clés, les paramètres de dérivation, le pointeur de racine. Il peut lire, retenir, substituer, réordonner, rejouer. Déroulons les attaques une à une.
+
+**Lire le contenu d'un fichier.** Échec : chaque morceau est chiffré sous une clé de fichier aléatoire, enveloppée sous la clé de compte, elle-même enveloppée sous une clé maîtresse qui n'a jamais transité. Rien de ce que le serveur détient ne remonte la chaîne.
+
+**Lire les noms, l'arborescence.** Échec : ces métadonnées vivent dans les manifestes et objets d'arbre, chiffrés. Le serveur ne voit que des identifiants opaques.
+
+**Réordonner les morceaux d'un fichier.** L'attaque mérite le détail. Le serveur ne peut pas réécrire le manifeste (blob authentifié) ; il peut en revanche servir le morceau B quand le client demande le morceau A. Mais le client demande chaque morceau _par son adresse_, dans l'ordre dicté par le manifeste authentifié — et vérifie que l'empreinte du blob reçu correspond à l'adresse demandée. Le mauvais morceau a la mauvaise empreinte : détection immédiate, avant même le déchiffrement. **L'ordre est protégé parce qu'il vit dans un objet authentifié, et la livraison est vérifiée par l'adressage.**
+
+**Substituer un morceau d'un autre fichier** (même utilisateur, contenu identique). L'empreinte pourrait-elle coïncider ? Non : l'autre fichier est chiffré sous une _autre_ clé de fichier aléatoire — même contenu en clair, textes chiffrés sans rapport, adresses sans rapport. Et si l'adresse ne correspond pas, le contrôle d'intégrité échoue ; si par construction on servait le blob exact attendu, il appartiendrait au même fichier.
+
+**Permuter des blobs entre rôles.** Servir une enveloppe à la place d'un manifeste, une enveloppe de récupération à la place d'une enveloppe maîtresse : échec, séparation de domaines (chapitre 2) — le tag ne correspond plus dès que le contexte attendu diffère.
+
+**Affaiblir la dérivation au login.** Annoncer des paramètres Argon2id dérisoires pour rendre la phrase de passe brute-forçable : échec, plancher côté client (chapitre 1).
+
+**Rejouer un ancien état.** Servir au client une _ancienne_ racine — parfaitement valide, correctement chiffrée, simplement périmée — pour faire « disparaître » des fichiers récents. Ici, honnêteté : **le design tel que construit ne le détecte pas**. Le blob est authentique ; c'est sa _fraîcheur_ qui ne l'est pas. La couverture exige un mécanisme supplémentaire — compteur de version signé côté client, chaînage des racines — qui relève d'une itération suivante. Un bon modèle de menace l'écrit noir sur blanc au lieu de l'oublier.
+
+<Callout kind="warn" title="Le tableau honnête">
+**Couvert** : lecture du contenu et des métadonnées, altération, substitution, réordonnancement, confusion de rôles, affaiblissement de la dérivation.
+
+**Assumé et documenté** : tailles approximatives des blobs, horodatages d'activité, graphe manifeste→morceaux (nécessaire au ramasse-miettes côté serveur).
+
+**Non couvert (explicitement)** : rejeu d'un état ancien par un serveur actif (fraîcheur), déni de service par le serveur (il peut toujours refuser de servir), compromission de l'appareil client — qui détient les clés, par définition.
+
+</Callout>
+
+## Du design au code : les disciplines qui font tenir
+
+Un modèle de menace propre ne survit pas à une implémentation négligente. Cinq disciplines transforment le design en système digne de confiance — chacune attrape une classe d'erreurs que les autres ne voient pas.
+
+**Le typage comme garde-fou.** Chaque clé reçoit son propre type (clé maîtresse, clé de compte, clé de fichier…) : passer l'une à la place de l'autre devient une _erreur de compilation_, pas un bug de production. Les types de clés n'implémentent ni affichage de débogage ni sérialisation : logger une clé par accident est impossible par construction. Les accesseurs aux octets bruts sont confinés à l'intérieur du module cryptographique — l'extérieur manipule des clés comme des objets opaques.
+
+**L'hygiène mémoire.** Une clé qui sort de portée doit être effacée de la RAM (_zeroize_), pas seulement désallouée — un vidage mémoire ou un fichier d'échange ne doit rien révéler. Le piège classique : les **copies intermédiaires**. Décoder un code de récupération crée des tampons temporaires contenant la clé ; un tampon qui se réalloue en grandissant abandonne son ancienne copie sur le tas, non effacée. La discipline consiste à tracer _chaque_ copie du matériau sensible, y compris celles que le langage crée discrètement.
+
+**Les vecteurs de non-régression figés.** Le format v1 est un engagement : un blob chiffré aujourd'hui doit se déchiffrer dans dix ans. La garantie ne vient pas de la bonne volonté mais d'un test : on génère une fois des blobs de référence, on fige leurs octets en constantes dans la suite de tests, et toute rupture accidentelle de format — changement de bibliothèque, de défaut de sérialisation — casse la CI immédiatement. C'est le test le plus important d'un format de stockage.
+
+**Les tests par propriétés.** Plutôt que des exemples choisis, des invariants vérifiés sur des centaines d'entrées générées : _tout_ aller-retour chiffrement/déchiffrement restitue l'entrée ; _toute_ inversion d'un bit du blob fait échouer l'ouverture. Avec une subtilité d'audit : une propriété mal écrite peut être plus faible qu'elle n'en a l'air. Si le bit inversé est tiré dans une plage trop étroite, le test « toute altération est détectée » ne touche en réalité que le début du blob — et le tag d'authentification, en fin de blob, n'est jamais exercé. Relire ses propriétés est aussi important que les écrire.
+
+**Le fuzzing des parseurs.** Tout ce qui _parse_ des octets venus de l'extérieur — déchiffrement de blobs, ouverture de manifestes — est exposé à des entrées adverses par construction. Le fuzzing bombarde ces chemins d'entrées aléatoires et mutées en cherchant le plantage. Sur un coffre-fort, les cibles prioritaires sont exactement les frontières de confiance : ce que le serveur peut fabriquer.
+
+<Callout kind="note" title="La sécurité est un processus de revue">
+  Aucun des durcissements de ce cours n'est sorti parfait du premier jet : l'en-tête non
+  authentifié, l'affaiblissement des paramètres de dérivation, les copies mémoire non effacées sont
+  des trouvailles *de revue* — quelqu'un a relu le design en se demandant « et si j'étais le serveur
+  ? ». La leçon dépasse la cryptographie : un design de sécurité doit être attaqué par ses auteurs,
+  méthodiquement, avant de l'être par d'autres. Le modèle de menace n'est pas un document de fin de
+  projet ; c'est l'outil de travail de chaque revue.
+</Callout>
+
+## Vérifie ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Comment le réordonnancement des morceaux d'un fichier par le serveur est-il détecté ?",
+      options: [
+        'Le serveur signe chaque morceau avant de le servir',
+        "L'ordre vit dans le manifeste authentifié, et chaque morceau reçu est vérifié contre l'adresse demandée : un mauvais morceau a une mauvaise empreinte",
+        'Le client télécharge toujours les morceaux dans un ordre aléatoire',
+        'Chaque morceau contient le numéro du morceau suivant',
+      ],
+      answer: 1,
+      explain:
+        "Deux mécanismes se combinent : la liste ordonnée des adresses est à l'intérieur d'un blob authentifié que le serveur ne peut pas réécrire, et l'adressage par contenu permet de vérifier chaque blob reçu avant déchiffrement. Le serveur peut servir ce qu'il veut — il ne peut pas le faire passer pour autre chose.",
+    },
+    {
+      q: "Quelle attaque du serveur n'est PAS couverte par le design de ce cours, et est documentée comme telle ?",
+      options: [
+        'La lecture des noms de fichiers',
+        "La substitution d'un morceau d'un autre fichier",
+        "Le rejeu d'un ancien état (ancienne racine) parfaitement valide mais périmé",
+        "L'affaiblissement des paramètres de dérivation",
+      ],
+      answer: 2,
+      explain:
+        "Une ancienne racine est authentique : seul manque un mécanisme de fraîcheur (compteur signé, chaînage) pour détecter qu'elle est périmée. Le modèle de menace l'inscrit explicitement comme non couvert — c'est la marque d'un modèle honnête : dire ce qu'on ne fait pas, plutôt que le taire.",
+    },
+    {
+      q: 'À quoi servent les vecteurs de non-régression figés ?',
+      options: [
+        'À mesurer les performances du chiffrement au fil des versions',
+        "À garantir qu'un blob chiffré au format v1 restera déchiffrable pour toujours : toute rupture accidentelle du format casse la CI",
+        'À générer des clés de test reproductibles',
+        'À vérifier que les nonces ne se répètent jamais',
+      ],
+      answer: 1,
+      explain:
+        'Un format de stockage est un engagement de compatibilité. Des blobs de référence générés une fois, figés en constantes et re-déchiffrés à chaque exécution de la suite de tests transforment cet engagement en garde-fou mécanique : un changement de bibliothèque ou de sérialisation qui casserait le format est détecté immédiatement.',
+    },
+    {
+      q: "Pourquoi relire attentivement une propriété de test du type « toute inversion d'un bit fait échouer le déchiffrement » ?",
+      options: [
+        'Parce que les tests par propriétés sont trop lents pour la CI',
+        'Parce que le générateur aléatoire peut produire deux fois la même entrée',
+        "Parce qu'une plage de tirage mal bornée peut restreindre les bits testés à une petite zone du blob, laissant par exemple le tag d'authentification jamais exercé",
+        "Parce que l'inversion d'un bit peut produire un blob valide",
+      ],
+      answer: 2,
+      explain:
+        "Une propriété vaut ce que vaut son générateur : si l'indice du bit est tiré dans une plage plus étroite que le blob, le test passe en n'exerçant qu'une fraction du format — il est plus faible que son intitulé. L'audit des générateurs fait partie de l'audit des tests.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir
+
+- Un **modèle de menace** se travaille en trois colonnes : couvert, assumé, non couvert — et l'honnêteté de la troisième colonne fait la crédibilité des deux premières.
+- L'exercice du **serveur malveillant** valide le design : lecture, altération, substitution, réordonnancement, confusion de rôles et affaiblissement de la dérivation échouent ; le **rejeu d'un ancien état** reste ouvert et documenté (fraîcheur).
+- Le **typage** transforme les mauvais usages de clés en erreurs de compilation ; l'**hygiène mémoire** traque chaque copie du matériau sensible, y compris les tampons intermédiaires.
+- Les **vecteurs figés** verrouillent la compatibilité du format ; les **tests par propriétés** vérifient des invariants — à condition d'auditer leurs générateurs ; le **fuzzing** martèle les parseurs exposés aux octets adverses.
+- La sécurité est un **processus de revue adversariale** : les meilleures trouvailles de ce cours viennent de relectures qui posaient une seule question — « et si j'étais le serveur ? ».

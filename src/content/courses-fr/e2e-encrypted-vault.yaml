@@ -1,0 +1,23 @@
+slug: e2e-encrypted-vault
+title: 'Concevoir un coffre-fort chiffré de bout en bout : du zero-knowledge au format de stockage'
+summary: "Comment stocker ses fichiers sur un serveur sans que ce serveur puisse en lire un seul octet ? Ce cours de cryptographie appliquée déroule la conception complète d'un coffre-fort de fichiers zero-knowledge : hiérarchie de clés par enveloppes, dérivation Argon2id résistante aux attaques par affaiblissement, format de blob authentifié (AEAD, séparation de domaines, en-tête couvert par le tag), découpage content-defined, adressage par contenu et arborescence de Merkle chiffrée. Il se termine par un exercice de modèle de menace : on attaque le système qu'on vient de construire, et on regarde ce qui tient. Aucun framework, uniquement des primitives standards et des décisions d'architecture justifiées."
+tags:
+  - cryptographie
+  - e2e
+  - zero-knowledge
+  - aead
+  - kdf
+  - merkle
+  - stockage
+  - threat-model
+theme: security
+subtheme: applied-crypto
+level: intermediate
+estimatedMinutes: 90
+modules:
+  - 01-le-modele-zero-knowledge-et-la-hierarchie-de-cles
+  - 02-un-format-de-blob-authentifie
+  - 03-chunking-content-addressing-et-arbre-de-merkle
+  - 04-le-modele-de-menace-a-lepreuve
+published: true
+publishedAt: 2026-06-06

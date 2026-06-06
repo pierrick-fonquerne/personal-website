@@ -1,0 +1,128 @@
+---
+course: e2e-encrypted-vault
+order: 4
+title: 'Stress-testing the threat model'
+subtitle: 'We become the malicious server and attack the system from the first three chapters: what holds, what is accepted, and the engineering disciplines that make it all hold over time.'
+estimatedMinutes: 20
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+A cryptographic design is only worth its **threat model**: the explicit list of what it protects against, what it accepts, and what it does not cover. The first three chapters built a vault; this one attacks it. You will take on the most powerful role in the model: **the malicious server**, which holds every blob, serves whatever it wants, and observes everything in transit.
+
+By the end of this chapter, you will be able to run a systematic attack review on an encrypted storage system, distinguish covered threats from accepted ones, and name the engineering disciplines — typing, memory hygiene, frozen vectors, property-based testing, fuzzing — without which the best design remains theoretical.
+
+## The exercise: you are the server
+
+The server holds: every encrypted chunk, every manifest, every tree object, the key envelopes, the derivation parameters, the root pointer. It can read, withhold, substitute, reorder, replay. Let's run the attacks one by one.
+
+**Read a file's content.** Fails: each chunk is encrypted under a random file key, enveloped under the account key, itself enveloped under a master key that never transited. Nothing the server holds climbs back up the chain.
+
+**Read names, directory structure.** Fails: that metadata lives inside manifests and tree objects, encrypted. The server only sees opaque identifiers.
+
+**Reorder a file's chunks.** This attack deserves detail. The server cannot rewrite the manifest (an authenticated blob); it can, however, serve chunk B when the client asks for chunk A. But the client requests each chunk _by its address_, in the order dictated by the authenticated manifest — and verifies that the digest of the received blob matches the requested address. The wrong chunk has the wrong digest: immediate detection, before decryption is even attempted. **The order is protected because it lives in an authenticated object, and delivery is verified by addressing.**
+
+**Substitute a chunk from another file** (same user, identical content). Could the digests coincide? No: the other file is encrypted under a _different_ random file key — identical plaintext, unrelated ciphertexts, unrelated addresses. If the address does not match, the integrity check fails; if by construction the exact expected blob were served, it would belong to the same file.
+
+**Swap blobs across roles.** Serving an envelope in place of a manifest, a recovery envelope in place of a master envelope: fails — domain separation (chapter 2), the tag no longer matches as soon as the expected context differs.
+
+**Weaken the derivation at login.** Announcing derisory Argon2id parameters to make the passphrase brute-forceable: fails — client-side floor (chapter 1).
+
+**Replay an old state.** Serving the client an _old_ root — perfectly valid, correctly encrypted, simply stale — to make recent files "disappear". Here, honesty: **the design as built does not detect this**. The blob is authentic; it is its _freshness_ that is not. Coverage requires an additional mechanism — a client-signed version counter, root chaining — which belongs to a next iteration. A good threat model writes this down in black and white instead of forgetting it.
+
+<Callout kind="warn" title="The honest table">
+**Covered**: reading content and metadata, tampering, substitution, reordering, role confusion, derivation downgrade.
+
+**Accepted and documented**: approximate blob sizes, activity timestamps, the manifest→chunks reference graph (needed for server-side garbage collection).
+
+**Not covered (explicitly)**: replay of an old state by an active server (freshness), denial of service by the server (it can always refuse to serve), compromise of the client device — which holds the keys, by definition.
+
+</Callout>
+
+## From design to code: the disciplines that make it hold
+
+A clean threat model does not survive a careless implementation. Five disciplines turn the design into a trustworthy system — each catches a class of errors the others cannot see.
+
+**Typing as a guardrail.** Every key gets its own type (master key, account key, file key…): passing one where another is expected becomes a _compile-time error_, not a production bug. Key types implement neither debug printing nor serialization: accidentally logging a key is impossible by construction. Raw-byte accessors are confined inside the cryptographic module — the outside world handles keys as opaque objects.
+
+**Memory hygiene.** A key going out of scope must be wiped from RAM (_zeroized_), not merely deallocated — a memory dump or swap file must reveal nothing. The classic trap: **intermediate copies**. Decoding a recovery code creates temporary buffers holding the key; a buffer that reallocates while growing abandons its old, unwiped copy on the heap. The discipline is to trace _every_ copy of sensitive material, including the ones the language creates quietly.
+
+**Frozen regression vectors.** Format v1 is a commitment: a blob encrypted today must decrypt in ten years. The guarantee comes not from goodwill but from a test: reference blobs are generated once, their bytes frozen as constants in the test suite, and any accidental format break — a library change, a serialization default — fails CI immediately. It is the single most important test of a storage format.
+
+**Property-based testing.** Rather than hand-picked examples, invariants verified over hundreds of generated inputs: _every_ encrypt/decrypt round trip restores the input; _every_ single-bit flip in a blob makes opening fail. With one audit subtlety: a badly written property can be weaker than it looks. If the flipped bit is drawn from too narrow a range, the test "every alteration is detected" only ever touches the start of the blob — and the authentication tag, at the end, is never exercised. Re-reading your properties matters as much as writing them.
+
+**Fuzzing the parsers.** Everything that _parses_ bytes coming from outside — blob decryption, manifest opening — is exposed to adversarial input by construction. Fuzzing hammers those paths with random and mutated inputs, hunting for crashes. On a vault, the priority targets are exactly the trust boundaries: whatever the server can fabricate.
+
+<Callout kind="note" title="Security is a review process">
+  None of the hardenings in this course came out perfect on the first draft: the unauthenticated
+  header, the derivation-parameter downgrade, the unwiped memory copies are *review* findings —
+  someone re-read the design asking "what if I were the server?". The lesson goes beyond
+  cryptography: a security design must be attacked by its authors, methodically, before others do.
+  The threat model is not an end-of-project document; it is the working tool of every review.
+</Callout>
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "How is the server's reordering of a file's chunks detected?",
+      options: [
+        'The server signs each chunk before serving it',
+        'The order lives in the authenticated manifest, and each received chunk is verified against the requested address: a wrong chunk has a wrong digest',
+        'The client always downloads chunks in random order',
+        'Each chunk contains the number of the next chunk',
+      ],
+      answer: 1,
+      explain:
+        'Two mechanisms combine: the ordered address list sits inside an authenticated blob the server cannot rewrite, and content addressing lets the client verify every received blob before decryption. The server can serve whatever it wants — it cannot pass it off as something else.',
+    },
+    {
+      q: 'Which server attack is NOT covered by the design in this course, and is documented as such?',
+      options: [
+        'Reading file names',
+        'Substituting a chunk from another file',
+        'Replaying an old state (an old root) that is perfectly valid but stale',
+        'Weakening the derivation parameters',
+      ],
+      answer: 2,
+      explain:
+        'An old root is authentic: what is missing is a freshness mechanism (signed counter, chaining) to detect that it is stale. The threat model explicitly records this as not covered — the mark of an honest model: stating what you do not do rather than hiding it.',
+    },
+    {
+      q: 'What are frozen regression vectors for?',
+      options: [
+        'Measuring encryption performance across versions',
+        'Guaranteeing that a v1-format blob stays decryptable forever: any accidental format break fails CI',
+        'Generating reproducible test keys',
+        'Verifying that nonces never repeat',
+      ],
+      answer: 1,
+      explain:
+        'A storage format is a compatibility commitment. Reference blobs generated once, frozen as constants and re-decrypted on every test run turn that commitment into a mechanical guardrail: a library or serialization change that would break the format is caught immediately.',
+    },
+    {
+      q: 'Why carefully re-read a test property like "flipping any single bit makes decryption fail"?',
+      options: [
+        'Because property-based tests are too slow for CI',
+        'Because the random generator can produce the same input twice',
+        'Because a badly bounded sampling range can restrict the tested bits to a small zone of the blob, leaving the authentication tag never exercised, for example',
+        'Because flipping one bit can produce a valid blob',
+      ],
+      answer: 2,
+      explain:
+        'A property is only worth its generator: if the bit index is drawn from a narrower range than the blob, the test passes while exercising only a fraction of the format — it is weaker than its name. Auditing generators is part of auditing tests.',
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- A **threat model** is worked in three columns: covered, accepted, not covered — and the honesty of the third column is what makes the first two credible.
+- The **malicious server** exercise validates the design: reading, tampering, substitution, reordering, role confusion and derivation downgrade all fail; **replaying an old state** remains open and documented (freshness).
+- **Typing** turns key misuse into compile-time errors; **memory hygiene** tracks every copy of sensitive material, including intermediate buffers.
+- **Frozen vectors** lock format compatibility; **property-based tests** verify invariants — provided their generators are audited; **fuzzing** hammers the parsers exposed to adversarial bytes.
+- Security is an **adversarial review process**: this course's best findings came from re-readings that asked a single question — "what if I were the server?".

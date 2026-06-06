@@ -1,0 +1,23 @@
+slug: e2e-encrypted-vault
+title: 'Designing an end-to-end encrypted vault: from zero-knowledge to the storage format'
+summary: 'How do you store files on a server without that server being able to read a single byte? This applied cryptography course walks through the complete design of a zero-knowledge file vault: an envelope-based key hierarchy, Argon2id derivation hardened against parameter-downgrade attacks, an authenticated blob format (AEAD, domain separation, header covered by the tag), content-defined chunking, content addressing and an encrypted Merkle tree. It ends with a threat-model exercise: we attack the system we just built and see what holds. No frameworks, only standard primitives and justified architecture decisions.'
+tags:
+  - cryptography
+  - e2e
+  - zero-knowledge
+  - aead
+  - kdf
+  - merkle
+  - storage
+  - threat-model
+theme: security
+subtheme: applied-crypto
+level: intermediate
+estimatedMinutes: 90
+modules:
+  - 01-the-zero-knowledge-model-and-the-key-hierarchy
+  - 02-an-authenticated-blob-format
+  - 03-chunking-content-addressing-and-merkle-trees
+  - 04-stress-testing-the-threat-model
+published: true
+publishedAt: 2026-06-06
