@@ -5,6 +5,7 @@ import { ClientRouter } from 'astro:transitions';
 import Nav from '../components/layout/Nav.astro';
 import Footer from '../components/layout/Footer.astro';
 import ConsentBanner from '../components/layout/ConsentBanner.astro';
+import LanguageSuggestBanner from '../components/layout/LanguageSuggestBanner.astro';
 import ScrollProgress from '../components/layout/ScrollProgress.astro';
 import StructuredData from '../components/seo/StructuredData.astro';
 import type { Thing } from 'schema-dts';
@@ -97,32 +98,6 @@ const resolvedDescription = description ?? t.meta.description;
     <ClientRouter />
 
     {
-      /* First-visit language detection: redirect non-FR browsers from / to /en/.
-        After redirect or first FR visit, the choice is persisted in localStorage
-        so this block is a no-op on later loads (and the manual switcher always wins). */
-    }
-    <script is:inline>
-      (() => {
-        try {
-          if (localStorage.getItem('lang')) return;
-          const onEn = location.pathname.startsWith('/en');
-          const browserFr = (navigator.language || 'fr').toLowerCase().startsWith('fr');
-          if (browserFr) {
-            localStorage.setItem('lang', 'fr');
-            return;
-          }
-          localStorage.setItem('lang', 'en');
-          if (!onEn) {
-            const sub = location.pathname === '/' ? '/' : location.pathname;
-            location.replace('/en' + (sub === '/' ? '/' : sub));
-          }
-        } catch {
-          /* navigator or localStorage unavailable, do nothing */
-        }
-      })();
-    </script>
-
-    {
       /* Apply the stored theme before paint and on every view-transition swap.
         Without astro:before-swap, ClientRouter resets <html data-theme> back to
         the SSR default whenever the user navigates (e.g. switches language). */
@@ -161,5 +136,6 @@ const resolvedDescription = description ?? t.meta.description;
       umamiSiteId={import.meta.env.PUBLIC_UMAMI_WEBSITE_ID ?? ''}
       umamiUrl={import.meta.env.PUBLIC_UMAMI_URL ?? ''}
     />
+    <LanguageSuggestBanner locale={locale} />
   </body>
 </html>

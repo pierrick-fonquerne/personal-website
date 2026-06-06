@@ -1,0 +1,70 @@
+---
+import { resolveTranslatedPath, useTranslations, type Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const targetLocale: Locale = locale === 'fr' ? 'en' : 'fr';
+const tb = useTranslations(targetLocale).langBanner;
+const targetHref = await resolveTranslatedPath(Astro.url.pathname, locale, targetLocale);
+---
+
+<div
+  id="lang-banner"
+  hidden
+  class="fixed top-16 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-md -translate-x-1/2 items-center gap-3 rounded-md border border-[var(--color-line-strong)] bg-[var(--color-bg-elevated)] px-4 py-3 text-sm text-[var(--color-fg)] shadow-lg"
+>
+  <p class="flex-1">{tb.message}</p>
+  <a
+    href={targetHref}
+    data-lang-banner-switch
+    class="font-medium whitespace-nowrap text-[var(--color-accent)] hover:underline"
+  >
+    {tb.action}
+  </a>
+  <button
+    type="button"
+    data-lang-banner-dismiss
+    aria-label={tb.dismiss}
+    class="text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]"
+  >
+    ✕
+  </button>
+</div>
+
+<script is:inline define:vars={{ pageLocale: locale, targetLocale }}>
+  (() => {
+    try {
+      if (localStorage.getItem('lang')) return;
+      const browserLocale = (navigator.language || 'fr').toLowerCase().startsWith('fr')
+        ? 'fr'
+        : 'en';
+      if (browserLocale === pageLocale) {
+        localStorage.setItem('lang', pageLocale);
+        return;
+      }
+      const banner = document.getElementById('lang-banner');
+      if (!banner) return;
+      banner.hidden = false;
+      banner.querySelector('[data-lang-banner-switch]')?.addEventListener('click', () => {
+        try {
+          localStorage.setItem('lang', targetLocale);
+        } catch {
+          /* localStorage unavailable */
+        }
+      });
+      banner.querySelector('[data-lang-banner-dismiss]')?.addEventListener('click', () => {
+        try {
+          localStorage.setItem('lang', pageLocale);
+        } catch {
+          /* localStorage unavailable */
+        }
+        banner.hidden = true;
+      });
+    } catch {
+      /* navigator or localStorage unavailable */
+    }
+  })();
+</script>

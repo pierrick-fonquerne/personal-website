@@ -4,6 +4,11 @@ const fr: Translations = {
   meta: {
     description: 'Pierrick Fonquerne, développeur passionné. Projets, écrits et recherche.',
   },
+  langBanner: {
+    message: 'Cette page existe aussi en français.',
+    action: 'Voir en français',
+    dismiss: 'Fermer',
+  },
   nav: {
     home: 'Accueil',
     projects: 'Projets',
