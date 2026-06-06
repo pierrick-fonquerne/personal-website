@@ -72,6 +72,7 @@ export function buildPersonNode(locale: Locale): Person {
     '@id': PERSON_ID,
     name: SITE.name,
     url: `${SITE_URL}/`,
+    image: `${SITE_URL}/pierrick-fonquerne.jpg`,
     jobTitle: JOB_TITLE[locale],
     description: PERSON_DESCRIPTION[locale],
     sameAs: [SITE.linkedin, SITE.github, SITE.crates],
