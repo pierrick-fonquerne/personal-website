@@ -83,13 +83,13 @@ export function buildPersonNode(locale: Locale): Person {
 /**
  * Builds the WebSite node shared by every page of the site.
  */
-export function buildWebSiteNode(locale: Locale): WebSite {
+export function buildWebSiteNode(): WebSite {
   return {
     '@type': 'WebSite',
     '@id': WEBSITE_ID,
     name: SITE.name,
     url: `${SITE_URL}/`,
-    inLanguage: IN_LANGUAGE[locale],
+    inLanguage: ['fr-FR', 'en-US'],
     publisher: { '@id': PERSON_ID },
   };
 }
@@ -100,7 +100,7 @@ export function buildWebSiteNode(locale: Locale): WebSite {
 export function buildGraph(locale: Locale, extra: readonly Thing[] = []): Graph {
   return {
     '@context': 'https://schema.org',
-    '@graph': [buildWebSiteNode(locale), buildPersonNode(locale), ...extra],
+    '@graph': [buildWebSiteNode(), buildPersonNode(locale), ...extra],
   };
 }
 
