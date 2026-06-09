@@ -1,0 +1,21 @@
+slug: constant-time
+fr:
+  term: Temps constant
+  definition: >
+    Propriété d'une implémentation dont la durée d'exécution ne dépend pas des valeurs
+    secrètes traitées, éliminant les canaux auxiliaires temporels. Elle est indispensable
+    pour la comparaison de tags d'authentification et pour les opérations cryptographiques
+    sensibles. ChaCha20-Poly1305 est naturellement en temps constant en logiciel, tandis
+    qu'AES nécessite des instructions matérielles (AES-NI) pour atteindre cette propriété.
+en:
+  term: Constant-time
+  definition: >
+    A property of an implementation whose execution duration does not depend on secret
+    values, eliminating timing side channels. It is essential for authentication tag
+    comparison and sensitive cryptographic operations. ChaCha20-Poly1305 is naturally
+    constant-time in software, whereas AES requires hardware instructions (AES-NI) to
+    achieve this property.
+seeAlso:
+  - authentication-tag
+  - padding-oracle
+  - authenticated-encryption

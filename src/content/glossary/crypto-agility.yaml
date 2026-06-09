@@ -1,0 +1,19 @@
+slug: crypto-agility
+fr:
+  term: Crypto-agilité
+  definition: >
+    Capacité d'un format ou d'un protocole à migrer vers de nouveaux primitifs
+    cryptographiques sans casser les données existantes. Elle s'implémente typiquement
+    par un octet de version en tête du chiffré, permettant de décoder les anciens
+    enregistrements et de chiffrer les nouveaux avec l'algorithme courant. Elle est
+    essentielle pour préparer une migration post-quantique.
+en:
+  term: Crypto-agility
+  definition: >
+    The ability of a format or protocol to migrate to new cryptographic primitives
+    without breaking existing data. It is typically implemented via a version byte at
+    the head of the ciphertext, allowing old records to be decoded and new ones encrypted
+    with the current algorithm. It is essential for preparing a post-quantum migration.
+seeAlso:
+  - authenticated-encryption
+  - domain-separation

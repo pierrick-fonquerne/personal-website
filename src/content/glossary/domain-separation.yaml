@@ -1,0 +1,20 @@
+slug: domain-separation
+fr:
+  term: Séparation de domaines
+  definition: >
+    Technique consistant à dériver des clés ou des contextes distincts pour chaque
+    rôle ou usage, de sorte qu'un chiffré valide dans un domaine ne puisse pas être
+    rejoué dans un autre. Elle s'implémente typiquement via des données associées
+    spécifiques au rôle, des préfixes de dérivation de clé ou des octets de version.
+    Elle est essentielle pour prévenir les attaques par confusion de contexte.
+en:
+  term: Domain separation
+  definition: >
+    A technique that derives distinct keys or contexts for each role or usage, ensuring
+    that a valid ciphertext in one domain cannot be replayed in another. It is typically
+    implemented via role-specific associated data, key derivation prefixes, or version
+    bytes. It is essential for preventing context-confusion attacks.
+seeAlso:
+  - associated-data
+  - nonce
+  - crypto-agility
