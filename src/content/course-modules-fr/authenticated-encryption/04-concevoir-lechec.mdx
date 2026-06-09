@@ -1,0 +1,188 @@
+---
+course: authenticated-encryption
+order: 4
+title: "Concevoir l'échec"
+subtitle: "Authentifier avant de parser, erreur opaque, frontières de confiance : comment la manière dont un système échoue décide de sa sécurité."
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+Dans le module 1, tu as vu qu'un <Term slug="padding-oracle">oracle de padding</Term> permettait à un adversaire de reconstruire un texte clair octet par octet, sans jamais connaître la clé, simplement en observant si le serveur acceptait ou rejetait un message. Ce que l'adversaire exploitait n'était pas l'algorithme. C'était le comportement du système à l'échec : deux réponses distinctes, selon la cause du rejet. Cette distinction observable était l'oracle.
+
+L'AEAD élimine les oracles de padding en retirant à l'adversaire toute information sur le résultat du déchiffrement. Mais un système qui utilise correctement un algorithme AEAD peut quand même recréer un oracle, par sa façon d'échouer, de parser, ou de valider les octets entrants. Les erreurs de conception à ce niveau annulent les garanties cryptographiques.
+
+Ce module examine les règles de conception qui ferment ces failles. C'est le module final du cours : les principes qui suivent s'appuient sur l'intégrité et la confidentialité du module 1, l'unicité du nonce du module 2, et la liaison au contexte du module 3.
+
+À la fin de ce module, tu sauras expliquer pourquoi l'ordre d'opérations (vérifier avant de parser) est une propriété de sécurité, définir ce qu'est une erreur opaque et pourquoi elle est nécessaire, appliquer le principe de frontière de confiance à un flux de traitement, et identifier les cas où un système bien chiffré reste vulnérable par sa logique d'échec.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : modules 1, 2 et 3 de ce cours (AEAD, tag d'authentification, nonce, données associées). Aucune connaissance des mathématiques des primitives n'est nécessaire.
+
+**Ce qu'il n'est pas nécessaire de connaître** : preuves formelles de sécurité, détails internes des algorithmes, protocoles réseau spécifiques.
+
+**Niveau de rigueur** : les règles sont formulées avec précision et illustrées par des contre-exemples concrets. Les preuves formelles sont hors périmètre.
+</Callout>
+
+## Authentifier avant de parser
+
+La règle est absolue : **vérifier le tag avant de toucher un seul octet du texte chiffré**.
+
+L'ordre paraît évident une fois énoncé, mais les violations sont courantes. Un système qui parse les octets chiffrés avant d'avoir vérifié leur authenticité expose sa logique de parsing à des données entièrement contrôlées par l'adversaire. Chaque branchement conditionnel dans ce parseur devient une fuite potentielle : le comportement du système (temps de réponse, message d'erreur, code de retour) peut varier selon la structure des octets, et cette variation est observable.
+
+Prenons un exemple. Un service reçoit une requête API chiffrée dont le premier champ est une longueur de payload. Si le service lit ce champ et alloue un buffer de la taille annoncée avant de vérifier le tag, un adversaire peut envoyer une valeur de longueur arbitraire et observer si l'allocation réussit ou échoue. Le parseur a traité des données non authentifiées. L'adversaire a obtenu une information.
+
+Le même raisonnement s'applique à toute logique conditionnelle exécutée avant la vérification : décodage d'un format, lecture d'un champ de version, validation d'un identifiant. Si ces opérations s'effectuent sur des octets non authentifiés, elles participent à l'oracle.
+
+**La vérification du tag est une précondition, pas une étape parmi d'autres dans le traitement.**
+
+Un schéma AEAD correct applique déjà ce principe dans son opération open : le tag est vérifié en premier, et si la vérification échoue, aucun octet de texte clair n'est retourné. La règle s'étend à la couche applicative : même après l'open réussi, le texte clair obtenu doit être traité comme une donnée de source externe jusqu'à ce que son contenu soit validé.
+
+## Parse, don't validate
+
+Une fois le tag vérifié, les octets du texte clair sont authentiques, mais ils peuvent encore être malformés. La règle "parse, don't validate" dit : **transformer les octets bruts en valeurs bien typées à la frontière d'entrée, une seule fois, de sorte que le reste du code ne puisse pas recevoir de données malformées**.
+
+La distinction est précise. Valider, c'est vérifier qu'une donnée satisfait une condition (par exemple : "ce champ est un entier positif") et continuer à manipuler la donnée brute si la condition est vraie. Parser, c'est construire une représentation typée depuis les octets bruts, et retourner une erreur si la construction échoue.
+
+L'avantage du parsing est structurel : une fois la frontière franchie, les types garantissent la cohérence des données. Un champ "longueur" qui n'existe qu'en tant qu'entier non signé borné ne peut pas être négatif ailleurs dans le code, par construction du type, pas par vérification répétée.
+
+Ce principe s'applique à toute couche qui reçoit des octets de l'extérieur : déchiffrement de tokens, lecture de paquets réseau, décodage de messages. La frontière de parsing coïncide avec la frontière de confiance. Ce qui passe cette frontière est utilisable. Ce qui échoue à la passer est rejeté, sans traitement partiel.
+
+## L'erreur opaque
+
+Un système qui échoue de plusieurs façons observables est un oracle. La conséquence de conception est directe : **un seul mode d'échec, sans information exploitable**.
+
+Ce que cela signifie concrètement :
+
+- **Un seul message d'erreur.** "Déchiffrement échoué" couvre tous les cas : tag invalide, nonce mal formé, AAD absente, données corrompues. Distinguer ces cas dans le message retourné permet à l'adversaire de savoir ce qui a échoué et pourquoi, ce qui suffit à reconstruire des informations sur le message original.
+- **Un seul code de retour.** Même logique pour les codes d'erreur HTTP, les codes de statut applicatifs, les exceptions levées. Toute distinction observable entre les causes d'échec est une fuite.
+- **Un temps de réponse constant.** Comme vu dans le module 2 avec la comparaison de tags en <Term slug="constant-time">temps constant</Term>, une différence de temps de traitement entre deux causes d'échec est un canal caché. Un rejet qui arrive en 2 millisecondes et un rejet qui arrive en 20 millisecondes sont deux messages distincts pour un adversaire qui peut mesurer.
+
+L'erreur opaque s'applique aussi aux journaux internes : un log détaillé accessible via une interface externe (un endpoint de métriques, une page de diagnostic) peut devenir une fuite si l'adversaire peut le consulter. Les journaux internes peuvent être précis ; ce qui est retourné au client ne doit pas l'être.
+
+<Callout kind="note" title="La sécurité comme revue adversariale">
+Les failles de conception à l'échec sont difficiles à trouver par inspection positive : "ce code fait ce qu'il est supposé faire". Elles se révèlent par une revue adversariale : pour chaque chemin d'exécution, demander "qu'est-ce que l'adversaire observe si ce chemin est pris ?". La question "que se passe-t-il si le tag est invalide ?" doit avoir la même réponse observable que "que se passe-t-il si le nonce est mal formé ?". Si les réponses diffèrent de façon observable, le système a un oracle.
+</Callout>
+
+## Les frontières de confiance
+
+Une frontière de confiance est le point où des octets non contrôlés entrent dans le système. Tout ce qui vient de l'extérieur de cette frontière est hostile par défaut.
+
+Dans un système qui utilise l'AEAD, la frontière de confiance est l'opération open : ce qui arrive avant l'open est non authentifié, ce qui sort de l'open réussi est authentifié. Mais cette frontière a des implications pratiques sur la conception du système.
+
+**Valider dans les deux sens.** Le seal doit vérifier que les champs inclus dans l'AAD sont bien formés, pas seulement les passer tels quels. Si l'émetteur inclut dans l'AAD un identifiant de destinataire sans valider qu'il correspond à un destinataire existant, le chiffré peut être forgé avec un identifiant invalide et le destinataire ne détectera l'erreur qu'après le déchiffrement. La validation des champs de contexte au moment du seal réduit la surface exploitable dès l'émission.
+
+**Traiter tout ce qui vient de l'extérieur comme hostile.** Cela inclut les octets chiffrés (évident), mais aussi les métadonnées qui accompagnent le chiffré : un en-tête HTTP, un identifiant de session transmis séparément, un paramètre d'URL. Ces valeurs externes doivent être validées indépendamment, avant d'être utilisées pour sélectionner la clé, l'algorithme ou le destinataire.
+
+**La couche cryptographique n'est pas la seule ligne de défense.** L'AEAD garantit qu'un message authentifié n'a pas été altéré. Elle ne garantit pas que le message a été construit correctement par un émetteur légitime. Un adversaire interne (un composant compromis, un émetteur qui forge un contexte valide mais malveillant) peut produire un chiffré authentique avec un contenu malveillant. Les validations applicatives après l'open restent nécessaires.
+
+## Ordre correct contre ordre incorrect
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    subgraph correct["Ordre correct"]
+      r1["Recevoir les octets chiffrés"]
+      v1["Vérifier le tag (open)"]
+      p1["Parser le texte clair authentifié"]
+      a1["Agir sur les données validées"]
+      e1["Erreur opaque (tag invalide)"]
+      r1 --> v1
+      v1 -->|"tag valide"| p1
+      v1 -->|"tag invalide"| e1
+      p1 --> a1
+    end
+    subgraph wrong["Ordre incorrect"]
+      r2["Recevoir les octets chiffrés"]
+      p2["Parser le chiffré brut"]
+      v2["Vérifier le tag"]
+      a2["Agir"]
+      e2["Fuite : le parseur observe des octets non authentifiés"]
+      r2 --> p2
+      p2 --> v2
+      p2 -.->|"oracle"| e2
+      v2 --> a2
+    end`}
+  caption="À gauche : la vérification du tag précède tout parsing. L'erreur est opaque. À droite : le parseur traite des octets non authentifiés avant la vérification, créant un oracle observable."
+/>
+
+Le diagramme illustre la différence structurelle. Dans l'ordre correct, l'adversaire ne peut pas influencer le comportement du parseur, car le parseur ne reçoit que des données dont l'authenticité a déjà été établie. Dans l'ordre incorrect, chaque branchement du parseur est potentiellement observable par l'adversaire, qui contrôle entièrement les octets présentés.
+
+## Le pattern à retenir
+
+**Ne touche aucun octet que tu n'as pas authentifié. Un seul mode d'échec, sans détail exploitable.**
+
+Ces deux règles se renforcent mutuellement. La première ferme l'oracle que le parseur pourrait créer. La seconde ferme l'oracle que le mécanisme d'erreur pourrait créer. Ensemble, elles font en sorte que le comportement observable du système à l'échec soit constant : un rejet, une seule façon, sans information sur la cause.
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Un service reçoit un message chiffré avec AES-GCM. Avant de vérifier le tag, il lit le premier champ du chiffré pour allouer un buffer. Pourquoi est-ce une faille ?",
+      options: [
+        "Parce qu'AES-GCM interdit de lire un chiffré avant la vérification du tag.",
+        "Parce que l'allocation réussit ou échoue selon la valeur du champ, ce qui est observable par un adversaire qui contrôle les octets chiffrés.",
+        "Parce que le buffer alloué avant vérification peut contenir des données sensibles.",
+        "Parce que la lecture du chiffré avant l'open modifie le nonce.",
+      ],
+      answer: 1,
+      explain:
+        "Le chiffré non vérifié est entièrement contrôlé par l'adversaire. Si le parseur l'examine avant la vérification du tag, son comportement (succès ou échec de l'allocation, temps de réponse, message d'erreur) varie selon la valeur du champ. Cette variation observable est un oracle. La vérification du tag doit précéder tout traitement des octets.",
+    },
+    {
+      q: "Dans le module 2, tu as vu que la comparaison de tags doit s'effectuer en temps constant. Quelle propriété générale ce principe illustre-t-il pour la conception des échecs ?",
+      options: [
+        "Les opérations cryptographiques doivent être parallélisées pour être rapides.",
+        "Une différence de temps de traitement entre deux causes d'échec est un canal caché exploitable.",
+        "Le temps constant garantit que le tag est correct, indépendamment des données comparées.",
+        "La vérification en temps constant évite les collisions de tag.",
+      ],
+      answer: 1,
+      explain:
+        "Le temps de réponse est une information observable. Si un rejet pour tag invalide prend un temps différent d'un rejet pour nonce mal formé, l'adversaire peut distinguer les deux cas. La comparaison en temps constant est une instance du principe plus général : un seul mode d'échec, sans différence observable entre les causes.",
+    },
+    {
+      q: "Un système scelle un token avec AES-GCM en incluant dans l'AAD l'identifiant de l'utilisateur et la direction du message (module 3). Lors du open, il retourne des messages d'erreur distincts selon que le tag est invalide ou que l'AAD ne correspond pas. Quel est le problème ?",
+      options: [
+        "L'AAD ne doit pas contenir l'identifiant utilisateur, car cela expose des données personnelles.",
+        "Deux messages d'erreur distincts permettent à un adversaire de distinguer les cas d'échec, ce qui constitue un oracle.",
+        "Le open ne doit pas vérifier l'AAD, car elle est transmise en clair.",
+        "Il n'y a pas de problème : distinguer les causes d'erreur aide au débogage.",
+      ],
+      answer: 1,
+      explain:
+        "Un adversaire qui peut distinguer 'tag invalide' de 'AAD incorrecte' obtient une information sur la structure du message. Il peut, par exemple, apprendre si un token a été produit avec le bon contexte mais modifié, ou s'il a été produit avec un contexte incorrect. Un seul message d'erreur ('déchiffrement échoué') couvre tous les cas sans fuite.",
+    },
+    {
+      q: "En réunissant les quatre modules du cours : un système utilise ChaCha20-Poly1305, génère des nonces aléatoires de 192 bits, inclut l'identifiant de domaine et le destinataire dans l'AAD, vérifie le tag avant de parser, et retourne une erreur unique en cas d'échec. Quelle propriété reste à vérifier pour une mise en oeuvre complète ?",
+      options: [
+        "Vérifier que ChaCha20-Poly1305 est plus rapide qu'AES-GCM sur le matériel cible.",
+        "Vérifier que la clé est dérivée séparément pour chaque usage et que les validations applicatives après l'open sont bien présentes.",
+        "Vérifier que le nonce est transmis chiffré, pour éviter qu'un adversaire le lise.",
+        "Vérifier que l'AAD est limitée à 64 octets pour rester dans les limites du schéma.",
+      ],
+      answer: 1,
+      explain:
+        "Les quatre points couverts correspondent aux quatre modules : intégrité AEAD (module 1), unicité du nonce (module 2), liaison au contexte via AAD (module 3), erreur opaque et ordre d'opérations (module 4). Il reste à s'assurer que la séparation de domaines est réalisée au niveau des clés (une clé dérivée par usage, pas seulement un contexte dans l'AAD) et que les validations applicatives après le déchiffrement (vérification de l'expiration, autorisation d'accès) ne sont pas omises sous prétexte que le chiffrement les remplace.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir
+
+- Un système peut utiliser correctement un schéma AEAD et quand même créer un <Term slug="padding-oracle">oracle</Term> par sa logique d'échec. Ce que l'adversaire observe à l'échec est une surface d'attaque aussi réelle que l'algorithme lui-même.
+- **Vérifier le tag avant de toucher un seul octet** : la vérification est une précondition, pas une étape parmi d'autres. Tout parseur qui s'exécute sur des octets non authentifiés est exposé.
+- **Parse, don't validate** : transformer les octets bruts en valeurs bien typées à la frontière d'entrée, une seule fois. Ce qui passe la frontière est utilisable ; ce qui échoue est rejeté sans traitement partiel.
+- **Un seul mode d'échec, sans information exploitable** : même message d'erreur, même code de retour, même temps de traitement, quelle que soit la cause du rejet. Une différence observable est un oracle.
+- La comparaison de tags en <Term slug="constant-time">temps constant</Term> (module 2) est une instance de cette règle générale : le temps de réponse est une information observable.
+- **Tout ce qui vient de l'extérieur est hostile par défaut** : valider les champs de contexte au seal et au open, ne pas supposer que la couche cryptographique remplace les validations applicatives.
+- Les quatre modules forment un tout : l'AEAD garantit l'intégrité et la confidentialité (module 1) à condition que le nonce soit unique (module 2), que le contexte soit lié au chiffré (module 3), et que le système échoue sans donner prise à un oracle (module 4). Chaque couche est nécessaire. Aucune ne remplace les autres.
