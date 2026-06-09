@@ -1,0 +1,199 @@
+---
+course: authenticated-encryption
+order: 1
+title: 'Chiffrer ne suffit pas'
+subtitle: "Confidentialité contre intégrité : pourquoi un adversaire qui ne peut pas lire peut quand même tout casser, et comment le chiffrement authentifié répond."
+estimatedMinutes: 20
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import TamperLab from '../../../components/learning/TamperLab';
+
+En 2011, des chercheurs ont montré qu'un adversaire positionné entre un navigateur et un serveur HTTPS pouvait, sans jamais déchiffrer un seul octet, modifier les données chiffrées de façon prévisible et forcer des comportements non prévus par l'application. L'attaque ne lisait rien. Elle réécrivait.
+
+Ce scénario, qui s'appelle l'<Term slug="malleability">malléabilité</Term>, est le problème central de ce chapitre. Le chiffrement classique cache le contenu. Il ne garantit pas que le contenu n'a pas été altéré en chemin.
+
+À la fin de ce chapitre, tu sauras expliquer la différence entre confidentialité et intégrité, reconnaître la malléabilité d'un chiffrement non authentifié, et dire ce que l'<Term slug="authenticated-encryption">AEAD</Term> garantit et comment.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : notion de chiffrement symétrique (clé, texte clair, texte chiffré) et idée générale de ce qu'est une fonction de hachage. Pas besoin de connaître les mathématiques des primitives.
+
+**Ce qu'il n'est pas nécessaire de connaître** : détails internes d'AES, construction des modes opératoires, preuves de sécurité formelles.
+
+**Niveau de rigueur** : les définitions sont précises, les raisons sont justifiées, les preuves formelles sont hors périmètre.
+</Callout>
+
+## Confidentialité contre intégrité
+
+Ces deux propriétés sont distinctes, et les confondre est la source de nombreuses vulnérabilités réelles.
+
+**La confidentialité** garantit qu'un adversaire qui observe le message chiffré ne peut pas en déduire le contenu. Elle protège contre un attaquant passif, qui écoute.
+
+**L'intégrité** garantit qu'un adversaire ne peut pas modifier le message sans que cette modification soit détectée. Elle protège contre un attaquant actif, qui intervient.
+
+Un système peut avoir l'une sans l'autre. Et c'est là que réside le piège.
+
+### L'adversaire actif
+
+Prenons un exemple concret. Un service de paiement chiffre le montant d'un virement avec un mode CTR (compteur). En mode CTR, le chiffrement XOR le texte clair avec un flux pseudo-aléatoire généré depuis la clé et un compteur. Un bit à zéro dans le texte clair devient un bit selon le flux, et vice versa.
+
+Si un adversaire connaît la position dans le texte chiffré qui correspond au champ "montant", il peut inverser exactement le bon bit dans le chiffré. Quand le destinataire déchiffre, il obtient un montant modifié. L'adversaire n'a jamais su quel était le montant original. Il l'a juste changé.
+
+C'est la <Term slug="malleability">malléabilité</Term> : la propriété d'un schéma de chiffrement qui permet de transformer un chiffré en un autre chiffré dont le déchiffrement est prévisible, sans connaître la clé.
+
+**Un schéma confidentiel peut être malléable. Un schéma malléable n'offre aucune garantie d'intégrité.**
+
+## L'AEAD, la réponse
+
+Le chiffrement authentifié avec données associées, noté <Term slug="authenticated-encryption">AEAD</Term> (Authenticated Encryption with Associated Data), résout ce problème en combinant confidentialité et intégrité dans une seule opération.
+
+Un schéma AEAD expose deux opérations :
+
+- **Seal (fermer)** : prend une clé $k$, un <Term slug="nonce">nonce</Term> $N$, des données associées $A$ et un texte clair $P$. Produit un texte chiffré augmenté d'un tag d'authentification : $C = \mathrm{Enc}_k(N, A, P)$.
+- **Open (ouvrir)** : prend $k$, $N$, $A$ et $C$. Vérifie le <Term slug="authentication-tag">tag</Term>, puis déchiffre. Si la vérification échoue, retourne une erreur, sans rien révéler d'autre.
+
+Chaque symbole a son rôle :
+
+- $k$ : la clé secrète partagée entre les deux parties.
+- $N$ : le nonce, un nombre utilisé une seule fois. Il garantit que deux chiffrements du même texte clair avec la même clé produisent des chiffrés différents. Les détails sont en module 3.
+- $A$ : les données associées, des métadonnées authentifiées mais non chiffrées (un en-tête HTTP, un identifiant de session, une version de protocole). Elles ne font pas partie du chiffré, mais toute modification les concernant invalide le tag. Le module 2 y revient en détail.
+- $P$ : le texte clair (plaintext), le message à protéger.
+- $C$ : la sortie, c'est-à-dire le texte chiffré concaténé avec le tag d'authentification.
+
+### Le tag d'authentification
+
+Le <Term slug="authentication-tag">tag</Term> est une empreinte cryptographique calculée sur le chiffré et les données associées avec la clé. Il est produit lors du seal et vérifié lors du open.
+
+Si un bit du chiffré a été inversé, si une donnée associée a changé, si le tag lui-même a été trafiqué : la vérification échoue. L'open retourne une erreur générique, sans indiquer ce qui a changé ni où. Cette absence d'information est intentionnelle : révéler la cause permettrait à un adversaire d'apprendre quelque chose, attaque par oracle.
+
+**Le chiffrement cache, il ne protège pas. L'intégrité se prouve, elle ne se suppose pas.**
+
+## Comment se passe un seal et un open
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    subgraph seal["Seal (émetteur)"]
+      P["Texte clair P"] --> enc["Chiffrement + Tag"]
+      N1["Nonce N"] --> enc
+      A1["Données associées A"] --> enc
+      enc --> C["Chiffré C\n(texte + tag)"]
+    end
+    subgraph open["Open (destinataire)"]
+      C2["Chiffré C"] --> verify["Vérification du tag"]
+      N2["Nonce N"] --> verify
+      A2["Données associées A"] --> verify
+      verify -->|"tag valide"| P2["Texte clair P"]
+      verify -->|"tag invalide"| err["Erreur (rien révélé)"]
+    end
+    C --> C2`}
+  caption="Seal produit le chiffré avec tag. Open vérifie le tag avant tout déchiffrement. Un tag invalide retourne une erreur sans information supplémentaire."
+/>
+
+## Essaie par toi-même
+
+Le composant ci-dessous te permet d'inverser un bit dans le chiffré et d'observer ce qui se passe selon le mode.
+
+En mode **chiffrement simple**, le bit inversé traverse le déchiffrement sans que personne ne le détecte. Le texte clair qui ressort est altéré, silencieusement.
+
+En mode **AEAD**, le même bit inversé provoque un échec de vérification du tag. L'open retourne un rejet. Aucune information sur le contenu n'est divulguée.
+
+<TamperLab
+  client:visible
+  labels={{
+    message: 'Message',
+    flip: 'Inverser un bit',
+    reset: 'Réinitialiser',
+    modeSimple: 'Chiffrement simple',
+    modeAead: 'AEAD',
+    intact: 'Intact',
+    outputLabel: 'Résultat du déchiffrement',
+    rejected: 'Rejeté : le tag est invalide',
+    defaultMessage: 'virement 100 euros',
+  }}
+/>
+
+Remarque la différence de comportement. Dans un système réel, le mode simple laisserait passer le message altéré sans aucun avertissement. Le mode AEAD refuse catégoriquement.
+
+<Callout kind="note" title="Historique : bit-flipping et oracles de padding">
+Les attaques sur les modes non authentifiés ont une longue histoire. Le bit-flipping contre CTR est connu depuis les années 2000. Contre CBC, une variante plus subtile exploite le <Term slug="padding-oracle">padding oracle</Term> : en observant si le serveur accepte ou rejette un message selon si le déchiffrement produit un padding valide, un adversaire peut reconstituer le texte clair octet par octet, sans jamais connaître la clé. L'attaque POODLE (2014) est une instance réelle contre SSL 3.0.
+
+Ces attaques sont toutes devenues caduques avec l'adoption généralisée de l'AEAD, qui retire à l'adversaire toute information sur le résultat du déchiffrement.
+</Callout>
+
+<Callout kind="tip" title="Algorithmes AEAD courants">
+Les algorithmes AEAD les plus utilisés aujourd'hui sont AES-GCM (dans TLS 1.3, les API web modernes, AWS et GCP) et ChaCha20-Poly1305 (dans TLS 1.3 également, WireGuard, Signal). Les modules suivants examinent leurs constructions et leurs propriétés respectives.
+</Callout>
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Un message est chiffré avec un mode CTR non authentifié. Un adversaire intercepte le chiffré et inverse un bit. Que se passe-t-il quand le destinataire déchiffre ?",
+      options: [
+        "Le déchiffrement échoue avec une erreur.",
+        "Le texte clair est modifié de façon prévisible, sans aucune alerte.",
+        "La clé est compromise.",
+        "Le message est ignoré automatiquement.",
+      ],
+      answer: 1,
+      explain:
+        "CTR est malléable. Un bit inversé dans le chiffré produit un bit inversé exactement au même endroit dans le texte clair, sans aucune détection. C'est précisément ce que l'AEAD prévient.",
+    },
+    {
+      q: "Quelle propriété l'AEAD ajoute-t-elle au chiffrement classique ?",
+      options: [
+        "Une compression du texte clair.",
+        "Un second niveau de chiffrement.",
+        "Un tag d'authentification qui prouve que le chiffré n'a pas été altéré.",
+        "Un accord de clé automatique.",
+      ],
+      answer: 2,
+      explain:
+        "L'AEAD produit un tag cryptographique lié au chiffré et aux données associées. Toute modification invalide le tag. Le destinataire vérifie le tag avant de déchiffrer.",
+    },
+    {
+      q: "Quand l'open d'un schéma AEAD échoue, que doit-il retourner ?",
+      options: [
+        "Le texte partiellement déchiffré jusqu'à l'erreur.",
+        "Une erreur générique sans indication sur la cause.",
+        "La position du bit corrompu.",
+        "Le tag attendu pour comparaison.",
+      ],
+      answer: 1,
+      explain:
+        "Révéler la cause de l'échec (tag invalide, bit corrompu, données associées modifiées) permettrait à un adversaire d'apprendre des informations par oracle. L'open doit retourner une erreur opaque.",
+    },
+    {
+      q: "Un service chiffre un cookie de session avec AES-GCM. L'utilisateur modifie le cookie dans son navigateur et renvoie la requête. Que se passe-t-il côté serveur ?",
+      options: [
+        "Le serveur déchiffre et utilise la valeur modifiée.",
+        "Le serveur détecte la modification via le tag et rejette la requête.",
+        "Le serveur génère une nouvelle clé.",
+        "Le serveur ignore le cookie.",
+      ],
+      answer: 1,
+      explain:
+        "AES-GCM est un schéma AEAD. Toute modification du cookie invalide le tag. L'open échoue et le serveur rejette la requête sans traiter la valeur falsifiée.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir
+
+- La **confidentialité** (le chiffrement) cache le contenu à un adversaire passif. Elle ne protège pas contre un adversaire actif qui modifie les données.
+- L'**intégrité** garantit qu'une modification est détectée. Elle se prouve par un tag cryptographique, elle ne se suppose pas.
+- La <Term slug="malleability">malléabilité</Term> est la propriété d'un chiffrement qui permet de transformer un chiffré en un chiffré prévisible sans connaître la clé. Les modes CTR et CBC non authentifiés en souffrent.
+- L'<Term slug="authenticated-encryption">AEAD</Term> (chiffrement authentifié avec données associées) combine les deux propriétés en une seule opération : seal produit chiffré + tag, open vérifie le tag avant de déchiffrer.
+- Un open qui échoue retourne une erreur générique, sans information sur la cause. Cette opacité est une propriété de sécurité, pas un manque de détail.
+- Les données associées $A$ sont authentifiées mais non chiffrées : les modifier invalide le tag, même si le chiffré est intact.
+- Les algorithmes AEAD courants sont AES-GCM et ChaCha20-Poly1305. Les modules suivants examinent leurs propriétés, leurs contraintes et leurs cas d'usage.
