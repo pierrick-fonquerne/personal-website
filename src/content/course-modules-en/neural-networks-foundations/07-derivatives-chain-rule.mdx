@@ -2,22 +2,342 @@
 course: neural-networks-foundations
 order: 7
 title: Derivatives and the chain rule
-subtitle: 'The strict minimum of differential calculus needed to understand backpropagation.'
-estimatedMinutes: 12
+subtitle: 'From the slope of a curve to the gradient: the tool that turns the cost landscape into a path of descent.'
+estimatedMinutes: 18
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
-import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import TangentSlopeExplorer from '../../../components/learning/TangentSlopeExplorer.tsx';
+import ChainRuleGraph from '../../../components/learning/ChainRuleGraph.tsx';
+import GradientVectorExplorer from '../../../components/learning/GradientVectorExplorer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 6, we learned to compute a network's score and read it as an altitude in a cost landscape. Good networks sit in the valleys, bad ones on the peaks, and learning means descending toward a low point. The decisive question remains: around the point where we currently stand, in which direction should each weight be adjusted to bring the score down?
+
+To answer it, we need to measure which way the surface tilts. That local tilt has a precise mathematical name: the derivative. This chapter lays down the three tools on which all of learning depends. The derivative measures the slope of a curve at a point. The chain rule propagates that slope through a composition of computations. The gradient generalises the slope to many weights at once. None of these tools is hard, and each one has a clear geometric reading. By the end, the static landscape of chapter 6 will have become a path of descent.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the sigmoid function and the notation $a = f(z)$ (chapter 3), the loss function and the cost surface (chapter 6), a bit of high-school algebra (expanding $(x+h)^2$).
+
+**What you do not need to know**: backpropagation (chapter 8) and gradient descent (chapter 9). Here we learn to measure a slope, not yet to use it to correct weights.
+
+**Level of rigour**: a geometric definition of the derivative, a table of derivatives useful throughout the course, a chain-rule computation unrolled in full then re-read as a neuron, a visual reading of the gradient, and four pen-and-paper exercises with detailed solutions line by line.
+
 </Callout>
 
-## What you will learn
+## Act 1: the derivative is a slope
 
-- The geometric intuition of a derivative: the slope of a curve at a point
-- The chain rule for differentiating a composition of functions
-- The extension to partial derivatives and gradients
+Take a curve, say $f(x) = x^2$. Pick a point on it. If you zoom in very close around that point, the curve eventually looks like a straight line. The slope of that line is the <Term slug="derivee">derivative</Term> of $f$ at that point. It tells you two things at once: in which direction the output moves when the input increases, and by how much.
 
-Backpropagation is essentially the chain rule applied to a computation graph. This chapter gives you exactly what you need to follow the next one without getting stuck on the maths.
+To define it properly, we start from the rate of change between two nearby points, $x$ and $x + h$:
+
+$$
+\frac{f(x + h) - f(x)}{h}.
+$$
+
+This is the slope of the line cutting the curve at those two points, the secant. As we let the gap $h$ tend to $0$, the second point slides toward the first, and the secant tips over toward the tangent. The derivative $f'(x)$ is the limit of that rate:
+
+$$
+f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}.
+$$
+
+For $f(x) = x^2$, this computation gives $f'(x) = 2x$ (we work it out by hand in exercise 1). The slope is therefore $2$ at $x = 1$, it is $0$ at $x = 0$ (the bottom of the bowl, where the curve is flat), and $-2$ at $x = -1$ (the curve is descending).
+
+A few derivatives come up constantly in this course. Here they are once and for all:
+
+$$
+(x^n)' = n\,x^{n-1}, \qquad (e^x)' = e^x, \qquad (\ln x)' = \frac{1}{x}, \qquad \sigma'(z) = \sigma(z)\,\big(1 - \sigma(z)\big).
+$$
+
+The last one, the sigmoid, is remarkable: its slope is expressed in terms of its own value. We will use it in Act 2 and again in chapter 8.
+
+Slide the point along the curve, and narrow the gap $h$ to watch the secant tip over toward the tangent.
+
+<TangentSlopeExplorer client:visible locale="en" />
+
+Three things to notice while you play:
+
+- The smaller you make $h$, the closer the secant's slope gets to the exact slope $f'(x) = 2x$. The gap between the two shrinks toward zero: that is the limit, made visible.
+- At the bottom of the bowl, at $x = 0$, the tangent is horizontal and the slope is $0$. That is the signature of a minimum, and it will be the goal of learning.
+- To the left of the bottom the slope is negative, to the right it is positive. The sign of the derivative tells you which way the curve descends.
+
+## Act 2: the chain rule
+
+A network is not a single function but a stack of nested functions. The output of one layer feeds the next. To differentiate such a stack, we need to know how to differentiate a <Term slug="composition-de-fonctions">composition of functions</Term>, that is, a computation of the form $h(x) = f\big(g(x)\big)$.
+
+The <Term slug="regle-de-la-chaine">chain rule</Term> answers exactly that need. It says the derivative of a composition is the product of the local derivatives:
+
+$$
+h'(x) = f'\big(g(x)\big) \cdot g'(x).
+$$
+
+The intuition is mechanical. If $g$ amplifies variations by a factor $g'(x)$, and $f$ amplifies them by a factor $f'$ at the point where it receives its input, then the whole thing amplifies by a factor equal to the product of the two. We multiply the slopes along the path.
+
+Let us work through a numerical example. Let $u = g(x) = 3x + 1$ and $y = f(u) = u^2$. The local derivatives are $g'(x) = 3$ and $f'(u) = 2u$. The chain rule gives
+
+$$
+\frac{dy}{dx} = \underbrace{2u}_{f'(u)} \cdot \underbrace{3}_{g'(x)} = 6\,(3x + 1).
+$$
+
+At $x = 1$, we have $u = 4$, so $\tfrac{dy}{dx} = 2 \cdot 4 \cdot 3 = 24$.
+
+**The same mechanism is a neuron.** This is the key point of the chapter. Take a single neuron and its score, as in chapter 6. The input $x$ passes through three nested computations:
+
+$$
+z = wx + b, \qquad a = \sigma(z), \qquad L = (a - y)^2.
+$$
+
+To know how to adjust the weight $w$, we need $\tfrac{dL}{dw}$. This is a composition of three functions, so we multiply three local derivatives along the path $w \to z \to a \to L$:
+
+$$
+\frac{dL}{dw} = \underbrace{2(a - y)}_{dL/da} \cdot \underbrace{a(1 - a)}_{da/dz} \cdot \underbrace{x}_{dz/dw}.
+$$
+
+The first derivative comes from $L = (a-y)^2$, the second is the derivative of the sigmoid (written using its own value, $a(1-a)$), the third comes from $z = wx + b$. For the bias, only the last factor changes: $\tfrac{dz}{db} = 1$, so $\tfrac{dL}{db} = 2(a - y)\,a(1 - a)$.
+
+You have just computed how the score responds to a weight, by propagating local derivatives backward through the graph. That is exactly backpropagation. Chapter 8 will simply apply this mechanically to a full network.
+
+Toggle between the abstract composition and the neuron graph, and watch the local derivatives multiply along the path.
+
+<ChainRuleGraph client:visible locale="en" />
+
+Three things to notice while you play:
+
+- In composition mode, each edge carries its local derivative, and the product along the path reconstitutes $\tfrac{dy}{dx}$. Change $x$: the product follows.
+- In neuron mode, the same mechanism computes $\tfrac{dL}{dw}$ and $\tfrac{dL}{db}$. The edges are the same building blocks; only the functions change.
+- When one factor in the product is small (for instance $a(1 - a)$ when the neuron is saturated), the whole product collapses. That is the origin of the vanishing gradient, a problem we will encounter further on.
+
+## Act 3: partial derivatives and the gradient
+
+A real network does not have one weight but millions. The score $L$ is then a function of all those weights at once. How do we talk about slope when there are many directions to move in?
+
+The answer fits in a single gesture: we look at one direction at a time. The <Term slug="derivee-partielle">partial derivative</Term> with respect to one weight is the slope obtained by varying only that weight, all others held constant. To write it, we replace the straight $d$ with a round $\partial$: $\tfrac{\partial L}{\partial w_1}$ is the slope along $w_1$ alone.
+
+Take a toy cost with two weights, $L(w_1, w_2) = w_1^2 + 2\,w_2^2$. Its two partial derivatives are
+
+$$
+\frac{\partial L}{\partial w_1} = 2 w_1, \qquad \frac{\partial L}{\partial w_2} = 4 w_2.
+$$
+
+Stack those slopes into a vector, and you get the <Term slug="gradient">gradient</Term>, written $\nabla L$:
+
+$$
+\nabla L = \left( \frac{\partial L}{\partial w_1},\; \frac{\partial L}{\partial w_2} \right) = (2 w_1,\; 4 w_2).
+$$
+
+The gradient is not just a list of numbers. Seen as an arrow at the current point, it points in the direction of steepest ascent of the score, and its length measures the steepness of that ascent. To bring the score down, it suffices to go in the opposite direction, $-\nabla L$. We finally hold the compass of descent.
+
+Move the point on the landscape and read both partial slopes and the gradient arrow.
+
+<GradientVectorExplorer client:visible locale="en" />
+
+Three things to notice while you play:
+
+- The gradient arrow always points uphill, away from the valley. The descent arrow $-\nabla L$ points toward the valley.
+- At the bottom of the bowl, both partial slopes vanish and the gradient becomes zero. That is the signal of a minimum, the multi-weight version of the horizontal tangent from Act 1.
+- The coefficient $2$ in front of $w_2^2$ makes the slope along $w_2$ twice as steep: the gradient does not point toward the centre in a straight line, it leans toward the steeper axis.
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line.
+
+**Exercise 1.** Recover the derivative of $f(x) = x^2$ from the definition, that is, compute the limit of $\tfrac{(x+h)^2 - x^2}{h}$ as $h \to 0$.
+
+<Callout kind="tip" title="Solution to exercise 1: a derivative from the definition">
+**Step 1.** Expand the numerator.
+
+$$
+(x + h)^2 - x^2 = x^2 + 2xh + h^2 - x^2 = 2xh + h^2.
+$$
+
+**Step 2.** Divide by $h$ (we have $h \neq 0$ as long as we have not taken the limit).
+
+$$
+\frac{2xh + h^2}{h} = 2x + h.
+$$
+
+**Step 3.** Let $h$ tend to $0$.
+
+$$
+f'(x) = \lim_{h \to 0} (2x + h) = 2x.
+$$
+
+**Result.** $f'(x) = 2x$, which confirms the slope read in the Act 1 component.
+
+</Callout>
+
+**Exercise 2.** Let $y = (3x + 1)^2$. Compute $\tfrac{dy}{dx}$ using the chain rule, then give its value at $x = 2$.
+
+<Callout kind="tip" title="Solution to exercise 2: a chain rule">
+**Step 1.** Identify the two nested functions: $u = 3x + 1$ (inner) and $y = u^2$ (outer).
+
+**Step 2.** Compute the two local derivatives.
+
+$$
+\frac{dy}{du} = 2u, \qquad \frac{du}{dx} = 3.
+$$
+
+**Step 3.** Multiply along the chain.
+
+$$
+\frac{dy}{dx} = 2u \cdot 3 = 6\,(3x + 1).
+$$
+
+**Step 4.** Evaluate at $x = 2$, where $3x + 1 = 7$.
+
+$$
+\frac{dy}{dx}\Big|_{x = 2} = 6 \cdot 7 = 42.
+$$
+
+**Result.** $\tfrac{dy}{dx} = 6(3x + 1)$, which gives $42$ at $x = 2$.
+
+</Callout>
+
+**Exercise 3.** For a neuron, $L = (a - y)^2$ with $a = \sigma(z)$ and $z = wx + b$. Give $\tfrac{dL}{dz}$, then $\tfrac{dL}{dw}$.
+
+<Callout kind="tip" title="Solution to exercise 3: the gradient of a neuron">
+**Step 1.** Differentiate the score with respect to the output $a$.
+
+$$
+\frac{dL}{da} = 2(a - y).
+$$
+
+**Step 2.** Differentiate the activation with respect to the pre-activation $z$ (derivative of the sigmoid).
+
+$$
+\frac{da}{dz} = \sigma'(z) = a\,(1 - a).
+$$
+
+**Step 3.** Multiply the two to get $\tfrac{dL}{dz}$.
+
+$$
+\frac{dL}{dz} = 2(a - y)\,a\,(1 - a).
+$$
+
+**Step 4.** Add the last link, $\tfrac{dz}{dw} = x$.
+
+$$
+\frac{dL}{dw} = \frac{dL}{dz} \cdot x = 2(a - y)\,a\,(1 - a)\,x.
+$$
+
+**Result.** $\tfrac{dL}{dz} = 2(a - y)\,a(1 - a)$ and $\tfrac{dL}{dw} = 2(a - y)\,a(1 - a)\,x$. This is precisely what backpropagation computes in chapter 8.
+
+</Callout>
+
+**Exercise 4.** Let $L(w_1, w_2) = w_1^2 + 2\,w_2^2$. Compute the gradient $\nabla L$ at the point $(1, 1)$, then give the direction of descent.
+
+<Callout kind="tip" title="Solution to exercise 4: a gradient and its descent">
+**Step 1.** Compute the two partial derivatives.
+
+$$
+\frac{\partial L}{\partial w_1} = 2 w_1, \qquad \frac{\partial L}{\partial w_2} = 4 w_2.
+$$
+
+**Step 2.** Evaluate each one at $(1, 1)$.
+
+$$
+\frac{\partial L}{\partial w_1} = 2, \qquad \frac{\partial L}{\partial w_2} = 4.
+$$
+
+**Step 3.** Assemble the gradient.
+
+$$
+\nabla L = (2,\; 4).
+$$
+
+**Step 4.** The direction of descent is the opposite of the gradient.
+
+$$
+-\nabla L = (-2,\; -4).
+$$
+
+**Result.** $\nabla L = (2, 4)$ points uphill; to bring the score down, we follow $(-2, -4)$, which leans toward the $w_2$ axis, the steeper one.
+
+</Callout>
+
+## In one sentence
+
+The derivative measures the slope of a function at a point, the chain rule propagates that slope through nested computations by multiplying the local derivatives, and the gradient stacks those slopes into a compass that tells, for each weight, which way to bring the score down.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'What does the derivative of a function at a point measure?',
+      options: [
+        'The value of the function at that point',
+        'The slope of the curve at that point',
+        'The area under the curve',
+        'The number of minima of the function',
+      ],
+      answer: 1,
+      explain:
+        'The derivative is the slope of the tangent: it says in which direction and by how much the output changes when the input shifts by a hair.',
+    },
+    {
+      q: 'How does the chain rule differentiate a composition f(g(x))?',
+      options: [
+        'By adding the local derivatives',
+        'By taking the larger of the two derivatives',
+        'By multiplying the local derivatives along the path',
+        'By ignoring the inner function',
+      ],
+      answer: 2,
+      explain:
+        "The derivative of a composition is the product of the local derivatives: f'(g(x)) multiplied by g'(x). We multiply the slopes along the path.",
+    },
+    {
+      q: 'Why does computing dL/dw for a neuron prefigure backpropagation?',
+      options: [
+        'Because it uses no derivatives at all',
+        'Because backpropagation is the chain rule applied to the computation graph',
+        'Because the neuron has no bias',
+        'Because softmax replaces the sigmoid',
+      ],
+      answer: 1,
+      explain:
+        'Backpropagation propagates local derivatives backward through the graph by multiplying them. The single-weight neuron is the minimal case.',
+    },
+    {
+      q: 'What is a partial derivative?',
+      options: [
+        'The slope along a single axis, the other variables held constant',
+        'Half a derivative',
+        'The derivative of a function that is only partially defined',
+        'The sum of all slopes',
+      ],
+      answer: 0,
+      explain:
+        'We vary one weight at a time and keep the others fixed: the partial derivative is the slope along that axis.',
+    },
+    {
+      q: 'Which direction does the gradient point, and what do we do to bring the score down?',
+      options: [
+        'Toward the minimum; we follow the gradient',
+        'Toward the steepest ascent; we follow the opposite of the gradient',
+        'At random; we draw a weight',
+        'Always toward the horizontal axis; we change nothing',
+      ],
+      answer: 1,
+      explain:
+        'The gradient points toward the steepest ascent. To bring the score down, we move in the opposite direction, minus the gradient.',
+    },
+  ]}
+  submitLabel="Submit"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Toward chapter 8
+
+We now know how to compute the slope of the score with respect to a single isolated weight, by multiplying local derivatives along a neuron's computation graph. But a real network has thousands of weights chained across many layers. Redoing this computation from scratch for each one would be ruinously expensive. Backpropagation, in chapter 8, organises this computation into a single backward pass through the network that recovers all the partial derivatives at once. It is the chain rule, industrialised.
+
+## Sources
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 6 (and section 6.5 on backpropagation and differentiation). https://www.deeplearningbook.org
+- Spivak, M. (2008). _Calculus_ (4th ed.). Publish or Perish. Chapters on the derivative and the chain rule.
+- Nielsen, M. (2015). _Neural Networks and Deep Learning_. Chapter 2, on propagating derivatives through a network. http://neuralnetworksanddeeplearning.com/chap2.html
