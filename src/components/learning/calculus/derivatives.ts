@@ -55,6 +55,11 @@ export function gradient(f: MultiFn, xs: readonly number[], h = 1e-5): number[] 
   return xs.map((_, i) => partialDerivative(f, xs, i, h));
 }
 
+/** Toy quadratic bowl used as an example cost surface: w0^2 + 2 * w1^2. */
+export function quadraticBowl(w: readonly number[]): number {
+  return (w[0] ?? 0) ** 2 + 2 * (w[1] ?? 0) ** 2;
+}
+
 /** Squared-error loss of a single sigmoid neuron: L = (sigmoid(wx + b) - y)^2. */
 export function neuronLoss(w: number, b: number, x: number, y: number): number {
   const a = sigmoid(w * x + b);

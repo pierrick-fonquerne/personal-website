@@ -1,5 +1,5 @@
 import { useMemo, useState, type JSX } from 'react';
-import { gradient, type MultiFn } from './calculus/derivatives';
+import { gradient, quadraticBowl } from './calculus/derivatives';
 
 type Locale = 'fr' | 'en';
 
@@ -19,16 +19,16 @@ interface Dictionary {
 const DICT: Record<Locale, Dictionary> = {
   fr: {
     title: 'Le gradient, boussole de la descente',
-    partial0: '∂f/∂w₀',
-    partial1: '∂f/∂w₁',
+    partial0: '∂f/∂w₁',
+    partial1: '∂f/∂w₂',
     gradientArrow: 'Gradient ∇f (montée)',
     descentArrow: '-∇f (descente)',
     bridgeNote: 'Le gradient est la boussole de la descente du chapitre 9.',
   },
   en: {
     title: 'The gradient, compass for the descent',
-    partial0: '∂f/∂w₀',
-    partial1: '∂f/∂w₁',
+    partial0: '∂f/∂w₁',
+    partial1: '∂f/∂w₂',
     gradientArrow: 'Gradient ∇f (ascent)',
     descentArrow: '-∇f (descent)',
     bridgeNote: 'The gradient is the compass for the descent in chapter 9.',
@@ -40,13 +40,6 @@ const VH = 240;
 const PAD = 24;
 const W_LO = -2;
 const W_HI = 2;
-
-// Bowl function: f(w) = w0^2 + 2*w1^2
-const bowlFn: MultiFn = (ws) => {
-  const w0 = ws[0] ?? 0;
-  const w1 = ws[1] ?? 0;
-  return w0 * w0 + 2 * w1 * w1;
-};
 
 const CONTOUR_LEVELS = [0.3, 0.8, 1.6, 2.8, 4.5, 6.5] as const;
 
@@ -126,7 +119,7 @@ export default function GradientVectorExplorer({
   const [w0, setW0] = useState<number>(1);
   const [w1, setW1] = useState<number>(0.8);
 
-  const grad = useMemo(() => gradient(bowlFn, [w0, w1]), [w0, w1]);
+  const grad = useMemo(() => gradient(quadraticBowl, [w0, w1]), [w0, w1]);
   const dw0 = grad[0] ?? 0;
   const dw1 = grad[1] ?? 0;
 
@@ -199,7 +192,7 @@ export default function GradientVectorExplorer({
             fontSize={9}
             textAnchor="middle"
           >
-            w₀
+            w₁
           </text>
           <text
             x={toSvgX(0) - 10}
@@ -208,7 +201,7 @@ export default function GradientVectorExplorer({
             fontSize={9}
             textAnchor="middle"
           >
-            w₁
+            w₂
           </text>
 
           {/* Minimum marker */}
@@ -284,7 +277,7 @@ export default function GradientVectorExplorer({
               marginBottom: '4px',
             }}
           >
-            w₀ :{' '}
+            w₁ :{' '}
             <strong style={{ color: 'var(--accent-violet, #a78bfa)' }}>
               {formatNum(w0, locale)}
             </strong>
@@ -308,7 +301,7 @@ export default function GradientVectorExplorer({
               marginBottom: '4px',
             }}
           >
-            w₁ :{' '}
+            w₂ :{' '}
             <strong style={{ color: 'var(--accent-violet, #a78bfa)' }}>
               {formatNum(w1, locale)}
             </strong>

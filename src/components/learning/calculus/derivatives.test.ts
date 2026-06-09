@@ -8,6 +8,7 @@ import {
   chainRule,
   partialDerivative,
   gradient,
+  quadraticBowl,
   neuronLoss,
   neuronLossGradient,
 } from './derivatives';
@@ -49,15 +50,13 @@ describe('chainRule', () => {
 });
 
 describe('gradient', () => {
-  const bowl = (w: readonly number[]) => (w[0] ?? 0) ** 2 + 2 * (w[1] ?? 0) ** 2;
-
   it('partial derivatives along each axis', () => {
-    expect(partialDerivative(bowl, [1, 1], 0)).toBeCloseTo(2, 4);
-    expect(partialDerivative(bowl, [1, 1], 1)).toBeCloseTo(4, 4);
+    expect(partialDerivative(quadraticBowl, [1, 1], 0)).toBeCloseTo(2, 4);
+    expect(partialDerivative(quadraticBowl, [1, 1], 1)).toBeCloseTo(4, 4);
   });
 
   it('assembles partials into the gradient vector', () => {
-    const g = gradient(bowl, [1, 1]);
+    const g = gradient(quadraticBowl, [1, 1]);
     expect(g[0]).toBeCloseTo(2, 4);
     expect(g[1]).toBeCloseTo(4, 4);
   });

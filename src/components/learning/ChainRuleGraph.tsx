@@ -1,7 +1,7 @@
 import { useState, type JSX } from 'react';
 import {
-  chainRule,
   squareDeriv,
+  chainRule,
   sigmoid,
   sigmoidDeriv,
   neuronLossGradient,
@@ -69,7 +69,6 @@ const NEU_NODES = [
 
 interface EdgeLabel {
   readonly formula: string;
-  readonly value: string;
 }
 
 interface GraphData {
@@ -77,26 +76,21 @@ interface GraphData {
   readonly edges: readonly { from: number; to: number }[];
   readonly edgeLabels: readonly EdgeLabel[];
   readonly productLabel: string;
-  readonly productValue: string;
 }
 
 function buildAbstractData(x: number, locale: Locale): GraphData {
   const g = 3 * x + 1;
-  const dgdx = 3;
   const dydg = squareDeriv(g); // 2g
-  const dydx = chainRule(dydg, dgdx);
+  const dgdx = 3;
+  const dydx = chainRule(dydg, dgdx); // (2g) * 3
   return {
     nodes: ABS_NODES,
     edges: [
       { from: 0, to: 1 },
       { from: 1, to: 2 },
     ],
-    edgeLabels: [
-      { formula: "g' = 3", value: formatNum(dgdx, locale) },
-      { formula: `dy/dg = 2g = ${formatNum(dydg, locale)}`, value: formatNum(dydg, locale) },
-    ],
-    productLabel: 'dy/dx',
-    productValue: formatNum(dydx, locale),
+    edgeLabels: [{ formula: "g' = 3" }, { formula: `dy/dg = 2g = ${formatNum(dydg, locale)}` }],
+    productLabel: `dy/dx = ${formatNum(dydx, locale)}`,
   };
 }
 
@@ -118,12 +112,11 @@ function buildNeuronData(w: number, b: number, locale: Locale): GraphData {
       { from: 2, to: 3 },
     ],
     edgeLabels: [
-      { formula: `dz/dw = x = ${formatNum(dzdw, locale)}`, value: formatNum(dzdw, locale) },
-      { formula: `da/dz = ${formatNum(dadz, locale)}`, value: formatNum(dadz, locale) },
-      { formula: `dL/da = ${formatNum(dLda, locale)}`, value: formatNum(dLda, locale) },
+      { formula: `dz/dw = x = ${formatNum(dzdw, locale)}` },
+      { formula: `da/dz = ${formatNum(dadz, locale)}` },
+      { formula: `dL/da = ${formatNum(dLda, locale)}` },
     ],
     productLabel: `dL/dw = ${formatNum(dW, locale)},  dL/db = ${formatNum(dB, locale)}`,
-    productValue: `dL/dw=${formatNum(dW, locale)}`,
   };
 }
 
