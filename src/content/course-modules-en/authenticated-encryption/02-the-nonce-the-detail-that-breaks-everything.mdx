@@ -1,0 +1,239 @@
+---
+course: authenticated-encryption
+order: 2
+title: "The nonce: the detail that breaks everything"
+subtitle: 'Vital uniqueness, random versus counter, birthday bound and constant time: why the least secret number in the system is also the most dangerous.'
+estimatedMinutes: 22
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import NonceReuseViewer from '../../../components/learning/NonceReuseViewer';
+
+In the previous chapter, you saw that AEAD guarantees confidentiality and integrity in a single operation, provided its parameters are used correctly. The nonce is one of those parameters. And its usage constraint is absolute.
+
+In 2016, researchers published the "Forbidden attack" against AES-GCM. The attack does not break the algorithm. It exploits a single usage error: reusing the same nonce with the same key. The result: not only are both messages partially exposed, but the internal authentication key (the GHASH key, derived from the hashing polynomial of GCM) can be reconstructed by the adversary. Once the GHASH key is known, integrity collapses entirely: the adversary can forge valid tags for any message of their choice.
+
+By the end of this chapter, you will be able to explain why nonce uniqueness is a security constraint and not a convention, demonstrate what reuse reveals via the two-time pad intuition, distinguish between random and counter strategies for nonce generation, and understand why tag comparison must be performed in constant time.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: module 1 of this course (AEAD, authentication tag), the notion of XOR as a bitwise operation. No knowledge of Galois polynomials or the internal construction of GCM is required.
+
+**What you do not need to know**: finite field arithmetic, formal proof of the Forbidden attack, internal details of GHASH.
+
+**Rigour level**: intuitions are built from the definition of XOR, the mechanisms of the Forbidden attack are described without the full polynomial mathematics.
+</Callout>
+
+## The nonce
+
+The <Term slug="nonce">nonce</Term> (short for "number used once") is a value transmitted in plaintext with each encrypted message. Its role is precise: to guarantee that two encryptions of the same plaintext with the same key produce different ciphertexts.
+
+What matters is not its confidentiality, but its **uniqueness**. A nonce can be read by anyone on the network without affecting security. However, using the same nonce twice with the same key, even for two distinct messages, breaks fundamental guarantees.
+
+The size and generation strategy vary by primitive. AES-GCM uses a ninety-six-bit nonce. XChaCha20-Poly1305 uses a one-hundred-and-ninety-two-bit nonce. These differences have concrete consequences for how nonces are generated, as we will see shortly.
+
+## Reuse: the catastrophe
+
+### The two-time pad intuition
+
+To understand why nonce reuse is catastrophic, it is enough to look at what a stream cipher does under the hood.
+
+A stream cipher (such as the keystream in ChaCha20 or CTR mode under AES-GCM) generates a pseudo-random stream $K_s$ from the key $k$ and the nonce $N$. The plaintext $P$ is XORed with this stream:
+
+$$C = P \oplus K_s(k, N)$$
+
+If two messages $P_1$ and $P_2$ are encrypted with the same $k$ and the same $N$, their ciphertexts are:
+
+$$C_1 = P_1 \oplus K_s \quad \text{and} \quad C_2 = P_2 \oplus K_s$$
+
+An adversary who has both ciphertexts computes:
+
+$$C_1 \oplus C_2 = (P_1 \oplus K_s) \oplus (P_2 \oplus K_s) = P_1 \oplus P_2$$
+
+The keystream $K_s$ cancels out. The adversary directly obtains the XOR of the two plaintexts. If one of the two messages is known (or guessable, such as a fixed protocol header), the other is immediately recoverable. This is what is called the "two-time pad", by analogy with the one-time pad whose fundamental invariant it breaks.
+
+The component below illustrates this mechanism. Edit the two messages and observe how the XOR of the ciphertexts directly reveals the combination of the plaintexts. Modify the first message to resemble a known protocol header, and watch what the "recovered" field displays for the second.
+
+<NonceReuseViewer
+  client:visible
+  labels={{
+    plaintext1: 'Message 1 (plaintext)',
+    plaintext2: 'Message 2 (plaintext)',
+    ciphertextXor: 'C1 XOR C2 (observed by the adversary)',
+    recovered: 'Message 2 recovered (knowing message 1)',
+    default1: 'auth: user',
+    default2: 'auth: adminroot',
+  }}
+/>
+
+### The Forbidden attack: when integrity collapses too
+
+Plaintext leakage is only the first consequence. In AES-GCM, the authentication tag is computed via a polynomial function (GHASH) parameterised by an internal key $H$, derived from the main key. If two messages encrypted with the same nonce and the same key are observed, an adversary can construct a system of equations over $H$ and solve it. Once $H$ is known, they can forge a valid tag for any ciphertext of their choice.
+
+**Nonce reuse does not degrade AES-GCM security: it annihilates it.**
+
+<Callout kind="warning" title="A usage condition, not a recommendation">
+Nonce uniqueness in an AEAD scheme is not a best practice to follow when possible. It is a security assumption. If it is not respected, the formal guarantees of the scheme disappear. The 2016 Forbidden attack led to revised practices in widely deployed libraries, including BoringSSL.
+</Callout>
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    subgraph attacker["Adversary"]
+      obs["Observes C1 and C2\n(same nonce, same key)"]
+      xor["Computes C1 XOR C2"]
+      leak["= P1 XOR P2\n(keystream cancelled)"]
+      obs --> xor --> leak
+    end
+    subgraph gcm["AES-GCM specifically"]
+      eq["Builds equations over H\n(GHASH key)"]
+      solve["Solves: H known"]
+      forge["Forges valid tags"]
+      leak --> eq --> solve --> forge
+    end`}
+  caption="Nonce reuse: the keystream cancels out (two-time pad), and in AES-GCM the GHASH key can be reconstructed, enabling tag forgery."
+/>
+
+## Random versus counter
+
+Two main strategies exist for generating unique nonces. They have very different risk profiles.
+
+### Random nonce
+
+Drawing a nonce uniformly at random from a sufficiently large space makes collisions negligible. XChaCha20-Poly1305 uses a one-hundred-and-ninety-two-bit nonce: it would take on the order of two to the sixty-four messages encrypted under the same key for the collision probability to reach only two to the minus sixty-five, a negligible risk at any real-world scale. These nonces can be generated with a secure cryptographic generator without any coordination between parties.
+
+AES-GCM with its ninety-six-bit nonce is more constrained. The **birthday bound** tells us that the collision probability grows approximately as the square of the number of nonces generated divided by the space size: after two to the thirty-two messages (roughly four billion), the collision probability with a random ninety-six-bit nonce exceeds two to the minus thirty-three, which becomes concerning in high-throughput systems. The NIST recommendation limits the use of a single AES-GCM key to two to the thirty-two messages with random nonces.
+
+<Callout kind="note" title="The birthday bound, intuition">
+If a room contains twenty-three people drawn at random, the probability that two of them share the same birthday exceeds fifty percent. The same phenomenon applies to nonces: the collision probability is not proportional to the number of nonces generated, but to its square. Doubling the number of messages multiplies the risk by four, not by two.
+</Callout>
+
+### Counter nonce
+
+A monotone counter guarantees uniqueness without a probabilistic limit: each value is distinct by construction. This is the recommended strategy for AES-GCM in deterministic systems (a single producer, a single key, persistent state).
+
+The fragility is operational. A counter must be:
+
+- **Persistent**: a restart must not reset the counter to zero. If the value is not saved to durable storage, nonce zero will be reused after every restart.
+- **Unique per instance**: in a distributed system, two nodes with the same key each maintaining their own counter will inevitably produce the same values. You need either centralised coordination or a unique node identifier included in the nonce.
+- **Non-recyclable**: a key whose counter has reached its limit can no longer be used. Key rotation must be planned for.
+
+**The resulting design rule: a guarantee that rests on a usage condition (nonce uniqueness) must be made impossible to violate by construction, not entrusted to human discipline.** Prefer primitives with large nonces (XChaCha20-Poly1305) when state management is difficult. When a counter is necessary, make it inaccessible to the application layer and have it managed by the cryptographic layer.
+
+## Constant time
+
+Tag verification at open must be performed in <Term slug="constant-time">constant time</Term>: the execution time must not depend on the values being compared.
+
+Why? Because a naive comparison (byte by byte, returning on the first difference) creates a timing side channel. An adversary who can measure a server's response time gains information: if the rejection arrives faster, the first bytes of the tag are incorrect. If the rejection takes slightly longer, the first bytes match. By repeating enough attempts, they can reconstruct the valid tag byte by byte, without ever knowing the key.
+
+The defence is simple to state: compare both tags via an XOR of all bytes, then check that the cumulative result is zero, with no early conditional branching.
+
+The constant-time question extends to the primitive itself. ChaCha20 is designed to depend only on additions, rotations, and XOR, operations whose execution time does not vary with the data. AES in pure software (without AES-NI instructions) uses substitution tables (S-box) accessed in memory: the processor cache can reveal which entries were accessed, creating a cache side-channel leak. With AES-NI, the hardware instructions are constant time by construction.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    subgraph naive["Naive comparison"]
+      n1["tag[0] == ref[0] ?"]
+      n2["tag[1] == ref[1] ?"]
+      n3["..."]
+      n4["Immediate rejection if different"]
+      n1 -->|"equal"| n2 -->|"equal"| n3
+      n1 -->|"different"| n4
+    end
+    subgraph ct["Constant time"]
+      c1["acc = tag[0] XOR ref[0]"]
+      c2["acc |= tag[1] XOR ref[1]"]
+      c3["... (all bytes)"]
+      c4["acc == 0 ? Valid : Rejected"]
+      c1 --> c2 --> c3 --> c4
+    end`}
+  caption="Naive comparison: rejection time varies with the position of the first differing byte, creating a timing channel. Constant-time comparison: all bytes are processed before any branching."
+/>
+
+## Choosing a primitive
+
+The choice between AES-GCM and (X)ChaCha20-Poly1305 depends on the deployment context, not on the absolute superiority of one over the other.
+
+**AES-GCM** is preferable when the environment has AES-NI (x86-64 servers, ARM Cortex-A with ARMv8-A crypto). Performance is excellent and constant time is guaranteed by hardware. The main constraint is managing the ninety-six-bit nonce: a well-managed counter is necessary in high-throughput or distributed systems.
+
+**ChaCha20-Poly1305** is preferable in environments without hardware AES acceleration: older mobile devices, microcontrollers, WASM, native JavaScript. Performance is comparable or better, and constant time is ensured by algorithmic construction, without relying on hardware. The one-hundred-and-ninety-two-bit nonce of XChaCha20 considerably simplifies management by allowing random generation without practical limits.
+
+**<Term slug="crypto-agility">Cryptographic agility</Term> recommends not coupling application code to a specific primitive**: encapsulating the choice in an abstraction layer allows migration without rewriting if a vulnerability is discovered.
+
+<Callout kind="tip" title="TLS 1.3 and the retained cipher suites">
+TLS 1.3 mandates AES-128-GCM, AES-256-GCM, and ChaCha20-Poly1305 as the only symmetric cipher suites. The CBC suites from previous versions, the source of many vulnerabilities (POODLE, Lucky13), have been removed. The protocol leaves suite negotiation to the client and server, which can signal their preference based on their hardware.
+</Callout>
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Why is nonce uniqueness critical, and not its confidentiality?",
+      options: [
+        "Because a secret nonce would be too difficult to transmit to the recipient.",
+        "Because an adversary who knows the nonce can decrypt the message directly.",
+        "Because two encryptions with the same nonce and the same key cancel the keystream, revealing the XOR of the plaintexts.",
+        "Because a public nonce allows verifying the order of messages.",
+      ],
+      answer: 2,
+      explain:
+        "The nonce travels in plaintext with no impact on security, because its confidentiality is not what matters. What matters is its uniqueness: if two messages share the same nonce and the same key, their ciphertexts produce C1 XOR C2 = P1 XOR P2. The keystream disappears and the plaintexts are partially exposed.",
+    },
+    {
+      q: "What can an adversary do who observes two AES-GCM messages encrypted with the same nonce and the same key, in the worst case?",
+      options: [
+        "Decrypt the messages only if they know the main key.",
+        "Recover the XOR of the plaintexts and, if one message is known, reconstruct the other. In AES-GCM, they can also reconstruct the GHASH key and forge tags.",
+        "Invalidate the tags of both messages without being able to read their content.",
+        "Discover the main key in plaintext.",
+      ],
+      answer: 1,
+      explain:
+        "Nonce reuse exposes P1 XOR P2 via the two-time pad. In AES-GCM specifically, it also allows reconstructing the internal GHASH key, which enables forging valid tags for any message. This is the Forbidden attack published in 2016.",
+    },
+    {
+      q: "In a distributed system where two nodes use the same AES-GCM key and each maintains a local counter starting at zero, what is the problem?",
+      options: [
+        "The counters will desynchronise and the recipient will no longer be able to decrypt.",
+        "Both nodes will produce the same nonce values (0, 1, 2...) for different messages, causing reuse.",
+        "AES-GCM forbids counters and requires random nonces.",
+        "Counter nonces are only valid if the nodes are on the same physical network.",
+      ],
+      answer: 1,
+      explain:
+        "Two independent local counters starting at the same value will produce the same nonces for different messages. The solution is to include a unique per-node identifier in the nonce, or to centralise nonce generation, or to use a primitive with a large random nonce such as XChaCha20-Poly1305.",
+    },
+    {
+      q: "Why must tag comparison be performed in constant time?",
+      options: [
+        "To prevent the processor from overheating when verifying long tags.",
+        "Because the execution time of a naive comparison varies with the first differing byte, creating an exploitable timing side channel.",
+        "Because constant-time comparison is faster on all processors.",
+        "To satisfy FIPS 140-3 requirements on response delays.",
+      ],
+      answer: 1,
+      explain:
+        "A naive comparison that stops at the first differing byte reveals through response time how many bytes match. An adversary can deduce the valid tag byte by byte. Constant-time comparison processes all bytes before any branching, eliminating this leak.",
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- The <Term slug="nonce">nonce</Term> travels in plaintext. What matters is not its confidentiality, but its **absolute uniqueness** per (key, nonce) pair.
+- Reusing a nonce with the same key cancels the keystream: $C_1 \oplus C_2 = P_1 \oplus P_2$. If one message is known, the other is recoverable.
+- In AES-GCM, reuse also allows reconstructing the GHASH key and forging valid tags for any message (Forbidden attack, 2016).
+- AES-GCM with a ninety-six-bit nonce requires a well-managed counter in distributed contexts. The birthday bound limits random nonces to roughly two to the thirty-two messages per key.
+- XChaCha20-Poly1305 with a one-hundred-and-ninety-two-bit nonce allows random generation without practical limits, simplifying management in distributed or stateless systems.
+- **A guarantee that rests on a usage condition must be made impossible to violate by construction, not entrusted to human discipline.**
+- Tag verification must be performed in <Term slug="constant-time">constant time</Term> to eliminate the timing side channel.
+- ChaCha20 is constant time by algorithmic construction. AES without AES-NI can create cache leaks. AES-NI is constant time by hardware.

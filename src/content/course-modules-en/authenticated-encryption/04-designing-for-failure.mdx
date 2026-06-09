@@ -1,0 +1,188 @@
+---
+course: authenticated-encryption
+order: 4
+title: 'Designing for failure'
+subtitle: 'Authenticate before parsing, opaque errors, trust boundaries: how the way a system fails determines its security.'
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+In module 1, you saw that a <Term slug="padding-oracle">padding oracle</Term> allowed an adversary to reconstruct a plaintext byte by byte, without ever knowing the key, simply by observing whether the server accepted or rejected a message. What the adversary exploited was not the algorithm. It was the system's behaviour on failure: two distinct responses, depending on the cause of the rejection. This observable distinction was the oracle.
+
+AEAD eliminates padding oracles by removing from the adversary any information about the result of decryption. But a system that correctly uses an AEAD algorithm can still recreate an oracle, through the way it fails, parses, or validates incoming bytes. Design errors at this level annul cryptographic guarantees.
+
+This module examines the design rules that close these flaws. It is the final module of the course: the principles that follow build on the integrity and confidentiality from module 1, the nonce uniqueness from module 2, and the context binding from module 3.
+
+By the end of this module, you will be able to explain why operation order (verify before parsing) is a security property, define what an opaque error is and why it is necessary, apply the trust boundary principle to a processing pipeline, and identify cases where a correctly encrypted system remains vulnerable through its failure logic.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: modules 1, 2, and 3 of this course (AEAD, authentication tag, nonce, associated data). No knowledge of the mathematics of primitives is required.
+
+**What you do not need to know**: formal security proofs, internal algorithm details, specific network protocols.
+
+**Rigour level**: rules are formulated precisely and illustrated with concrete counterexamples. Formal proofs are out of scope.
+</Callout>
+
+## Authenticate before parsing
+
+The rule is absolute: **verify the tag before touching a single byte of the ciphertext**.
+
+The order seems obvious once stated, but violations are common. A system that parses encrypted bytes before verifying their authenticity exposes its parsing logic to data entirely controlled by the adversary. Every conditional branch in that parser becomes a potential leak: the system's behaviour (response time, error message, return code) can vary based on the structure of the bytes, and this variation is observable.
+
+Consider an example. A service receives an encrypted API request whose first field is a payload length. If the service reads this field and allocates a buffer of the announced size before verifying the tag, an adversary can send an arbitrary length value and observe whether the allocation succeeds or fails. The parser has processed unauthenticated data. The adversary has gained information.
+
+The same reasoning applies to any conditional logic executed before verification: decoding a format, reading a version field, validating an identifier. If these operations run on unauthenticated bytes, they contribute to the oracle.
+
+**Tag verification is a precondition, not one step among others in the processing pipeline.**
+
+A correct AEAD scheme already applies this principle in its open operation: the tag is verified first, and if verification fails, no plaintext byte is returned. The rule extends to the application layer: even after a successful open, the obtained plaintext must be treated as data from an external source until its content is validated.
+
+## Parse, don't validate
+
+Once the tag is verified, the plaintext bytes are authentic, but they can still be malformed. The "parse, don't validate" rule says: **transform raw bytes into well-typed values at the input boundary, once, so that the rest of the code cannot receive malformed data**.
+
+The distinction is precise. To validate is to check that data satisfies a condition (for example: "this field is a positive integer") and continue manipulating the raw data if the condition is true. To parse is to construct a typed representation from the raw bytes, and return an error if construction fails.
+
+The advantage of parsing is structural: once the boundary is crossed, types guarantee data consistency. A "length" field that exists only as a bounded unsigned integer cannot be negative elsewhere in the code, by construction of the type, not by repeated checking.
+
+This principle applies to every layer that receives bytes from the outside: token decryption, network packet reading, message decoding. The parsing boundary coincides with the trust boundary. What crosses it is usable. What fails to cross it is rejected, without partial processing.
+
+## The opaque error
+
+A system that fails in multiple observable ways is an oracle. The design consequence is direct: **a single failure mode, with no exploitable information**.
+
+What this means in practice:
+
+- **A single error message.** "Decryption failed" covers all cases: invalid tag, malformed nonce, missing AAD, corrupted data. Distinguishing these cases in the returned message allows an adversary to know what failed and why, which is sufficient to reconstruct information about the original message.
+- **A single return code.** Same logic for HTTP error codes, application status codes, raised exceptions. Any observable distinction between failure causes is a leak.
+- **A constant response time.** As seen in module 2 with <Term slug="constant-time">constant-time</Term> tag comparison, a difference in processing time between two failure causes is a side channel. A rejection arriving in two milliseconds and a rejection arriving in twenty milliseconds are two distinct messages for an adversary who can measure.
+
+The opaque error applies to internal logs as well: a detailed log accessible via an external interface (a metrics endpoint, a diagnostic page) can become a leak if the adversary can consult it. Internal logs can be precise; what is returned to the client must not be.
+
+<Callout kind="note" title="Security as adversarial review">
+Design flaws in failure handling are difficult to find by positive inspection: "this code does what it is supposed to do". They are revealed by adversarial review: for each execution path, ask "what does the adversary observe if this path is taken?". The question "what happens if the tag is invalid?" must have the same observable answer as "what happens if the nonce is malformed?". If the answers differ in any observable way, the system has an oracle.
+</Callout>
+
+## Trust boundaries
+
+A trust boundary is the point where uncontrolled bytes enter the system. Everything that comes from outside this boundary is hostile by default.
+
+In a system using AEAD, the trust boundary is the open operation: what arrives before the open is unauthenticated, what comes out of a successful open is authenticated. But this boundary has practical implications for system design.
+
+**Validate in both directions.** The seal must verify that the fields included in the AAD are well-formed, not merely pass them as-is. If the sender includes a recipient identifier in the AAD without validating that it corresponds to an existing recipient, the ciphertext can be forged with an invalid identifier and the recipient will only detect the error after decryption. Validating context fields at seal time reduces the exploitable surface at the point of emission.
+
+**Treat everything from the outside as hostile.** This includes the encrypted bytes (obvious), but also the metadata accompanying the ciphertext: an HTTP header, a session identifier transmitted separately, a URL parameter. These external values must be validated independently, before being used to select the key, the algorithm, or the recipient.
+
+**The cryptographic layer is not the only line of defence.** AEAD guarantees that an authenticated message has not been altered. It does not guarantee that the message was correctly constructed by a legitimate sender. An internal adversary (a compromised component, a sender forging a valid but malicious context) can produce an authentic ciphertext with malicious content. Application-level validations after the open remain necessary.
+
+## Correct order versus incorrect order
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    subgraph correct["Correct order"]
+      r1["Receive encrypted bytes"]
+      v1["Verify tag (open)"]
+      p1["Parse authenticated plaintext"]
+      a1["Act on validated data"]
+      e1["Opaque error (invalid tag)"]
+      r1 --> v1
+      v1 -->|"tag valid"| p1
+      v1 -->|"tag invalid"| e1
+      p1 --> a1
+    end
+    subgraph wrong["Incorrect order"]
+      r2["Receive encrypted bytes"]
+      p2["Parse raw ciphertext"]
+      v2["Verify tag"]
+      a2["Act"]
+      e2["Leak: parser observes unauthenticated bytes"]
+      r2 --> p2
+      p2 --> v2
+      p2 -.->|"oracle"| e2
+      v2 --> a2
+    end`}
+  caption="Left: tag verification precedes all parsing. The error is opaque. Right: the parser processes unauthenticated bytes before verification, creating an observable oracle."
+/>
+
+The diagram illustrates the structural difference. In the correct order, the adversary cannot influence the parser's behaviour, because the parser only receives data whose authenticity has already been established. In the incorrect order, every branch of the parser is potentially observable by the adversary, who entirely controls the bytes presented.
+
+## The pattern to retain
+
+**Touch no byte you have not authenticated. A single failure mode, with no exploitable detail.**
+
+These two rules reinforce each other. The first closes the oracle the parser could create. The second closes the oracle the error mechanism could create. Together, they ensure that the system's observable behaviour on failure is constant: a rejection, a single way, with no information about the cause.
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "A service receives a message encrypted with AES-GCM. Before verifying the tag, it reads the first field of the ciphertext to allocate a buffer. Why is this a vulnerability?",
+      options: [
+        "Because AES-GCM forbids reading a ciphertext before tag verification.",
+        "Because the allocation succeeds or fails based on the field's value, which is observable by an adversary who controls the encrypted bytes.",
+        "Because the buffer allocated before verification can contain sensitive data.",
+        "Because reading the ciphertext before the open modifies the nonce.",
+      ],
+      answer: 1,
+      explain:
+        "The unverified ciphertext is entirely controlled by the adversary. If the parser examines it before tag verification, its behaviour (success or failure of the allocation, response time, error message) varies based on the field's value. This observable variation is an oracle. Tag verification must precede all byte processing.",
+    },
+    {
+      q: "In module 2, you saw that tag comparison must be performed in constant time. What general principle does this illustrate for failure design?",
+      options: [
+        "Cryptographic operations must be parallelised to be fast.",
+        "A difference in processing time between two failure causes is an exploitable side channel.",
+        "Constant time guarantees the tag is correct, regardless of the data being compared.",
+        "Constant-time verification avoids tag collisions.",
+      ],
+      answer: 1,
+      explain:
+        "Response time is observable information. If a rejection for an invalid tag takes a different time than a rejection for a malformed nonce, the adversary can distinguish the two cases. Constant-time comparison is an instance of the more general principle: a single failure mode, with no observable difference between causes.",
+    },
+    {
+      q: "A system seals a token with AES-GCM, including in the AAD the user identifier and the message direction (module 3). During open, it returns distinct error messages depending on whether the tag is invalid or the AAD does not match. What is the problem?",
+      options: [
+        "The AAD must not contain the user identifier, as this exposes personal data.",
+        "Two distinct error messages allow an adversary to distinguish failure cases, which constitutes an oracle.",
+        "The open must not verify the AAD, because it is transmitted in plaintext.",
+        "There is no problem: distinguishing error causes helps debugging.",
+      ],
+      answer: 1,
+      explain:
+        "An adversary who can distinguish \"invalid tag\" from \"incorrect AAD\" gains information about the message structure. They can, for example, learn whether a token was produced with the correct context but modified, or produced with an incorrect context. A single error message (\"decryption failed\") covers all cases without leaking.",
+    },
+    {
+      q: "Bringing together all four modules: a system uses ChaCha20-Poly1305, generates random one-hundred-and-ninety-two-bit nonces, includes the domain identifier and recipient in the AAD, verifies the tag before parsing, and returns a single error on failure. What property remains to be verified for a complete implementation?",
+      options: [
+        "Verifying that ChaCha20-Poly1305 is faster than AES-GCM on the target hardware.",
+        "Verifying that the key is derived separately for each purpose and that application-level validations after the open are present.",
+        "Verifying that the nonce is transmitted encrypted, to prevent an adversary from reading it.",
+        "Verifying that the AAD is limited to sixty-four bytes to stay within the scheme's limits.",
+      ],
+      answer: 1,
+      explain:
+        "The four points covered correspond to the four modules: AEAD integrity (module 1), nonce uniqueness (module 2), context binding via AAD (module 3), opaque error and operation order (module 4). It remains to ensure that domain separation is realised at the key level (one derived key per purpose, not merely a context in the AAD) and that application-level validations after decryption (expiry check, access authorisation) are not omitted on the assumption that encryption replaces them.",
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- A system can correctly use an AEAD scheme and still create an <Term slug="padding-oracle">oracle</Term> through its failure logic. What the adversary observes on failure is an attack surface as real as the algorithm itself.
+- **Verify the tag before touching a single byte**: verification is a precondition, not one step among others. Any parser that runs on unauthenticated bytes is exposed.
+- **Parse, don't validate**: transform raw bytes into well-typed values at the input boundary, once. What crosses the boundary is usable; what fails to cross it is rejected without partial processing.
+- **A single failure mode, with no exploitable information**: same error message, same return code, same processing time, regardless of the cause of rejection. An observable difference is an oracle.
+- <Term slug="constant-time">Constant-time</Term> tag comparison (module 2) is an instance of this general rule: response time is observable information.
+- **Everything from the outside is hostile by default**: validate context fields at seal and open, do not assume the cryptographic layer replaces application-level validations.
+- The four modules form a whole: AEAD guarantees integrity and confidentiality (module 1) provided the nonce is unique (module 2), the context is bound to the ciphertext (module 3), and the system fails without giving an adversary an oracle (module 4). Each layer is necessary. None replaces the others.
