@@ -75,7 +75,7 @@ Plaintext leakage is only the first consequence. In AES-GCM, the authentication 
 
 **Nonce reuse does not degrade AES-GCM security: it annihilates it.**
 
-<Callout kind="warning" title="A usage condition, not a recommendation">
+<Callout kind="warn" title="A usage condition, not a recommendation">
 Nonce uniqueness in an AEAD scheme is not a best practice to follow when possible. It is a security assumption. If it is not respected, the formal guarantees of the scheme disappear. The 2016 Forbidden attack led to revised practices in widely deployed libraries, including BoringSSL.
 </Callout>
 

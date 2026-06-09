@@ -1,0 +1,20 @@
+slug: authenticated-encryption
+title: 'Chiffrement authentifié : pourquoi chiffrer ne suffit jamais'
+summary: "Chiffrer un message le rend illisible, pas inviolable. Ce cours de cryptographie appliquée construit l'intuition du chiffrement authentifié : confidentialité contre intégrité, l'AEAD et son tag, les pièges du nonce, les données associées et la séparation de domaines, les formats versionnés, et l'art de concevoir un échec qui ne fuit rien. Quatre chapitres, deux composants interactifs, des attaques réelles à chaque étape. Aucun langage de programmation requis."
+tags:
+  - cryptographie
+  - aead
+  - nonce
+  - intégrité
+  - sécurité
+theme: security
+subtheme: applied-crypto
+level: intermediate
+estimatedMinutes: 80
+modules:
+  - 01-chiffrer-ne-suffit-pas
+  - 02-le-nonce-le-detail-qui-fait-tout-seffondrer
+  - 03-lier-le-chiffre-a-son-contexte
+  - 04-concevoir-lechec
+published: true
+publishedAt: 2026-06-09

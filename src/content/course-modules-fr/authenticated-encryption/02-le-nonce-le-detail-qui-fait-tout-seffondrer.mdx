@@ -75,7 +75,7 @@ La fuite des textes clairs n'est que la première conséquence. Dans AES-GCM, le
 
 **La réutilisation du nonce ne dégrade pas la sécurité d'AES-GCM : elle l'annule.**
 
-<Callout kind="warning" title="Une condition d'usage, pas une recommandation">
+<Callout kind="warn" title="Une condition d'usage, pas une recommandation">
 L'unicité du nonce dans un schéma AEAD n'est pas une bonne pratique à suivre si possible. C'est une hypothèse de sécurité. Si elle n'est pas respectée, les garanties formelles du schéma disparaissent. La Forbidden attack de 2016 a conduit à des révisions de pratique dans des bibliothèques largement déployées, dont BoringSSL.
 </Callout>
 
