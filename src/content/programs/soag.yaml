@@ -20,7 +20,7 @@ roadmap:
     en: 'Emergent spatial organization'
   - fr: 'Dynamiques multi-échelles'
     en: 'Multi-scale temporal dynamics'
-published: true
+published: false
 fr:
   title: SOAG
   tagline: "L'intelligence comme auto-organisation, pas comme optimisation : des composants riches qui s'organisent localement."

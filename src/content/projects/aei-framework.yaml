@@ -25,4 +25,4 @@ en:
     A Rust exploration of an AI agent framework built on Event Sourcing.
     Perception, decision and action loops are persisted as events, so the
     agent's behaviour can be replayed, audited and evolved over time.
-published: true
+published: false
