@@ -71,7 +71,7 @@ if (Test-Path $envProduction) {
     Get-Content $envProduction | ForEach-Object {
         if ($_ -match '^\s*([^#][^=]+)=(.+)$') {
             $key   = $Matches[1].Trim()
-            $value = $Matches[2].Trim()
+            $value = $Matches[2].Trim() -replace '^["'']|["'']$', ''
             [System.Environment]::SetEnvironmentVariable($key, $value, 'Process')
             Write-Host "    $key=***"
         }
