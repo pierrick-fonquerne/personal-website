@@ -20,7 +20,8 @@
     "audio:dry": "node scripts/generate-audio.mjs --dry-run",
     "audio:list": "node scripts/generate-audio.mjs --list",
     "audio:voices": "node scripts/generate-audio.mjs --voices",
-    "astro": "astro"
+    "astro": "astro",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/mdx": "^5.0.5",
@@ -54,7 +55,8 @@
     "prettier-plugin-tailwindcss": "^0.8.0",
     "schema-dts": "^2.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.3"
+    "typescript-eslint": "^8.59.3",
+    "vitest": "^4.1.8"
   },
   "overrides": {
     "vite": "^7"

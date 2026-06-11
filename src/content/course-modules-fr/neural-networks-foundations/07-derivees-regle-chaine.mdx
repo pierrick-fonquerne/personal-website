@@ -2,22 +2,342 @@
 course: neural-networks-foundations
 order: 7
 title: Dérivées et règle de la chaîne
-subtitle: 'Le strict minimum de calcul différentiel pour comprendre la backpropagation.'
-estimatedMinutes: 12
+subtitle: "De la pente d'une courbe au gradient : l'outil qui transforme le paysage de coût en chemin de descente."
+estimatedMinutes: 18
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
-import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import TangentSlopeExplorer from '../../../components/learning/TangentSlopeExplorer.tsx';
+import ChainRuleGraph from '../../../components/learning/ChainRuleGraph.tsx';
+import GradientVectorExplorer from '../../../components/learning/GradientVectorExplorer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 6, on a appris à calculer la note d'un réseau et à la lire comme une altitude dans un paysage de coût. Les bons réseaux occupent les vallées, les mauvais les sommets, et apprendre revient à descendre vers un creux. Reste la question décisive : autour du point où l'on se trouve, dans quelle direction faut-il modifier chaque poids pour que la note baisse ?
+
+Pour le savoir, il faut mesurer de quel côté penche la surface. Cette pente locale a un nom précis en mathématiques : la dérivée. Ce chapitre pose les trois outils dont tout l'apprentissage dépend. La dérivée mesure la pente d'une courbe en un point. La règle de la chaîne propage cette pente à travers une composition de calculs. Le gradient généralise la pente à plusieurs poids à la fois. Aucun de ces outils n'est difficile, et chacun se voit géométriquement. À la fin, le décor statique du chapitre 6 sera devenu un chemin de descente.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : la fonction sigmoïde et la notation $a = f(z)$ (chapitre 3), la fonction de coût et la surface de coût (chapitre 6), un peu d'algèbre de lycée (développer $(x+h)^2$).
+
+**Ce qu'il n'est pas nécessaire de connaître** : la rétropropagation (chapitre 8) et la descente de gradient (chapitre 9). Ici, on apprend à mesurer une pente, pas encore à s'en servir pour corriger les poids.
+
+**Niveau de rigueur** : une définition géométrique de la dérivée, une table des dérivées utiles au cours, un calcul de chaîne déroulé entièrement puis relu comme un neurone, une lecture visuelle du gradient, et quatre exercices papier-crayon aux corrigés détaillés ligne par ligne.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : la dérivée, c'est une pente
 
-- L'intuition géométrique de la dérivée : pente d'une courbe en un point
-- La règle de la chaîne pour dériver une composition de fonctions
-- La généralisation en dérivées partielles et en gradient
+Prends une courbe, par exemple celle de $f(x) = x^2$. Choisis un point dessus. Si tu zoomes très fort autour de ce point, la courbe finit par ressembler à une droite. La pente de cette droite, c'est la <Term slug="derivee">dérivée</Term> de $f$ en ce point. Elle te dit deux choses d'un coup : dans quel sens la sortie bouge quand l'entrée augmente, et de combien.
 
-La backpropagation est essentiellement la règle de la chaîne appliquée à un graphe de calculs. Ce chapitre te donne juste ce qu'il faut pour suivre le chapitre suivant sans buter sur les mathématiques.
+Pour la définir proprement, on part du taux de variation entre deux points proches, $x$ et $x + h$ :
+
+$$
+\frac{f(x + h) - f(x)}{h}.
+$$
+
+C'est la pente de la droite qui coupe la courbe en ces deux points, la sécante. Quand on fait tendre l'écart $h$ vers $0$, le second point glisse vers le premier, et la sécante bascule vers la tangente. La dérivée $f'(x)$ est la limite de ce taux :
+
+$$
+f'(x) = \lim_{h \to 0} \frac{f(x + h) - f(x)}{h}.
+$$
+
+Pour $f(x) = x^2$, ce calcul donne $f'(x) = 2x$ (on le refait à la main dans l'exercice 1). La pente vaut donc $2$ en $x = 1$, elle vaut $0$ en $x = 0$ (le fond du bol, où la courbe est plate), et $-2$ en $x = -1$ (la courbe descend).
+
+Quelques dérivées reviennent sans cesse dans ce cours. Les voici une fois pour toutes :
+
+$$
+(x^n)' = n\,x^{n-1}, \qquad (e^x)' = e^x, \qquad (\ln x)' = \frac{1}{x}, \qquad \sigma'(z) = \sigma(z)\,\big(1 - \sigma(z)\big).
+$$
+
+La dernière, celle de la sigmoïde, est remarquable : sa pente s'exprime à partir de sa propre valeur. On s'en servira dès l'acte 2, puis au chapitre 8.
+
+Glisse le point le long de la courbe, et resserre l'écart $h$ pour voir la sécante basculer vers la tangente.
+
+<TangentSlopeExplorer client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Plus tu réduis $h$, plus la pente de la sécante se rapproche de la pente exacte $f'(x) = 2x$. L'écart entre les deux fond vers zéro : c'est la limite, rendue visible.
+- Au creux du bol, en $x = 0$, la tangente est horizontale et la pente vaut $0$. C'est la signature d'un minimum, et ce sera le but de l'apprentissage.
+- À gauche du creux la pente est négative, à droite elle est positive. Le signe de la dérivée dit de quel côté la courbe descend.
+
+## Acte 2 : la règle de la chaîne
+
+Un réseau n'est pas une seule fonction, c'est un empilement de fonctions emboîtées. La sortie d'une couche entre dans la suivante. Pour dériver un tel empilement, il faut savoir dériver une <Term slug="composition-de-fonctions">composition de fonctions</Term>, c'est-à-dire un calcul de la forme $h(x) = f\big(g(x)\big)$.
+
+La <Term slug="regle-de-la-chaine">règle de la chaîne</Term> répond exactement à ce besoin. Elle dit que la dérivée d'une composition est le produit des dérivées locales :
+
+$$
+h'(x) = f'\big(g(x)\big) \cdot g'(x).
+$$
+
+L'intuition est mécanique. Si $g$ amplifie les variations d'un facteur $g'(x)$, et que $f$ les amplifie d'un facteur $f'$ au point où elle reçoit son entrée, alors le tout amplifie d'un facteur égal au produit des deux. On multiplie les pentes le long du chemin.
+
+Déroulons un exemple chiffré. Soit $u = g(x) = 3x + 1$ et $y = f(u) = u^2$. Les dérivées locales sont $g'(x) = 3$ et $f'(u) = 2u$. La règle de la chaîne donne
+
+$$
+\frac{dy}{dx} = \underbrace{2u}_{f'(u)} \cdot \underbrace{3}_{g'(x)} = 6\,(3x + 1).
+$$
+
+En $x = 1$, on a $u = 4$, donc $\tfrac{dy}{dx} = 2 \cdot 4 \cdot 3 = 24$.
+
+**La même mécanique est un neurone.** Voici le point clé du chapitre. Reprends un seul neurone et sa note, comme au chapitre 6. L'entrée $x$ traverse trois calculs emboîtés :
+
+$$
+z = wx + b, \qquad a = \sigma(z), \qquad L = (a - y)^2.
+$$
+
+Pour savoir comment ajuster le poids $w$, on cherche $\tfrac{dL}{dw}$. C'est une composition de trois fonctions, donc on multiplie trois dérivées locales le long du chemin $w \to z \to a \to L$ :
+
+$$
+\frac{dL}{dw} = \underbrace{2(a - y)}_{dL/da} \cdot \underbrace{a(1 - a)}_{da/dz} \cdot \underbrace{x}_{dz/dw}.
+$$
+
+La première dérivée vient de $L = (a-y)^2$, la deuxième est la dérivée de la sigmoïde (qui s'écrit avec sa propre valeur, $a(1-a)$), la troisième vient de $z = wx + b$. Pour le biais, seul le dernier facteur change : $\tfrac{dz}{db} = 1$, donc $\tfrac{dL}{db} = 2(a - y)\,a(1 - a)$.
+
+Tu viens de calculer comment la note réagit à un poids, en propageant des dérivées locales à rebours dans le graphe. C'est exactement la rétropropagation. Le chapitre 8 ne fera que l'appliquer mécaniquement à un réseau entier.
+
+Bascule entre la composition abstraite et le graphe du neurone, et regarde les dérivées locales se multiplier le long du chemin.
+
+<ChainRuleGraph client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- En mode composition, chaque arête porte sa dérivée locale, et le produit le long du chemin reconstitue $\tfrac{dy}{dx}$. Change $x$ : le produit suit.
+- En mode neurone, le même mécanisme calcule $\tfrac{dL}{dw}$ et $\tfrac{dL}{db}$. Les arêtes sont les mêmes briques, seules les fonctions changent.
+- Quand un facteur du produit est petit (par exemple $a(1 - a)$ quand le neurone est saturé), tout le produit s'écrase. C'est l'origine du gradient qui s'évanouit, un problème qu'on retrouvera plus loin.
+
+## Acte 3 : dérivées partielles et gradient
+
+Un vrai réseau n'a pas un poids mais des millions. La note $L$ est alors une fonction de tous ces poids à la fois. Comment parler de pente quand il y a plusieurs directions où bouger ?
+
+La réponse tient en un geste simple : on regarde une direction à la fois. La <Term slug="derivee-partielle">dérivée partielle</Term> par rapport à un poids est la pente obtenue en ne faisant varier que ce poids, tous les autres gardés constants. Pour la noter, on remplace le $d$ droit par un $\partial$ rond : $\tfrac{\partial L}{\partial w_1}$ est la pente selon $w_1$ seul.
+
+Prenons un coût jouet à deux poids, $L(w_1, w_2) = w_1^2 + 2\,w_2^2$. Ses deux dérivées partielles sont
+
+$$
+\frac{\partial L}{\partial w_1} = 2 w_1, \qquad \frac{\partial L}{\partial w_2} = 4 w_2.
+$$
+
+Empile ces pentes dans un vecteur, et tu obtiens le <Term slug="gradient">gradient</Term>, noté $\nabla L$ :
+
+$$
+\nabla L = \left( \frac{\partial L}{\partial w_1},\; \frac{\partial L}{\partial w_2} \right) = (2 w_1,\; 4 w_2).
+$$
+
+Le gradient n'est pas qu'une liste de nombres. Vu comme une flèche au point courant, il pointe dans la direction de plus forte montée de la note, et sa longueur mesure la raideur de cette montée. Pour faire baisser la note, il suffit donc d'aller dans la direction opposée, $-\nabla L$. On tient enfin la boussole de la descente.
+
+Déplace le point sur le relief et lis les deux pentes partielles ainsi que la flèche du gradient.
+
+<GradientVectorExplorer client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- La flèche du gradient pointe toujours vers le haut du relief, à l'opposé du creux. La flèche de descente $-\nabla L$ vise le creux.
+- Au fond du bol, les deux pentes partielles s'annulent et le gradient devient nul. C'est le signal d'un minimum, la version multi-poids de la tangente horizontale de l'acte 1.
+- Le coefficient $2$ devant $w_2^2$ rend la pente selon $w_2$ deux fois plus raide : le gradient ne pointe pas vers le centre en ligne droite, il penche vers l'axe le plus pentu.
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne.
+
+**Exercice 1.** Retrouve la dérivée de $f(x) = x^2$ par la définition, c'est-à-dire calcule la limite de $\tfrac{(x+h)^2 - x^2}{h}$ quand $h \to 0$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : une dérivée par la définition">
+**Étape 1.** Développe le numérateur.
+
+$$
+(x + h)^2 - x^2 = x^2 + 2xh + h^2 - x^2 = 2xh + h^2.
+$$
+
+**Étape 2.** Divise par $h$ (on a $h \neq 0$ tant qu'on n'a pas pris la limite).
+
+$$
+\frac{2xh + h^2}{h} = 2x + h.
+$$
+
+**Étape 3.** Fais tendre $h$ vers $0$.
+
+$$
+f'(x) = \lim_{h \to 0} (2x + h) = 2x.
+$$
+
+**Résultat.** $f'(x) = 2x$, ce qui confirme la pente lue dans le composant de l'acte 1.
+
+</Callout>
+
+**Exercice 2.** Soit $y = (3x + 1)^2$. Calcule $\tfrac{dy}{dx}$ avec la règle de la chaîne, puis donne sa valeur en $x = 2$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : une règle de la chaîne">
+**Étape 1.** Identifie les deux fonctions emboîtées : $u = 3x + 1$ (interne) et $y = u^2$ (externe).
+
+**Étape 2.** Calcule les deux dérivées locales.
+
+$$
+\frac{dy}{du} = 2u, \qquad \frac{du}{dx} = 3.
+$$
+
+**Étape 3.** Multiplie le long de la chaîne.
+
+$$
+\frac{dy}{dx} = 2u \cdot 3 = 6\,(3x + 1).
+$$
+
+**Étape 4.** Évalue en $x = 2$, où $3x + 1 = 7$.
+
+$$
+\frac{dy}{dx}\Big|_{x = 2} = 6 \cdot 7 = 42.
+$$
+
+**Résultat.** $\tfrac{dy}{dx} = 6(3x + 1)$, soit $42$ en $x = 2$.
+
+</Callout>
+
+**Exercice 3.** Pour un neurone, $L = (a - y)^2$ avec $a = \sigma(z)$ et $z = wx + b$. Donne $\tfrac{dL}{dz}$, puis $\tfrac{dL}{dw}$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : le gradient d'un neurone">
+**Étape 1.** Dérive la note par rapport à la sortie $a$.
+
+$$
+\frac{dL}{da} = 2(a - y).
+$$
+
+**Étape 2.** Dérive l'activation par rapport à la pré-activation $z$ (dérivée de la sigmoïde).
+
+$$
+\frac{da}{dz} = \sigma'(z) = a\,(1 - a).
+$$
+
+**Étape 3.** Multiplie les deux pour obtenir $\tfrac{dL}{dz}$.
+
+$$
+\frac{dL}{dz} = 2(a - y)\,a\,(1 - a).
+$$
+
+**Étape 4.** Ajoute le dernier maillon, $\tfrac{dz}{dw} = x$.
+
+$$
+\frac{dL}{dw} = \frac{dL}{dz} \cdot x = 2(a - y)\,a\,(1 - a)\,x.
+$$
+
+**Résultat.** $\tfrac{dL}{dz} = 2(a - y)\,a(1 - a)$ et $\tfrac{dL}{dw} = 2(a - y)\,a(1 - a)\,x$. C'est précisément ce que la rétropropagation calcule au chapitre 8.
+
+</Callout>
+
+**Exercice 4.** Soit $L(w_1, w_2) = w_1^2 + 2\,w_2^2$. Calcule le gradient $\nabla L$ au point $(1, 1)$, puis donne la direction de descente.
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : un gradient et sa descente">
+**Étape 1.** Calcule les deux dérivées partielles.
+
+$$
+\frac{\partial L}{\partial w_1} = 2 w_1, \qquad \frac{\partial L}{\partial w_2} = 4 w_2.
+$$
+
+**Étape 2.** Évalue chacune en $(1, 1)$.
+
+$$
+\frac{\partial L}{\partial w_1} = 2, \qquad \frac{\partial L}{\partial w_2} = 4.
+$$
+
+**Étape 3.** Assemble le gradient.
+
+$$
+\nabla L = (2,\; 4).
+$$
+
+**Étape 4.** La direction de descente est l'opposée du gradient.
+
+$$
+-\nabla L = (-2,\; -4).
+$$
+
+**Résultat.** $\nabla L = (2, 4)$ pointe vers la montée ; pour baisser la note, on suit $(-2, -4)$, qui penche vers l'axe $w_2$, le plus pentu.
+
+</Callout>
+
+## En une phrase
+
+La dérivée mesure la pente d'une fonction en un point, la règle de la chaîne propage cette pente à travers des calculs emboîtés en multipliant les dérivées locales, et le gradient empile ces pentes en une boussole qui indique, pour chaque poids, dans quel sens faire baisser la note.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Que mesure la dérivée d’une fonction en un point ?',
+      options: [
+        'La valeur de la fonction en ce point',
+        'La pente de la courbe en ce point',
+        'La surface sous la courbe',
+        'Le nombre de minimums de la fonction',
+      ],
+      answer: 1,
+      explain:
+        "La dérivée est la pente de la tangente : elle dit dans quel sens et de combien la sortie change quand l'entrée varie d'un cheveu.",
+    },
+    {
+      q: 'Comment la règle de la chaîne dérive-t-elle une composition f(g(x)) ?',
+      options: [
+        'En additionnant les dérivées locales',
+        'En prenant la plus grande des deux dérivées',
+        'En multipliant les dérivées locales le long du chemin',
+        'En ignorant la fonction interne',
+      ],
+      answer: 2,
+      explain:
+        "La dérivée d'une composition est le produit des dérivées locales : f'(g(x)) multiplié par g'(x). On multiplie les pentes le long du chemin.",
+    },
+    {
+      q: 'Pourquoi le calcul de dL/dw d’un neurone préfigure-t-il la rétropropagation ?',
+      options: [
+        "Parce qu'il n'utilise aucune dérivée",
+        'Parce que la rétropropagation est la règle de la chaîne appliquée au graphe de calcul',
+        'Parce que le neurone n’a pas de biais',
+        'Parce que softmax remplace la sigmoïde',
+      ],
+      answer: 1,
+      explain:
+        'La rétropropagation propage des dérivées locales à rebours dans le graphe en les multipliant. Le neurone à un poids en est le cas minimal.',
+    },
+    {
+      q: 'Qu’est-ce qu’une dérivée partielle ?',
+      options: [
+        'La pente selon un seul axe, les autres variables gardées constantes',
+        'La moitié d’une dérivée',
+        'La dérivée d’une fonction qui n’est définie qu’en partie',
+        'La somme de toutes les pentes',
+      ],
+      answer: 0,
+      explain:
+        'On fait varier un seul poids à la fois et on garde les autres figés : la dérivée partielle est la pente selon cet axe.',
+    },
+    {
+      q: 'Dans quelle direction pointe le gradient, et que fait-on pour baisser la note ?',
+      options: [
+        'Vers le minimum ; on suit le gradient',
+        'Vers la plus forte montée ; on suit l’opposé du gradient',
+        'Au hasard ; on tire un poids',
+        'Toujours vers l’axe horizontal ; on ne bouge rien',
+      ],
+      answer: 1,
+      explain:
+        'Le gradient pointe vers la plus forte montée. Pour faire baisser la note, on se déplace dans la direction opposée, moins le gradient.',
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 8
+
+On sait désormais calculer la pente de la note par rapport à un poids isolé, en multipliant des dérivées locales le long du graphe d'un neurone. Mais un réseau réel compte des milliers de poids enchaînés sur plusieurs couches. Refaire ce calcul de zéro pour chacun serait ruineux. La rétropropagation, au chapitre 8, organise ce calcul en un seul passage arrière à travers le réseau, qui récupère toutes les dérivées partielles d'un coup. C'est la règle de la chaîne, industrialisée.
+
+## Sources
+
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 6 (et section 6.5 sur la rétropropagation et la différentiation). https://www.deeplearningbook.org
+- Spivak, M. (2008). _Calculus_ (4e éd.). Publish or Perish. Chapitres sur la dérivée et la règle de la chaîne.
+- Nielsen, M. (2015). _Neural Networks and Deep Learning_. Chapitre 2, sur la propagation des dérivées dans un réseau. http://neuralnetworksanddeeplearning.com/chap2.html

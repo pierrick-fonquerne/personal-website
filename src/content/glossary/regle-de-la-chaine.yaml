@@ -1,10 +1,11 @@
 slug: regle-de-la-chaine
 fr:
-  term: Règle de la chaîne
-  definition: Règle de calcul différentiel permettant de dériver une fonction composée. Si y = f(g(x)), alors dy/dx = f'(g(x)) · g'(x). C'est le pilier mathématique de la backpropagation, qui n'est qu'une application systématique de cette règle à travers un réseau.
+  term: "Règle de la chaîne"
+  definition: "Règle de dérivation d'une composition de fonctions : la dérivée de f(g(x)) est f'(g(x)) multiplié par g'(x). On multiplie les dérivées locales le long du chemin. C'est le coeur mécanique de la rétropropagation."
 en:
   term: Chain rule
-  definition: A rule of differential calculus to differentiate a composite function. If y = f(g(x)), then dy/dx = f'(g(x)) · g'(x). It is the mathematical pillar of backpropagation, which is just a systematic application of this rule through a network.
+  definition: "The rule for differentiating a composition of functions: the derivative of f(g(x)) is f'(g(x)) times g'(x). Local derivatives are multiplied along the path. It is the mechanical heart of backpropagation."
 seeAlso:
-  - gradient
+  - derivee
+  - composition-de-fonctions
   - backpropagation

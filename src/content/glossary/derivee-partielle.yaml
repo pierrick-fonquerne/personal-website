@@ -1,0 +1,10 @@
+slug: derivee-partielle
+fr:
+  term: Dérivée partielle
+  definition: Dérivée d'une fonction de plusieurs variables par rapport à une seule d'entre elles, les autres étant gardées constantes. Elle mesure la pente selon un axe. Empilées, les dérivées partielles forment le gradient.
+en:
+  term: Partial derivative
+  definition: The derivative of a multivariable function with respect to a single variable, the others held constant. It measures the slope along one axis. Stacked together, the partial derivatives form the gradient.
+seeAlso:
+  - gradient
+  - derivee
