@@ -1,0 +1,10 @@
+slug: derivee
+fr:
+  term: Dérivée
+  definition: Pente d'une fonction en un point. Formellement, la limite du taux de variation (f(x+h) - f(x)) / h quand h tend vers zéro. Elle dit de combien et dans quel sens la sortie change quand on bouge l'entrée d'un cheveu.
+en:
+  term: Derivative
+  definition: The slope of a function at a point. Formally, the limit of the rate of change (f(x+h) - f(x)) / h as h tends to zero. It tells how much, and in which direction, the output changes when the input moves by a hair.
+seeAlso:
+  - regle-de-la-chaine
+  - gradient
