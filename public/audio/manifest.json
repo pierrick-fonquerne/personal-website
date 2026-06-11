@@ -97,35 +97,35 @@
   },
   "fr/service-architecture-models/01-monolithe-integre-services-autonomes": {
     "url": "/audio/fr/service-architecture-models/01-monolithe-integre-services-autonomes.mp3",
-    "chars": 8394
+    "chars": 8432
   },
   "fr/service-architecture-models/02-le-modele-federe": {
     "url": "/audio/fr/service-architecture-models/02-le-modele-federe.mp3",
-    "chars": 9779
+    "chars": 9831
   },
   "fr/service-architecture-models/03-frontieres-et-contrats-ddd": {
     "url": "/audio/fr/service-architecture-models/03-frontieres-et-contrats-ddd.mp3",
-    "chars": 8960
+    "chars": 9008
   },
   "fr/service-architecture-models/04-choisir-et-migrer": {
     "url": "/audio/fr/service-architecture-models/04-choisir-et-migrer.mp3",
-    "chars": 7953
+    "chars": 8015
   },
   "en/service-architecture-models/01-integrated-monolith-autonomous-services": {
     "url": "/audio/en/service-architecture-models/01-integrated-monolith-autonomous-services.mp3",
-    "chars": 7601
+    "chars": 7639
   },
   "en/service-architecture-models/02-the-federated-model": {
     "url": "/audio/en/service-architecture-models/02-the-federated-model.mp3",
-    "chars": 9028
+    "chars": 9080
   },
   "en/service-architecture-models/03-boundaries-and-contracts-ddd": {
     "url": "/audio/en/service-architecture-models/03-boundaries-and-contracts-ddd.mp3",
-    "chars": 8432
+    "chars": 8480
   },
   "en/service-architecture-models/04-choosing-and-migrating": {
     "url": "/audio/en/service-architecture-models/04-choosing-and-migrating.mp3",
-    "chars": 7493
+    "chars": 7555
   },
   "fr/research/neurone-a-etat": {
     "url": "/audio/fr/research/neurone-a-etat.mp3",
@@ -134,5 +134,45 @@
   "en/research/neurone-a-etat": {
     "url": "/audio/en/research/neurone-a-etat.mp3",
     "chars": 6397
+  },
+  "fr/authenticated-encryption/01-chiffrer-ne-suffit-pas": {
+    "url": "/audio/fr/authenticated-encryption/01-chiffrer-ne-suffit-pas.mp3",
+    "chars": 6521
+  },
+  "fr/authenticated-encryption/02-le-nonce-le-detail-qui-fait-tout-seffondrer": {
+    "url": "/audio/fr/authenticated-encryption/02-le-nonce-le-detail-qui-fait-tout-seffondrer.mp3",
+    "chars": 9994
+  },
+  "fr/authenticated-encryption/03-lier-le-chiffre-a-son-contexte": {
+    "url": "/audio/fr/authenticated-encryption/03-lier-le-chiffre-a-son-contexte.mp3",
+    "chars": 10527
+  },
+  "fr/authenticated-encryption/04-concevoir-lechec": {
+    "url": "/audio/fr/authenticated-encryption/04-concevoir-lechec.mp3",
+    "chars": 9277
+  },
+  "fr/neural-networks-foundations/07-derivees-regle-chaine": {
+    "url": "/audio/fr/neural-networks-foundations/07-derivees-regle-chaine.mp3",
+    "chars": 4956
+  },
+  "en/authenticated-encryption/01-encryption-is-not-enough": {
+    "url": "/audio/en/authenticated-encryption/01-encryption-is-not-enough.mp3",
+    "chars": 6214
+  },
+  "en/authenticated-encryption/02-the-nonce-the-detail-that-breaks-everything": {
+    "url": "/audio/en/authenticated-encryption/02-the-nonce-the-detail-that-breaks-everything.mp3",
+    "chars": 9182
+  },
+  "en/authenticated-encryption/03-binding-ciphertext-to-context": {
+    "url": "/audio/en/authenticated-encryption/03-binding-ciphertext-to-context.mp3",
+    "chars": 9687
+  },
+  "en/authenticated-encryption/04-designing-for-failure": {
+    "url": "/audio/en/authenticated-encryption/04-designing-for-failure.mp3",
+    "chars": 8488
+  },
+  "en/neural-networks-foundations/07-derivatives-chain-rule": {
+    "url": "/audio/en/neural-networks-foundations/07-derivatives-chain-rule.mp3",
+    "chars": 4961
   }
 }
