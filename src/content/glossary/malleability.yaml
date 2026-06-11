@@ -1,0 +1,20 @@
+slug: malleability
+fr:
+  term: Malléabilité
+  definition: >
+    Propriété d'un schéma de chiffrement où une modification du chiffré produit un
+    changement prédicible et exploitable du clair correspondant. Les modes de chiffrement
+    sans authentification (flux, CTR, CBC sans MAC) sont malléables. L'utilisation d'un
+    algorithme AEAD supprime cette propriété en faisant échouer tout déchiffrement d'un
+    chiffré altéré.
+en:
+  term: Malleability
+  definition: >
+    A property of an encryption scheme where modifying the ciphertext produces a
+    predictable, exploitable change in the corresponding plaintext. Unauthenticated
+    cipher modes (stream, CTR, CBC without MAC) are malleable. Using an AEAD algorithm
+    eliminates this property by causing any modified ciphertext to fail decryption.
+seeAlso:
+  - authenticated-encryption
+  - authentication-tag
+  - padding-oracle

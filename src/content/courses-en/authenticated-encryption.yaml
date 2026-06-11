@@ -1,0 +1,20 @@
+slug: authenticated-encryption
+title: 'Authenticated encryption: why encryption alone is never enough'
+summary: "Encrypting a message makes it unreadable, not tamper-proof. This applied cryptography course builds intuition for authenticated encryption: confidentiality versus integrity, AEAD and its tag, the pitfalls of nonces, associated data and domain separation, versioned formats, and the art of designing a failure that leaks nothing. Four chapters, two interactive components, real-world attacks at every step. No programming language required."
+tags:
+  - cryptography
+  - aead
+  - nonce
+  - integrity
+  - security
+theme: security
+subtheme: applied-crypto
+level: intermediate
+estimatedMinutes: 80
+modules:
+  - 01-encryption-is-not-enough
+  - 02-the-nonce-the-detail-that-breaks-everything
+  - 03-binding-ciphertext-to-context
+  - 04-designing-for-failure
+published: true
+publishedAt: 2026-06-09

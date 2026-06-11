@@ -1,0 +1,20 @@
+slug: associated-data
+fr:
+  term: Données associées (AAD)
+  definition: >
+    Données authentifiées par un algorithme AEAD mais non chiffrées, typiquement des
+    métadonnées comme un en-tête, un identifiant ou un contexte d'utilisation. Elles
+    lient le chiffré à son contexte : toute discordance entre les données associées
+    attendues et celles fournies au déchiffrement invalide le tag et fait échouer
+    l'opération.
+en:
+  term: Associated data (AAD)
+  definition: >
+    Data authenticated by an AEAD algorithm but not encrypted, typically metadata such
+    as a header, identifier, or usage context. It binds the ciphertext to its context:
+    any mismatch between the expected associated data and the value provided at decryption
+    invalidates the tag and causes the open operation to fail.
+seeAlso:
+  - authenticated-encryption
+  - authentication-tag
+  - domain-separation

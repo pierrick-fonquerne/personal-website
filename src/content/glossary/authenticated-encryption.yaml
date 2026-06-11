@@ -1,0 +1,24 @@
+slug: authenticated-encryption
+fr:
+  term: Chiffrement authentifié (AEAD)
+  definition: >
+    Primitive cryptographique qui garantit simultanément la confidentialité et l'intégrité
+    d'un message. Elle produit un tag d'authentification joint au chiffré, et toute
+    altération des données rend le déchiffrement impossible. AEAD (Authenticated
+    Encryption with Associated Data) étend ce mécanisme en protégeant également des
+    données associées non chiffrées, liées au contexte d'utilisation.
+  source: "NIST SP 800-38D"
+en:
+  term: Authenticated encryption (AEAD)
+  definition: >
+    A cryptographic primitive that simultaneously guarantees confidentiality and integrity
+    of a message. It produces an authentication tag alongside the ciphertext, and any
+    tampering causes decryption to fail cleanly. AEAD (Authenticated Encryption with
+    Associated Data) extends this by also authenticating unencrypted associated data
+    bound to the usage context.
+  source: "NIST SP 800-38D"
+seeAlso:
+  - authentication-tag
+  - associated-data
+  - nonce
+  - malleability

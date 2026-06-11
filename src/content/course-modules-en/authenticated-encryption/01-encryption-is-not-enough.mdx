@@ -1,0 +1,199 @@
+---
+course: authenticated-encryption
+order: 1
+title: 'Encryption is not enough'
+subtitle: 'Confidentiality versus integrity: why an adversary who cannot read can still break everything, and how authenticated encryption responds.'
+estimatedMinutes: 20
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import TamperLab from '../../../components/learning/TamperLab';
+
+In 2011, researchers showed that an adversary positioned between a browser and an HTTPS server could, without ever decrypting a single byte, modify encrypted data in a predictable way and force behaviours the application never intended. The attack read nothing. It rewrote.
+
+This scenario, called <Term slug="malleability">malleability</Term>, is the central problem of this chapter. Classical encryption hides the content. It does not guarantee that the content has not been altered in transit.
+
+By the end of this chapter, you will be able to explain the difference between confidentiality and integrity, recognise the malleability of unauthenticated encryption, and describe what <Term slug="authenticated-encryption">AEAD</Term> guarantees and how.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: the notion of symmetric encryption (key, plaintext, ciphertext) and a general idea of what a hash function is. No knowledge of the mathematics of primitives is required.
+
+**What you do not need to know**: internal details of AES, construction of cipher modes, formal security proofs.
+
+**Rigour level**: definitions are precise, reasons are justified, formal proofs are out of scope.
+</Callout>
+
+## Confidentiality versus integrity
+
+These two properties are distinct, and confusing them is the source of many real-world vulnerabilities.
+
+**Confidentiality** guarantees that an adversary who observes an encrypted message cannot deduce its content. It protects against a passive attacker, one who listens.
+
+**Integrity** guarantees that an adversary cannot modify a message without that modification being detected. It protects against an active attacker, one who intervenes.
+
+A system can have one without the other. And that is where the trap lies.
+
+### The active adversary
+
+Consider a concrete example. A payment service encrypts the amount of a transfer using CTR (counter) mode. In CTR mode, encryption XORs the plaintext with a pseudo-random stream generated from the key and a counter. A zero bit in the plaintext becomes a bit from the stream, and vice versa.
+
+If an adversary knows the position in the ciphertext that corresponds to the "amount" field, they can flip exactly the right bit in the ciphertext. When the recipient decrypts, they obtain a modified amount. The adversary never knew what the original amount was. They just changed it.
+
+This is <Term slug="malleability">malleability</Term>: the property of an encryption scheme that allows transforming a ciphertext into another ciphertext whose decryption is predictable, without knowing the key.
+
+**A confidential scheme can be malleable. A malleable scheme offers no integrity guarantee.**
+
+## AEAD: the answer
+
+Authenticated Encryption with Associated Data, written <Term slug="authenticated-encryption">AEAD</Term>, solves this problem by combining confidentiality and integrity in a single operation.
+
+An AEAD scheme exposes two operations:
+
+- **Seal**: takes a key $k$, a <Term slug="nonce">nonce</Term> $N$, associated data $A$, and a plaintext $P$. Produces a ciphertext augmented with an authentication tag: $C = \mathrm{Enc}_k(N, A, P)$.
+- **Open**: takes $k$, $N$, $A$, and $C$. Verifies the <Term slug="authentication-tag">tag</Term>, then decrypts. If verification fails, returns an error without revealing anything else.
+
+Each symbol has its role:
+
+- $k$: the secret key shared between the two parties.
+- $N$: the nonce, a number used once. It guarantees that two encryptions of the same plaintext with the same key produce different ciphertexts. Details are covered in module 3.
+- $A$: the associated data, metadata that is authenticated but not encrypted (an HTTP header, a session identifier, a protocol version). It is not part of the ciphertext, but any modification to it invalidates the tag. Module 2 covers this in detail.
+- $P$: the plaintext, the message to protect.
+- $C$: the output, that is, the ciphertext concatenated with the authentication tag.
+
+### The authentication tag
+
+The <Term slug="authentication-tag">tag</Term> is a cryptographic fingerprint computed over the ciphertext and the associated data using the key. It is produced during seal and verified during open.
+
+If a bit of the ciphertext has been flipped, if an associated data field has changed, if the tag itself has been tampered with: verification fails. The open returns a generic error, without indicating what changed or where. This absence of information is intentional: revealing the cause would allow an adversary to learn something, an oracle attack.
+
+**Encryption hides; it does not protect. Integrity is proved, not assumed.**
+
+## How seal and open work
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    subgraph seal["Seal (sender)"]
+      P["Plaintext P"] --> enc["Encryption + Tag"]
+      N1["Nonce N"] --> enc
+      A1["Associated data A"] --> enc
+      enc --> C["Ciphertext C\n(text + tag)"]
+    end
+    subgraph open["Open (recipient)"]
+      C2["Ciphertext C"] --> verify["Tag verification"]
+      N2["Nonce N"] --> verify
+      A2["Associated data A"] --> verify
+      verify -->|"tag valid"| P2["Plaintext P"]
+      verify -->|"tag invalid"| err["Error (nothing revealed)"]
+    end
+    C --> C2`}
+  caption="Seal produces the ciphertext with tag. Open verifies the tag before any decryption. An invalid tag returns an error with no additional information."
+/>
+
+## Try it yourself
+
+The component below lets you flip a bit in the ciphertext and observe what happens depending on the mode.
+
+In **simple encryption** mode, the flipped bit passes through decryption without anyone detecting it. The plaintext that comes out is silently altered.
+
+In **AEAD** mode, the same flipped bit triggers a tag verification failure. The open returns a rejection. No information about the content is disclosed.
+
+<TamperLab
+  client:visible
+  labels={{
+    message: 'Message',
+    flip: 'Flip a bit',
+    reset: 'Reset',
+    modeSimple: 'Simple encryption',
+    modeAead: 'AEAD',
+    intact: 'Intact',
+    outputLabel: 'Decryption output',
+    rejected: 'Rejected: tag is invalid',
+    defaultMessage: 'transfer 100',
+  }}
+/>
+
+Notice the difference in behaviour. In a real system, simple mode would let the altered message through without any warning. AEAD mode refuses categorically.
+
+<Callout kind="note" title="History: bit-flipping and padding oracles">
+Attacks on unauthenticated modes have a long history. Bit-flipping against CTR has been known since the early 2000s. Against CBC, a subtler variant exploits the <Term slug="padding-oracle">padding oracle</Term>: by observing whether the server accepts or rejects a message based on whether decryption produces valid padding, an adversary can reconstruct the plaintext byte by byte, without ever knowing the key. The POODLE attack (2014) is a real-world instance against SSL 3.0.
+
+All of these attacks became obsolete with the widespread adoption of AEAD, which removes from the adversary any information about the result of decryption.
+</Callout>
+
+<Callout kind="tip" title="Common AEAD algorithms">
+The most widely used AEAD algorithms today are AES-GCM (in TLS 1.3, modern web APIs, AWS and GCP) and ChaCha20-Poly1305 (also in TLS 1.3, WireGuard, Signal). The following modules examine their constructions and respective properties.
+</Callout>
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "A message is encrypted with an unauthenticated CTR mode. An adversary intercepts the ciphertext and flips a bit. What happens when the recipient decrypts?",
+      options: [
+        "Decryption fails with an error.",
+        "The plaintext is modified in a predictable way, with no alert whatsoever.",
+        "The key is compromised.",
+        "The message is automatically discarded.",
+      ],
+      answer: 1,
+      explain:
+        "CTR is malleable. A bit flipped in the ciphertext produces a bit flipped at exactly the same position in the plaintext, with no detection. This is precisely what AEAD prevents.",
+    },
+    {
+      q: "What property does AEAD add to classical encryption?",
+      options: [
+        "A compression of the plaintext.",
+        "A second layer of encryption.",
+        "An authentication tag that proves the ciphertext has not been altered.",
+        "An automatic key agreement.",
+      ],
+      answer: 2,
+      explain:
+        "AEAD produces a cryptographic tag bound to the ciphertext and the associated data. Any modification invalidates the tag. The recipient verifies the tag before decrypting.",
+    },
+    {
+      q: "When the open of an AEAD scheme fails, what should it return?",
+      options: [
+        "The partially decrypted text up to the error.",
+        "A generic error with no indication of the cause.",
+        "The position of the corrupted bit.",
+        "The expected tag for comparison.",
+      ],
+      answer: 1,
+      explain:
+        "Revealing the cause of failure (invalid tag, corrupted bit, modified associated data) would allow an adversary to learn information via oracle. The open must return an opaque error.",
+    },
+    {
+      q: "A service encrypts a session cookie with AES-GCM. The user modifies the cookie in their browser and sends the request again. What happens on the server side?",
+      options: [
+        "The server decrypts and uses the modified value.",
+        "The server detects the modification via the tag and rejects the request.",
+        "The server generates a new key.",
+        "The server ignores the cookie.",
+      ],
+      answer: 1,
+      explain:
+        "AES-GCM is an AEAD scheme. Any modification to the cookie invalidates the tag. The open fails and the server rejects the request without processing the forged value.",
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- **Confidentiality** (encryption) hides the content from a passive adversary. It does not protect against an active adversary who modifies data.
+- **Integrity** guarantees that a modification is detected. It is proved by a cryptographic tag, not assumed.
+- <Term slug="malleability">Malleability</Term> is the property of an encryption scheme that allows transforming a ciphertext into a predictable ciphertext without knowing the key. Unauthenticated CTR and CBC modes suffer from it.
+- <Term slug="authenticated-encryption">AEAD</Term> (Authenticated Encryption with Associated Data) combines both properties in a single operation: seal produces ciphertext plus tag, open verifies the tag before decrypting.
+- A failing open returns a generic error, with no information about the cause. This opacity is a security property, not a lack of detail.
+- Associated data $A$ is authenticated but not encrypted: modifying it invalidates the tag, even if the ciphertext is intact.
+- The common AEAD algorithms are AES-GCM and ChaCha20-Poly1305. The following modules examine their properties, constraints, and use cases.

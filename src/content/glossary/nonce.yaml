@@ -1,0 +1,22 @@
+slug: nonce
+fr:
+  term: Nonce
+  definition: >
+    Valeur utilisée une seule fois avec une clé donnée. C'est l'unicité qui importe,
+    non le secret : réutiliser un nonce avec la même clé brise complètement le schéma.
+    Un nonce aléatoire de 192 bits (XChaCha20) offre une probabilité de collision
+    négligeable, tandis qu'un compteur de 96 bits (AES-GCM, ChaCha20-Poly1305) exige
+    une gestion rigoureuse pour ne jamais dépasser 2^32 messages par clé.
+  source: "RFC 8439"
+en:
+  term: Nonce
+  definition: >
+    A value used exactly once with a given key. Uniqueness, not secrecy, is the critical
+    property: reusing a nonce with the same key completely breaks the scheme. A 192-bit
+    random nonce (XChaCha20) makes collisions negligible, while a 96-bit counter
+    (AES-GCM, ChaCha20-Poly1305) requires careful management to never exceed 2^32
+    messages per key.
+  source: "RFC 8439"
+seeAlso:
+  - authenticated-encryption
+  - domain-separation

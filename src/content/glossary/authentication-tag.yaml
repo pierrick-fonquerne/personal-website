@@ -1,0 +1,19 @@
+slug: authentication-tag
+fr:
+  term: Tag d'authentification
+  definition: >
+    Valeur courte (typiquement 128 bits) produite par un algorithme AEAD ou un MAC,
+    et vérifiée lors du déchiffrement. Toute modification du chiffré, des données
+    associées ou du nonce invalide le tag et fait échouer l'ouverture. Il garantit
+    à la fois l'intégrité et l'authenticité du message.
+en:
+  term: Authentication tag
+  definition: >
+    A short value (typically 128 bits) produced by an AEAD algorithm or MAC, verified
+    at decryption time. Any change to the ciphertext, associated data, or nonce
+    invalidates the tag and causes the open operation to fail. It provides both integrity
+    and authenticity guarantees.
+seeAlso:
+  - authenticated-encryption
+  - associated-data
+  - malleability

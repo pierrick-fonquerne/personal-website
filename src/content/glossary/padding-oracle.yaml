@@ -1,0 +1,21 @@
+slug: padding-oracle
+fr:
+  term: Oracle de padding
+  definition: >
+    Attaque exploitant tout signal (message d'erreur, temps de réponse, comportement
+    observable) qui révèle si le rembourrage d'un bloc chiffré est valide. En itérant
+    les modifications du chiffré et en observant les réponses, un attaquant peut
+    déchiffrer le message sans connaître la clé. C'est l'une des raisons historiques
+    majeures pour lesquelles le chiffrement seul sans authentification est dangereux.
+en:
+  term: Padding oracle
+  definition: >
+    An attack that exploits any observable signal (error message, response time,
+    detectable behavior) revealing whether the padding of an encrypted block is valid.
+    By iterating ciphertext modifications and observing responses, an attacker can
+    decrypt the message without knowing the key. It is one of the classic reasons why
+    encryption without authentication is dangerous.
+seeAlso:
+  - malleability
+  - authenticated-encryption
+  - constant-time

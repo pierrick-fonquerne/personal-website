@@ -1,0 +1,199 @@
+---
+course: authenticated-encryption
+order: 3
+title: 'Binding ciphertext to its context'
+subtitle: 'Associated data, domain separation, authenticated headers and versioned formats: why a perfectly valid ciphertext can still be a vulnerability if replayed outside its context.'
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+In the previous chapter, you saw that the nonce must be unique for the guarantees of AEAD to hold. But there is another attack vector, a subtler one: a ciphertext can be perfectly authentic, with a valid tag and a unique nonce, and still serve as a weapon in the hands of an adversary who replays it in the wrong context. The problem is no longer the algorithm. It is the absence of a binding between the ciphertext and the situation in which it is meant to be used.
+
+Imagine a software update system. An update package is encrypted and authenticated for component A, version 2. An adversary intercepts this package and replays it as an update for component B. The tag is valid. The nonce is unique. Not a single bit has been touched. And yet, code intended for one component executes in another.
+
+By the end of this chapter, you will be able to define associated data and its role in binding a ciphertext to its context, explain domain separation and why the same ciphertext must not cross multiple roles, understand why a header transmitted in plaintext must be covered by the tag, and describe how a versioned format enables cryptographic migration without breaking existing data.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: modules 1 and 2 of this course (AEAD, authentication tag, nonce). No knowledge of the mathematics of primitives is required.
+
+**What you do not need to know**: internal constructions of GCM or Poly1305, formal security proofs, specific network protocols.
+
+**Rigour level**: definitions are precise and attack mechanisms are built from concrete examples. Formal proofs are out of scope.
+</Callout>
+
+## Associated data (AAD)
+
+The full notation for an AEAD seal is $C = \mathrm{Enc}_k(N, A, P)$, where $A$ denotes the <Term slug="associated-data">associated data</Term> (sometimes abbreviated AAD). This parameter is mentioned in module 1; this chapter examines it in detail.
+
+Associated data is information that travels in plaintext with the encrypted message but is bound to the ciphertext by the authentication tag. It is not part of the ciphertext: anyone observing the transmission can read it. However, it is part of the tag computation: if the associated data differs between seal and open, verification fails. The open returns an error, without decrypting, without additional information.
+
+**The central intuition: AAD binds a ciphertext to its context of use.**
+
+AAD can contain a user identifier, a session identifier, a version number, a destination identifier, a creation timestamp, or any combination of these elements. The constraint is: the value used during seal must be identical to the value presented during open. Any divergence invalidates the tag.
+
+Returning to the update package example: if the seal includes in the AAD the identifier of the target component and the expected version, the open fails as soon as the package is presented to a different component or for a different version. The ciphertext cannot be replayed outside its declared context, even by someone who does not know the key.
+
+<Callout kind="note" title="Empty AAD versus absent AAD">
+Passing an empty AAD (a zero-length string) is not a cryptographic error: the scheme remains secure. But it means the ciphertext is not bound to any context. An adversary can replay it in any session, for any recipient, without invalidating the tag. The question is not "does the AAD need to be non-empty?" but "which context must this ciphertext be unable to leave?".
+</Callout>
+
+## Domain separation
+
+<Term slug="domain-separation">Domain separation</Term> is the principle that a key, or a cryptographic value, must serve only one well-defined purpose. Two different operations in the same system must not share the same key, even if they use the same algorithm.
+
+Why? Because a ciphertext produced for one purpose can be replayed into another if nothing distinguishes the two contexts cryptographically. Here are two representative cases.
+
+**Session tokens and API tokens.** A service generates tokens encrypted with AES-GCM. If the same key is used to encrypt both session tokens and long-lived API tokens, an adversary who obtains an API token can try to present it as a session token. The tag is valid, the nonce is unique. Without domain separation, the system has no way to distinguish the two.
+
+**Encryption for sender and for recipient.** In a messaging protocol, messages encrypted by Alice to Bob and by Bob to Alice must not share the same directional key. Otherwise, a message from Alice to Bob can be replayed as if it came from Bob to Alice.
+
+Separation is implemented in two ways, often combined.
+
+- **Key per purpose**: derive a distinct key for each role from a master key, with an explicit label (for example a key derivation function with a context of "session-token" for one and "api-token" for the other).
+- **Context in the AAD**: systematically include a domain identifier in the associated data (a string such as `"purpose=session"` or `"direction=client-to-server"`). Two ciphertexts produced in different domains will have different AAD values, hence different tags, even with the same key.
+
+Both approaches reinforce each other. The key per purpose forbids replay at the level of cryptographic material. The context in the AAD forbids replay even if two purposes accidentally share a key.
+
+**The principle to retain: an encrypted object must explicitly declare its domain of use, and the system must make it impossible to present it in a different domain.**
+
+## Plaintext headers, but authenticated
+
+In many protocols, a header travels in plaintext before the ciphertext. This header can contain a version identifier, an algorithm identifier, a recipient identifier, a message length, or a combination of these fields. It must be readable before decryption, notably to route the request to the correct key or algorithm.
+
+The problem is: if this header is not covered by the tag, it is <Term slug="malleability">malleable</Term>. An adversary can modify it without invalidating the authentication. The consequences are concrete.
+
+- **Recipient redirection.** If the recipient identifier in the header is not authenticated, an adversary can replace Bob's identifier with Alice's. The message is decrypted by Alice, who receives content intended for Bob. The tag is valid, because it does not cover the header.
+- **Algorithm downgrade.** If the algorithm identifier in the header is not authenticated, an adversary can replace it with a weaker algorithm. The recipient attempts to decrypt with that algorithm, believing it is what the sender chose.
+- **Version confusion.** If the version number is not covered by the tag, an adversary can make a message from one version pass as another, hoping the other version's parser handles the bytes differently.
+
+The solution is direct: place the entire header in the AAD. The header remains readable in plaintext (AAD is not encrypted), but any modification invalidates the tag. The sender includes the header in the seal. The recipient reconstructs the header from the received bytes and passes it to the open. If a single field was modified in transit, the open fails.
+
+This is the same mechanism as in module 1: **the authentication tag covers everything that must be protected against modification, whether it is encrypted or not**.
+
+## Versioned formats and cryptographic agility
+
+A system deployed in production cannot change algorithms in a single restart. Data exists, encrypted with the current algorithm. Older clients must continue to work. Migration must be progressive.
+
+<Term slug="crypto-agility">Cryptographic agility</Term> is the ability of a system to migrate from one algorithm to another without rewriting the entire codebase and without invalidating existing data. It relies on a versioned message format.
+
+The principle is simple: the first byte (or first few bytes) of the encoded message indicate which primitive was used to encrypt it. The decryptor reads this field first, chooses the appropriate decryption path, then proceeds.
+
+```
+[version: 1 byte | nonce: N bytes | ciphertext + tag: M bytes]
+```
+
+Version 1 means AES-256-GCM. Version 2 means XChaCha20-Poly1305. Version 3 could, tomorrow, mean a quantum-resistant algorithm. Neither format is incompatible with the other: data encrypted in version 1 remains decryptable as long as the version 1 key is retained.
+
+This mechanism is already present in common protocols. TLS encodes the cipher suite identifier in the handshake. GPG key formats include an algorithm byte. JWT formats include an `alg` field in the header.
+
+But it introduces a critical constraint: **the version byte must itself be covered by the tag**. Otherwise, an adversary can modify the version to force the decryptor to use a weaker algorithm or a different key. The version byte is in plaintext (so the decryptor knows what to do), but it must appear in the AAD of both seal and open.
+
+<Callout kind="tip" title="Cryptographic agility and post-quantum migration">
+Current symmetric-key algorithms (AES-256, ChaCha20) are considered sound against quantum computers, for reasons related to the structure of Grover's algorithm. However, the asymmetric key exchange mechanisms used to establish the symmetric key (such as ECDH) are vulnerable. A versioned format allows adopting a post-quantum key encapsulation mechanism (such as ML-KEM, standardised in 2024 by NIST) without modifying the data encryption format itself.
+</Callout>
+
+## Structure of an authenticated message
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    subgraph header["Header (plaintext, in AAD)"]
+      ver["Version\n(1 byte)"]
+      nonce["Nonce\n(N bytes)"]
+      dest["Recipient\n(optional)"]
+    end
+    subgraph body["Message body"]
+      ct["Ciphertext\n(encrypted plaintext)"]
+      tag["Authentication tag\n(16 bytes)"]
+    end
+    header -- "covered by the tag" --> tag
+    ct -- "covered by the tag" --> tag`}
+  caption="Structure of a versioned AEAD message. The header (version, nonce, identifiers) travels in plaintext but is fully covered by the tag via the AAD. Any modification to a header field invalidates the tag."
+/>
+
+The structure above illustrates the general principle. The header is readable without a key, which allows the recipient to select the correct key and algorithm before attempting decryption. But the header is cryptographically bound to the ciphertext via the tag: it is impossible to modify the version, the nonce, or the recipient identifier without invalidating the authentication.
+
+## The binding principle
+
+Everything above converges on a single principle:
+
+**An authentic ciphertext outside its context remains a vulnerability. Context is part of the message.**
+
+This principle has immediate practical consequences.
+
+- Each ciphertext must explicitly declare who it is for, for what purpose, in which domain, with which version.
+- These metadata must not merely accompany the ciphertext: they must be bound to it by the tag, so that a replay in the wrong context is detected cryptographically, not merely by an application-level check.
+- The application-level check (verifying an identifier against a database, validating token expiry) remains necessary, but it does not replace cryptographic binding. Both layers are complementary.
+
+## Quiz
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Restart"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "What is associated data (AAD) in an AEAD scheme?",
+      options: [
+        "Data encrypted in parallel with the plaintext, for enhanced protection.",
+        "Data transmitted in plaintext, bound to the ciphertext by the tag, whose modification causes the open to fail.",
+        "A secondary key that allows verifying the sender's identity.",
+        "A random salt added to the plaintext before encryption.",
+      ],
+      answer: 1,
+      explain:
+        "AAD is not encrypted: it travels in plaintext. But it is covered by the authentication tag, computed during seal. If the associated data presented during open differs from that used during seal, the tag is invalid and the open fails. AAD binds the ciphertext to its context of use without hiding its content.",
+    },
+    {
+      q: "A service encrypts session tokens and API tokens with the same AES-GCM key, without domain separation. What risk does this create?",
+      options: [
+        "Both types of tokens can be decrypted by anyone who knows either one.",
+        "A valid API token can be replayed as a session token, because the tag is valid in both contexts.",
+        "Using the same key for two purposes exposes the key via a birthday attack.",
+        "The tags produced for both types become identical, enabling forgery.",
+      ],
+      answer: 1,
+      explain:
+        "Without domain separation, a ciphertext produced for one purpose is cryptographically indistinguishable from one produced for another, if the same key is used. The tag is valid in both contexts. Including a domain identifier in the AAD or deriving distinct keys per purpose solves this problem.",
+    },
+    {
+      q: "A header containing the recipient identifier travels in plaintext before the ciphertext, but is not included in the AAD. What can an adversary do?",
+      options: [
+        "Nothing: the tag covers the ciphertext, so the header cannot be exploited.",
+        "Modify the recipient identifier without invalidating the tag, redirecting the message to a different recipient.",
+        "Decrypt the message knowing only the recipient identifier.",
+        "Forge a valid tag for a message of their choice.",
+      ],
+      answer: 1,
+      explain:
+        "If the header is not in the AAD, the tag does not cover it. An adversary can modify the recipient identifier without invalidating the authentication. The modified recipient receives and decrypts a message that was not intended for them. Including the header in the AAD cryptographically binds the recipient to the ciphertext.",
+    },
+    {
+      q: "Why must the version byte in a versioned message format be included in the AAD?",
+      options: [
+        "So that the recipient can find the correct key by consulting an external registry.",
+        "So that the version appears in the ciphertext and is invisible to observers.",
+        "So that any modification of the version invalidates the tag, preventing a forced downgrade to a weaker algorithm.",
+        "Because the AEAD scheme requires all metadata to be in the AAD.",
+      ],
+      answer: 2,
+      explain:
+        "The version byte must remain in plaintext so the decryptor knows which algorithm to use. But if it is not covered by the tag, an adversary can modify it to force the use of a weaker algorithm or a different key. Including it in the AAD makes it readable but non-malleable: any modification invalidates the tag.",
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- <Term slug="associated-data">Associated data</Term> is transmitted in plaintext but covered by the authentication tag. Modifying it causes the open to fail. It binds the ciphertext to its context of use.
+- An empty AAD is cryptographically valid, but means the ciphertext is not bound to any context and can be freely replayed.
+- <Term slug="domain-separation">Domain separation</Term> consists of deriving distinct keys per purpose or including a domain identifier in the AAD, so that a ciphertext produced in one domain is not valid in another.
+- Every plaintext header field must appear in the AAD: version, algorithm, recipient identifier, message direction. Without this, the header is <Term slug="malleability">malleable</Term> without detection.
+- A versioned format enables <Term slug="crypto-agility">primitive migration</Term> without invalidating existing data. The version byte must itself be covered by the tag.
+- **An authentic ciphertext outside its context remains a vulnerability. Context is part of the message.**
