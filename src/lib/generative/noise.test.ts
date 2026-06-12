@@ -3,7 +3,9 @@ import { valueNoise } from './noise';
 
 describe('valueNoise', () => {
   it('returns the same value for the same inputs and seed', () => {
-    expect(valueNoise(12.34, 56.78, 42)).toBe(valueNoise(12.34, 56.78, 42));
+    const value = valueNoise(12.34, 56.78, 42);
+    expect(value).toBe(valueNoise(12.34, 56.78, 42));
+    expect(value).toBeCloseTo(0.31286120832622494, 10);
   });
 
   it('returns different fields for different seeds', () => {
@@ -17,6 +19,14 @@ describe('valueNoise', () => {
   it('stays within [0, 1]', () => {
     for (let i = 0; i < 500; i++) {
       const value = valueNoise(i * 0.37, i * 0.91, 7);
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('handles negative coordinates within [0, 1]', () => {
+    for (let i = 0; i < 200; i++) {
+      const value = valueNoise(-i * 0.37 - 0.5, -i * 0.91 - 0.5, 7);
       expect(value).toBeGreaterThanOrEqual(0);
       expect(value).toBeLessThanOrEqual(1);
     }
