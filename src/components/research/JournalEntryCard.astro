@@ -1,0 +1,65 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../../lib/i18n';
+import { useTranslations } from '../../lib/i18n';
+import { journalEntryPath } from '../../lib/research-journal';
+
+interface Props {
+  entry: CollectionEntry<'research-journal'>;
+  researchSlug: string;
+  locale: Locale;
+}
+
+const { entry, researchSlug, locale } = Astro.props;
+const t = useTranslations(locale);
+const href = journalEntryPath(researchSlug, entry.data.slug, locale);
+const title = entry.data.title[locale];
+const excerpt = entry.data.excerpt?.[locale];
+const dateLabel = entry.data.date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<article
+  class="flex h-full flex-col gap-5 rounded-md border border-[var(--color-line)] p-6 transition-colors duration-200 hover:border-[var(--color-line-strong)]"
+>
+  <header class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <span class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-accent)] uppercase">
+        {t.research.journal.eyebrow}
+      </span>
+      <time
+        datetime={entry.data.date.toISOString()}
+        class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]"
+      >
+        {dateLabel}
+      </time>
+    </div>
+
+    <h3 class="font-display text-[22px] leading-[1.2] font-bold tracking-[-0.01em]">
+      <a
+        href={href}
+        class="text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
+      >
+        {title}
+      </a>
+    </h3>
+
+    {
+      excerpt && (
+        <p class="text-[15px] leading-[1.5] text-[var(--color-fg-muted)]">{excerpt}</p>
+      )
+    }
+  </header>
+
+  <footer class="mt-auto border-t border-[var(--color-line)] pt-4">
+    <a
+      href={href}
+      class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)] transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.research.journal.readEntry} ->
+    </a>
+  </footer>
+</article>

@@ -1,0 +1,29 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../../lib/i18n';
+import { useTranslations } from '../../lib/i18n';
+import JournalEntryCard from './JournalEntryCard.astro';
+
+interface Props {
+  entries: CollectionEntry<'research-journal'>[];
+  researchSlug: string;
+  locale: Locale;
+}
+
+const { entries, researchSlug, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+{
+  entries.length === 0 ? (
+    <p class="text-[15px] leading-[1.5] text-[var(--color-fg-muted)]">
+      {t.research.journal.empty}
+    </p>
+  ) : (
+    <div class="flex flex-col gap-6">
+      {entries.map((entry) => (
+        <JournalEntryCard entry={entry} researchSlug={researchSlug} locale={locale} />
+      ))}
+    </div>
+  )
+}
