@@ -1,0 +1,350 @@
+---
+course: spiking-neural-networks
+order: 1
+title: Le neurone qui a oublié le temps
+subtitle: "Pourquoi le neurone des fondations ne sait pas entendre le temps, et comment un état interne lui rend cette oreille."
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import CoincidenceLab from '../../../components/learning/CoincidenceLab.tsx';
+
+Une chouette effraie chasse dans le noir complet. Elle ne voit pas la souris qui file dans les feuilles : elle l'entend. Le son atteint son oreille la plus proche quelques millionièmes de seconde avant l'autre, et ce minuscule décalage lui suffit pour fondre précisément sur sa proie. Quelque part dans son cerveau, des neurones mesurent un écart de temps de l'ordre de la microseconde.
+
+Reprends maintenant le neurone du cours fondations, celui qui calcule $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. Pourrait-il faire ce que fait la chouette ? La réponse est non, et la raison est précise. Ce chapitre part de cette impossibilité pour reconstruire un neurone qui, lui, sait entendre le temps.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : le neurone artificiel et sa somme pondérée, vus au chapitre 1 du cours fondations. La notion de suite définie par récurrence (une valeur calculée à partir de la précédente) aide beaucoup, mais on la réintroduit au passage.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les équations différentielles (le chapitre 3 les introduira), la neurobiologie détaillée, et tout langage de programmation.
+
+**Niveau de rigueur** : on définit chaque objet formellement et on démontre l'affirmation centrale (un neurone sans état est aveugle au décalage temporel). Les calculs se font à la main sur de petits nombres, exprès.
+</Callout>
+
+## Le neurone des fondations vit dans un présent éternel
+
+Reviens à la formule centrale du cours fondations. Pour une entrée $\mathbf{x}$, le neurone produit
+
+$$
+y = f(\mathbf{w} \cdot \mathbf{x} + b).
+$$
+
+Regarde bien ce qu'il y a, et surtout ce qu'il n'y a pas, dans cette équation. Il y a les entrées, les poids, le biais, l'activation. Il n'y a aucune trace du moment où l'entrée arrive. Tu peux présenter $\mathbf{x}$ aujourd'hui ou demain, le résultat $y$ est le même. Le neurone n'a pas d'horloge, pas de mémoire de ce qui s'est passé juste avant. On dit qu'il est **sans état** : sa sortie ne dépend que de l'entrée de l'instant.
+
+Imaginons qu'on lui présente une séquence d'entrées, une à chaque pas de temps : $\mathbf{x}_0, \mathbf{x}_1, \mathbf{x}_2, \dots$ Le neurone sans état les traite une par une, indépendamment :
+
+$$
+y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b).
+$$
+
+Chaque sortie $y_t$ ne regarde que son entrée $\mathbf{x}_t$. Le passé n'entre jamais dans le calcul. C'est un présent éternel, sans avant ni après.
+
+<Callout kind="note" title="Ce n'est pas un défaut, c'est un choix">
+L'absence de mémoire n'est pas un bug du neurone des fondations. C'est ce qui rend le deep learning classique simple et massivement parallèle : chaque exemple d'un jeu de données se traite sans dépendre des autres. Le revers, c'est que pour tout ce qui est intrinsèquement temporel (un son, une parole, un geste), il faut ruser. Ce cours explore une autre ruse que celle des réseaux récurrents : donner au neurone lui-même un état interne.
+</Callout>
+
+## Le problème de la chouette : entendre un écart de temps
+
+Formalisons le défi de la chouette. Deux signaux arrivent, un par oreille. Appelons-les l'entrée gauche et l'entrée droite. Ce qui porte l'information, ce n'est ni l'intensité du son gauche ni celle du son droit pris isolément : c'est **l'écart de temps** entre les deux. Le cerveau doit décharger fort quand les deux signaux arrivent presque ensemble, et rester muet quand ils sont trop espacés.
+
+Cette capacité porte un nom : la <Term slug="detection-de-coincidence">détection de coïncidence</Term>. Elle a été proposée dès 1948 par Lloyd Jeffress comme modèle de la localisation sonore (Jeffress, 1948), et on l'a depuis observée dans le tronc cérébral des oiseaux et des mammifères.
+
+Voici pourquoi le neurone sans état échoue. Supposons que jamais les deux entrées ne tombent exactement sur le même pas de temps (il y a presque toujours un petit écart). Alors, à chaque pas, le neurone ne voit qu'une seule entrée active. Comme sa sortie ne dépend que de l'instant présent, il réagit pareil que l'écart soit minuscule ou énorme. Il ne peut pas mesurer une distance entre deux évènements qu'il ne voit jamais ensemble. Il lui manque un endroit où **garder la trace** de la première entrée en attendant la seconde.
+
+## Donner un état au neurone
+
+L'idée qui débloque tout : ajouter au neurone une variable interne qui se souvient, un court instant, de ce qui vient d'arriver. On l'appelle le <Term slug="potentiel-de-membrane">potentiel de membrane</Term>, par analogie avec la charge électrique qui s'accumule sur la membrane d'un vrai neurone. Notons-le $v$.
+
+Cette variable obéit à trois règles simples, à chaque pas de temps :
+
+1. **Elle fuit.** En l'absence d'entrée, $v$ retombe peu à peu vers zéro. Elle ne garde qu'une fraction $\lambda$ de sa valeur d'un pas au suivant, avec $0 \le \lambda < 1$.
+2. **Elle intègre.** Quand une entrée de charge $I_t$ arrive au pas $t$, elle s'ajoute à $v$.
+3. **Elle décharge.** Si $v$ atteint un seuil $\theta$, le neurone émet une impulsion et $v$ se réinitialise à zéro.
+
+Les deux premières règles tiennent dans une seule récurrence :
+
+<Formula caption="Mise à jour du potentiel, un pas de temps">v(t+1) = λ · v(t) + I(t)</Formula>
+
+En notation compacte :
+
+$$
+v_{t+1} = \lambda\, v_t + I_t.
+$$
+
+Cette équation se lit : la nouvelle valeur du potentiel est égale à l'ancienne multipliée par la rétention $\lambda$, plus l'entrée reçue à ce pas. Le facteur $\lambda$ est la mémoire du neurone. À $\lambda = 0$, il oublie tout instantanément et redevient sans état. Plus $\lambda$ approche de $1$, plus il garde longtemps la trace du passé.
+
+Ce neurone à trois règles est le plus simple des neurones impulsionnels. On l'appelle le modèle <Term slug="integrate-and-fire">integrate-and-fire</Term> (intègre-et-décharge), introduit par Louis Lapicque dès 1907 (Lapicque, 1907). Un neurone dont la sortie dépend d'une variable interne qui évolue dans le temps est un <Term slug="neurone-a-etat">neurone à état</Term> : par opposition au neurone sans état des fondations, sa réponse dépend de son histoire récente.
+
+<Callout kind="tip" title="Lire la coïncidence dans l'équation">
+Regarde ce que produisent deux entrées de même charge $c$, séparées de $\Delta$ pas. La première porte le potentiel à $c$. Pendant $\Delta$ pas sans entrée, elle fuit jusqu'à $c\,\lambda^{\Delta}$. Puis la seconde ajoute $c$. Au moment de la seconde entrée, le potentiel vaut donc
+
+$$
+v = c\,\lambda^{\Delta} + c = c\,(1 + \lambda^{\Delta}).
+$$
+
+Cette expression suppose qu'une seule entrée ne suffit pas à décharger le neurone, autrement dit $c < \theta$ : sinon la première impulsion déclencherait déjà un spike et remettrait le potentiel à zéro. C'est bien le cas dans tous les exemples de ce chapitre, où $c = 0{,}6$ et $\theta = 0{,}9$.
+
+Si $\Delta$ est petit, $\lambda^{\Delta}$ est proche de $1$ et le potentiel approche $2c$ : les deux charges s'additionnent presque entièrement, le seuil est franchi. Si $\Delta$ est grand, $\lambda^{\Delta}$ tend vers $0$, la première entrée s'est évaporée avant l'arrivée de la seconde, et le neurone reste muet. La détection de coïncidence sort directement de la fuite.
+</Callout>
+
+## Manipule la détection de coïncidence
+
+La théorie d'un coup d'oeil ne remplace pas la main sur les curseurs. Dans le composant ci-dessous, deux entrées de charge fixe arrivent : la première tôt, la seconde décalée du **délai Δ** que tu règles. Tu vois le potentiel monter à la première, fuir, puis remonter à la seconde. S'il franchit le seuil, le neurone décharge.
+
+**Ta mission** : pars d'un délai nul (les deux entrées ensemble), constate la décharge, puis augmente Δ pas à pas jusqu'à ce que le neurone se taise. Tu viens de mesurer sa fenêtre de coïncidence. Ensuite, joue avec la rétention : une membrane qui garde mieux sa charge pardonne des délais plus grands.
+
+<InteractivePrint
+  label="Figure : détection de coïncidence d'un neurone à état (interactif)"
+  description="Tracé du potentiel de membrane d'un neurone integrate-and-fire au cours du temps. Deux entrées de charge 0,6 arrivent, la seconde décalée d'un délai Δ réglable. Le potentiel garde une fraction λ (rétention) de sa valeur à chaque pas et s'additionne aux entrées. Une ligne pointillée marque le seuil de décharge. Avec rétention 0,7 et seuil 0,9, le neurone décharge pour un délai de 0 ou 1 pas, et reste silencieux au-delà : il détecte la coïncidence des deux entrées. Augmenter la rétention élargit la fenêtre, augmenter le seuil la rétrécit."
+>
+  <CoincidenceLab client:visible locale="fr" />
+</InteractivePrint>
+
+Trois choses à observer en jouant :
+
+- À délai nul, les deux charges tombent sur le même pas et s'additionnent : le potentiel fait un bond unique à $2c$. C'est le cas le plus facile à décharger.
+- En augmentant la rétention, la pente de fuite s'adoucit et la fenêtre de coïncidence s'élargit. La mémoire de la membrane fixe la tolérance temporelle du neurone.
+- En montant le seuil, tu exiges une coïncidence plus serrée. Seuil et rétention sont deux manières indépendantes de régler la même chose : à quel point les deux entrées doivent être proches.
+
+## Le spike, un langage dans le temps
+
+Le neurone à état ne rend plus un nombre continu comme la sigmoïde des fondations. Il rend une impulsion, un évènement bref et tout ou rien : il décharge, ou il ne décharge pas. Cette impulsion s'appelle un spike. Toute l'information qu'un réseau impulsionnel manipule est faite de spikes répartis dans le temps.
+
+D'où une question neuve, qui n'avait pas de sens pour le neurone sans état : où l'information se cache-t-elle dans une suite d'impulsions ? Deux réponses cohabitent. Dans le codage par fréquence, ce qui compte est le nombre de spikes par seconde, leur cadence. Dans le <Term slug="codage-temporel">codage temporel</Term>, ce qui compte est l'instant précis de chaque spike. La chouette utilise la seconde voie : c'est l'instant d'arrivée, pas la cadence, qui porte la position de la proie. Le codage temporel permet de calculer avec très peu de spikes, donc très peu d'énergie. On y reviendra en détail dans un chapitre dédié.
+
+<MermaidDiagram
+  client:visible
+  caption="Sans état contre à état : ce que chacun voit"
+  definition={`flowchart LR
+    subgraph SS["Neurone sans état"]
+      direction TB
+      a1["entrée à l'instant t"] --> a2["sortie à l'instant t"]
+    end
+    subgraph AE["Neurone à état"]
+      direction TB
+      b1["entrées passées"] --> b3["potentiel v"]
+      b2["entrée présente"] --> b3
+      b3 --> b4["spike, ou pas"]
+    end`}
+/>
+
+## En une phrase
+
+Le neurone des fondations est sans mémoire et donc aveugle au temps ; lui ajouter un potentiel de membrane qui intègre, fuit et décharge en fait un neurone à état capable de détecter la coïncidence de deux signaux, et donc d'entendre le temps.
+
+## Vers le chapitre 2
+
+On a parlé du potentiel de membrane comme d'une variable qui monte et qui fuit, en se contentant d'un facteur de rétention $\lambda$ posé à la main. C'est une caricature commode, mais d'où vient cette fuite, au juste ? Dans un vrai neurone, elle a une cause physique : la membrane cellulaire se comporte comme un petit condensateur qui se décharge à travers une résistance. Le chapitre 2 ouvre la cellule pour y trouver l'origine concrète de $\lambda$, avant que le chapitre 3 ne transforme notre récurrence en l'équation différentielle du modèle integrate-and-fire complet.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : intégrer à la main
+
+Un neurone à état a une rétention $\lambda = 0{,}5$ et un seuil $\theta = 0{,}9$. Son potentiel part de $v = 0$. Deux entrées de charge $c = 0{,}6$ arrivent. Pour chacun des délais $\Delta = 0$, $\Delta = 1$ et $\Delta = 2$ pas, calculer le potentiel au moment de la seconde entrée et dire si le neurone décharge.
+
+### Exercice 2 : un neurone sans état est aveugle au décalage
+
+Montrer que le neurone sans état $y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b)$ ne peut pas distinguer deux entrées proches dans le temps de deux entrées éloignées, dès lors que les deux entrées ne tombent jamais sur le même pas.
+
+### Exercice 3 : la fenêtre de coïncidence
+
+À partir de la condition de décharge $c\,(1 + \lambda^{\Delta}) \ge \theta$, exprimer le plus grand délai entier $\Delta_{\max}$ qui déclenche encore un spike, puis le calculer pour $\lambda = 0{,}7$, $c = 0{,}6$ et $\theta = 0{,}9$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : intégrer à la main">
+On a $\lambda = 0{,}5$, $\theta = 0{,}9$, $c = 0{,}6$, et le potentiel part de $v = 0$.
+
+**Étape 1.** Cas $\Delta = 0$. Les deux entrées tombent sur le même pas, leurs charges s'additionnent :
+
+$$
+v = 0{,}6 + 0{,}6 = 1{,}2
+$$
+
+Comme $1{,}2 \ge 0{,}9$, le neurone **décharge**.
+
+**Étape 2.** Cas $\Delta = 1$. Au premier pas, la première entrée donne :
+
+$$
+v = 0{,}6
+$$
+
+Comme $0{,}6 < 0{,}9$, pas de décharge pour l'instant.
+
+**Étape 3.** Au pas suivant, le potentiel fuit d'abord, puis la seconde entrée s'ajoute :
+
+$$
+v = 0{,}5 \times 0{,}6 + 0{,}6 = 0{,}3 + 0{,}6 = 0{,}9
+$$
+
+Comme $0{,}9 \ge 0{,}9$, le neurone **décharge** (le seuil est atteint pile).
+
+**Étape 4.** Cas $\Delta = 2$. Premier pas : $v = 0{,}6$. Deuxième pas, sans entrée, le potentiel fuit :
+
+$$
+v = 0{,}5 \times 0{,}6 = 0{,}3
+$$
+
+**Étape 5.** Troisième pas, la seconde entrée arrive sur ce potentiel déjà retombé :
+
+$$
+v = 0{,}5 \times 0{,}3 + 0{,}6 = 0{,}15 + 0{,}6 = 0{,}75
+$$
+
+Comme $0{,}75 < 0{,}9$, le neurone **reste silencieux**.
+
+**Résultat.** Le neurone décharge pour $\Delta = 0$ et $\Delta = 1$, mais pas pour $\Delta = 2$. Sa fenêtre de coïncidence est de un pas : exactement le comportement de détection de coïncidence.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : un neurone sans état est aveugle au décalage">
+On veut montrer que la sortie du neurone sans état ne dépend pas de l'écart entre les deux entrées.
+
+**Étape 1.** On rappelle la règle du neurone sans état. À chaque pas $t$, sa sortie est
+
+$$
+y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b)
+$$
+
+et elle ne dépend que de l'entrée $\mathbf{x}_t$ de ce pas, d'aucune autre.
+
+**Étape 2.** On pose le scénario. La première entrée arrive au pas $t_1$, la seconde au pas $t_2$, avec $t_1 \ne t_2$ (elles ne tombent jamais ensemble). À tout pas où il n'y a pas d'entrée, $\mathbf{x}_t = \mathbf{0}$.
+
+**Étape 3.** On calcule les sorties. Au pas $t_1$ la sortie vaut $f(\mathbf{w} \cdot \mathbf{x}_1 + b)$, au pas $t_2$ elle vaut $f(\mathbf{w} \cdot \mathbf{x}_2 + b)$, et partout ailleurs elle vaut $f(b)$. Aucune de ces trois valeurs ne fait intervenir l'écart $\Delta = t_2 - t_1$.
+
+**Étape 4.** On conclut. Rapprocher ou éloigner les deux entrées ne change que les instants où apparaissent les mêmes valeurs de sortie, jamais ces valeurs elles-mêmes. Le neurone produit la même collection de réponses quel que soit $\Delta$.
+
+**Résultat.** Sans une variable interne qui relie un pas au suivant, le neurone ne peut pas mesurer un écart de temps. Il faut un état, c'est-à-dire un terme qui transporte le passé vers le présent, comme le $\lambda\, v_t$ de la récurrence.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : la fenêtre de coïncidence">
+On part de la condition de décharge sur la seconde entrée : $c\,(1 + \lambda^{\Delta}) \ge \theta$.
+
+**Étape 1.** On isole le terme en $\lambda^{\Delta}$. On divise par $c$ (positif), puis on retire $1$ :
+
+$$
+\lambda^{\Delta} \ge \frac{\theta}{c} - 1
+$$
+
+**Étape 2.** On applique le logarithme aux deux membres. Tant que le rapport est positif (ce qui est le cas ici), le logarithme conserve le sens de l'inégalité :
+
+$$
+\Delta \cdot \ln \lambda \ge \ln\!\left(\frac{\theta}{c} - 1\right)
+$$
+
+**Étape 3.** On divise par $\ln \lambda$. Comme $0 < \lambda < 1$, on a $\ln \lambda < 0$, et diviser par un nombre négatif inverse le sens de l'inégalité :
+
+$$
+\Delta \le \frac{\ln\!\left(\dfrac{\theta}{c} - 1\right)}{\ln \lambda}
+$$
+
+**Étape 4.** Le plus grand délai entier admissible est donc la partie entière de ce quotient :
+
+$$
+\Delta_{\max} = \left\lfloor \frac{\ln\!\left(\dfrac{\theta}{c} - 1\right)}{\ln \lambda} \right\rfloor
+$$
+
+**Étape 5.** On applique aux valeurs $\lambda = 0{,}7$, $c = 0{,}6$, $\theta = 0{,}9$. On calcule d'abord le rapport :
+
+$$
+\frac{\theta}{c} - 1 = \frac{0{,}9}{0{,}6} - 1 = 1{,}5 - 1 = 0{,}5
+$$
+
+**Étape 6.** On calcule le quotient des logarithmes :
+
+$$
+\frac{\ln(0{,}5)}{\ln(0{,}7)} = \frac{-0{,}693}{-0{,}357} \approx 1{,}94
+$$
+
+**Résultat.** La partie entière de $1{,}94$ vaut $1$, donc $\Delta_{\max} = 1$. Le neurone décharge pour un délai de $0$ ou $1$ pas, et se tait au-delà. C'est exactement ce que montre le composant interactif avec ses réglages par défaut.
+</Callout>
+
+## Sources
+
+- Jeffress, L. A. (1948). « A place theory of sound localization. » _Journal of Comparative and Physiological Psychology_ 41(1), 35-39. [DOI 10.1037/h0061495](https://doi.org/10.1037/h0061495)
+- Lapicque, L. (1907). « Recherches quantitatives sur l'excitation électrique des nerfs traitée comme une polarisation. » _Journal de Physiologie et de Pathologie Générale_ 9, 620-635. [Traduction commentée, Brunel & van Rossum, 2007, DOI 10.1007/s00422-007-0189-6](https://doi.org/10.1007/s00422-007-0189-6)
+- Maass, W. (1997). « Networks of spiking neurons: the third generation of neural network models. » _Neural Networks_ 10(9), 1659-1671. [DOI 10.1016/S0893-6080(97)00011-7](https://doi.org/10.1016/S0893-6080%2897%2900011-7)
+
+### Pour aller plus loin
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics_. Cambridge University Press. Chapitre 1 sur le modèle integrate-and-fire. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Carr, C. E. & Konishi, M. (1990). « A circuit for detection of interaural time differences in the brain stem of the barn owl. » _Journal of Neuroscience_ 10(10), 3227-3246. [DOI 10.1523/JNEUROSCI.10-10-03227.1990](https://doi.org/10.1523/JNEUROSCI.10-10-03227.1990)
+
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 1 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : pourquoi le neurone sans état est aveugle au temps, le rôle du potentiel de membrane, la détection de coïncidence, et la nature d'un spike. Cinq questions avec explication de la bonne réponse à la validation. À faire en ligne pour le scoring automatique."
+>
+  <Quiz
+    client:visible
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: "Pourquoi le neurone des fondations ne peut-il pas mesurer un écart de temps entre deux entrées ?",
+        options: [
+          "Parce que sa fonction d'activation est trop simple",
+          "Parce que sa sortie ne dépend que de l'entrée de l'instant présent, sans mémoire du passé",
+          "Parce qu'il a trop peu de poids",
+          "Parce que le biais l'en empêche",
+        ],
+        answer: 1,
+        explain:
+          "Le neurone sans état calcule y = f(w·x + b) à chaque pas indépendamment. Rien ne relie un pas au suivant, donc aucun écart temporel ne peut être mesuré.",
+      },
+      {
+        q: "À quoi sert le potentiel de membrane d'un neurone à état ?",
+        options: [
+          'À remplacer le biais',
+          'À normaliser la sortie entre 0 et 1',
+          'À garder la trace des entrées récentes en accumulant une charge qui fuit avec le temps',
+          'À accélérer le calcul',
+        ],
+        answer: 2,
+        explain:
+          "Le potentiel intègre les entrées, fuit en l'absence d'entrée, et déclenche un spike au seuil. C'est la mémoire courte qui rend le neurone sensible au temps.",
+      },
+      {
+        q: 'Dans la récurrence v(t+1) = λ·v(t) + I(t), que se passe-t-il si λ = 0 ?',
+        options: [
+          'Le neurone garde sa charge indéfiniment',
+          'Le neurone oublie tout instantanément et redevient sans état',
+          'Le neurone décharge en continu',
+          'Le seuil devient infini',
+        ],
+        answer: 1,
+        explain:
+          "Avec λ = 0, le potentiel ne garde rien du pas précédent : v(t+1) = I(t). Le neurone ne dépend plus que de l'instant présent, exactement comme un neurone sans état.",
+      },
+      {
+        q: "Qu'est-ce que la détection de coïncidence ?",
+        options: [
+          "Décharger uniquement quand deux entrées arrivent à un court intervalle l'une de l'autre",
+          'Détecter quand deux poids sont égaux',
+          "Compter le nombre total d'entrées reçues",
+          'Choisir la plus grande des deux entrées',
+        ],
+        answer: 0,
+        explain:
+          "Grâce à la fuite, deux entrées proches s'additionnent et franchissent le seuil, tandis que deux entrées éloignées non. Le neurone décharge donc en réponse à leur coïncidence temporelle.",
+      },
+      {
+        q: "Quelle est la sortie d'un neurone impulsionnel ?",
+        options: [
+          'Un nombre réel continu entre 0 et 1',
+          'Une probabilité',
+          'Une impulsion brève et tout ou rien (un spike), placée dans le temps',
+          'Un vecteur de poids',
+        ],
+        answer: 2,
+        explain:
+          "Le neurone à état ne rend pas un nombre continu mais un spike : un évènement discret. L'information se loge alors dans la cadence ou dans l'instant précis des spikes.",
+      },
+    ]}
+  />
+</InteractivePrint>

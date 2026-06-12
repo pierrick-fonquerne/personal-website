@@ -1,0 +1,24 @@
+slug: spiking-neural-networks
+title: 'Réseaux de neurones impulsionnels : le neurone qui calcule dans le temps'
+summary: Un cours universitaire accessible sur les réseaux de neurones impulsionnels (SNN). On part de la limite du neurone classique, qui ignore le temps, pour reconstruire un neurone à état qui intègre, fuit et décharge des impulsions. De la détection de coïncidence au gradient de substitution et au matériel neuromorphique.
+tags:
+  - réseaux-impulsionnels
+  - neurone-à-état
+  - codage-temporel
+  - neuromorphique
+  - integrate-and-fire
+theme: ai
+subtheme: neural-nets
+level: intermediate
+estimatedMinutes: 32
+modules:
+  - 00-avant-propos
+  - 01-le-neurone-qui-a-oublie-le-temps
+personalNote: |
+  Après avoir écrit le cours sur les fondations des réseaux de neurones, une question m'est restée en travers de la gorge : le neurone que j'y décrivais ne connaissait pas le temps. Il recevait une entrée, rendait une sortie, et oubliait tout. Or le vrai neurone, celui qui tient dans ta tête, vit dans le temps. Il accumule, il fuit, il décharge des impulsions.
+
+  Ce cours est né de cette gêne. Je voulais comprendre ce qu'un réseau gagne quand on lui rend la dimension temporelle, et ce que ça coûte. C'est aussi le terrain de mes propres explorations sur ce que j'appelle le neurone à état, que je documente ailleurs sur ce site dans la section recherche.
+
+  Je ne suis ni neuroscientifique ni chercheur en IA de formation. Je rédige ce cours comme je l'aurais voulu en l'abordant : rigoureux sur les définitions, honnête sur ce qu'on ne sait pas encore, et toujours accompagné de quelque chose à manipuler pour que l'intuition rentre.
+published: true
+publishedAt: 2026-06-12

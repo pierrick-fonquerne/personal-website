@@ -1,0 +1,107 @@
+---
+course: spiking-neural-networks
+order: 0
+title: Foreword
+subtitle: 'Why give time back to neurons, what this course covers, and how to read it.'
+estimatedMinutes: 8
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+The course "Neural networks: foundations and mathematics" showed you a powerful brick: the neuron that computes a weighted sum of its inputs, runs it through a non-linear function, and returns an output. That brick has a quiet but deep flaw. It has no memory. It receives, it answers, it forgets. Time does not exist for it.
+
+This course fixes that flaw. We are going to give neurons back the dimension they were missing: time. You will meet another family of networks, <Term slug="reseau-impulsionnel">spiking neural networks</Term>, where each neuron carries an internal state that evolves, accumulates, and fires discrete spikes. Closer to biology, far more energy-frugal, and carrying a way of computing that classical networks cannot easily imitate.
+
+## Three generations of networks
+
+To place what we study, a classic grid due to Wolfgang Maass (Maass, 1997) sorts neural networks into three generations:
+
+1. **First generation**: the binary threshold neuron of McCulloch and Pitts (McCulloch & Pitts, 1943). All-or-nothing output, like the switch you saw in chapter 1 of the foundations course.
+2. **Second generation**: the continuous-activation neuron (sigmoid, ReLU). It underpins all of modern deep learning, and the whole foundations course.
+3. **Third generation**: the spiking neuron. Its output is no longer a number, it is a train of spikes placed in time. That is the subject of this course.
+
+Maass proved that a third-generation network can, with fewer neurons, compute functions that earlier generations need more resources to approximate. The promise is there as early as 1997. The difficulty of training it, however, took decades to tame.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow** : the artificial neuron and its weighted sum, the activation function, and the idea of gradient descent. All of this is covered in "Neural networks: foundations and mathematics", the natural prerequisite for this one. A little comfort with numerical sequences and exponentials helps in the central chapters.
+
+**What you do not need to know** : detailed neurobiology (we introduce what is needed, when it is needed), formal differential equations (we present them step by step), and any particular programming language.
+
+**Level of rigor** : this course aims at an advanced undergraduate standard while staying readable for a motivated reader coming from the foundations. Most chapters stay intermediate; some flagged sections push toward graduate level for those who want to go further.
+</Callout>
+
+## The path
+
+The course follows a simple thread: give time back to the neuron, make it compute, then make it learn, and finally make it run on dedicated hardware.
+
+### Block 1: the neuron regains time
+
+Why the classical neuron fails to hear time, what a membrane potential is, the integrate-and-fire model and its zoo of variants.
+
+### Block 2: coding and connecting in time
+
+How information is coded in spikes, and how a synapse transmits a signal that has a duration.
+
+### Block 3: learning without differentiating a spike
+
+Timing-dependent plasticity, the wall of non-differentiability, the surrogate gradient, and converting a classical network into a spiking one.
+
+### Block 4: silicon that imitates the brain
+
+<Term slug="neuromorphique">Neuromorphic computing</Term>, its chips, its promises of energy efficiency, then an honest assessment of the limits and real uses.
+
+<MermaidDiagram
+  client:visible
+  caption="The four blocks of the course and their progression"
+  definition={`flowchart TB
+    subgraph B1["Block 1: time regained"]
+      direction LR
+      c1[1. Forgotten time] --> c2[2. Membrane potential] --> c3[3. Integrate-and-fire] --> c4[4. Zoo of dynamics]
+    end
+    subgraph B2["Block 2: code and connect"]
+      direction LR
+      c5[5. Coding in spikes] --> c6[6. The temporal synapse]
+    end
+    subgraph B3["Block 3: learning"]
+      direction LR
+      c7[7. Temporal plasticity] --> c8[8. The spike wall] --> c9[9. Surrogate gradient] --> c10[10. Conversion]
+    end
+    subgraph B4["Block 4: the hardware"]
+      direction LR
+      c11[11. Neuromorphic] --> c12[12. Limits and uses]
+    end
+    B1 --> B2 --> B3 --> B4`}
+/>
+
+<Callout kind="note" title="A course under construction">
+This course is written chapter by chapter. Block 1 starts now with chapter 1. The later blocks will arrive as the writing progresses. The map above is the destination, not the current state.
+</Callout>
+
+## Who this course is for
+
+- **You finished the foundations course** and want to see what lies beyond the continuous neuron. This is the ideal audience: you have exactly the right background.
+- **You are interested in computational neuroscience** and want the bridge to machine learning. This course builds that bridge without drowning the biology in formalism.
+- **You work on the energy efficiency of AI** and have heard of neuromorphic computing. You will find here what the promise rests on, and what it is worth.
+
+This course is **not** a tutorial for one particular simulation library, nor a survey of the very latest research, which moves too fast for a course.
+
+## In one sentence
+
+Spiking neural networks give the neuron back the dimension of time: their output is no longer a frozen number but a train of spikes, and it is that difference this course will unfold, from the basic model to silicon.
+
+## On to chapter 1
+
+It all starts from a concrete frustration. A barn owl locates a mouse in pitch darkness thanks to a gap of a few microseconds between its two ears. The foundations neuron cannot do this, and for a precise reason. That is where chapter 1 begins.
+
+## Sources
+
+- McCulloch, W. S. & Pitts, W. (1943). "A Logical Calculus of Ideas Immanent in Nervous Activity." _Bulletin of Mathematical Biophysics_ 5(4), 115-133. [DOI 10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Maass, W. (1997). "Networks of spiking neurons: the third generation of neural network models." _Neural Networks_ 10(9), 1659-1671. [DOI 10.1016/S0893-6080(97)00011-7](https://doi.org/10.1016/S0893-6080%2897%2900011-7)
+
+### To go further before tackling chapter 1
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition_. Cambridge University Press. A reference of the field, free online. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Eshraghian, J. K. et al. (2023). "Training Spiking Neural Networks Using Lessons From Deep Learning." _Proceedings of the IEEE_ 111(9). [arXiv:2109.12894](https://arxiv.org/abs/2109.12894)

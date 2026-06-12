@@ -174,5 +174,21 @@
   "en/neural-networks-foundations/07-derivatives-chain-rule": {
     "url": "/audio/en/neural-networks-foundations/07-derivatives-chain-rule.mp3",
     "chars": 4961
+  },
+  "fr/spiking-neural-networks/00-avant-propos": {
+    "url": "/audio/fr/spiking-neural-networks/00-avant-propos.mp3",
+    "chars": 3584
+  },
+  "fr/spiking-neural-networks/01-le-neurone-qui-a-oublie-le-temps": {
+    "url": "/audio/fr/spiking-neural-networks/01-le-neurone-qui-a-oublie-le-temps.mp3",
+    "chars": 7252
+  },
+  "en/spiking-neural-networks/00-foreword": {
+    "url": "/audio/en/spiking-neural-networks/00-foreword.mp3",
+    "chars": 3273
+  },
+  "en/spiking-neural-networks/01-the-neuron-that-forgot-time": {
+    "url": "/audio/en/spiking-neural-networks/01-the-neuron-that-forgot-time.mp3",
+    "chars": 6711
   }
 }

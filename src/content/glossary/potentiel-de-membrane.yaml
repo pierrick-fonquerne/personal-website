@@ -1,0 +1,11 @@
+slug: potentiel-de-membrane
+fr:
+  term: Potentiel de membrane
+  definition: Variable interne d'un neurone à état qui mesure sa charge électrique accumulée. Il monte quand des entrées arrivent, fuit lentement vers son repos en l'absence d'entrée, et déclenche une impulsion quand il atteint un seuil, après quoi il se réinitialise.
+en:
+  term: Membrane potential
+  definition: The internal variable of a stateful neuron measuring its accumulated electric charge. It rises when inputs arrive, slowly leaks back toward rest when no input comes, and triggers a spike once it reaches a threshold, after which it resets.
+seeAlso:
+  - neurone-a-etat
+  - integrate-and-fire
+  - reseau-impulsionnel
