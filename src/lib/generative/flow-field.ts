@@ -45,13 +45,20 @@ export interface StepResult {
 export type RandomSource = () => number;
 
 const OUT_OF_BOUNDS_MARGIN = 4;
+const POINTER_DISTANCE_EPSILON = 0.5;
 
 /** Same field for every visitor on a given day: the artwork changes daily. */
 export function dailySeed(date: Date): number {
   return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 }
 
-/** Direction of the flow at a point, drifting slowly over time. */
+/**
+ * Direction of the flow at a point, drifting slowly over time.
+ *
+ * The `time` parameter is an abstract animation clock in arbitrary units.
+ * The renderer chooses the per-frame increment passed here; `driftSpeed`
+ * converts it to angular drift in radians.
+ */
 export function fieldAngle(
   x: number,
   y: number,
@@ -76,7 +83,7 @@ export function pointerRepulsion(
   const dx = x - pointer.x;
   const dy = y - pointer.y;
   const distance = Math.hypot(dx, dy);
-  if (distance === 0 || distance >= configuration.pointerRadius) {
+  if (distance < POINTER_DISTANCE_EPSILON || distance >= configuration.pointerRadius) {
     return { x: 0, y: 0 };
   }
   const falloff = 1 - distance / configuration.pointerRadius;
@@ -97,7 +104,13 @@ export function spawnParticle(
   };
 }
 
-/** Advance a particle by one frame, respawning it when it leaves the bounds. */
+/**
+ * Advance a particle by one frame, respawning it when it leaves the bounds.
+ *
+ * The `time` parameter is an abstract animation clock in arbitrary units.
+ * The renderer chooses the per-frame increment passed here; `driftSpeed`
+ * converts it to angular drift in radians.
+ */
 export function stepParticle(
   particle: Particle,
   time: number,

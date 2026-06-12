@@ -37,6 +37,17 @@ describe('fieldAngle', () => {
       fieldAngle(100, 200, 1, configuration),
     );
   });
+
+  it('is spatially continuous: neighboring points give close angles', () => {
+    for (let i = 0; i < 200; i++) {
+      const x = i * 3.7;
+      const y = i * 1.9;
+      const delta = Math.abs(
+        fieldAngle(x + 1, y, 0.5, configuration) - fieldAngle(x, y, 0.5, configuration),
+      );
+      expect(delta).toBeLessThan(0.5);
+    }
+  });
 });
 
 describe('pointerRepulsion', () => {
@@ -59,6 +70,13 @@ describe('pointerRepulsion', () => {
     const near = pointerRepulsion(20, 0, pointer, configuration);
     const far = pointerRepulsion(80, 0, pointer, configuration);
     expect(near.x).toBeGreaterThan(far.x);
+  });
+
+  it('is zero when the particle nearly coincides with the pointer', () => {
+    const pointer = { x: 100, y: 100 };
+    const force = pointerRepulsion(100.0001, 100, pointer, configuration);
+    expect(force.x).toBe(0);
+    expect(force.y).toBe(0);
   });
 });
 
