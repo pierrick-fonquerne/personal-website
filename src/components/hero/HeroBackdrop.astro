@@ -30,16 +30,29 @@
     accent: string;
   }
 
-  const canvas = document.querySelector<HTMLCanvasElement>('canvas.hero-backdrop');
-  if (canvas instanceof HTMLCanvasElement) {
-    initialize(canvas);
+  let teardown: (() => void) | null = null;
+
+  function boot(): void {
+    teardown?.();
+    teardown = null;
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas.hero-backdrop');
+    if (canvas instanceof HTMLCanvasElement) {
+      teardown = initialize(canvas);
+    }
   }
 
-  function initialize(canvas: HTMLCanvasElement): void {
+  boot();
+  document.addEventListener('astro:page-load', boot);
+  document.addEventListener('astro:before-swap', () => {
+    teardown?.();
+    teardown = null;
+  });
+
+  function initialize(canvas: HTMLCanvasElement): () => void {
     const contextOrNull = canvas.getContext('2d');
     const sectionOrNull = canvas.closest('section');
     if (contextOrNull === null || sectionOrNull === null) {
-      return;
+      return () => {};
     }
     const context: CanvasRenderingContext2D = contextOrNull;
     const section: Element = sectionOrNull;
@@ -143,42 +156,53 @@
 
     if (prefersReducedMotion) {
       renderStaticArtwork();
-      new MutationObserver(() => {
+      const themeObserver = new MutationObserver(() => {
         colors = readThemeColors();
         renderStaticArtwork();
-      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-      return;
+      });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      return () => {
+        themeObserver.disconnect();
+      };
     }
 
     resetCanvas();
     start();
 
-    new MutationObserver(() => {
+    const themeObserver = new MutationObserver(() => {
       colors = readThemeColors();
       context.fillStyle = colors.background;
       context.fillRect(0, 0, bounds.width, bounds.height);
-    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-    new ResizeObserver(() => {
-      resetCanvas();
-    }).observe(section);
+    let lastObservedWidth = section.clientWidth;
+    const resizeObserver = new ResizeObserver(() => {
+      if (section.clientWidth !== lastObservedWidth) {
+        lastObservedWidth = section.clientWidth;
+        resetCanvas();
+      }
+    });
+    resizeObserver.observe(section);
 
-    new IntersectionObserver((entries) => {
+    const intersectionObserver = new IntersectionObserver((entries) => {
       isInViewport = entries.some((entry) => entry.isIntersecting);
       if (isInViewport) {
         start();
       } else {
         stop();
       }
-    }).observe(canvas);
+    });
+    intersectionObserver.observe(canvas);
 
-    document.addEventListener('visibilitychange', () => {
+    const onVisibilityChange = () => {
       if (document.hidden) {
         stop();
       } else {
         start();
       }
-    });
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     section.addEventListener('pointermove', (event: Event) => {
       const pointerEvent = event as PointerEvent;
@@ -192,6 +216,14 @@
     section.addEventListener('pointerleave', () => {
       pointer = null;
     });
+
+    return () => {
+      stop();
+      themeObserver.disconnect();
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }
 </script>
 
