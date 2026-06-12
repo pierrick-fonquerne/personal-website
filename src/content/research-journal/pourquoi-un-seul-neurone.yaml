@@ -1,0 +1,10 @@
+slug: pourquoi-un-seul-neurone
+research: neurone-vivant-et-persistant
+date: 2026-06-12
+title:
+  fr: 'Pourquoi un seul neurone suffit à trancher la persistance'
+  en: 'Why a single neuron is enough to settle persistence'
+excerpt:
+  fr: "Trois points tranchés : l'encodage brut en trains de spikes, la signature comme ancre du replay, et le coût assumé d'un journal non borné."
+  en: 'Three points settled: raw spike-train encoding, the signature as a replay anchor, and the assumed cost of an unbounded journal.'
+published: true

@@ -1,0 +1,21 @@
+---
+slug: pourquoi-un-seul-neurone
+---
+
+Aujourd'hui j'ai fermé les trois points qui restaient ouverts dans le modèle réfutable du neurone vivant et persistant. Le fil conducteur a été le même partout : choisir la forme la plus pauvre qui pourrait suffire, puis chercher à la casser.
+
+## L'oubli ne peut venir que du partage
+
+Sur une seule unité, il n'y a pas de réseau où cacher une mémoire. L'oubli ne peut donc venir que d'une chose : les mêmes poids codent P1 et P2. C'est pour cela que le recouvrement des afférences entre les deux motifs devient la vraie variable de l'expérience, pas un détail. On le balaie de 0 à 1 et on lit une courbe de rétention, plutôt qu'un seul verdict.
+
+## La signature comme ancre, pas comme copie
+
+La signature du neurone n'est utile que si elle ne dérive pas avec les poids. Je la fixe comme un état lent qui oriente le replay du sommeil vers les événements cohérents avec ce que le neurone est. La forme retenue est minimale : un vecteur de traces afférentes lentes. Il score les épisodes du journal, il ne régénère pas le motif : c'est ce qui empêche de gagner par triche.
+
+## Le journal non borné, assumé
+
+Garder tout coûte. Je l'assume : le journal complet est une borne supérieure, un oracle, et je mesure son coût pour lire chaque rétention en regard de son prix. La question n'est pas « est-ce gratuit » mais « combien un buffer borné en récupère à compute égal ». Le coût O(T) est la condition de l'expérience, pas un défaut à cacher.
+
+## Reste ouvert
+
+Choisir l'artefact de la brique : une page concept jouable, ou du code Rust en TDD. La dimension pédagogique du replay, la madeleine de Proust, viendra avec.
