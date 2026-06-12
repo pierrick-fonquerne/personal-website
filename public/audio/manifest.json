@@ -177,18 +177,26 @@
   },
   "fr/spiking-neural-networks/00-avant-propos": {
     "url": "/audio/fr/spiking-neural-networks/00-avant-propos.mp3",
-    "chars": 3584
+    "chars": 3598
   },
   "fr/spiking-neural-networks/01-le-neurone-qui-a-oublie-le-temps": {
     "url": "/audio/fr/spiking-neural-networks/01-le-neurone-qui-a-oublie-le-temps.mp3",
-    "chars": 7252
+    "chars": 7272
   },
   "en/spiking-neural-networks/00-foreword": {
     "url": "/audio/en/spiking-neural-networks/00-foreword.mp3",
-    "chars": 3273
+    "chars": 3287
   },
   "en/spiking-neural-networks/01-the-neuron-that-forgot-time": {
     "url": "/audio/en/spiking-neural-networks/01-the-neuron-that-forgot-time.mp3",
-    "chars": 6711
+    "chars": 6731
+  },
+  "fr/spiking-neural-networks/02-le-potentiel-de-membrane": {
+    "url": "/audio/fr/spiking-neural-networks/02-le-potentiel-de-membrane.mp3",
+    "chars": 7070
+  },
+  "en/spiking-neural-networks/02-the-membrane-potential": {
+    "url": "/audio/en/spiking-neural-networks/02-the-membrane-potential.mp3",
+    "chars": 6624
   }
 }

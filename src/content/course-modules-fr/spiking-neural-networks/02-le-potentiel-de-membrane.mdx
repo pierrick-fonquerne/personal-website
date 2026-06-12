@@ -1,0 +1,306 @@
+---
+course: spiking-neural-networks
+order: 2
+title: Le potentiel de membrane
+subtitle: "D'où vient le facteur de fuite posé à la main au chapitre 1 : la membrane est un condensateur qui se décharge à travers une résistance."
+estimatedMinutes: 20
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import MembraneRcLab from '../../../components/learning/MembraneRcLab.tsx';
+
+Au chapitre précédent, tu as donné une mémoire au neurone avec un seul bouton : le facteur de rétention $\lambda$, glissé à la main entre $0$ et $1$. Il marchait, mais il tombait du ciel. Pourquoi $0{,}7$ et pas autre chose ? Que représente-t-il vraiment ? Ce chapitre ouvre la cellule pour montrer que $\lambda$ n'est pas un réglage arbitraire : il sort tout droit de la physique d'une membrane, un petit condensateur qui se vide à travers une résistance.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : la récurrence du potentiel vue au chapitre 1, $v_{t+1} = \lambda\, v_t + I_t$, et l'idée que $\lambda$ règle la vitesse de la fuite. Savoir qu'une exponentielle décroissante part vite puis ralentit aide, mais on la réintroduit.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les équations différentielles (le chapitre 3 les écrira), l'électrochimie détaillée des ions, et tout circuit électrique réel.
+
+**Niveau de rigueur** : on définit chaque grandeur physique, et on démontre le lien exact entre la décharge continue d'une membrane et la récurrence discrète du chapitre 1. Les calculs se font à la main sur de petits nombres.
+</Callout>
+
+## Une membrane, deux pièces électriques
+
+Un vrai neurone baigne dans un liquide rempli d'ions chargés, le sodium, le potassium, le chlore. Au repos, sa membrane maintient une petite différence de tension constante entre l'intérieur et l'extérieur de la cellule, de l'ordre de $-65$ millivolts. C'est le <Term slug="potentiel-de-repos">potentiel de repos</Term>, la valeur vers laquelle la cellule revient quand on la laisse tranquille.
+
+Cette membrane est une paroi grasse très fine qui sépare deux solutions salées. Elle accumule des charges opposées de part et d'autre, exactement comme un condensateur : un composant qui stocke de la charge électrique. Plus sa capacité $C$ est grande, plus il faut de charge pour faire monter sa tension d'un même cran.
+
+Mais la membrane n'est pas parfaitement étanche. Elle est percée de pores minuscules, les <Term slug="canal-ionique">canaux ioniques</Term>, qui laissent fuir un filet de courant. Vue de loin, cette fuite se comporte comme une résistance : un composant qui s'oppose au passage du courant. Plus la résistance $R$ est grande, plus le courant peine à passer, et plus la charge s'échappe lentement.
+
+Retiens ces deux rôles, car tout le chapitre tient dans leur rencontre : la capacité $C$ stocke, la résistance $R$ laisse fuir.
+
+## Le circuit RC et la loi de décharge
+
+Mets ces deux pièces ensemble : un condensateur $C$ chargé, relié à une résistance $R$ par où il peut se vider. C'est le circuit RC, le modèle électrique le plus simple d'une membrane dite passive, c'est-à-dire qui se contente de fuir, sans les mécanismes actifs qui fabriquent l'impulsion (on y revient à la fin).
+
+Charge ce condensateur jusqu'à une tension $V_0$, puis laisse-le seul. Le courant s'échappe par la résistance, la tension baisse. À quelle vitesse ? Voici l'intuition décisive : le courant qui fuit est d'autant plus fort que la tension est haute. Plus il reste de charge, plus elle s'échappe vite ; moins il en reste, plus la fuite ralentit. Une grandeur dont la vitesse de décroissance est proportionnelle à sa propre valeur décroît selon une exponentielle. La décharge d'un circuit RC suit donc
+
+$$
+V(t) = V_0\, e^{-t/\tau}, \qquad \tau = R\,C.
+$$
+
+Cette équation se lit : la tension à l'instant $t$ est égale à la tension de départ $V_0$ multipliée par $e$ élevé à la puissance $-t/\tau$. Le nombre $\tau$ (la lettre grecque tau) regroupe les deux pièces en une seule grandeur, $\tau = RC$. La justification propre de cette forme passe par une équation différentielle, l'outil du chapitre 3 ; ici, l'intuition de proportionnalité nous suffit pour avancer.
+
+## La constante de temps, l'horloge de la membrane
+
+Le produit $\tau = RC$ a une unité de temps et une signification très concrète. Regarde ce que vaut la tension juste au moment $t = \tau$ :
+
+$$
+V(\tau) = V_0\, e^{-1} \approx 0{,}37\, V_0.
+$$
+
+Au bout d'une durée $\tau$, la membrane a perdu environ $63\,\%$ de sa charge : il lui en reste $37\,\%$. C'est pourquoi on appelle $\tau$ la <Term slug="constante-de-temps">constante de temps</Term> : elle mesure la durée caractéristique de la fuite. Une petite constante de temps, et le souvenir s'évapore en un éclair ; une grande, et la membrane garde longtemps la trace de ce qu'elle a reçu. C'est la traduction physique exacte de ce que le bouton $\lambda$ réglait au chapitre 1.
+
+<Callout kind="note" title="Une grandeur, deux causes">
+Comme $\tau = RC$, deux membranes très différentes peuvent avoir la même horloge. Doubler la résistance $R$ ou doubler la capacité $C$ produit le même allongement de $\tau$, donc la même lenteur de fuite. La constante de temps ne dit pas, à elle seule, si la membrane est très résistive ou très capacitive : elle ne retient que leur produit.
+</Callout>
+
+## De la décharge continue au facteur de fuite du chapitre 1
+
+On a maintenant deux descriptions de la même fuite. La physique la décrit en continu : à chaque instant $t$, la tension vaut $V_0\, e^{-t/\tau}$. Le chapitre 1, lui, la décrivait par petits pas de temps, avec la récurrence sans entrée $v_{t+1} = \lambda\, v_t$. Décrivent-elles la même chose ?
+
+Pour comparer, échantillonnons la courbe continue : regardons-la seulement à intervalles réguliers $\Delta t$, c'est-à-dire aux instants $0$, $\Delta t$, $2\,\Delta t$, et ainsi de suite. À l'instant $k\,\Delta t$, la loi continue donne
+
+$$
+V(k\,\Delta t) = V_0\, e^{-k\,\Delta t / \tau} = V_0\, \left(e^{-\Delta t / \tau}\right)^{k}.
+$$
+
+La deuxième égalité utilise seulement la règle des puissances : $e^{-k\,\Delta t/\tau}$ est $\left(e^{-\Delta t/\tau}\right)$ multiplié par lui-même $k$ fois. Pose maintenant
+
+$$
+\lambda = e^{-\Delta t / \tau}.
+$$
+
+Alors la valeur échantillonnée s'écrit $V(k\,\Delta t) = V_0\, \lambda^{k}$, qui est exactement la suite produite par la récurrence du chapitre 1, dont la solution sans entrée est $v_k = v_0\, \lambda^{k}$.
+
+La conclusion est forte : la récurrence du chapitre 1 n'est pas une approximation grossière de la physique, c'est son échantillonnage exact, à condition de choisir $\lambda = e^{-\Delta t/\tau}$. Le facteur de fuite qu'on posait à la main avait donc une formule cachée, et la voici.
+
+<Callout kind="tip" title="Lire la formule du facteur de fuite">
+Comme $\Delta t > 0$ et $\tau > 0$, l'exposant $-\Delta t/\tau$ est négatif, donc $\lambda = e^{-\Delta t/\tau}$ tombe toujours entre $0$ et $1$ : c'est bien une rétention, jamais une amplification. Deux cas limites éclairent la formule. Si le pas $\Delta t$ est tout petit devant $\tau$ (on regarde la membrane très souvent), l'exposant frôle $0$ et $\lambda$ frôle $1$ : la récurrence garde presque toute sa charge d'un pas au suivant. Si au contraire $\Delta t$ dépasse largement $\tau$ (on la regarde rarement), l'exposant plonge et $\lambda$ s'effondre vers $0$ : entre deux coups d'oeil, tout a déjà fui.
+</Callout>
+
+## Manipule la décharge
+
+La formule se voit mieux qu'elle ne se lit. Dans le composant ci-dessous, une charge initiale pose le potentiel à sa valeur de départ, puis la membrane fuit. La courbe verte est la décharge continue $V(t) = V_0\, e^{-t/\tau}$. Les points violets sont les valeurs de la récurrence du chapitre 1, prélevées tous les $\Delta t$.
+
+**Ta mission** : règle d'abord $R$ et $C$, et observe la constante de temps $\tau = RC$ s'afficher pendant que la pente de la courbe change. Repère que la courbe croise toujours la ligne des $37\,\%$ pile à l'instant $t = \tau$. Joue ensuite avec le pas $\Delta t$ : les points violets s'écartent ou se resserrent, mais ils restent toujours posés exactement sur la courbe verte. C'est le théorème de la section précédente, sous tes yeux.
+
+<InteractivePrint
+  label="Figure : décharge d'une membrane RC, continue et échantillonnée (interactif)"
+  description="Tracé de la décharge du potentiel de membrane d'un circuit RC au cours du temps. La courbe continue suit V(t) = V0 e^(-t/tau) avec tau = R fois C. Des points discrets, prélevés tous les Delta t selon la récurrence v(k+1) = lambda v(k) avec lambda = e^(-Delta t / tau), se superposent exactement à la courbe continue. Une ligne pointillée horizontale marque le niveau des 37 pour cent (1/e) et une ligne verticale marque l'instant t = tau. Régler R et C change la constante de temps et donc la pente ; régler Delta t change l'espacement des points sans jamais les décoller de la courbe."
+>
+  <MembraneRcLab client:visible locale="fr" />
+</InteractivePrint>
+
+Trois choses à observer en jouant :
+
+- La constante de temps ne dépend que du produit $R\,C$. Double la résistance ou double la capacité : la courbe ralentit de la même façon. C'est le contenu de la note plus haut, rendu tangible.
+- À l'instant $t = \tau$, la courbe passe par la ligne des $37\,\%$, quels que soient $R$ et $C$. Le repère des $37\,\%$ et la verticale $\tau$ se croisent toujours sur la courbe.
+- Plus $\Delta t$ est petit devant $\tau$, plus $\lambda$ est proche de $1$ et plus les points sont denses. Plus $\Delta t$ est grand, plus $\lambda$ chute et plus les points dégringolent vite : la récurrence suit toujours la physique, à la cadence où tu la regardes.
+
+## Et le vrai neurone ?
+
+Le circuit RC décrit une membrane passive : elle stocke, elle fuit, et c'est tout. Or un vrai neurone ne se contente pas de fuir, il fabrique activement son impulsion. Comment ? En 1952, Alan Hodgkin et Andrew Huxley ont mesuré, sur l'axone géant du calmar, comment certains canaux ioniques s'ouvrent et se ferment selon la tension elle-même, créant une réaction en chaîne qui engendre le spike (Hodgkin & Huxley, 1952). Leur modèle, couronné par le prix Nobel de médecine en 1963, ajoute au simple RC des conductances qui dépendent de la tension, donc non linéaires.
+
+<Callout kind="note" title="La limite de l'analogie du condensateur">
+Le RC est juste tant que la membrane reste passive, loin du seuil. Près du déclenchement du spike, les canaux dépendants de la tension prennent le dessus et le modèle linéaire ne tient plus. Le RC n'est donc pas faux, il est incomplet : c'est le socle sur lequel les chapitres suivants ajoutent juste ce qu'il faut de non-linéarité, sans payer le coût du modèle complet de Hodgkin et Huxley.
+</Callout>
+
+## En une phrase
+
+La fuite du neurone n'a rien d'arbitraire : la membrane est un condensateur qui se vide à travers une résistance avec une constante de temps $\tau = RC$, et échantillonner cette décharge continue tous les $\Delta t$ redonne exactement le facteur $\lambda = e^{-\Delta t/\tau}$ posé à la main au chapitre 1.
+
+## Vers le chapitre 3
+
+On a relié notre récurrence à la physique d'une membrane qui fuit, mais il manque encore deux pièces pour un neurone impulsionnel complet. D'abord, l'équation qui gouverne la tension quand un courant d'entrée arrive en continu, et pas seulement quand on laisse la membrane se vider toute seule. Ensuite, le mécanisme de décharge : le seuil et la remise à zéro. Le chapitre 3 écrit l'équation différentielle de la membrane, $\tau\, \frac{dV}{dt} = -(V - V_\text{repos}) + R\,I$, lui ajoute un seuil et un reset, et obtient le modèle leaky integrate-and-fire complet, dont notre récurrence du chapitre 1 n'était que la version échantillonnée et privée d'entrée.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : calculer une constante de temps
+
+Une membrane a une résistance $R = 2$ et une capacité $C = 1{,}5$, dans les unités du modèle. Calculer sa constante de temps $\tau$. Puis dire ce que devient $\tau$ si on double la capacité.
+
+### Exercice 2 : le temps d'une demi-charge
+
+Une membrane a une constante de temps $\tau = 2$. Quelle fraction de la charge initiale reste-t-il à l'instant $t = \tau$ ? Puis, au bout de combien de temps n'en reste-t-il plus que la moitié ?
+
+### Exercice 3 : retrouver le facteur de fuite
+
+On échantillonne une décharge de constante de temps $\tau = 2$ avec un pas $\Delta t = 1$. Calculer le facteur de fuite $\lambda = e^{-\Delta t/\tau}$. Puis vérifier que, partant de $V_0 = 1$, la récurrence $v_{k+1} = \lambda\, v_k$ donne après deux pas la même valeur que la loi continue à l'instant $t = 2$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : calculer une constante de temps">
+On a $R = 2$ et $C = 1{,}5$.
+
+**Étape 1.** La constante de temps est le produit de la résistance et de la capacité :
+
+$$
+\tau = R\,C = 2 \times 1{,}5 = 3
+$$
+
+**Étape 2.** On double la capacité, donc $C$ passe à $3$. On recalcule :
+
+$$
+\tau = 2 \times 3 = 6
+$$
+
+**Résultat.** La constante de temps vaut $\tau = 3$, et doubler la capacité la double aussi, à $\tau = 6$. La fuite devient deux fois plus lente.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : le temps d'une demi-charge">
+On a $\tau = 2$ et la loi $V(t) = V_0\, e^{-t/\tau}$.
+
+**Étape 1.** À l'instant $t = \tau$, on remplace $t$ par $\tau$ dans la loi :
+
+$$
+V(\tau) = V_0\, e^{-\tau/\tau} = V_0\, e^{-1}
+$$
+
+**Étape 2.** On évalue $e^{-1}$ :
+
+$$
+e^{-1} \approx 0{,}37
+$$
+
+Il reste donc environ $37\,\%$ de la charge initiale.
+
+**Étape 3.** On cherche maintenant l'instant $t$ où il reste la moitié de la charge. On écrit la condition :
+
+$$
+e^{-t/\tau} = \frac{1}{2}
+$$
+
+**Étape 4.** On applique le logarithme népérien aux deux membres pour libérer l'exposant :
+
+$$
+-\frac{t}{\tau} = \ln\!\left(\frac{1}{2}\right) = -\ln 2
+$$
+
+**Étape 5.** On isole $t$ en multipliant par $-\tau$ :
+
+$$
+t = \tau \ln 2 = 2 \times 0{,}693 \approx 1{,}39
+$$
+
+**Résultat.** À $t = \tau$ il reste $37\,\%$ de la charge, et il faut attendre $t = \tau \ln 2 \approx 1{,}39$ pour qu'il n'en reste que la moitié.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : retrouver le facteur de fuite">
+On a $\tau = 2$, un pas $\Delta t = 1$ et un départ $V_0 = 1$.
+
+**Étape 1.** On calcule le facteur de fuite avec la formule du chapitre :
+
+$$
+\lambda = e^{-\Delta t/\tau} = e^{-1/2} = e^{-0{,}5} \approx 0{,}607
+$$
+
+**Étape 2.** On déroule la récurrence sur deux pas. Premier pas :
+
+$$
+v_1 = \lambda\, v_0 = 0{,}607 \times 1 = 0{,}607
+$$
+
+**Étape 3.** Deuxième pas :
+
+$$
+v_2 = \lambda\, v_1 = 0{,}607 \times 0{,}607 \approx 0{,}368
+$$
+
+**Étape 4.** On calcule de l'autre côté la loi continue à l'instant $t = 2$ :
+
+$$
+V(2) = V_0\, e^{-2/\tau} = e^{-2/2} = e^{-1} \approx 0{,}368
+$$
+
+**Résultat.** La récurrence donne $v_2 \approx 0{,}368$ après deux pas, et la loi continue donne $V(2) \approx 0{,}368$ au même instant. Les deux coïncident : la suite discrète est bien l'échantillonnage exact de la décharge continue.
+</Callout>
+
+## Sources
+
+- Hodgkin, A. L. & Huxley, A. F. (1952). « A quantitative description of membrane current and its application to conduction and excitation in nerve. » _The Journal of Physiology_ 117(4), 500-544. [DOI 10.1113/jphysiol.1952.sp004764](https://doi.org/10.1113/jphysiol.1952.sp004764)
+- Lapicque, L. (1907). « Recherches quantitatives sur l'excitation électrique des nerfs traitée comme une polarisation. » _Journal de Physiologie et de Pathologie Générale_ 9, 620-635. [Traduction commentée, Brunel & van Rossum, 2007, DOI 10.1007/s00422-007-0189-6](https://doi.org/10.1007/s00422-007-0189-6)
+
+### Pour aller plus loin
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics_. Cambridge University Press. Section 1.3 sur la membrane passive et le circuit RC. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Abbott, L. F. (1999). « Lapicque's introduction of the integrate-and-fire model neuron (1907). » _Brain Research Bulletin_ 50(5-6), 303-304. [DOI 10.1016/S0361-9230(99)00161-6](https://doi.org/10.1016/S0361-9230%2899%2900161-6)
+
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 2 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : l'origine physique du facteur de fuite, le rôle de la constante de temps tau égale R fois C, le repère des 37 pour cent à t égal tau, le lien exact entre décharge continue et récurrence discrète, et ce que le circuit RC modélise ou non du vrai neurone. Cinq questions avec explication de la bonne réponse à la validation. À faire en ligne pour le scoring automatique."
+>
+  <Quiz
+    client:visible
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: "D'où vient le facteur de rétention λ posé à la main au chapitre 1 ?",
+        options: [
+          "D'un choix arbitraire sans signification physique",
+          "De la physique de la membrane : un condensateur qui se décharge à travers une résistance, avec λ = e^(-Δt/τ)",
+          "Du nombre de canaux ioniques uniquement",
+          'Du potentiel de repos de la cellule',
+        ],
+        answer: 1,
+        explain:
+          "Échantillonner la décharge continue V(t) = V0 e^(-t/τ) tous les Δt donne V0 λ^k avec λ = e^(-Δt/τ). Le facteur de fuite est donc déterminé par la constante de temps de la membrane.",
+      },
+      {
+        q: 'Que vaut la constante de temps τ d\'un circuit RC ?',
+        options: [
+          'La somme R + C',
+          'Le rapport R / C',
+          'Le produit R × C',
+          'La résistance R seule',
+        ],
+        answer: 2,
+        explain:
+          "τ = R × C. C'est un temps : il mesure la durée caractéristique de la fuite. Doubler R ou doubler C double τ de la même manière.",
+      },
+      {
+        q: 'À l\'instant t = τ, quelle fraction de la charge initiale reste-t-il ?',
+        options: [
+          'La moitié, soit 50 %',
+          'Environ 37 % (la valeur 1/e)',
+          'Presque rien, moins de 1 %',
+          'La totalité, la fuite n\'a pas commencé',
+        ],
+        answer: 1,
+        explain:
+          "V(τ) = V0 e^(-1) ≈ 0,37 V0. Au bout d'une constante de temps, la membrane a perdu environ 63 % de sa charge et il en reste 37 %.",
+      },
+      {
+        q: 'Pourquoi dit-on que la récurrence du chapitre 1 est l\'échantillonnage exact de la décharge ?',
+        options: [
+          "Parce qu'elle en est une approximation grossière qui diverge avec le temps",
+          'Parce que V(kΔt) = V0 (e^(-Δt/τ))^k = V0 λ^k, identique à la suite discrète v_k = v0 λ^k',
+          'Parce que les deux ne coïncident qu\'au premier pas',
+          'Parce que λ vaut toujours 1',
+        ],
+        answer: 1,
+        explain:
+          "En prélevant la courbe continue tous les Δt, on retombe terme à terme sur la suite de la récurrence, à condition de poser λ = e^(-Δt/τ). Ce n'est pas une approximation, c'est une égalité exacte.",
+      },
+      {
+        q: 'Que modélise le circuit RC, et que ne modélise-t-il pas ?',
+        options: [
+          'Il modélise le spike actif, mais pas la fuite',
+          'Il modélise la membrane passive qui fuit, mais pas la génération active du spike',
+          'Il modélise tout le neurone, spike compris',
+          'Il ne modélise ni la fuite ni le spike',
+        ],
+        answer: 1,
+        explain:
+          "Le RC décrit une membrane passive : elle stocke et elle fuit. La génération active de l'impulsion vient de canaux dépendants de la tension, décrits par le modèle de Hodgkin et Huxley, non linéaire.",
+      },
+    ]}
+  />
+</InteractivePrint>

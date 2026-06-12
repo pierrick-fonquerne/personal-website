@@ -1,0 +1,12 @@
+slug: canal-ionique
+fr:
+  term: Canal ionique
+  definition: Pore traversant la membrane d'un neurone qui laisse passer certains ions chargés. Les canaux toujours ouverts font fuir un courant constant, ce qui se modélise comme une résistance. D'autres canaux s'ouvrent et se ferment selon la tension elle-même et engendrent activement l'impulsion (modèle de Hodgkin et Huxley).
+  source: Hodgkin & Huxley, 1952
+en:
+  term: Ion channel
+  definition: A pore through a neuron's membrane that lets specific charged ions pass. Always-open channels leak a steady current, modelled as a resistance. Other channels open and close depending on the voltage itself and actively generate the spike (the Hodgkin-Huxley model).
+  source: Hodgkin & Huxley, 1952
+seeAlso:
+  - potentiel-de-repos
+  - potentiel-de-membrane
