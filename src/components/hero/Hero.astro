@@ -2,6 +2,7 @@
 import Eyebrow from '../ui/Eyebrow.astro';
 import PulseDot from '../ui/PulseDot.astro';
 import RoleRotator from './RoleRotator.astro';
+import HeroBackdrop from './HeroBackdrop.astro';
 import { useTranslations, type Locale } from '../../lib/i18n';
 
 interface Props {
@@ -20,7 +21,8 @@ const cells = [
 ];
 ---
 
-<section class="container-page pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-24 lg:pb-12">
+<section class="container-page relative isolate pt-12 pb-8 sm:pt-16 sm:pb-10 lg:pt-24 lg:pb-12">
+  <HeroBackdrop />
   <Eyebrow text={t.hero.eyebrow} />
 
   <h1

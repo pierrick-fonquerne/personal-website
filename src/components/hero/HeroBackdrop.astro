@@ -1,0 +1,239 @@
+---
+---
+
+<canvas class="hero-backdrop" aria-hidden="true"></canvas>
+
+<script>
+  import {
+    dailySeed,
+    spawnParticle,
+    stepParticle,
+    type Bounds,
+    type FlowFieldConfiguration,
+    type Particle,
+    type Pointer,
+  } from '../../lib/generative/flow-field';
+
+  const DESKTOP_PARTICLE_COUNT = 200;
+  const MOBILE_PARTICLE_COUNT = 80;
+  const ACCENT_RATIO = 0.16;
+  const TIME_INCREMENT = 0.0035;
+  const TRAIL_FADE_ALPHA = 0.05;
+  const FOREGROUND_ALPHA = 0.1;
+  const ACCENT_ALPHA = 0.32;
+  const STATIC_FRAME_COUNT = 240;
+  const MAX_PIXEL_RATIO = 2;
+
+  interface ThemeColors {
+    background: string;
+    foreground: string;
+    accent: string;
+  }
+
+  let teardown: (() => void) | null = null;
+
+  function boot(): void {
+    teardown?.();
+    teardown = null;
+    const canvas = document.querySelector<HTMLCanvasElement>('canvas.hero-backdrop');
+    if (canvas instanceof HTMLCanvasElement) {
+      teardown = initialize(canvas);
+    }
+  }
+
+  boot();
+  document.addEventListener('astro:page-load', boot);
+  document.addEventListener('astro:before-swap', () => {
+    teardown?.();
+    teardown = null;
+  });
+
+  function initialize(canvas: HTMLCanvasElement): () => void {
+    const contextOrNull = canvas.getContext('2d');
+    const sectionOrNull = canvas.closest('section');
+    if (contextOrNull === null || sectionOrNull === null) {
+      return () => {};
+    }
+    const context: CanvasRenderingContext2D = contextOrNull;
+    const section: Element = sectionOrNull;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const configuration: FlowFieldConfiguration = {
+      seed: dailySeed(new Date()),
+      noiseScale: 0.005,
+      speed: 1.2,
+      driftSpeed: 6,
+      pointerRadius: 110,
+      pointerStrength: 2.6,
+    };
+
+    let colors = readThemeColors();
+    let bounds: Bounds = { width: 0, height: 0 };
+    let particles: Particle[] = [];
+    let pointer: Pointer | null = null;
+    let time = 0;
+    let frameId = 0;
+    let isInViewport = true;
+
+    function readThemeColors(): ThemeColors {
+      const styles = getComputedStyle(document.documentElement);
+      return {
+        background: styles.getPropertyValue('--color-bg').trim(),
+        foreground: styles.getPropertyValue('--color-fg').trim(),
+        accent: styles.getPropertyValue('--color-accent').trim(),
+      };
+    }
+
+    function withAlpha(hexColor: string, alpha: number): string {
+      const red = parseInt(hexColor.slice(1, 3), 16);
+      const green = parseInt(hexColor.slice(3, 5), 16);
+      const blue = parseInt(hexColor.slice(5, 7), 16);
+      return `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    }
+
+    function resetCanvas(): void {
+      const pixelRatio = Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
+      bounds = { width: section.clientWidth, height: section.clientHeight };
+      canvas.width = bounds.width * pixelRatio;
+      canvas.height = bounds.height * pixelRatio;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      const particleCount =
+        bounds.width < 768 ? MOBILE_PARTICLE_COUNT : DESKTOP_PARTICLE_COUNT;
+      particles = Array.from({ length: particleCount }, (_, index) =>
+        spawnParticle(bounds, index / particleCount < ACCENT_RATIO, Math.random),
+      );
+      context.fillStyle = colors.background;
+      context.fillRect(0, 0, bounds.width, bounds.height);
+    }
+
+    function drawStep(fadeAlpha: number): void {
+      time += TIME_INCREMENT;
+      context.fillStyle = withAlpha(colors.background, fadeAlpha);
+      context.fillRect(0, 0, bounds.width, bounds.height);
+      context.lineWidth = 1;
+      for (let index = 0; index < particles.length; index++) {
+        const current = particles[index];
+        const { particle: next, hasRespawned } = stepParticle(
+          current, time, configuration, bounds, pointer, Math.random,
+        );
+        if (!hasRespawned) {
+          context.strokeStyle = next.isAccent
+            ? withAlpha(colors.accent, ACCENT_ALPHA)
+            : withAlpha(colors.foreground, FOREGROUND_ALPHA);
+          context.beginPath();
+          context.moveTo(current.x, current.y);
+          context.lineTo(next.x, next.y);
+          context.stroke();
+        }
+        particles[index] = next;
+      }
+    }
+
+    function renderStaticArtwork(): void {
+      resetCanvas();
+      for (let frame = 0; frame < STATIC_FRAME_COUNT; frame++) {
+        drawStep(0);
+      }
+    }
+
+    function animationFrame(): void {
+      drawStep(TRAIL_FADE_ALPHA);
+      frameId = window.requestAnimationFrame(animationFrame);
+    }
+
+    function start(): void {
+      if (frameId === 0 && isInViewport && !document.hidden) {
+        frameId = window.requestAnimationFrame(animationFrame);
+      }
+    }
+
+    function stop(): void {
+      if (frameId !== 0) {
+        window.cancelAnimationFrame(frameId);
+        frameId = 0;
+      }
+    }
+
+    if (prefersReducedMotion) {
+      renderStaticArtwork();
+      const themeObserver = new MutationObserver(() => {
+        colors = readThemeColors();
+        renderStaticArtwork();
+      });
+      themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+      return () => {
+        themeObserver.disconnect();
+      };
+    }
+
+    resetCanvas();
+    start();
+
+    const themeObserver = new MutationObserver(() => {
+      colors = readThemeColors();
+      context.fillStyle = colors.background;
+      context.fillRect(0, 0, bounds.width, bounds.height);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    let lastObservedWidth = section.clientWidth;
+    const resizeObserver = new ResizeObserver(() => {
+      if (section.clientWidth !== lastObservedWidth) {
+        lastObservedWidth = section.clientWidth;
+        resetCanvas();
+      }
+    });
+    resizeObserver.observe(section);
+
+    const intersectionObserver = new IntersectionObserver((entries) => {
+      isInViewport = entries.some((entry) => entry.isIntersecting);
+      if (isInViewport) {
+        start();
+      } else {
+        stop();
+      }
+    });
+    intersectionObserver.observe(canvas);
+
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    section.addEventListener('pointermove', (event: Event) => {
+      const pointerEvent = event as PointerEvent;
+      if (pointerEvent.pointerType !== 'mouse') {
+        return;
+      }
+      const rectangle = canvas.getBoundingClientRect();
+      pointer = { x: pointerEvent.clientX - rectangle.left, y: pointerEvent.clientY - rectangle.top };
+    });
+
+    section.addEventListener('pointerleave', () => {
+      pointer = null;
+    });
+
+    return () => {
+      stop();
+      themeObserver.disconnect();
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }
+</script>
+
+<style>
+  .hero-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+</style>
