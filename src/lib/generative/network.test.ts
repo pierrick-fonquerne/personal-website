@@ -37,6 +37,18 @@ describe('createNodes', () => {
       expect(node.glow).toBe(0);
     }
   });
+
+  it('places nodes deterministically with a sequential rng', () => {
+    const sequence = [0.1, 0.2, 0.3, 0.4, 0.8, 0.9, 0.5, 0.6];
+    let index = 0;
+    const random = () => sequence[index++] ?? 0;
+    const nodes = createNodes(2, bounds, random);
+    expect(nodes[0].x).toBeCloseTo(0.1 * 800, 10);
+    expect(nodes[0].y).toBeCloseTo(0.2 * 600, 10);
+    expect(nodes[0].noiseOffsetX).toBeCloseTo(0.3 * 100, 10);
+    expect(nodes[0].noiseOffsetY).toBeCloseTo(0.4 * 100, 10);
+    expect(nodes[1].x).toBeCloseTo(0.8 * 800, 10);
+  });
 });
 
 describe('stepNode', () => {
@@ -77,6 +89,19 @@ describe('stepNode', () => {
     const node = nodeAt(100, 100);
     const next = stepNode(node, 0.5, configuration, bounds, { x: 700, y: 500 });
     expect(next.glow).toBe(0);
+  });
+
+  it('clamps glow at zero when decay exceeds current glow', () => {
+    const node = nodeAt(400, 300, 0.005);
+    const next = stepNode(node, 0.5, configuration, bounds, null);
+    expect(next.glow).toBe(0);
+  });
+
+  it('wraps around the remaining left and bottom edges', () => {
+    const beyondLeft = stepNode(nodeAt(-9, 300), 0, configuration, bounds, null);
+    expect(beyondLeft.x).toBeGreaterThan(bounds.width);
+    const beyondBottom = stepNode(nodeAt(400, bounds.height + 9), 0, configuration, bounds, null);
+    expect(beyondBottom.y).toBeLessThan(0);
   });
 });
 
