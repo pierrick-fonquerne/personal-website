@@ -231,6 +231,12 @@
 </script>
 
 <style>
+  /*
+   * The negative z-index resolves inside the stacking context created by
+   * the layout main element (relative z-3). The artwork stays visible only
+   * while main itself has no background; if main ever gains one, move this
+   * canvas directly under body instead.
+   */
   .research-backdrop {
     position: fixed;
     inset: 0;
