@@ -1,0 +1,23 @@
+slug: spiking-neural-networks
+title: 'Spiking neural networks: the neuron that computes in time'
+summary: An accessible university-level course on spiking neural networks (SNN). We start from the limit of the classical neuron, which ignores time, and rebuild a stateful neuron that integrates, leaks and fires spikes. From coincidence detection to the surrogate gradient and neuromorphic hardware.
+tags:
+  - spiking-networks
+  - stateful-neuron
+  - temporal-coding
+  - neuromorphic
+  - integrate-and-fire
+theme: ai
+subtheme: neural-nets
+level: intermediate
+estimatedMinutes: 32
+modules:
+  - 00-foreword
+  - 01-the-neuron-that-forgot-time
+personalNote: |
+  After writing the course on the foundations of neural networks, one question stuck with me: the neuron I described there knew nothing about time. It took an input, returned an output, and forgot everything. Yet the real neuron, the one inside your head, lives in time. It accumulates, it leaks, it fires spikes.
+
+  This course grew out of that discomfort. I wanted to understand what a network gains when you give it back the dimension of time, and what it costs. It is also the ground of my own explorations of what I call the stateful neuron, which I document elsewhere on this site in the research section.
+
+  I am neither a neuroscientist nor a formally trained AI researcher. I write this course the way I would have wanted it when I started: rigorous about definitions, honest about what we do not yet know, and always paired with something to manipulate so the intuition sinks in.
+published: true

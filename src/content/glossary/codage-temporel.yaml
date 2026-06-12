@@ -1,0 +1,10 @@
+slug: codage-temporel
+fr:
+  term: Codage temporel
+  definition: Manière de représenter une information dans l'instant précis où une impulsion est émise, et non dans le nombre d'impulsions par seconde. L'instant de décharge porte alors le message, ce qui permet à un réseau impulsionnel de calculer avec très peu d'impulsions. S'oppose au codage par fréquence.
+en:
+  term: Temporal coding
+  definition: A way of representing information in the precise instant when a spike is emitted, rather than in the number of spikes per second. The firing time then carries the message, letting a spiking network compute with very few spikes. Contrasts with rate coding.
+seeAlso:
+  - reseau-impulsionnel
+  - detection-de-coincidence

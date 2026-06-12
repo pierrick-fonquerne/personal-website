@@ -1,0 +1,107 @@
+---
+course: spiking-neural-networks
+order: 0
+title: Avant-propos
+subtitle: 'Pourquoi rendre le temps aux neurones, ce que ce cours couvre, et comment le lire.'
+estimatedMinutes: 8
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Term from '../../../components/learning/Term.astro';
+
+Le cours « Réseaux de neurones : fondations et mathématiques » t'a montré une brique puissante : le neurone qui calcule une somme pondérée de ses entrées, la passe dans une fonction non-linéaire, et rend une sortie. Cette brique a un défaut discret mais profond. Elle est sans mémoire. Elle reçoit, elle répond, elle oublie. Le temps n'existe pas pour elle.
+
+Ce cours répare ce défaut. On va rendre aux neurones la dimension qui leur manquait : le temps. Tu découvriras une autre famille de réseaux, les <Term slug="reseau-impulsionnel">réseaux de neurones impulsionnels</Term>, où chaque neurone possède un état interne qui évolue, accumule, et déclenche des impulsions discrètes. Plus proches de la biologie, plus économes en énergie, et porteurs d'une manière de calculer que les réseaux classiques ne savent pas imiter simplement.
+
+## Trois générations de réseaux
+
+Pour situer ce qu'on étudie, une grille classique due à Wolfgang Maass (Maass, 1997) range les réseaux de neurones en trois générations :
+
+1. **Première génération** : le neurone à seuil binaire de McCulloch et Pitts (McCulloch & Pitts, 1943). Sortie tout ou rien, comme l'interrupteur que tu as vu au chapitre 1 des fondations.
+2. **Deuxième génération** : le neurone à activation continue (sigmoïde, ReLU). C'est celui sur lequel repose tout le deep learning moderne, et tout le cours fondations.
+3. **Troisième génération** : le neurone impulsionnel. Sa sortie n'est plus un nombre, c'est une suite d'impulsions placées dans le temps. C'est l'objet de ce cours.
+
+Maass a démontré qu'un réseau de la troisième génération peut, avec moins de neurones, calculer des fonctions que les générations précédentes exigent plus de ressources pour approcher. La promesse est là dès 1997. La difficulté d'entraînement, elle, a mis des décennies à se laisser apprivoiser.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : le neurone artificiel et sa somme pondérée, la fonction d'activation, et l'idée de la descente de gradient. Tout cela est couvert dans le cours « Réseaux de neurones : fondations et mathématiques », qui est le prérequis naturel de celui-ci. Un peu d'aisance avec les suites numériques et les exponentielles aide pour les chapitres centraux.
+
+**Ce qu'il n'est pas nécessaire de connaître** : la neurobiologie détaillée (on introduit ce qu'il faut, au moment où il le faut), les équations différentielles formelles (on les présentera pas à pas), et un langage de programmation particulier.
+
+**Niveau de rigueur** : ce cours vise le standard d'un cours de licence avancée tout en restant lisible par un lecteur motivé venu des fondations. La plupart des chapitres restent intermédiaires ; certaines sections, signalées, poussent vers le niveau master pour qui veut aller plus loin.
+</Callout>
+
+## Le parcours
+
+Le cours suit un fil simple : rendre le temps au neurone, le faire calculer, puis le faire apprendre, et enfin le faire tourner sur du matériel dédié.
+
+### Bloc 1 : le neurone retrouve le temps
+
+Pourquoi le neurone classique échoue à entendre le temps, ce qu'est un potentiel de membrane, le modèle integrate-and-fire et son zoo de variantes.
+
+### Bloc 2 : coder et connecter dans le temps
+
+Comment une information se code dans des impulsions, et comment une synapse transmet un signal qui a une durée.
+
+### Bloc 3 : apprendre sans dériver un spike
+
+La plasticité dépendante du temps, le mur de la non-dérivabilité, le gradient de substitution, et la conversion d'un réseau classique en réseau impulsionnel.
+
+### Bloc 4 : le silicium qui imite le cerveau
+
+Le <Term slug="neuromorphique">calcul neuromorphique</Term>, ses puces, ses promesses d'efficacité énergétique, puis un bilan honnête des limites et des usages réels.
+
+<MermaidDiagram
+  client:visible
+  caption="Les quatre blocs du cours et leur progression"
+  definition={`flowchart TB
+    subgraph B1["Bloc 1 : le temps retrouvé"]
+      direction LR
+      c1[1. Le temps oublié] --> c2[2. Potentiel de membrane] --> c3[3. Integrate-and-fire] --> c4[4. Zoo des dynamiques]
+    end
+    subgraph B2["Bloc 2 : coder et connecter"]
+      direction LR
+      c5[5. Coder en impulsions] --> c6[6. La synapse temporelle]
+    end
+    subgraph B3["Bloc 3 : apprendre"]
+      direction LR
+      c7[7. Plasticité temporelle] --> c8[8. Le mur du spike] --> c9[9. Gradient de substitution] --> c10[10. Conversion]
+    end
+    subgraph B4["Bloc 4 : le matériel"]
+      direction LR
+      c11[11. Neuromorphique] --> c12[12. Limites et usages]
+    end
+    B1 --> B2 --> B3 --> B4`}
+/>
+
+<Callout kind="note" title="Un cours en construction">
+Ce cours s'écrit chapitre par chapitre. Le bloc 1 démarre maintenant avec le chapitre 1. Les blocs suivants arriveront au fil de la rédaction. La carte ci-dessus est la destination, pas l'état actuel.
+</Callout>
+
+## Pour qui ce cours
+
+- **Tu as fini le cours fondations** et tu veux voir ce qui existe au-delà du neurone continu. C'est le public idéal : tu as exactement les bases nécessaires.
+- **Tu t'intéresses aux neurosciences computationnelles** et tu veux le pont avec le machine learning. Ce cours fait ce pont sans noyer la biologie sous le formalisme.
+- **Tu travailles sur l'efficacité énergétique de l'IA** et tu as entendu parler du neuromorphique. Tu trouveras ici de quoi comprendre d'où vient la promesse, et ce qu'elle vaut.
+
+Ce cours **n'est pas** un tutoriel d'une bibliothèque de simulation particulière, ni un état de l'art de la recherche la plus récente, qui bouge trop vite pour un cours.
+
+## En une phrase
+
+Les réseaux de neurones impulsionnels rendent au neurone la dimension du temps : leur sortie n'est plus un nombre figé mais une suite d'impulsions, et c'est cette différence que ce cours va déplier, du modèle de base jusqu'au silicium.
+
+## Place au chapitre 1
+
+Tout part d'une frustration concrète. Une chouette localise une souris dans le noir absolu grâce à un décalage de quelques microsecondes entre ses deux oreilles. Le neurone des fondations en est incapable, et pour une raison précise. C'est là que commence le chapitre 1.
+
+## Sources
+
+- McCulloch, W. S. & Pitts, W. (1943). « A Logical Calculus of Ideas Immanent in Nervous Activity. » _Bulletin of Mathematical Biophysics_ 5(4), 115-133. [DOI 10.1007/BF02478259](https://doi.org/10.1007/BF02478259)
+- Maass, W. (1997). « Networks of spiking neurons: the third generation of neural network models. » _Neural Networks_ 10(9), 1659-1671. [DOI 10.1016/S0893-6080(97)00011-7](https://doi.org/10.1016/S0893-6080%2897%2900011-7)
+
+### Pour aller plus loin avant d'attaquer le chap 1
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics: From Single Neurons to Networks and Models of Cognition_. Cambridge University Press. Référence du domaine, gratuite en ligne. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Eshraghian, J. K. et al. (2023). « Training Spiking Neural Networks Using Lessons From Deep Learning. » _Proceedings of the IEEE_ 111(9). [arXiv:2109.12894](https://arxiv.org/abs/2109.12894)

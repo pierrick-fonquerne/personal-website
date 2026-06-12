@@ -1,0 +1,350 @@
+---
+course: spiking-neural-networks
+order: 1
+title: The neuron that forgot time
+subtitle: "Why the foundations neuron cannot hear time, and how an internal state gives it that ear back."
+estimatedMinutes: 24
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import CoincidenceLab from '../../../components/learning/CoincidenceLab.tsx';
+
+A barn owl hunts in complete darkness. It does not see the mouse darting through the leaves: it hears it. The sound reaches its nearer ear a few millionths of a second before the other, and that tiny gap is enough for it to strike precisely. Somewhere in its brain, neurons are measuring a time difference on the order of a microsecond.
+
+Now take the neuron from the foundations course, the one that computes $y = f(\mathbf{w} \cdot \mathbf{x} + b)$. Could it do what the owl does? The answer is no, and the reason is precise. This chapter starts from that impossibility to rebuild a neuron that can, in fact, hear time.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow** : the artificial neuron and its weighted sum, seen in chapter 1 of the foundations course. The idea of a sequence defined by recurrence (a value computed from the previous one) helps a lot, but we reintroduce it along the way.
+
+**What you do not need to know** : differential equations (chapter 3 will introduce them), detailed neurobiology, and any programming language.
+
+**Level of rigor** : we define every object formally and prove the central claim (a stateless neuron is blind to temporal shift). The calculations are done by hand on small numbers, on purpose.
+</Callout>
+
+## The foundations neuron lives in an eternal present
+
+Go back to the central formula of the foundations course. For an input $\mathbf{x}$, the neuron produces
+
+$$
+y = f(\mathbf{w} \cdot \mathbf{x} + b).
+$$
+
+Look carefully at what is in this equation, and above all at what is not. There are the inputs, the weights, the bias, the activation. There is no trace of the moment when the input arrives. You can present $\mathbf{x}$ today or tomorrow, the result $y$ is the same. The neuron has no clock, no memory of what happened just before. We say it is **stateless**: its output depends only on the present input.
+
+Suppose we feed it a sequence of inputs, one per time step: $\mathbf{x}_0, \mathbf{x}_1, \mathbf{x}_2, \dots$ The stateless neuron processes them one by one, independently:
+
+$$
+y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b).
+$$
+
+Each output $y_t$ only looks at its input $\mathbf{x}_t$. The past never enters the computation. An eternal present, with no before and no after.
+
+<Callout kind="note" title="Not a flaw, a choice">
+The lack of memory is not a bug of the foundations neuron. It is what makes classical deep learning simple and massively parallel: each example in a dataset is processed without depending on the others. The flip side is that for anything intrinsically temporal (a sound, speech, a gesture) you have to be clever. This course explores a different trick from recurrent networks: giving the neuron itself an internal state.
+</Callout>
+
+## The owl's problem: hearing a time gap
+
+Let us formalize the owl's challenge. Two signals arrive, one per ear. Call them the left input and the right input. What carries the information is neither the intensity of the left sound nor of the right one taken alone: it is the **time gap** between the two. The brain must fire strongly when the two signals arrive almost together, and stay silent when they are too far apart.
+
+This ability has a name: <Term slug="detection-de-coincidence">coincidence detection</Term>. It was proposed as early as 1948 by Lloyd Jeffress as a model of sound localization (Jeffress, 1948), and it has since been observed in the brainstem of birds and mammals.
+
+Here is why the stateless neuron fails. Suppose the two inputs never land on exactly the same time step (there is almost always a small gap). Then, at each step, the neuron sees only one active input. Since its output depends only on the present instant, it reacts the same whether the gap is tiny or huge. It cannot measure a distance between two events it never sees together. It is missing a place to **hold the trace** of the first input while waiting for the second.
+
+## Giving the neuron a state
+
+The idea that unlocks everything: add to the neuron an internal variable that remembers, for a brief moment, what just arrived. We call it the <Term slug="potentiel-de-membrane">membrane potential</Term>, by analogy with the electric charge that builds up on the membrane of a real neuron. Let us write it $v$.
+
+This variable obeys three simple rules, at each time step:
+
+1. **It leaks.** With no input, $v$ slowly falls back toward zero. It keeps only a fraction $\lambda$ of its value from one step to the next, with $0 \le \lambda < 1$.
+2. **It integrates.** When an input of charge $I_t$ arrives at step $t$, it adds to $v$.
+3. **It fires.** If $v$ reaches a threshold $\theta$, the neuron emits a spike and $v$ resets to zero.
+
+The first two rules fit in a single recurrence:
+
+<Formula caption="Potential update, one time step">v(t+1) = λ · v(t) + I(t)</Formula>
+
+In compact notation:
+
+$$
+v_{t+1} = \lambda\, v_t + I_t.
+$$
+
+This equation reads: the new value of the potential equals the old one times the retention $\lambda$, plus the input received at this step. The factor $\lambda$ is the neuron's memory. At $\lambda = 0$, it forgets everything instantly and becomes stateless again. The closer $\lambda$ gets to $1$, the longer it holds the trace of the past.
+
+This three-rule neuron is the simplest spiking neuron. It is called the <Term slug="integrate-and-fire">integrate-and-fire</Term> model, introduced by Louis Lapicque as early as 1907 (Lapicque, 1907). A neuron whose output depends on an internal variable evolving over time is a <Term slug="neurone-a-etat">stateful neuron</Term>: unlike the stateless neuron of the foundations, its response depends on its recent history.
+
+<Callout kind="tip" title="Reading coincidence in the equation">
+Look at what two inputs of the same charge $c$, separated by $\Delta$ steps, produce. The first carries the potential to $c$. Over $\Delta$ steps with no input, it leaks down to $c\,\lambda^{\Delta}$. Then the second adds $c$. At the moment of the second input, the potential is therefore
+
+$$
+v = c\,\lambda^{\Delta} + c = c\,(1 + \lambda^{\Delta}).
+$$
+
+This expression assumes a single input is not enough to fire the neuron, that is $c < \theta$: otherwise the first pulse would already trigger a spike and reset the potential to zero. This holds for every example in this chapter, where $c = 0.6$ and $\theta = 0.9$.
+
+If $\Delta$ is small, $\lambda^{\Delta}$ is close to $1$ and the potential approaches $2c$: the two charges add up almost entirely, the threshold is crossed. If $\Delta$ is large, $\lambda^{\Delta}$ tends to $0$, the first input has evaporated before the second arrives, and the neuron stays silent. Coincidence detection comes directly out of the leak.
+</Callout>
+
+## Play with coincidence detection
+
+A glance at the theory does not replace your hand on the sliders. In the component below, two inputs of fixed charge arrive: the first early, the second shifted by the **delay Δ** you set. You watch the potential rise at the first, leak, then rise again at the second. If it crosses the threshold, the neuron fires.
+
+**Your mission**: start from zero delay (both inputs together), watch it fire, then raise Δ step by step until the neuron falls silent. You have just measured its coincidence window. Then play with the retention: a membrane that holds its charge better forgives larger delays.
+
+<InteractivePrint
+  label="Figure: coincidence detection of a stateful neuron (interactive)"
+  description="Plot of the membrane potential of an integrate-and-fire neuron over time. Two inputs of charge 0.6 arrive, the second shifted by an adjustable delay Δ. The potential keeps a fraction λ (retention) of its value at each step and adds the inputs. A dashed line marks the firing threshold. With retention 0.7 and threshold 0.9, the neuron fires for a delay of 0 or 1 step and stays silent beyond: it detects the coincidence of the two inputs. Raising the retention widens the window, raising the threshold narrows it."
+>
+  <CoincidenceLab client:visible locale="en" />
+</InteractivePrint>
+
+Three things to observe while playing:
+
+- At zero delay, both charges land on the same step and add up: the potential makes a single jump to $2c$. That is the easiest case to fire.
+- Raising the retention softens the leak slope and widens the coincidence window. The membrane's memory sets the neuron's temporal tolerance.
+- Raising the threshold demands a tighter coincidence. Threshold and retention are two independent ways of tuning the same thing: how close the two inputs must be.
+
+## The spike, a language in time
+
+The stateful neuron no longer returns a continuous number like the sigmoid of the foundations. It returns a spike, a brief all-or-nothing event: it fires, or it does not. This spike is what a spiking network manipulates: everything is made of spikes spread out in time.
+
+Hence a new question, one that made no sense for the stateless neuron: where does the information hide in a train of spikes? Two answers coexist. In rate coding, what matters is the number of spikes per second, their rate. In <Term slug="codage-temporel">temporal coding</Term>, what matters is the precise instant of each spike. The owl uses the second route: it is the arrival time, not the rate, that carries the position of the prey. Temporal coding lets you compute with very few spikes, hence very little energy. We will come back to it in detail in a dedicated chapter.
+
+<MermaidDiagram
+  client:visible
+  caption="Stateless versus stateful: what each one sees"
+  definition={`flowchart LR
+    subgraph SS["Stateless neuron"]
+      direction TB
+      a1["input at time t"] --> a2["output at time t"]
+    end
+    subgraph AE["Stateful neuron"]
+      direction TB
+      b1["past inputs"] --> b3["potential v"]
+      b2["present input"] --> b3
+      b3 --> b4["spike, or not"]
+    end`}
+/>
+
+## In one sentence
+
+The foundations neuron is memoryless and therefore blind to time; giving it a membrane potential that integrates, leaks and fires turns it into a stateful neuron able to detect the coincidence of two signals, and thus to hear time.
+
+## On to chapter 2
+
+We spoke of the membrane potential as a variable that rises and leaks, settling for a retention factor $\lambda$ set by hand. A convenient caricature, but where does that leak actually come from? In a real neuron it has a physical cause: the cell membrane behaves like a small capacitor discharging through a resistor. Chapter 2 opens the cell to find the concrete origin of $\lambda$, before chapter 3 turns our recurrence into the differential equation of the full integrate-and-fire model.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, to look at only after you have tried.
+
+### Exercise 1: integrate by hand
+
+A stateful neuron has retention $\lambda = 0.5$ and threshold $\theta = 0.9$. Its potential starts at $v = 0$. Two inputs of charge $c = 0.6$ arrive. For each of the delays $\Delta = 0$, $\Delta = 1$ and $\Delta = 2$ steps, compute the potential at the moment of the second input and say whether the neuron fires.
+
+### Exercise 2: a stateless neuron is blind to shift
+
+Show that the stateless neuron $y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b)$ cannot tell two inputs close in time apart from two inputs far apart, as long as the two inputs never land on the same step.
+
+### Exercise 3: the coincidence window
+
+From the firing condition $c\,(1 + \lambda^{\Delta}) \ge \theta$, express the largest integer delay $\Delta_{\max}$ that still triggers a spike, then compute it for $\lambda = 0.7$, $c = 0.6$ and $\theta = 0.9$.
+
+<Callout kind="tip" title="Solution to exercise 1: integrate by hand">
+We have $\lambda = 0.5$, $\theta = 0.9$, $c = 0.6$, and the potential starts at $v = 0$.
+
+**Step 1.** Case $\Delta = 0$. Both inputs land on the same step, their charges add up:
+
+$$
+v = 0.6 + 0.6 = 1.2
+$$
+
+Since $1.2 \ge 0.9$, the neuron **fires**.
+
+**Step 2.** Case $\Delta = 1$. At the first step, the first input gives:
+
+$$
+v = 0.6
+$$
+
+Since $0.6 < 0.9$, no firing yet.
+
+**Step 3.** At the next step, the potential leaks first, then the second input adds on:
+
+$$
+v = 0.5 \times 0.6 + 0.6 = 0.3 + 0.6 = 0.9
+$$
+
+Since $0.9 \ge 0.9$, the neuron **fires** (the threshold is reached exactly).
+
+**Step 4.** Case $\Delta = 2$. First step: $v = 0.6$. Second step, with no input, the potential leaks:
+
+$$
+v = 0.5 \times 0.6 = 0.3
+$$
+
+**Step 5.** Third step, the second input arrives on this already-decayed potential:
+
+$$
+v = 0.5 \times 0.3 + 0.6 = 0.15 + 0.6 = 0.75
+$$
+
+Since $0.75 < 0.9$, the neuron **stays silent**.
+
+**Result.** The neuron fires for $\Delta = 0$ and $\Delta = 1$, but not for $\Delta = 2$. Its coincidence window is one step: exactly the coincidence-detection behavior.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: a stateless neuron is blind to shift">
+We want to show that the stateless neuron's output does not depend on the gap between the two inputs.
+
+**Step 1.** Recall the rule of the stateless neuron. At each step $t$, its output is
+
+$$
+y_t = f(\mathbf{w} \cdot \mathbf{x}_t + b)
+$$
+
+and it depends only on the input $\mathbf{x}_t$ of that step, on no other.
+
+**Step 2.** Set up the scenario. The first input arrives at step $t_1$, the second at step $t_2$, with $t_1 \ne t_2$ (they never land together). At any step with no input, $\mathbf{x}_t = \mathbf{0}$.
+
+**Step 3.** Compute the outputs. At step $t_1$ the output is $f(\mathbf{w} \cdot \mathbf{x}_1 + b)$, at step $t_2$ it is $f(\mathbf{w} \cdot \mathbf{x}_2 + b)$, and everywhere else it is $f(b)$. None of these three values involves the gap $\Delta = t_2 - t_1$.
+
+**Step 4.** Conclude. Moving the two inputs closer or farther only changes the instants at which the same output values appear, never those values themselves. The neuron produces the same collection of responses whatever $\Delta$ is.
+
+**Result.** Without an internal variable linking one step to the next, the neuron cannot measure a time gap. It needs a state, that is, a term carrying the past into the present, like the $\lambda\, v_t$ of the recurrence.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 3: the coincidence window">
+We start from the firing condition on the second input: $c\,(1 + \lambda^{\Delta}) \ge \theta$.
+
+**Step 1.** Isolate the $\lambda^{\Delta}$ term. Divide by $c$ (positive), then subtract $1$:
+
+$$
+\lambda^{\Delta} \ge \frac{\theta}{c} - 1
+$$
+
+**Step 2.** Apply the logarithm to both sides. As long as the ratio is positive (which it is here), the logarithm preserves the inequality:
+
+$$
+\Delta \cdot \ln \lambda \ge \ln\!\left(\frac{\theta}{c} - 1\right)
+$$
+
+**Step 3.** Divide by $\ln \lambda$. Since $0 < \lambda < 1$, we have $\ln \lambda < 0$, and dividing by a negative number flips the inequality:
+
+$$
+\Delta \le \frac{\ln\!\left(\dfrac{\theta}{c} - 1\right)}{\ln \lambda}
+$$
+
+**Step 4.** The largest admissible integer delay is the floor of this quotient:
+
+$$
+\Delta_{\max} = \left\lfloor \frac{\ln\!\left(\dfrac{\theta}{c} - 1\right)}{\ln \lambda} \right\rfloor
+$$
+
+**Step 5.** Apply the values $\lambda = 0.7$, $c = 0.6$, $\theta = 0.9$. First the ratio:
+
+$$
+\frac{\theta}{c} - 1 = \frac{0.9}{0.6} - 1 = 1.5 - 1 = 0.5
+$$
+
+**Step 6.** Then the quotient of logarithms:
+
+$$
+\frac{\ln(0.5)}{\ln(0.7)} = \frac{-0.693}{-0.357} \approx 1.94
+$$
+
+**Result.** The floor of $1.94$ is $1$, so $\Delta_{\max} = 1$. The neuron fires for a delay of $0$ or $1$ step, and falls silent beyond. This is exactly what the interactive component shows with its default settings.
+</Callout>
+
+## Sources
+
+- Jeffress, L. A. (1948). "A place theory of sound localization." _Journal of Comparative and Physiological Psychology_ 41(1), 35-39. [DOI 10.1037/h0061495](https://doi.org/10.1037/h0061495)
+- Lapicque, L. (1907). "Recherches quantitatives sur l'excitation électrique des nerfs traitée comme une polarisation." _Journal de Physiologie et de Pathologie Générale_ 9, 620-635. [Annotated translation, Brunel & van Rossum, 2007, DOI 10.1007/s00422-007-0189-6](https://doi.org/10.1007/s00422-007-0189-6)
+- Maass, W. (1997). "Networks of spiking neurons: the third generation of neural network models." _Neural Networks_ 10(9), 1659-1671. [DOI 10.1016/S0893-6080(97)00011-7](https://doi.org/10.1016/S0893-6080%2897%2900011-7)
+
+### To go further
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics_. Cambridge University Press. Chapter 1 on the integrate-and-fire model. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Carr, C. E. & Konishi, M. (1990). "A circuit for detection of interaural time differences in the brain stem of the barn owl." _Journal of Neuroscience_ 10(10), 3227-3246. [DOI 10.1523/JNEUROSCI.10-10-03227.1990](https://doi.org/10.1523/JNEUROSCI.10-10-03227.1990)
+
+<InteractivePrint
+  label="Quiz: chapter 1 recap (interactive)"
+  description="Multiple-choice quiz checking the chapter's takeaways: why the stateless neuron is blind to time, the role of the membrane potential, coincidence detection, and the nature of a spike. Five questions with an explanation of the correct answer on submission. Take it online for automatic scoring."
+>
+  <Quiz
+    client:visible
+    submitLabel="Check"
+    resetLabel="Restart"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: "Why can the foundations neuron not measure a time gap between two inputs?",
+        options: [
+          'Because its activation function is too simple',
+          'Because its output depends only on the present input, with no memory of the past',
+          'Because it has too few weights',
+          'Because the bias prevents it',
+        ],
+        answer: 1,
+        explain:
+          "The stateless neuron computes y = f(w·x + b) at each step independently. Nothing links one step to the next, so no time gap can be measured.",
+      },
+      {
+        q: 'What is the membrane potential of a stateful neuron for?',
+        options: [
+          'Replacing the bias',
+          'Normalizing the output between 0 and 1',
+          'Holding the trace of recent inputs by accumulating a charge that leaks over time',
+          'Speeding up the computation',
+        ],
+        answer: 2,
+        explain:
+          'The potential integrates inputs, leaks when there is none, and fires a spike at threshold. It is the short memory that makes the neuron sensitive to time.',
+      },
+      {
+        q: 'In the recurrence v(t+1) = λ·v(t) + I(t), what happens if λ = 0?',
+        options: [
+          'The neuron keeps its charge forever',
+          'The neuron forgets everything instantly and becomes stateless again',
+          'The neuron fires continuously',
+          'The threshold becomes infinite',
+        ],
+        answer: 1,
+        explain:
+          'With λ = 0, the potential keeps nothing from the previous step: v(t+1) = I(t). The neuron depends only on the present instant, exactly like a stateless neuron.',
+      },
+      {
+        q: 'What is coincidence detection?',
+        options: [
+          'Firing only when two inputs arrive within a short interval of each other',
+          'Detecting when two weights are equal',
+          'Counting the total number of inputs received',
+          'Picking the larger of the two inputs',
+        ],
+        answer: 0,
+        explain:
+          'Thanks to the leak, two close inputs add up and cross the threshold, while two distant ones do not. The neuron therefore fires in response to their temporal coincidence.',
+      },
+      {
+        q: 'What is the output of a spiking neuron?',
+        options: [
+          'A continuous real number between 0 and 1',
+          'A probability',
+          'A brief all-or-nothing pulse (a spike), placed in time',
+          'A vector of weights',
+        ],
+        answer: 2,
+        explain:
+          'The stateful neuron returns not a continuous number but a spike: a discrete event. Information then lives in the rate or in the precise timing of spikes.',
+      },
+    ]}
+  />
+</InteractivePrint>
