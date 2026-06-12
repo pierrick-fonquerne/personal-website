@@ -10,10 +10,11 @@ tags:
 theme: ai
 subtheme: neural-nets
 level: intermediate
-estimatedMinutes: 32
+estimatedMinutes: 52
 modules:
   - 00-foreword
   - 01-the-neuron-that-forgot-time
+  - 02-the-membrane-potential
 personalNote: |
   After writing the course on the foundations of neural networks, one question stuck with me: the neuron I described there knew nothing about time. It took an input, returned an output, and forgot everything. Yet the real neuron, the one inside your head, lives in time. It accumulates, it leaks, it fires spikes.
 

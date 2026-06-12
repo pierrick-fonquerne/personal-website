@@ -10,10 +10,11 @@ tags:
 theme: ai
 subtheme: neural-nets
 level: intermediate
-estimatedMinutes: 32
+estimatedMinutes: 52
 modules:
   - 00-avant-propos
   - 01-le-neurone-qui-a-oublie-le-temps
+  - 02-le-potentiel-de-membrane
 personalNote: |
   Après avoir écrit le cours sur les fondations des réseaux de neurones, une question m'est restée en travers de la gorge : le neurone que j'y décrivais ne connaissait pas le temps. Il recevait une entrée, rendait une sortie, et oubliait tout. Or le vrai neurone, celui qui tient dans ta tête, vit dans le temps. Il accumule, il fuit, il décharge des impulsions.
 

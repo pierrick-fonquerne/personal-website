@@ -4,7 +4,7 @@ order: 2
 title: Le potentiel de membrane
 subtitle: "D'où vient le facteur de fuite posé à la main au chapitre 1 : la membrane est un condensateur qui se décharge à travers une résistance."
 estimatedMinutes: 20
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -22,6 +22,7 @@ Au chapitre précédent, tu as donné une mémoire au neurone avec un seul bouto
 **Ce qu'il n'est pas nécessaire de connaître** : les équations différentielles (le chapitre 3 les écrira), l'électrochimie détaillée des ions, et tout circuit électrique réel.
 
 **Niveau de rigueur** : on définit chaque grandeur physique, et on démontre le lien exact entre la décharge continue d'une membrane et la récurrence discrète du chapitre 1. Les calculs se font à la main sur de petits nombres.
+
 </Callout>
 
 ## Une membrane, deux pièces électriques
@@ -57,7 +58,10 @@ $$
 Au bout d'une durée $\tau$, la membrane a perdu environ $63\,\%$ de sa charge : il lui en reste $37\,\%$. C'est pourquoi on appelle $\tau$ la <Term slug="constante-de-temps">constante de temps</Term> : elle mesure la durée caractéristique de la fuite. Une petite constante de temps, et le souvenir s'évapore en un éclair ; une grande, et la membrane garde longtemps la trace de ce qu'elle a reçu. C'est la traduction physique exacte de ce que le bouton $\lambda$ réglait au chapitre 1.
 
 <Callout kind="note" title="Une grandeur, deux causes">
-Comme $\tau = RC$, deux membranes très différentes peuvent avoir la même horloge. Doubler la résistance $R$ ou doubler la capacité $C$ produit le même allongement de $\tau$, donc la même lenteur de fuite. La constante de temps ne dit pas, à elle seule, si la membrane est très résistive ou très capacitive : elle ne retient que leur produit.
+  Comme $\tau = RC$, deux membranes très différentes peuvent avoir la même horloge. Doubler la
+  résistance $R$ ou doubler la capacité $C$ produit le même allongement de $\tau$, donc la même
+  lenteur de fuite. La constante de temps ne dit pas, à elle seule, si la membrane est très
+  résistive ou très capacitive : elle ne retient que leur produit.
 </Callout>
 
 ## De la décharge continue au facteur de fuite du chapitre 1
@@ -108,7 +112,10 @@ Trois choses à observer en jouant :
 Le circuit RC décrit une membrane passive : elle stocke, elle fuit, et c'est tout. Or un vrai neurone ne se contente pas de fuir, il fabrique activement son impulsion. Comment ? En 1952, Alan Hodgkin et Andrew Huxley ont mesuré, sur l'axone géant du calmar, comment certains canaux ioniques s'ouvrent et se ferment selon la tension elle-même, créant une réaction en chaîne qui engendre le spike (Hodgkin & Huxley, 1952). Leur modèle, couronné par le prix Nobel de médecine en 1963, ajoute au simple RC des conductances qui dépendent de la tension, donc non linéaires.
 
 <Callout kind="note" title="La limite de l'analogie du condensateur">
-Le RC est juste tant que la membrane reste passive, loin du seuil. Près du déclenchement du spike, les canaux dépendants de la tension prennent le dessus et le modèle linéaire ne tient plus. Le RC n'est donc pas faux, il est incomplet : c'est le socle sur lequel les chapitres suivants ajoutent juste ce qu'il faut de non-linéarité, sans payer le coût du modèle complet de Hodgkin et Huxley.
+  Le RC est juste tant que la membrane reste passive, loin du seuil. Près du déclenchement du spike,
+  les canaux dépendants de la tension prennent le dessus et le modèle linéaire ne tient plus. Le RC
+  n'est donc pas faux, il est incomplet : c'est le socle sur lequel les chapitres suivants ajoutent
+  juste ce qu'il faut de non-linéarité, sans payer le coût du modèle complet de Hodgkin et Huxley.
 </Callout>
 
 ## En une phrase
@@ -151,6 +158,7 @@ $$
 $$
 
 **Résultat.** La constante de temps vaut $\tau = 3$, et doubler la capacité la double aussi, à $\tau = 6$. La fuite devient deux fois plus lente.
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 2 : le temps d'une demi-charge">
@@ -189,6 +197,7 @@ t = \tau \ln 2 = 2 \times 0{,}693 \approx 1{,}39
 $$
 
 **Résultat.** À $t = \tau$ il reste $37\,\%$ de la charge, et il faut attendre $t = \tau \ln 2 \approx 1{,}39$ pour qu'il n'en reste que la moitié.
+
 </Callout>
 
 <Callout kind="tip" title="Corrigé de l'exercice 3 : retrouver le facteur de fuite">
@@ -219,6 +228,7 @@ V(2) = V_0\, e^{-2/\tau} = e^{-2/2} = e^{-1} \approx 0{,}368
 $$
 
 **Résultat.** La récurrence donne $v_2 \approx 0{,}368$ après deux pas, et la loi continue donne $V(2) \approx 0{,}368$ au même instant. Les deux coïncident : la suite discrète est bien l'échantillonnage exact de la décharge continue.
+
 </Callout>
 
 ## Sources
@@ -245,16 +255,16 @@ $$
         q: "D'où vient le facteur de rétention λ posé à la main au chapitre 1 ?",
         options: [
           "D'un choix arbitraire sans signification physique",
-          "De la physique de la membrane : un condensateur qui se décharge à travers une résistance, avec λ = e^(-Δt/τ)",
-          "Du nombre de canaux ioniques uniquement",
+          'De la physique de la membrane : un condensateur qui se décharge à travers une résistance, avec λ = e^(-Δt/τ)',
+          'Du nombre de canaux ioniques uniquement',
           'Du potentiel de repos de la cellule',
         ],
         answer: 1,
         explain:
-          "Échantillonner la décharge continue V(t) = V0 e^(-t/τ) tous les Δt donne V0 λ^k avec λ = e^(-Δt/τ). Le facteur de fuite est donc déterminé par la constante de temps de la membrane.",
+          'Échantillonner la décharge continue V(t) = V0 e^(-t/τ) tous les Δt donne V0 λ^k avec λ = e^(-Δt/τ). Le facteur de fuite est donc déterminé par la constante de temps de la membrane.',
       },
       {
-        q: 'Que vaut la constante de temps τ d\'un circuit RC ?',
+        q: "Que vaut la constante de temps τ d'un circuit RC ?",
         options: [
           'La somme R + C',
           'Le rapport R / C',
@@ -266,23 +276,23 @@ $$
           "τ = R × C. C'est un temps : il mesure la durée caractéristique de la fuite. Doubler R ou doubler C double τ de la même manière.",
       },
       {
-        q: 'À l\'instant t = τ, quelle fraction de la charge initiale reste-t-il ?',
+        q: "À l'instant t = τ, quelle fraction de la charge initiale reste-t-il ?",
         options: [
           'La moitié, soit 50 %',
           'Environ 37 % (la valeur 1/e)',
           'Presque rien, moins de 1 %',
-          'La totalité, la fuite n\'a pas commencé',
+          "La totalité, la fuite n'a pas commencé",
         ],
         answer: 1,
         explain:
           "V(τ) = V0 e^(-1) ≈ 0,37 V0. Au bout d'une constante de temps, la membrane a perdu environ 63 % de sa charge et il en reste 37 %.",
       },
       {
-        q: 'Pourquoi dit-on que la récurrence du chapitre 1 est l\'échantillonnage exact de la décharge ?',
+        q: "Pourquoi dit-on que la récurrence du chapitre 1 est l'échantillonnage exact de la décharge ?",
         options: [
           "Parce qu'elle en est une approximation grossière qui diverge avec le temps",
           'Parce que V(kΔt) = V0 (e^(-Δt/τ))^k = V0 λ^k, identique à la suite discrète v_k = v0 λ^k',
-          'Parce que les deux ne coïncident qu\'au premier pas',
+          "Parce que les deux ne coïncident qu'au premier pas",
           'Parce que λ vaut toujours 1',
         ],
         answer: 1,
