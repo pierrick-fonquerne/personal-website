@@ -6,6 +6,7 @@ import ResearchIntro from '../../components/research/ResearchIntro.astro';
 import ResearchList from '../../components/research/ResearchList.astro';
 import { useTranslations } from '../../lib/i18n';
 import { resolveProgram } from '../../lib/programs';
+import ResearchBackdrop from '../../components/research/ResearchBackdrop.astro';
 
 const locale = 'fr' as const;
 const t = useTranslations(locale);
@@ -23,6 +24,7 @@ const programs = (await getCollection('programs'))
   current="/research"
   locale={locale}
 >
+  <ResearchBackdrop />
   <section class="container-page py-16">
     <Eyebrow text={t.research.eyebrow} />
     <h1
