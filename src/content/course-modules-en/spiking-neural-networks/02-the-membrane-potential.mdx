@@ -2,9 +2,9 @@
 course: spiking-neural-networks
 order: 2
 title: The membrane potential
-subtitle: "Where the leak factor we set by hand in chapter 1 comes from: the membrane is a capacitor discharging through a resistor."
+subtitle: 'Where the leak factor we set by hand in chapter 1 comes from: the membrane is a capacitor discharging through a resistor.'
 estimatedMinutes: 20
-published: false
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
@@ -22,6 +22,7 @@ In the previous chapter you gave the neuron a memory with a single knob: the ret
 **What you do not need to know** : differential equations (chapter 3 will write them), the detailed electrochemistry of ions, and any real electrical circuit.
 
 **Rigour** : we define each physical quantity, and we prove the exact link between the continuous decay of a membrane and the discrete recurrence of chapter 1. The calculations are done by hand on small numbers.
+
 </Callout>
 
 ## A membrane, two electrical parts
@@ -57,7 +58,10 @@ $$
 After a duration $\tau$, the membrane has lost about $63\%$ of its charge: $37\%$ is left. This is why $\tau$ is called the <Term slug="constante-de-temps">time constant</Term>: it measures the characteristic duration of the leak. A small time constant, and the memory evaporates in a flash; a large one, and the membrane holds the trace of what it received for a long time. This is the exact physical translation of what the $\lambda$ knob was tuning in chapter 1.
 
 <Callout kind="note" title="One quantity, two causes">
-Since $\tau = RC$, two very different membranes can share the same clock. Doubling the resistance $R$ or doubling the capacitance $C$ produces the same lengthening of $\tau$, hence the same slowness of leak. The time constant alone does not tell you whether the membrane is very resistive or very capacitive: it keeps only their product.
+  Since $\tau = RC$, two very different membranes can share the same clock. Doubling the resistance
+  $R$ or doubling the capacitance $C$ produces the same lengthening of $\tau$, hence the same
+  slowness of leak. The time constant alone does not tell you whether the membrane is very resistive
+  or very capacitive: it keeps only their product.
 </Callout>
 
 ## From continuous decay to the leak factor of chapter 1
@@ -108,7 +112,10 @@ Three things to watch as you play:
 The RC circuit describes a passive membrane: it stores, it leaks, and that is all. But a real neuron does not merely leak, it actively builds its spike. How? In 1952, Alan Hodgkin and Andrew Huxley measured, on the squid giant axon, how certain ion channels open and close depending on the voltage itself, creating a chain reaction that generates the spike (Hodgkin & Huxley, 1952). Their model, awarded the Nobel Prize in Medicine in 1963, adds to the plain RC some conductances that depend on the voltage, hence nonlinear.
 
 <Callout kind="note" title="The limit of the capacitor analogy">
-The RC holds as long as the membrane stays passive, far from the threshold. Near the firing of the spike, the voltage-dependent channels take over and the linear model no longer holds. The RC is not wrong then, it is incomplete: it is the foundation on which the following chapters add just enough nonlinearity, without paying the cost of the full Hodgkin-Huxley model.
+  The RC holds as long as the membrane stays passive, far from the threshold. Near the firing of the
+  spike, the voltage-dependent channels take over and the linear model no longer holds. The RC is
+  not wrong then, it is incomplete: it is the foundation on which the following chapters add just
+  enough nonlinearity, without paying the cost of the full Hodgkin-Huxley model.
 </Callout>
 
 ## In one sentence
@@ -151,6 +158,7 @@ $$
 $$
 
 **Result.** The time constant is $\tau = 3$, and doubling the capacitance doubles it too, to $\tau = 6$. The leak becomes twice as slow.
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 2: the half-charge time">
@@ -189,6 +197,7 @@ t = \tau \ln 2 = 2 \times 0.693 \approx 1.39
 $$
 
 **Result.** At $t = \tau$ there remains $37\%$ of the charge, and we must wait until $t = \tau \ln 2 \approx 1.39$ for only half of it to be left.
+
 </Callout>
 
 <Callout kind="tip" title="Solution to exercise 3: recovering the leak factor">
@@ -219,6 +228,7 @@ V(2) = V_0\, e^{-2/\tau} = e^{-2/2} = e^{-1} \approx 0.368
 $$
 
 **Result.** The recurrence gives $v_2 \approx 0.368$ after two steps, and the continuous law gives $V(2) \approx 0.368$ at the same instant. The two coincide: the discrete sequence is indeed the exact sampling of the continuous discharge.
+
 </Callout>
 
 ## Sources
@@ -247,7 +257,7 @@ $$
           'From an arbitrary choice with no physical meaning',
           'From the physics of the membrane: a capacitor discharging through a resistor, with λ = e^(-Δt/τ)',
           'From the number of ion channels only',
-          'From the cell\'s resting potential',
+          "From the cell's resting potential",
         ],
         answer: 1,
         explain:
@@ -263,7 +273,7 @@ $$
         ],
         answer: 2,
         explain:
-          "τ = R × C. It is a time: it measures the characteristic duration of the leak. Doubling R or doubling C doubles τ the same way.",
+          'τ = R × C. It is a time: it measures the characteristic duration of the leak. Doubling R or doubling C doubles τ the same way.',
       },
       {
         q: 'At the instant t = τ, what fraction of the initial charge remains?',
@@ -275,7 +285,7 @@ $$
         ],
         answer: 1,
         explain:
-          "V(τ) = V0 e^(-1) ≈ 0.37 V0. After one time constant, the membrane has lost about 63% of its charge and 37% remains.",
+          'V(τ) = V0 e^(-1) ≈ 0.37 V0. After one time constant, the membrane has lost about 63% of its charge and 37% remains.',
       },
       {
         q: 'Why do we say the chapter-1 recurrence is the exact sampling of the discharge?',
@@ -287,7 +297,7 @@ $$
         ],
         answer: 1,
         explain:
-          "By sampling the continuous curve every Δt, we land term by term on the recurrence sequence, provided we set λ = e^(-Δt/τ). It is not an approximation, it is an exact equality.",
+          'By sampling the continuous curve every Δt, we land term by term on the recurrence sequence, provided we set λ = e^(-Δt/τ). It is not an approximation, it is an exact equality.',
       },
       {
         q: 'What does the RC circuit model, and what does it not model?',
@@ -299,7 +309,7 @@ $$
         ],
         answer: 1,
         explain:
-          "The RC describes a passive membrane: it stores and it leaks. The active generation of the spike comes from voltage-dependent channels, described by the nonlinear Hodgkin-Huxley model.",
+          'The RC describes a passive membrane: it stores and it leaks. The active generation of the spike comes from voltage-dependent channels, described by the nonlinear Hodgkin-Huxley model.',
       },
     ]}
   />
