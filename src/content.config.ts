@@ -146,6 +146,34 @@ const researchEn = defineCollection({
   schema: researchBodySchema,
 });
 
+const researchJournalSchema = z.object({
+  slug: z.string(),
+  research: z.string(),
+  date: z.coerce.date(),
+  title: z.object({ fr: z.string(), en: z.string() }),
+  excerpt: z.object({ fr: z.string(), en: z.string() }).optional(),
+  published: z.boolean().default(true),
+});
+
+const researchJournalBodySchema = z.object({
+  slug: z.string(),
+});
+
+const researchJournal = defineCollection({
+  loader: glob({ base: './src/content/research-journal', pattern: '**/*.{yaml,yml}' }),
+  schema: researchJournalSchema,
+});
+
+const researchJournalFr = defineCollection({
+  loader: glob({ base: './src/content/research-journal-fr', pattern: '**/*.mdx' }),
+  schema: researchJournalBodySchema,
+});
+
+const researchJournalEn = defineCollection({
+  loader: glob({ base: './src/content/research-journal-en', pattern: '**/*.mdx' }),
+  schema: researchJournalBodySchema,
+});
+
 const programLinkSchema = z.object({
   label: z.string(),
   href: z.string().url(),
@@ -219,5 +247,8 @@ export const collections = {
   research,
   'research-fr': researchFr,
   'research-en': researchEn,
+  'research-journal': researchJournal,
+  'research-journal-fr': researchJournalFr,
+  'research-journal-en': researchJournalEn,
   tracks,
 };
