@@ -1,0 +1,242 @@
+---
+---
+
+<canvas class="research-backdrop" aria-hidden="true"></canvas>
+
+<script>
+  import {
+    readThemeColors,
+    registerBackdrop,
+    withAlpha,
+  } from '../../lib/generative/backdrop-support';
+  import { dailySeed, type Bounds, type Pointer } from '../../lib/generative/flow-field';
+  import {
+    computeEdges,
+    createNodes,
+    maybeEmitPulse,
+    stepNode,
+    stepPulse,
+    type NetworkConfiguration,
+    type NetworkNode,
+    type NetworkPulse,
+  } from '../../lib/generative/network';
+
+  const DESKTOP_NODE_COUNT = 60;
+  const MOBILE_NODE_COUNT = 30;
+  const TIME_INCREMENT = 0.0014;
+  const EDGE_ALPHA = 0.07;
+  const NODE_ALPHA = 0.2;
+  const PULSE_ALPHA = 0.5;
+  const GLOW_ALPHA = 0.55;
+  const EMISSION_ATTEMPTS_PER_FRAME = 3;
+  const STATIC_FRAME_COUNT = 120;
+  const MAX_PIXEL_RATIO = 2;
+
+  registerBackdrop('canvas.research-backdrop', initialize);
+
+  function initialize(canvas: HTMLCanvasElement): () => void {
+    const contextOrNull = canvas.getContext('2d');
+    if (contextOrNull === null) {
+      return () => {};
+    }
+    const context: CanvasRenderingContext2D = contextOrNull;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const configuration: NetworkConfiguration = {
+      seed: dailySeed(new Date()),
+      driftSpeed: 0.35,
+      noiseScale: 1,
+      linkDistance: 70,
+      pulseSpeed: 0.04,
+      basePulseRate: 0.02,
+      pointerRadius: 120,
+      activationBoost: 8,
+      glowDecay: 0.015,
+    };
+
+    let colors = readThemeColors();
+    let bounds: Bounds = { width: 0, height: 0 };
+    let nodes: NetworkNode[] = [];
+    let pulses: NetworkPulse[] = [];
+    let pointer: Pointer | null = null;
+    let time = 0;
+    let frameId = 0;
+
+    function resetCanvas(): void {
+      const pixelRatio = Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
+      bounds = { width: window.innerWidth, height: window.innerHeight };
+      canvas.width = bounds.width * pixelRatio;
+      canvas.height = bounds.height * pixelRatio;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      const nodeCount = bounds.width < 768 ? MOBILE_NODE_COUNT : DESKTOP_NODE_COUNT;
+      nodes = createNodes(nodeCount, bounds, Math.random);
+      pulses = [];
+    }
+
+    function drawFrame(): void {
+      time += TIME_INCREMENT;
+      context.fillStyle = colors.background;
+      context.fillRect(0, 0, bounds.width, bounds.height);
+
+      for (let index = 0; index < nodes.length; index++) {
+        nodes[index] = stepNode(nodes[index], time, configuration, bounds, pointer);
+      }
+
+      const edges = computeEdges(nodes, configuration.linkDistance);
+      context.lineWidth = 1;
+      for (const edge of edges) {
+        const closeness = 1 - edge.distance / configuration.linkDistance;
+        context.strokeStyle = withAlpha(colors.foreground, closeness * EDGE_ALPHA);
+        context.beginPath();
+        context.moveTo(nodes[edge.from].x, nodes[edge.from].y);
+        context.lineTo(nodes[edge.to].x, nodes[edge.to].y);
+        context.stroke();
+      }
+
+      for (let attempt = 0; attempt < EMISSION_ATTEMPTS_PER_FRAME; attempt++) {
+        const emitted = maybeEmitPulse(edges, nodes, pointer, configuration, Math.random);
+        if (emitted !== null) {
+          pulses.push(emitted);
+        }
+      }
+
+      const survivors: NetworkPulse[] = [];
+      for (const pulse of pulses) {
+        const result = stepPulse(pulse, nodes, configuration);
+        if (result.arrivedAt !== null) {
+          const node = nodes[result.arrivedAt];
+          nodes[result.arrivedAt] = { ...node, glow: 1 };
+        }
+        if (result.pulse !== null) {
+          survivors.push(result.pulse);
+          const fromNode = nodes[result.pulse.from];
+          const toNode = nodes[result.pulse.to];
+          const x = fromNode.x + (toNode.x - fromNode.x) * result.pulse.progress;
+          const y = fromNode.y + (toNode.y - fromNode.y) * result.pulse.progress;
+          context.fillStyle = withAlpha(colors.accent, PULSE_ALPHA);
+          context.beginPath();
+          context.arc(x, y, 2, 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+      pulses = survivors;
+
+      for (const node of nodes) {
+        if (node.glow > 0) {
+          context.fillStyle = withAlpha(colors.accent, node.glow * GLOW_ALPHA);
+          context.beginPath();
+          context.arc(node.x, node.y, 2.6, 0, Math.PI * 2);
+          context.fill();
+        } else {
+          context.fillStyle = withAlpha(colors.foreground, NODE_ALPHA);
+          context.beginPath();
+          context.arc(node.x, node.y, 1.8, 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+    }
+
+    function renderStaticArtwork(): void {
+      resetCanvas();
+      for (let frame = 0; frame < STATIC_FRAME_COUNT; frame++) {
+        drawFrame();
+      }
+    }
+
+    function animationFrame(): void {
+      drawFrame();
+      frameId = window.requestAnimationFrame(animationFrame);
+    }
+
+    function start(): void {
+      if (frameId === 0 && !document.hidden) {
+        frameId = window.requestAnimationFrame(animationFrame);
+      }
+    }
+
+    function stop(): void {
+      if (frameId !== 0) {
+        window.cancelAnimationFrame(frameId);
+        frameId = 0;
+      }
+    }
+
+    if (prefersReducedMotion) {
+      renderStaticArtwork();
+      const themeObserver = new MutationObserver(() => {
+        colors = readThemeColors();
+        renderStaticArtwork();
+      });
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
+      return () => {
+        themeObserver.disconnect();
+      };
+    }
+
+    resetCanvas();
+    start();
+
+    const themeObserver = new MutationObserver(() => {
+      colors = readThemeColors();
+    });
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    let lastObservedWidth = window.innerWidth;
+    const onResize = (): void => {
+      if (window.innerWidth !== lastObservedWidth) {
+        lastObservedWidth = window.innerWidth;
+        resetCanvas();
+      }
+    };
+    window.addEventListener('resize', onResize);
+
+    const onVisibilityChange = (): void => {
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    const onPointerMove = (event: Event): void => {
+      const pointerEvent = event as PointerEvent;
+      if (pointerEvent.pointerType !== 'mouse') {
+        return;
+      }
+      pointer = { x: pointerEvent.clientX, y: pointerEvent.clientY };
+    };
+    document.addEventListener('pointermove', onPointerMove);
+
+    const onPointerLeave = (): void => {
+      pointer = null;
+    };
+    document.documentElement.addEventListener('pointerleave', onPointerLeave);
+
+    return () => {
+      stop();
+      themeObserver.disconnect();
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      document.removeEventListener('pointermove', onPointerMove);
+      document.documentElement.removeEventListener('pointerleave', onPointerLeave);
+    };
+  }
+</script>
+
+<style>
+  .research-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+</style>
