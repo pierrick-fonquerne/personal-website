@@ -110,6 +110,17 @@ const fr: Translations = {
     pagesUnit: (n) => `${n} page${n > 1 ? 's' : ''}`,
     conceptsUnit: (n) => `${n} concept${n > 1 ? 's' : ''}`,
     projectsUnit: (n) => `${n} projet${n > 1 ? 's' : ''}`,
+    journal: {
+      link: (n) => (n === 1 ? 'Journal de recherche (1 entrée)' : `Journal de recherche (${n} entrées)`),
+      indexTitle: 'Journal de recherche',
+      eyebrow: 'Carnet de bord',
+      lead: 'Un carnet de bord daté du cheminement en cours, entrée après entrée.',
+      empty: "Aucune entrée de journal pour l'instant.",
+      backToResearch: 'Retour à la page de recherche',
+      backToJournal: 'Retour au journal',
+      readEntry: 'Lire',
+      dateLabel: 'Écrit le',
+    },
   },
   courses: {
     eyebrow: 'COURS INTERACTIFS',
