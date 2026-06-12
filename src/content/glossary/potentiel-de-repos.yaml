@@ -1,0 +1,12 @@
+slug: potentiel-de-repos
+fr:
+  term: Potentiel de repos
+  definition: Différence de tension stable que la membrane d'un neurone maintient entre l'intérieur et l'extérieur de la cellule quand elle ne reçoit rien, de l'ordre de -65 millivolts. C'est la valeur vers laquelle le potentiel de membrane revient en l'absence d'entrée.
+  source: Gerstner et al., 2014
+en:
+  term: Resting potential
+  definition: The stable voltage difference a neuron's membrane maintains between the inside and outside of the cell when it receives nothing, on the order of -65 millivolts. It is the value the membrane potential drifts back to when no input arrives.
+  source: Gerstner et al., 2014
+seeAlso:
+  - potentiel-de-membrane
+  - canal-ionique

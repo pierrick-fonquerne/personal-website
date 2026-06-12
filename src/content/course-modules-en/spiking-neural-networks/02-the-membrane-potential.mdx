@@ -1,0 +1,306 @@
+---
+course: spiking-neural-networks
+order: 2
+title: The membrane potential
+subtitle: "Where the leak factor we set by hand in chapter 1 comes from: the membrane is a capacitor discharging through a resistor."
+estimatedMinutes: 20
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import MembraneRcLab from '../../../components/learning/MembraneRcLab.tsx';
+
+In the previous chapter you gave the neuron a memory with a single knob: the retention factor $\lambda$, slid by hand between $0$ and $1$. It worked, but it fell out of the sky. Why $0.7$ and not something else? What does it actually stand for? This chapter opens up the cell to show that $\lambda$ is not an arbitrary setting: it comes straight from the physics of a membrane, a tiny capacitor draining through a resistor.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow** : the potential recurrence from chapter 1, $v_{t+1} = \lambda\, v_t + I_t$, and the idea that $\lambda$ sets the speed of the leak. Knowing that a decaying exponential starts fast then slows down helps, but we reintroduce it.
+
+**What you do not need to know** : differential equations (chapter 3 will write them), the detailed electrochemistry of ions, and any real electrical circuit.
+
+**Rigour** : we define each physical quantity, and we prove the exact link between the continuous decay of a membrane and the discrete recurrence of chapter 1. The calculations are done by hand on small numbers.
+</Callout>
+
+## A membrane, two electrical parts
+
+A real neuron bathes in a fluid full of charged ions: sodium, potassium, chloride. At rest, its membrane holds a small, constant voltage difference between the inside and the outside of the cell, on the order of $-65$ millivolts. This is the <Term slug="potentiel-de-repos">resting potential</Term>, the value the cell drifts back to when left alone.
+
+This membrane is a very thin fatty wall separating two salty solutions. It piles up opposite charges on either side, exactly like a capacitor: a component that stores electric charge. The larger its capacitance $C$, the more charge it takes to raise its voltage by the same amount.
+
+But the membrane is not perfectly sealed. It is pierced by tiny pores, the <Term slug="canal-ionique">ion channels</Term>, which let a trickle of current leak through. Seen from afar, this leak behaves like a resistor: a component that opposes the flow of current. The larger the resistance $R$, the harder current passes, and the slower the charge escapes.
+
+Hold on to these two roles, because the whole chapter lives in their meeting: the capacitance $C$ stores, the resistance $R$ lets things leak.
+
+## The RC circuit and the discharge law
+
+Put these two parts together: a charged capacitor $C$, connected to a resistor $R$ through which it can drain. This is the RC circuit, the simplest electrical model of a so-called passive membrane, that is, one that merely leaks, without the active mechanisms that build the spike (we come back to this at the end).
+
+Charge this capacitor up to a voltage $V_0$, then leave it alone. Current escapes through the resistor, the voltage drops. How fast? Here is the decisive intuition: the leaking current is stronger the higher the voltage. The more charge remains, the faster it escapes; the less remains, the slower the leak. A quantity whose rate of decrease is proportional to its own value decays as an exponential. The discharge of an RC circuit therefore follows
+
+$$
+V(t) = V_0\, e^{-t/\tau}, \qquad \tau = R\,C.
+$$
+
+This equation reads: the voltage at time $t$ equals the starting voltage $V_0$ multiplied by $e$ raised to the power $-t/\tau$. The number $\tau$ (the Greek letter tau) bundles the two parts into a single quantity, $\tau = RC$. The proper justification of this form goes through a differential equation, the tool of chapter 3; here, the proportionality intuition is enough to move on.
+
+## The time constant, the membrane's clock
+
+The product $\tau = RC$ has units of time and a very concrete meaning. Look at what the voltage is worth right at the moment $t = \tau$:
+
+$$
+V(\tau) = V_0\, e^{-1} \approx 0.37\, V_0.
+$$
+
+After a duration $\tau$, the membrane has lost about $63\%$ of its charge: $37\%$ is left. This is why $\tau$ is called the <Term slug="constante-de-temps">time constant</Term>: it measures the characteristic duration of the leak. A small time constant, and the memory evaporates in a flash; a large one, and the membrane holds the trace of what it received for a long time. This is the exact physical translation of what the $\lambda$ knob was tuning in chapter 1.
+
+<Callout kind="note" title="One quantity, two causes">
+Since $\tau = RC$, two very different membranes can share the same clock. Doubling the resistance $R$ or doubling the capacitance $C$ produces the same lengthening of $\tau$, hence the same slowness of leak. The time constant alone does not tell you whether the membrane is very resistive or very capacitive: it keeps only their product.
+</Callout>
+
+## From continuous decay to the leak factor of chapter 1
+
+We now have two descriptions of the same leak. Physics describes it continuously: at every instant $t$, the voltage is $V_0\, e^{-t/\tau}$. Chapter 1 described it in small time steps, with the input-free recurrence $v_{t+1} = \lambda\, v_t$. Do they describe the same thing?
+
+To compare, let us sample the continuous curve: look at it only at regular intervals $\Delta t$, that is, at the instants $0$, $\Delta t$, $2\,\Delta t$, and so on. At instant $k\,\Delta t$, the continuous law gives
+
+$$
+V(k\,\Delta t) = V_0\, e^{-k\,\Delta t / \tau} = V_0\, \left(e^{-\Delta t / \tau}\right)^{k}.
+$$
+
+The second equality uses only the rule of powers: $e^{-k\,\Delta t/\tau}$ is $\left(e^{-\Delta t/\tau}\right)$ multiplied by itself $k$ times. Now set
+
+$$
+\lambda = e^{-\Delta t / \tau}.
+$$
+
+Then the sampled value reads $V(k\,\Delta t) = V_0\, \lambda^{k}$, which is exactly the sequence produced by the chapter-1 recurrence, whose input-free solution is $v_k = v_0\, \lambda^{k}$.
+
+The conclusion is strong: the chapter-1 recurrence is not a crude approximation of the physics, it is its exact sampling, provided you choose $\lambda = e^{-\Delta t/\tau}$. The leak factor we used to set by hand had a hidden formula, and here it is.
+
+<Callout kind="tip" title="Reading the leak-factor formula">
+Since $\Delta t > 0$ and $\tau > 0$, the exponent $-\Delta t/\tau$ is negative, so $\lambda = e^{-\Delta t/\tau}$ always lands between $0$ and $1$: it is a retention, never an amplification. Two limiting cases light up the formula. If the step $\Delta t$ is tiny compared with $\tau$ (we look at the membrane very often), the exponent grazes $0$ and $\lambda$ grazes $1$: the recurrence keeps almost all of its charge from one step to the next. If instead $\Delta t$ far exceeds $\tau$ (we look rarely), the exponent plunges and $\lambda$ collapses toward $0$: between two glances, everything has already leaked away.
+</Callout>
+
+## Play with the discharge
+
+The formula is easier to see than to read. In the component below, an initial charge sets the potential at its starting value, then the membrane leaks. The green curve is the continuous discharge $V(t) = V_0\, e^{-t/\tau}$. The violet dots are the values of the chapter-1 recurrence, sampled every $\Delta t$.
+
+**Your mission** : first set $R$ and $C$, and watch the time constant $\tau = RC$ appear while the slope of the curve changes. Notice that the curve always crosses the $37\%$ line right at the instant $t = \tau$. Then play with the step $\Delta t$: the violet dots spread apart or close up, but they always stay sitting exactly on the green curve. That is the theorem from the previous section, before your eyes.
+
+<InteractivePrint
+  label="Figure: discharge of an RC membrane, continuous and sampled (interactive)"
+  description="Plot of the discharge of an RC circuit's membrane potential over time. The continuous curve follows V(t) = V0 e^(-t/tau) with tau = R times C. Discrete dots, sampled every Delta t from the recurrence v(k+1) = lambda v(k) with lambda = e^(-Delta t / tau), lie exactly on the continuous curve. A horizontal dashed line marks the 37 percent level (1/e) and a vertical line marks the instant t = tau. Setting R and C changes the time constant and hence the slope; setting Delta t changes the spacing of the dots without ever lifting them off the curve."
+>
+  <MembraneRcLab client:visible locale="en" />
+</InteractivePrint>
+
+Three things to watch as you play:
+
+- The time constant depends only on the product $R\,C$. Double the resistance or double the capacitance: the curve slows down the same way. That is the content of the note above, made tangible.
+- At the instant $t = \tau$, the curve passes through the $37\%$ line, whatever $R$ and $C$ are. The $37\%$ mark and the $\tau$ vertical always cross on the curve.
+- The smaller $\Delta t$ is compared with $\tau$, the closer $\lambda$ is to $1$ and the denser the dots. The larger $\Delta t$, the more $\lambda$ drops and the faster the dots tumble: the recurrence always follows the physics, at whatever pace you look at it.
+
+## What about the real neuron?
+
+The RC circuit describes a passive membrane: it stores, it leaks, and that is all. But a real neuron does not merely leak, it actively builds its spike. How? In 1952, Alan Hodgkin and Andrew Huxley measured, on the squid giant axon, how certain ion channels open and close depending on the voltage itself, creating a chain reaction that generates the spike (Hodgkin & Huxley, 1952). Their model, awarded the Nobel Prize in Medicine in 1963, adds to the plain RC some conductances that depend on the voltage, hence nonlinear.
+
+<Callout kind="note" title="The limit of the capacitor analogy">
+The RC holds as long as the membrane stays passive, far from the threshold. Near the firing of the spike, the voltage-dependent channels take over and the linear model no longer holds. The RC is not wrong then, it is incomplete: it is the foundation on which the following chapters add just enough nonlinearity, without paying the cost of the full Hodgkin-Huxley model.
+</Callout>
+
+## In one sentence
+
+The neuron's leak is anything but arbitrary: the membrane is a capacitor draining through a resistor with a time constant $\tau = RC$, and sampling that continuous discharge every $\Delta t$ gives back exactly the factor $\lambda = e^{-\Delta t/\tau}$ set by hand in chapter 1.
+
+## Towards chapter 3
+
+We have tied our recurrence to the physics of a leaking membrane, but two pieces are still missing for a complete spiking neuron. First, the equation that governs the voltage when an input current arrives continuously, not just when we let the membrane drain on its own. Second, the firing mechanism: the threshold and the reset. Chapter 3 writes the membrane's differential equation, $\tau\, \frac{dV}{dt} = -(V - V_\text{rest}) + R\,I$, adds a threshold and a reset, and obtains the full leaky integrate-and-fire model, of which our chapter-1 recurrence was only the sampled, input-free version.
+
+## Exercises
+
+Grab paper and a pencil. The solutions are right below, to look at only after you have tried.
+
+### Exercise 1: computing a time constant
+
+A membrane has a resistance $R = 2$ and a capacitance $C = 1.5$, in the model's units. Compute its time constant $\tau$. Then say what $\tau$ becomes if you double the capacitance.
+
+### Exercise 2: the half-charge time
+
+A membrane has a time constant $\tau = 2$. What fraction of the initial charge remains at the instant $t = \tau$? Then, after how long is only half of it left?
+
+### Exercise 3: recovering the leak factor
+
+We sample a discharge with time constant $\tau = 2$ using a step $\Delta t = 1$. Compute the leak factor $\lambda = e^{-\Delta t/\tau}$. Then check that, starting from $V_0 = 1$, the recurrence $v_{k+1} = \lambda\, v_k$ gives after two steps the same value as the continuous law at instant $t = 2$.
+
+<Callout kind="tip" title="Solution to exercise 1: computing a time constant">
+We have $R = 2$ and $C = 1.5$.
+
+**Step 1.** The time constant is the product of resistance and capacitance:
+
+$$
+\tau = R\,C = 2 \times 1.5 = 3
+$$
+
+**Step 2.** We double the capacitance, so $C$ becomes $3$. We recompute:
+
+$$
+\tau = 2 \times 3 = 6
+$$
+
+**Result.** The time constant is $\tau = 3$, and doubling the capacitance doubles it too, to $\tau = 6$. The leak becomes twice as slow.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: the half-charge time">
+We have $\tau = 2$ and the law $V(t) = V_0\, e^{-t/\tau}$.
+
+**Step 1.** At the instant $t = \tau$, we replace $t$ by $\tau$ in the law:
+
+$$
+V(\tau) = V_0\, e^{-\tau/\tau} = V_0\, e^{-1}
+$$
+
+**Step 2.** We evaluate $e^{-1}$:
+
+$$
+e^{-1} \approx 0.37
+$$
+
+So about $37\%$ of the initial charge remains.
+
+**Step 3.** We now look for the instant $t$ where half the charge is left. We write the condition:
+
+$$
+e^{-t/\tau} = \frac{1}{2}
+$$
+
+**Step 4.** We apply the natural logarithm to both sides to free the exponent:
+
+$$
+-\frac{t}{\tau} = \ln\!\left(\frac{1}{2}\right) = -\ln 2
+$$
+
+**Step 5.** We isolate $t$ by multiplying by $-\tau$:
+
+$$
+t = \tau \ln 2 = 2 \times 0.693 \approx 1.39
+$$
+
+**Result.** At $t = \tau$ there remains $37\%$ of the charge, and we must wait until $t = \tau \ln 2 \approx 1.39$ for only half of it to be left.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 3: recovering the leak factor">
+We have $\tau = 2$, a step $\Delta t = 1$ and a start $V_0 = 1$.
+
+**Step 1.** We compute the leak factor with the chapter's formula:
+
+$$
+\lambda = e^{-\Delta t/\tau} = e^{-1/2} = e^{-0.5} \approx 0.607
+$$
+
+**Step 2.** We unroll the recurrence over two steps. First step:
+
+$$
+v_1 = \lambda\, v_0 = 0.607 \times 1 = 0.607
+$$
+
+**Step 3.** Second step:
+
+$$
+v_2 = \lambda\, v_1 = 0.607 \times 0.607 \approx 0.368
+$$
+
+**Step 4.** On the other side, we compute the continuous law at instant $t = 2$:
+
+$$
+V(2) = V_0\, e^{-2/\tau} = e^{-2/2} = e^{-1} \approx 0.368
+$$
+
+**Result.** The recurrence gives $v_2 \approx 0.368$ after two steps, and the continuous law gives $V(2) \approx 0.368$ at the same instant. The two coincide: the discrete sequence is indeed the exact sampling of the continuous discharge.
+</Callout>
+
+## Sources
+
+- Hodgkin, A. L. & Huxley, A. F. (1952). "A quantitative description of membrane current and its application to conduction and excitation in nerve." _The Journal of Physiology_ 117(4), 500-544. [DOI 10.1113/jphysiol.1952.sp004764](https://doi.org/10.1113/jphysiol.1952.sp004764)
+- Lapicque, L. (1907). "Quantitative research on the electrical excitation of nerves treated as a polarization." _Journal de Physiologie et de Pathologie Générale_ 9, 620-635. [Commented translation, Brunel & van Rossum, 2007, DOI 10.1007/s00422-007-0189-6](https://doi.org/10.1007/s00422-007-0189-6)
+
+### Further reading
+
+- Gerstner, W., Kistler, W. M., Naud, R. & Paninski, L. (2014). _Neuronal Dynamics_. Cambridge University Press. Section 1.3 on the passive membrane and the RC circuit. [neuronaldynamics.epfl.ch](https://neuronaldynamics.epfl.ch/)
+- Abbott, L. F. (1999). "Lapicque's introduction of the integrate-and-fire model neuron (1907)." _Brain Research Bulletin_ 50(5-6), 303-304. [DOI 10.1016/S0361-9230(99)00161-6](https://doi.org/10.1016/S0361-9230%2899%2900161-6)
+
+<InteractivePrint
+  label="Quiz: chapter 2 recap (interactive)"
+  description="Multiple-choice quiz checking the chapter's takeaways: the physical origin of the leak factor, the role of the time constant tau equals R times C, the 37 percent mark at t equals tau, the exact link between continuous discharge and discrete recurrence, and what the RC circuit does or does not model of the real neuron. Five questions with an explanation of the correct answer on submit. Do it online for automatic scoring."
+>
+  <Quiz
+    client:visible
+    submitLabel="Check"
+    resetLabel="Restart"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Where does the retention factor λ set by hand in chapter 1 come from?',
+        options: [
+          'From an arbitrary choice with no physical meaning',
+          'From the physics of the membrane: a capacitor discharging through a resistor, with λ = e^(-Δt/τ)',
+          'From the number of ion channels only',
+          'From the cell\'s resting potential',
+        ],
+        answer: 1,
+        explain:
+          "Sampling the continuous discharge V(t) = V0 e^(-t/τ) every Δt gives V0 λ^k with λ = e^(-Δt/τ). The leak factor is therefore set by the membrane's time constant.",
+      },
+      {
+        q: 'What is the time constant τ of an RC circuit equal to?',
+        options: [
+          'The sum R + C',
+          'The ratio R / C',
+          'The product R × C',
+          'The resistance R alone',
+        ],
+        answer: 2,
+        explain:
+          "τ = R × C. It is a time: it measures the characteristic duration of the leak. Doubling R or doubling C doubles τ the same way.",
+      },
+      {
+        q: 'At the instant t = τ, what fraction of the initial charge remains?',
+        options: [
+          'Half, that is 50%',
+          'About 37% (the value 1/e)',
+          'Almost nothing, less than 1%',
+          'All of it, the leak has not started',
+        ],
+        answer: 1,
+        explain:
+          "V(τ) = V0 e^(-1) ≈ 0.37 V0. After one time constant, the membrane has lost about 63% of its charge and 37% remains.",
+      },
+      {
+        q: 'Why do we say the chapter-1 recurrence is the exact sampling of the discharge?',
+        options: [
+          'Because it is a crude approximation that diverges over time',
+          'Because V(kΔt) = V0 (e^(-Δt/τ))^k = V0 λ^k, identical to the discrete sequence v_k = v0 λ^k',
+          'Because the two coincide only at the first step',
+          'Because λ is always equal to 1',
+        ],
+        answer: 1,
+        explain:
+          "By sampling the continuous curve every Δt, we land term by term on the recurrence sequence, provided we set λ = e^(-Δt/τ). It is not an approximation, it is an exact equality.",
+      },
+      {
+        q: 'What does the RC circuit model, and what does it not model?',
+        options: [
+          'It models the active spike, but not the leak',
+          'It models the passive leaking membrane, but not the active generation of the spike',
+          'It models the whole neuron, spike included',
+          'It models neither the leak nor the spike',
+        ],
+        answer: 1,
+        explain:
+          "The RC describes a passive membrane: it stores and it leaks. The active generation of the spike comes from voltage-dependent channels, described by the nonlinear Hodgkin-Huxley model.",
+      },
+    ]}
+  />
+</InteractivePrint>

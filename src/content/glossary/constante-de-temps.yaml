@@ -1,0 +1,12 @@
+slug: constante-de-temps
+fr:
+  term: Constante de temps
+  definition: Durée caractéristique de la fuite d'une membrane, notée τ et égale au produit de la résistance par la capacité, τ = R · C. Au bout d'une constante de temps, le potentiel a perdu environ 63 % de sa charge (il en reste 37 %, soit 1/e). Elle fixe le facteur de rétention discret λ = e^(-Δt/τ).
+  source: Gerstner et al., 2014
+en:
+  term: Time constant
+  definition: Characteristic timescale of a membrane's leak, written τ and equal to the product of resistance and capacitance, τ = R · C. After one time constant the potential has lost about 63% of its charge (37% remains, i.e. 1/e). It sets the discrete retention factor λ = e^(-Δt/τ).
+  source: Gerstner et al., 2014
+seeAlso:
+  - potentiel-de-membrane
+  - integrate-and-fire
