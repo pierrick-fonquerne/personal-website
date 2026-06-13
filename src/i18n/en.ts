@@ -119,6 +119,17 @@ export interface Translations {
     pagesUnit: (n: number) => string;
     conceptsUnit: (n: number) => string;
     projectsUnit: (n: number) => string;
+    journal: {
+      link: (n: number) => string;
+      indexTitle: string;
+      eyebrow: string;
+      lead: string;
+      empty: string;
+      backToResearch: string;
+      backToJournal: string;
+      readEntry: string;
+      dateLabel: string;
+    };
   };
   courses: {
     eyebrow: string;
@@ -389,6 +400,17 @@ const en: Translations = {
     pagesUnit: (n) => `${n} page${n === 1 ? '' : 's'}`,
     conceptsUnit: (n) => `${n} concept${n === 1 ? '' : 's'}`,
     projectsUnit: (n) => `${n} project${n === 1 ? '' : 's'}`,
+    journal: {
+      link: (n) => (n === 1 ? 'Research journal (1 entry)' : `Research journal (${n} entries)`),
+      indexTitle: 'Research journal',
+      eyebrow: 'Logbook',
+      lead: 'A dated logbook of the thinking in progress, entry after entry.',
+      empty: 'No journal entry yet.',
+      backToResearch: 'Back to the research page',
+      backToJournal: 'Back to the journal',
+      readEntry: 'Read',
+      dateLabel: 'Written on',
+    },
   },
   courses: {
     eyebrow: 'INTERACTIVE COURSES',

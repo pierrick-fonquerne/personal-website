@@ -1,0 +1,17 @@
+slug: neurone-vivant-et-persistant
+type: exploration
+theme: ai
+status: wip
+publishedAt: 2026-06-12
+tags:
+  - neurosciences-computationnelles
+  - spiking-neural-networks
+  - memoire
+fr:
+  title: 'Le neurone vivant et persistant'
+  tagline: "Un neurone qui ne se contente pas de calculer le présent : il garde une biographie et s'en sert."
+  summary: "Recherche en cours. Suite de la brique du neurone à état : on demande maintenant à l'unité de RETENIR. Le cheminement se lit dans le journal de recherche ci-contre, le concept finalisé viendra ensuite."
+en:
+  title: 'The Living, Persistent Neuron'
+  tagline: 'A neuron that does not merely compute the present: it keeps a biography and uses it.'
+  summary: 'Research in progress. A follow-up to the stateful-neuron brick: we now ask the unit to REMEMBER. The path is told in the research journal alongside; the finished concept will come later.'

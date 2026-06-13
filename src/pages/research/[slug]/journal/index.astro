@@ -1,0 +1,60 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import JournalList from '../../../../components/research/JournalList.astro';
+import { useTranslations, localizedPath } from '../../../../lib/i18n';
+import { journalEntriesFor } from '../../../../lib/research-journal';
+
+const locale = 'fr' as const;
+
+export const getStaticPaths = (async () => {
+  const research = (await getCollection('research')).filter((e) => e.data.published);
+  const journal = (await getCollection('research-journal')).filter((e) => e.data.published);
+  return research
+    .map((entry) => ({ entry, entries: journalEntriesFor(entry.data.slug, journal) }))
+    .filter((x) => x.entries.length > 0)
+    .map((x) => ({
+      params: { slug: x.entry.data.slug },
+      props: { research: x.entry, entries: x.entries },
+    }));
+}) satisfies GetStaticPaths;
+
+const { research, entries } = Astro.props;
+const t = useTranslations(locale);
+const content = research.data[locale];
+---
+
+<BaseLayout
+  title={`${t.research.journal.indexTitle} : ${content.title} | Pierrick Fonquerne`}
+  description={content.tagline}
+  current="/research"
+  locale={locale}
+>
+  <article class="mx-auto mt-8 max-w-[1280px] px-14 pb-24">
+    <a
+      href={localizedPath(`/research/${research.data.slug}`, locale)}
+      class="inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
+    >
+      {t.research.journal.backToResearch}
+    </a>
+
+    <header class="mt-10 border-t border-[var(--color-line)] pt-10">
+      <p class="font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.journal.eyebrow}
+      </p>
+      <h1
+        class="font-display mt-5 text-[clamp(40px,6vw,72px)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[var(--color-fg)]"
+      >
+        {t.research.journal.indexTitle}
+      </h1>
+      <p class="mt-5 text-[clamp(17px,3.5vw,22px)] leading-[1.5] text-[var(--color-fg-muted)]">
+        {t.research.journal.lead}
+      </p>
+    </header>
+
+    <section class="mt-16 border-t border-[var(--color-line)] pt-12">
+      <JournalList entries={entries} researchSlug={research.data.slug} locale={locale} />
+    </section>
+  </article>
+</BaseLayout>
