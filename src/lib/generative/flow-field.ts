@@ -8,6 +8,8 @@ export interface FlowFieldConfiguration {
   driftSpeed: number;
   pointerRadius: number;
   pointerStrength: number;
+  /** Per-frame probability that a particle dies and respawns elsewhere, capping its lifespan. */
+  respawnChance: number;
 }
 
 /** A single particle moving through the field. */
@@ -47,17 +49,22 @@ export type RandomSource = () => number;
 const OUT_OF_BOUNDS_MARGIN = 4;
 const POINTER_DISTANCE_EPSILON = 0.5;
 
+/** Diagonal direction the noise field translates along, so the pattern never scrolls on a single axis. */
+const DRIFT_DIRECTION_X = 1;
+const DRIFT_DIRECTION_Y = 0.6;
+
 /** Same field for every visitor on a given day: the artwork changes daily. */
 export function dailySeed(date: Date): number {
   return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 }
 
 /**
- * Direction of the flow at a point, drifting slowly over time.
+ * Direction of the flow at a point, sampled from a noise field that translates over time.
  *
- * The `time` parameter is an abstract animation clock in arbitrary units.
- * The renderer chooses the per-frame increment passed here; `driftSpeed`
- * converts it to angular drift in radians.
+ * The `time` parameter is an abstract animation clock in arbitrary units. The renderer
+ * chooses the per-frame increment passed here; `driftSpeed` converts it to a diagonal
+ * translation of the sampled field. Because the whole pattern glides rather than rotating
+ * in place, the vortices move across the canvas instead of staying anchored to one point.
  */
 export function fieldAngle(
   x: number,
@@ -65,12 +72,14 @@ export function fieldAngle(
   time: number,
   configuration: FlowFieldConfiguration,
 ): number {
+  const driftX = time * configuration.driftSpeed * DRIFT_DIRECTION_X;
+  const driftY = time * configuration.driftSpeed * DRIFT_DIRECTION_Y;
   const noise = valueNoise(
-    x * configuration.noiseScale,
-    y * configuration.noiseScale,
+    x * configuration.noiseScale + driftX,
+    y * configuration.noiseScale + driftY,
     configuration.seed,
   );
-  return noise * Math.PI * 4 + time * configuration.driftSpeed;
+  return noise * Math.PI * 4;
 }
 
 /** Radial push away from the pointer, fading linearly to zero at the radius. */
@@ -119,6 +128,9 @@ export function stepParticle(
   pointer: Pointer | null,
   random: RandomSource,
 ): StepResult {
+  if (random() < configuration.respawnChance) {
+    return { particle: spawnParticle(bounds, particle.isAccent, random), hasRespawned: true };
+  }
   const angle = fieldAngle(particle.x, particle.y, time, configuration);
   let velocityX = Math.cos(angle) * configuration.speed;
   let velocityY = Math.sin(angle) * configuration.speed;

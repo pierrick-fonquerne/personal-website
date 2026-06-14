@@ -14,13 +14,13 @@
     type Pointer,
   } from '../../lib/generative/flow-field';
 
-  const DESKTOP_PARTICLE_COUNT = 200;
+  const DESKTOP_PARTICLE_COUNT = 280;
   const MOBILE_PARTICLE_COUNT = 80;
   const ACCENT_RATIO = 0.16;
   const TIME_INCREMENT = 0.0035;
-  const TRAIL_FADE_ALPHA = 0.05;
+  const TRAIL_FADE_ALPHA = 0.04;
   const FOREGROUND_ALPHA = 0.1;
-  const ACCENT_ALPHA = 0.32;
+  const ACCENT_ALPHA = 0.26;
   const STATIC_FRAME_COUNT = 240;
   const MAX_PIXEL_RATIO = 2;
 
@@ -62,9 +62,10 @@
       seed: dailySeed(new Date()),
       noiseScale: 0.005,
       speed: 1.2,
-      driftSpeed: 6,
+      driftSpeed: 0.8,
       pointerRadius: 110,
       pointerStrength: 2.6,
+      respawnChance: 0.005,
     };
 
     let colors = readThemeColors();
@@ -93,7 +94,7 @@
 
     function resetCanvas(): void {
       const pixelRatio = Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO);
-      bounds = { width: section.clientWidth, height: section.clientHeight };
+      bounds = { width: canvas.clientWidth, height: canvas.clientHeight };
       canvas.width = bounds.width * pixelRatio;
       canvas.height = bounds.height * pixelRatio;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
@@ -176,14 +177,14 @@
     });
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
-    let lastObservedWidth = section.clientWidth;
+    let lastObservedWidth = canvas.clientWidth;
     const resizeObserver = new ResizeObserver(() => {
-      if (section.clientWidth !== lastObservedWidth) {
-        lastObservedWidth = section.clientWidth;
+      if (canvas.clientWidth !== lastObservedWidth) {
+        lastObservedWidth = canvas.clientWidth;
         resetCanvas();
       }
     });
-    resizeObserver.observe(section);
+    resizeObserver.observe(canvas);
 
     const intersectionObserver = new IntersectionObserver((entries) => {
       isInViewport = entries.some((entry) => entry.isIntersecting);
@@ -230,10 +231,20 @@
 <style>
   .hero-backdrop {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 100vw;
+    transform: translateX(-50%);
     z-index: -1;
-    width: 100%;
-    height: 100%;
     pointer-events: none;
+    -webkit-mask-image:
+      linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%),
+      linear-gradient(to top, #000 0%, transparent 100%);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%),
+      linear-gradient(to top, #000 0%, transparent 100%);
+    mask-composite: intersect;
   }
 </style>
