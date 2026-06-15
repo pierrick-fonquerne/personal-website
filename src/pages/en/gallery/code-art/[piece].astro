@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import Atelier from '../../../../components/art/Atelier';
+import { PIECES, findPiece } from '../../../../lib/generative/pieces/registry';
+import { useTranslations } from '../../../../lib/i18n';
+
+export function getStaticPaths() {
+  return PIECES.map((piece) => ({ params: { piece: piece.id } }));
+}
+
+const locale = 'en' as const;
+const t = useTranslations(locale);
+const { piece: pieceId } = Astro.params;
+const piece = findPiece(pieceId);
+if (piece === undefined) {
+  throw new Error(`Unknown piece: ${pieceId}`);
+}
+const labels = {
+  surprise: t.art.surprise,
+  exportPng: t.art.exportPng,
+  copyLink: t.art.copyLink,
+  copied: t.art.copied,
+};
+---
+
+<BaseLayout
+  title={`${piece.titleEn} · ${t.art.galleryTitle}`}
+  description={piece.descriptionEn}
+  current="/gallery/code-art"
+  locale={locale}
+>
+  <section class="container-page py-12">
+    <a
+      href="/en/gallery/code-art"
+      class="font-mono text-[13px] text-[var(--color-fg-muted)] transition-colors hover:text-[var(--color-accent)]"
+    >
+      {t.art.backToGallery}
+    </a>
+    <h1
+      class="font-display mt-3 text-[clamp(26px,5vw,38px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {piece.titleEn}
+    </h1>
+    <Atelier client:only="react" pieceId={piece.id} locale={locale} labels={labels} />
+  </section>
+</BaseLayout>
