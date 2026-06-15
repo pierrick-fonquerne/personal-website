@@ -32,6 +32,7 @@ export const NAV_LINKS: readonly NavLink[] = [
   { key: 'projects', href: '/projects' },
   { key: 'courses', href: '/interactive-courses' },
   { key: 'research', href: '/research' },
+  { key: 'gallery', href: '/gallery/code-art' },
   { key: 'about', href: '/about' },
 ];
 
