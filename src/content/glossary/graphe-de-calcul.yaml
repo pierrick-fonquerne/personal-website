@@ -1,0 +1,11 @@
+slug: graphe-de-calcul
+fr:
+  term: 'Graphe de calcul'
+  definition: "Représentation d'un calcul comme un graphe orienté dont les noeuds sont des opérations et les arêtes les valeurs qui circulent. Lire un réseau comme un graphe de calcul rend la rétropropagation systématique : on multiplie les dérivées locales le long des arêtes, en remontant des sorties vers les entrées."
+en:
+  term: Computation graph
+  definition: 'A representation of a computation as a directed graph whose nodes are operations and whose edges are the values flowing between them. Reading a network as a computation graph makes backpropagation systematic: local derivatives are multiplied along the edges, from outputs back to inputs.'
+seeAlso:
+  - regle-de-la-chaine
+  - backpropagation
+  - forward-pass

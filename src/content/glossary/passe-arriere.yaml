@@ -1,0 +1,11 @@
+slug: passe-arriere
+fr:
+  term: 'Passe arrière'
+  definition: "Phase de la rétropropagation où le signal d'erreur se propage de la sortie vers l'entrée, en sens inverse du forward pass, pour assembler le gradient de chaque poids. Elle réutilise les activations mémorisées pendant la passe avant au lieu de les recalculer."
+en:
+  term: Backward pass
+  definition: "The phase of backpropagation where the error signal propagates from output to input, the reverse direction of the forward pass, to assemble each weight's gradient. It reuses the activations stored during the forward pass instead of recomputing them."
+seeAlso:
+  - forward-pass
+  - backpropagation
+  - signal-d-erreur

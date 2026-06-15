@@ -1,22 +1,327 @@
 ---
 course: neural-networks-foundations
 order: 8
-title: 'Backpropagation: the gradient'
-subtitle: 'The algorithm that makes learning possible, step by step.'
-estimatedMinutes: 18
+title: Backpropagation
+subtitle: 'A single backward pass that recovers the gradient of every weight: the chain rule, industrialised.'
+estimatedMinutes: 22
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import BackpropStepper from '../../../components/learning/BackpropStepper.tsx';
+import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 7, we learned to compute $\frac{dL}{dw}$ for a single weight by multiplying local derivatives along the graph of one neuron. That was the chain rule, laid down brick by brick. But a real network does not have one weight: it has thousands, chained across several layers. Recomputing that from scratch for every weight would be ruinous.
+
+So the question of this chapter is precise: how do we get the derivative of the score with respect to every weight at once, in a single pass, without repeating the same multiplications a thousand times? The answer is an algorithm of rare elegance, and you already hold all its pieces. All that remains is to organise them.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the forward pass of a network, layer by layer (chapter 6), the cost function and its surface (chapter 6), the chain rule and the derivative of the sigmoid $\sigma'(z) = \sigma(z)\,(1 - \sigma(z))$ (chapter 7).
+
+**What you do not need to know**: gradient descent (chapter 9). Here we learn to compute the gradient of every weight, not yet to use it to correct them.
+
+**Level of rigour**: we define a neuron's error signal, fully unroll both passes on a small network, read the algorithm as a walk through the computation graph, and four pencil-and-paper exercises with detailed line-by-line solutions.
+
 </Callout>
 
-## What you will learn
+## Act 1: the cost of brute force
 
-- The chain rule and partial derivatives, intuitively
-- Computing the gradient for every weight in the network
-- Why "back"-propagation: the direction of dependencies in the graph
+Recall the end of chapter 7. For a single neuron we had
 
-Backpropagation is often presented as magic. It isn't: it's the chain rule applied repeatedly, organised to reuse intermediate results. Once the mechanics click, nothing remains obscure.
+$$
+\frac{dL}{dw} = \underbrace{2(a - y)}_{dL/da} \cdot \underbrace{a(1 - a)}_{da/dz} \cdot \underbrace{x}_{dz/dw}.
+$$
+
+Three factors, multiplied along the path $w \to z \to a \to L$. Simple. Now stack two layers. The score depends on the weights of the last layer, but also on those of the hidden layer, which act earlier and whose effect must cross the whole rest of the network before reaching the score.
+
+The naive approach treats each weight separately: for each one, start again from the score and walk the chain of derivatives down to it. The problem is obvious as soon as you count. Two weights that end at the same output neuron share exactly the same start of the chain. Recomputing it for each is redoing the same multiplication over and over. On a network with a million weights, that is a million almost identical chains, recomputed for nothing.
+
+The liberating idea fits in one sentence: what if we computed the shared pieces once, stored them, and reused them? That is precisely what backpropagation does. The word names the algorithm that computes the gradient of the score with respect to every weight by climbing the network from output to input, reusing intermediate results instead of recomputing them.
+
+## Act 2: the error signal and the two passes
+
+The piece shared by every chain passing through a neuron is the sensitivity of the score to that neuron. We give it a name and a symbol. The <Term slug="signal-d-erreur">error signal</Term> of a neuron, written $\delta$, is the derivative of the score with respect to that neuron's pre-activation:
+
+$$
+\delta = \frac{\partial L}{\partial z}.
+$$
+
+It reads: how much the score would change if the net input $z$ of this neuron shifted by a hair. Once this number is known for a neuron, the gradient of each of its incoming weights follows from a single product. This is the master formula of the chapter:
+
+$$
+\frac{\partial L}{\partial w_{ij}} = \delta_j \cdot a_i,
+$$
+
+the error signal of the arriving neuron $j$, times the activation of the departing neuron $i$. So all the work reduces to computing the $\delta$. And for that, we proceed in two passes.
+
+**The forward pass stores.** We first run a normal forward pass, from inputs to output, but this time we keep in memory every pre-activation $z$ and every activation $a$. They will be reused.
+
+**The backward pass propagates the error.** The <Term slug="passe-arriere">backward pass</Term> starts from the output and climbs back. At the output neuron, the error signal combines the slope of the score and the slope of the activation:
+
+$$
+\delta_{\text{out}} = \frac{dL}{da}\,\sigma'(z) = 2(a - y)\,a(1 - a).
+$$
+
+Then we step back one layer. The error signal of a hidden neuron $j$ is the error of the neurons it feeds, brought back to it by weighting with the connection weights, then modulated by its own local slope:
+
+$$
+\delta_j = \Big( \sum_k w_{jk}\,\delta_k \Big)\,\sigma'(z_j).
+$$
+
+The sum runs over every neuron $k$ of the next layer that $j$ feeds. That is the whole meaning of the prefix: the error propagates backwards, from output to input, each neuron receiving the share of error it helped create downstream.
+
+Let us unroll this on a small toy network with two inputs, two hidden neurons and one output, with the following weights: the hidden layer has $W^{(1)} = \big[\,[0{,}1,\ 0{,}2],\ [0{,}3,\ 0{,}4]\,\big]$ and zero biases, the output has $w^{(2)} = (0{,}5,\ 0{,}6)$ and a bias $0{,}1$. We feed the input $x = (1,\ 2)$ with target $y = 1$.
+
+The forward pass gives $z^{(1)} = (0{,}5,\ 1{,}1)$, hence $a^{(1)} = (0{,}622,\ 0{,}750)$, then $z^{(2)} = 0{,}861$ and $a^{(2)} = 0{,}703$. The score is $L = (0{,}703 - 1)^2 = 0{,}088$. The backward pass gives first $\delta_{\text{out}} = -0{,}124$, from which we read the output gradients, then the hidden signals $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, from which we read the hidden-layer gradients. You will already notice that the hidden gradients are nearly ten times smaller than the output ones: remember it, act 3 will return to this.
+
+Step through the component: the forward pass lights up the network from left to right, then the backward pass carries the error signal back from right to left.
+
+<BackpropStepper client:visible locale="en" />
+
+Three things to watch as you play:
+
+- During the forward pass, each neuron stores its activation. During the backward pass, those activations come straight back out in the products: nothing is recomputed, everything is reused.
+- The output error signal spreads to the hidden neurons by following the weights $w^{(2)}$ backwards. A hidden neuron linked by a strong weight receives a larger share of the error.
+- Each weight gradient is the product of two already computed numbers: the error signal of the arriving neuron and the activation of the departing neuron. The master formula, in action.
+
+## Act 3: why "backward", and the product that collapses
+
+The direction of the backward pass is not an arbitrary choice, it is forced by the graph. Reading a network as a <Term slug="graphe-de-calcul">computation graph</Term> means seeing each value as a node and each dependency as an arrow. Now the arrows of computation go from input to output: $x$ determines $z$, which determines $a$, which determines $L$. The derivatives, on the other hand, travel the opposite way, because to know how $L$ depends on a deep weight, we must climb the whole chain separating that weight from the score. The computation descends, the error climbs.
+
+This climb has a heavy consequence. The error signal of a deep neuron is a product: at each layer crossed backwards, we multiply by a new factor $\sigma'(z)$. But the derivative of the sigmoid never exceeds $0{,}25$, its maximum value, reached at $z = 0$. Multiplying numbers all below $0{,}25$, layer after layer, melts the result exponentially. After a few layers, the error signal of the first layers is so small that they barely learn any more. This is the <Term slug="vanishing-gradient">vanishing gradient</Term>, and you saw its seed in the toy network already, where the hidden gradients were noticeably smaller than the output ones.
+
+Stack layers in the simulator and watch the gradient collapse. Toggle the activation to compare: the sigmoid crushes everything, whereas ReLU, whose derivative equals $1$ in its active region, lets the signal through.
+
+<VanishingGradientSimulator
+  client:visible
+  defaultActivation="sigmoid"
+  defaultLayers={6}
+  labels={{
+    layersLabel: 'Depth (layers)',
+    helpText: 'Drag to stack layers and watch the product of derivatives collapse.',
+    layerPrefix: 'Layer',
+  }}
+/>
+
+Three things to watch as you play:
+
+- With the sigmoid, each added layer divides the gradient by at least four. Over six layers, almost nothing is left for the first ones.
+- With ReLU, the derivative equals $1$ in the active region, so the product does not crush the same way. This is one of the main reasons for the massive shift to ReLU.
+- The phenomenon is a pure consequence of backpropagation: the deep gradient is a product of local derivatives, and a product of small numbers is tiny.
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line. We keep the toy network from act 2, and you are given the useful sigmoid values: $\sigma(0{,}5) = 0{,}622$ and $\sigma(1{,}1) = 0{,}750$.
+
+**Exercise 1.** Run the forward pass of the toy network. Compute $z^{(1)}$, $a^{(1)}$, then $z^{(2)}$, using the sigmoid values provided.
+
+<Callout kind="tip" title="Solution to exercise 1: a forward pass by hand">
+**Step 1.** Compute the pre-activation of the first hidden neuron.
+
+$$
+z^{(1)}_1 = 0{,}1 \cdot 1 + 0{,}2 \cdot 2 + 0 = 0{,}5.
+$$
+
+**Step 2.** Compute that of the second hidden neuron.
+
+$$
+z^{(1)}_2 = 0{,}3 \cdot 1 + 0{,}4 \cdot 2 + 0 = 1{,}1.
+$$
+
+**Step 3.** Apply the sigmoid, with the provided values.
+
+$$
+a^{(1)} = \big(\sigma(0{,}5),\ \sigma(1{,}1)\big) = (0{,}622,\ 0{,}750).
+$$
+
+**Step 4.** Compute the output pre-activation.
+
+$$
+z^{(2)} = 0{,}5 \cdot 0{,}622 + 0{,}6 \cdot 0{,}750 + 0{,}1 = 0{,}311 + 0{,}450 + 0{,}1 = 0{,}861.
+$$
+
+**Result.** $z^{(1)} = (0{,}5,\ 1{,}1)$, $a^{(1)} = (0{,}622,\ 0{,}750)$ and $z^{(2)} = 0{,}861$, exactly what the component shows.
+
+</Callout>
+
+**Exercise 2.** You are given $a^{(2)} = 0{,}703$ and the target $y = 1$. Compute the output error signal $\delta_{\text{out}}$, then the gradient $\partial L / \partial w^{(2)}_1$ of the first output weight.
+
+<Callout kind="tip" title="Solution to exercise 2: the output error signal">
+**Step 1.** Write the output error signal.
+
+$$
+\delta_{\text{out}} = 2(a^{(2)} - y)\,a^{(2)}(1 - a^{(2)}).
+$$
+
+**Step 2.** Compute the gap to the target.
+
+$$
+a^{(2)} - y = 0{,}703 - 1 = -0{,}297.
+$$
+
+**Step 3.** Compute the local slope of the output sigmoid.
+
+$$
+a^{(2)}(1 - a^{(2)}) = 0{,}703 \cdot 0{,}297 = 0{,}209.
+$$
+
+**Step 4.** Assemble the error signal.
+
+$$
+\delta_{\text{out}} = 2 \cdot (-0{,}297) \cdot 0{,}209 = -0{,}124.
+$$
+
+**Step 5.** Multiply by the upstream activation $a^{(1)}_1 = 0{,}622$ for the weight gradient.
+
+$$
+\frac{\partial L}{\partial w^{(2)}_1} = \delta_{\text{out}} \cdot a^{(1)}_1 = -0{,}124 \cdot 0{,}622 = -0{,}077.
+$$
+
+**Result.** $\delta_{\text{out}} = -0{,}124$ and $\partial L / \partial w^{(2)}_1 = -0{,}077$.
+
+</Callout>
+
+**Exercise 3.** Backpropagate the signal to the first hidden neuron. Compute $\delta^{(1)}_1$, then the gradient $\partial L / \partial w^{(1)}_{11}$ (the weight from the first input to the first hidden neuron). Recall $a^{(1)}_1 = 0{,}622$, $w^{(2)}_1 = 0{,}5$ and $\delta_{\text{out}} = -0{,}124$.
+
+<Callout kind="tip" title="Solution to exercise 3: backpropagating to a hidden layer">
+**Step 1.** Write the hidden neuron's error signal. It has a single downstream neuron, the output, so the sum reduces to one term.
+
+$$
+\delta^{(1)}_1 = w^{(2)}_1\,\delta_{\text{out}}\,\cdot\,a^{(1)}_1(1 - a^{(1)}_1).
+$$
+
+**Step 2.** Compute the share of error brought back by the output weight.
+
+$$
+w^{(2)}_1\,\delta_{\text{out}} = 0{,}5 \cdot (-0{,}124) = -0{,}062.
+$$
+
+**Step 3.** Compute the local slope of the hidden neuron.
+
+$$
+a^{(1)}_1(1 - a^{(1)}_1) = 0{,}622 \cdot 0{,}378 = 0{,}235.
+$$
+
+**Step 4.** Assemble the hidden error signal.
+
+$$
+\delta^{(1)}_1 = -0{,}062 \cdot 0{,}235 = -0{,}015.
+$$
+
+**Step 5.** Multiply by the input $x_1 = 1$ for the weight gradient.
+
+$$
+\frac{\partial L}{\partial w^{(1)}_{11}} = \delta^{(1)}_1 \cdot x_1 = -0{,}015 \cdot 1 = -0{,}015.
+$$
+
+**Result.** $\delta^{(1)}_1 = -0{,}015$ and $\partial L / \partial w^{(1)}_{11} = -0{,}015$. The hidden signal is much smaller than the output one: the product has started to melt.
+
+</Callout>
+
+**Exercise 4.** To understand the vanishing gradient, suppose a chain of sigmoid neurons all centred at $z = 0$, where $\sigma'(0) = 0{,}25$. Give the accumulated multiplicative factor after 3 layers, then after 6 layers.
+
+<Callout kind="tip" title="Solution to exercise 4: the product that collapses">
+**Step 1.** At each layer crossed backwards, the signal is multiplied by $\sigma'(0) = 0{,}25$.
+
+**Step 2.** After 3 layers, the factor is the product of three times $0{,}25$.
+
+$$
+0{,}25^3 = 0{,}015625 \approx 0{,}016.
+$$
+
+**Step 3.** After 6 layers, we multiply six times.
+
+$$
+0{,}25^6 = 0{,}000244 \approx 0{,}00024.
+$$
+
+**Result.** The gradient of the first layers is divided by about $64$ after 3 layers, and by more than $4000$ after 6 layers. The signal vanishes, and that is exactly what the simulator shows.
+
+</Callout>
+
+## In one sentence
+
+Backpropagation computes the gradient of every weight in one forward pass that stores the activations and one backward pass that propagates the error signal from output to input, each weight gradient being the product of the arriving neuron's error signal by the departing neuron's activation.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'What does the error signal δ of a neuron represent?',
+      options: [
+        'The output value of the neuron',
+        'The derivative of the score with respect to that neuron’s pre-activation',
+        'The number of weights entering the neuron',
+        'The sum of the neuron’s weights',
+      ],
+      answer: 1,
+      explain:
+        'The error signal δ = ∂L/∂z measures the sensitivity of the score to the neuron’s pre-activation. Once known, it gives the gradient of each incoming weight through a single product.',
+    },
+    {
+      q: 'Why does the forward pass store the activations?',
+      options: [
+        'To display them on screen',
+        'Because the backward pass reuses them in the products, instead of recomputing them',
+        'To save memory',
+        'Because the sigmoid requires it',
+      ],
+      answer: 1,
+      explain:
+        'A weight gradient is the product of an error signal by an upstream activation. By keeping the forward-pass activations, the backward pass reuses them directly: that is what makes the algorithm efficient.',
+    },
+    {
+      q: 'How do we obtain the error signal of a hidden neuron?',
+      options: [
+        'By adding up its weights',
+        'By taking the derivative of the score alone',
+        'By summing the downstream error signals weighted by the connection weights, then multiplying by σ’(z)',
+        'By copying the output error signal',
+      ],
+      answer: 2,
+      explain:
+        'δ_hidden = (sum of downstream δ weighted by the connection weights) times σ’(z). The error of the fed neurons is brought back to the hidden neuron, then modulated by its local slope.',
+    },
+    {
+      q: 'Why do we speak of "backward" propagation?',
+      options: [
+        'Because the network computes from right to left',
+        'Because the derivatives climb the computation graph, in the opposite direction of the computation',
+        'Because the input is on the right',
+        'Because the sigmoid is symmetric',
+      ],
+      answer: 1,
+      explain:
+        'The computation goes from input to output, but to know how the score depends on a deep weight, we must climb the whole chain. The derivatives therefore travel backwards.',
+    },
+    {
+      q: 'Where does the vanishing gradient with the sigmoid come from?',
+      options: [
+        'From a bug in backpropagation',
+        'From the fact that σ’(z) ≤ 0.25, so the product over several layers collapses',
+        'From weights that are too large',
+        'From the zero bias',
+      ],
+      answer: 1,
+      explain:
+        'The deep error signal is a product of factors σ’(z), all below 0.25. Multiplying such numbers layer after layer melts the gradient exponentially.',
+    },
+  ]}
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Towards chapter 9
+
+We can now compute, in a single backward pass, the gradient of the score with respect to every weight of the network. So we hold the full compass: for each weight, in which direction and by how much moving it would lower the score. But knowing where to descend is not descending. How far to step each time? What happens if the step is too large, or too small? Gradient descent, in chapter 9, turns this gradient into a weight-update rule, and finally makes the network learn.
+
+## Sources
+
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). "Learning representations by back-propagating errors." _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Section 6.5 (backpropagation and differentiation). https://www.deeplearningbook.org
+- Nielsen, M. (2015). _Neural Networks and Deep Learning_. Chapter 2, on the backpropagation algorithm. http://neuralnetworksanddeeplearning.com/chap2.html
