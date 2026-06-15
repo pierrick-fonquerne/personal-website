@@ -15,6 +15,7 @@ const configuration: FlowFieldConfiguration = {
   driftSpeed: 6,
   pointerRadius: 110,
   pointerStrength: 2.6,
+  respawnChance: 0,
 };
 
 const bounds = { width: 800, height: 400 };
@@ -36,6 +37,14 @@ describe('fieldAngle', () => {
     expect(fieldAngle(100, 200, 0, configuration)).not.toBe(
       fieldAngle(100, 200, 1, configuration),
     );
+  });
+
+  it('drifts spatially rather than as a global phase rotation: angle differences between fixed points evolve over time', () => {
+    const differenceEarly =
+      fieldAngle(100, 200, 0, configuration) - fieldAngle(300, 250, 0, configuration);
+    const differenceLate =
+      fieldAngle(100, 200, 2, configuration) - fieldAngle(300, 250, 2, configuration);
+    expect(differenceEarly).not.toBeCloseTo(differenceLate, 5);
   });
 
   it('is spatially continuous: neighboring points give close angles', () => {
@@ -103,6 +112,25 @@ describe('stepParticle', () => {
     expect(next.y).toBeGreaterThanOrEqual(0);
     expect(next.y).toBeLessThanOrEqual(bounds.height);
     expect(next.isAccent).toBe(true);
+  });
+
+  it('respawns over time with a small per-frame probability, even while inside the bounds', () => {
+    const particle = { x: 400, y: 200, isAccent: true };
+    const aging: FlowFieldConfiguration = { ...configuration, respawnChance: 0.01 };
+    const { particle: next, hasRespawned } = stepParticle(
+      particle, 0.5, aging, bounds, null, () => 0.0001,
+    );
+    expect(hasRespawned).toBe(true);
+    expect(next.isAccent).toBe(true);
+    expect(next.x).toBeGreaterThanOrEqual(0);
+    expect(next.x).toBeLessThanOrEqual(bounds.width);
+  });
+
+  it('stays alive when the lifespan draw is above the respawn chance', () => {
+    const particle = { x: 400, y: 200, isAccent: false };
+    const aging: FlowFieldConfiguration = { ...configuration, respawnChance: 0.01 };
+    const { hasRespawned } = stepParticle(particle, 0.5, aging, bounds, null, () => 0.99);
+    expect(hasRespawned).toBe(false);
   });
 
   it('applies pointer repulsion to the velocity', () => {
