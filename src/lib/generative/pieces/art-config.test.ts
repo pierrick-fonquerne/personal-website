@@ -66,6 +66,18 @@ describe('randomConfig', () => {
       }
     }
   });
+
+  it('snaps to the step grid without float drift at the top of the range', () => {
+    const config = randomConfig(params, () => 0.999999, 1);
+    expect(config.count).toBe(100);
+    expect(config.speed).toBe(3);
+  });
+
+  it('produces clean step aligned decimals for mid range values', () => {
+    const config = randomConfig(params, () => 0.34, 1);
+    expect(config.count % 5).toBe(0);
+    expect(Number(config.speed.toFixed(1))).toBe(config.speed);
+  });
 });
 
 describe('randomSeed', () => {

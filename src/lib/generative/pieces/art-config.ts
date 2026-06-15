@@ -48,7 +48,14 @@ export function decodeConfig(
   return config;
 }
 
-/** Draw a random configuration within the parameter bounds, aligned to each step. */
+/** Count the decimal places of a step, so random values can be snapped cleanly. */
+function decimalPlaces(value: number): number {
+  const text = String(value);
+  const dot = text.indexOf('.');
+  return dot === -1 ? 0 : text.length - dot - 1;
+}
+
+/** Draw a random configuration within the parameter bounds, snapped to each step grid. */
 export function randomConfig(
   params: ParamSpec[],
   random: RandomSource,
@@ -57,8 +64,10 @@ export function randomConfig(
   const config: ArtConfig = { seed };
   for (const param of params) {
     const steps = Math.round((param.max - param.min) / param.step);
-    const value = param.min + Math.round(random() * steps) * param.step;
-    config[param.key] = clampToSpec(value, param);
+    const index = Math.min(steps, Math.floor(random() * (steps + 1)));
+    const raw = param.min + index * param.step;
+    const snapped = Number(raw.toFixed(decimalPlaces(param.step)));
+    config[param.key] = clampToSpec(snapped, param);
   }
   return config;
 }
