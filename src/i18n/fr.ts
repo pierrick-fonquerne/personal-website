@@ -20,12 +20,12 @@ const fr: Translations = {
   art: {
     eyebrow: 'Galerie',
     galleryTitle: 'Code art',
-    galleryLead: "Des pieces generatives jouables. Ouvre-en une, bouge les curseurs, laisse-toi surprendre, exporte l'image ou partage la composition exacte.",
+    galleryLead: "Des pièces génératives jouables. Ouvre-en une, bouge les curseurs, laisse-toi surprendre, exporte l'image ou partage la composition exacte.",
     surprise: 'Surprends-moi',
     exportPng: 'PNG',
     copyLink: 'Copier le lien',
-    copied: 'Copie',
-    backToGallery: 'Retour a la galerie',
+    copied: 'Copié',
+    backToGallery: 'Retour à la galerie',
   },
   toolbar: {
     print: 'Imprimer le chapitre',

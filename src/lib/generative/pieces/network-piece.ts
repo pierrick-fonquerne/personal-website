@@ -19,11 +19,11 @@ import type {
 } from './piece';
 
 const PARAMS: ParamSpec[] = [
-  { key: 'nodeCount', labelFr: 'Noeuds', labelEn: 'Nodes', min: 15, max: 140, step: 5, structural: true },
+  { key: 'nodeCount', labelFr: 'Nœuds', labelEn: 'Nodes', min: 15, max: 140, step: 5, structural: true },
   { key: 'linkDistance', labelFr: 'Distance de lien', labelEn: 'Link distance', min: 30, max: 160, step: 5 },
-  { key: 'driftSpeed', labelFr: 'Derive', labelEn: 'Drift', min: 0.05, max: 1.5, step: 0.05 },
+  { key: 'driftSpeed', labelFr: 'Dérive', labelEn: 'Drift', min: 0.05, max: 1.5, step: 0.05 },
   { key: 'pulseSpeed', labelFr: "Vitesse d'impulsion", labelEn: 'Pulse speed', min: 0.01, max: 0.12, step: 0.01 },
-  { key: 'basePulseRate', labelFr: 'Frequence', labelEn: 'Pulse rate', min: 0.002, max: 0.08, step: 0.002 },
+  { key: 'basePulseRate', labelFr: 'Fréquence', labelEn: 'Pulse rate', min: 0.002, max: 0.08, step: 0.002 },
   { key: 'glowDecay', labelFr: 'Persistance lueur', labelEn: 'Glow decay', min: 0.005, max: 0.05, step: 0.005 },
 ];
 
@@ -63,9 +63,9 @@ function toConfiguration(config: ArtConfig): NetworkConfiguration {
 /** The living network piece: drifting nodes, proximity links and traveling pulses. */
 export const networkPiece: GenerativePiece = {
   id: 'network',
-  titleFr: 'Reseau vivant',
+  titleFr: 'Réseau vivant',
   titleEn: 'Living network',
-  descriptionFr: 'Des noeuds derivent, se relient et echangent des impulsions.',
+  descriptionFr: 'Des nœuds dérivent, se relient et échangent des impulsions.',
   descriptionEn: 'Nodes drift, link up and exchange pulses.',
   params: PARAMS,
   defaults: DEFAULTS,

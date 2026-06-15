@@ -18,10 +18,10 @@ import type {
 const PARAMS: ParamSpec[] = [
   { key: 'particleCount', labelFr: 'Particules', labelEn: 'Particles', min: 40, max: 600, step: 10, structural: true },
   { key: 'speed', labelFr: 'Vitesse', labelEn: 'Speed', min: 0.2, max: 3, step: 0.1 },
-  { key: 'noiseScale', labelFr: 'Echelle du champ', labelEn: 'Field scale', min: 0.001, max: 0.02, step: 0.001 },
-  { key: 'driftSpeed', labelFr: 'Derive', labelEn: 'Drift', min: 0, max: 3, step: 0.1 },
-  { key: 'pointerStrength', labelFr: 'Repulsion', labelEn: 'Repulsion', min: 0, max: 6, step: 0.2 },
-  { key: 'trailFade', labelFr: 'Remanence', labelEn: 'Trail', min: 0.01, max: 0.3, step: 0.01 },
+  { key: 'noiseScale', labelFr: 'Échelle du champ', labelEn: 'Field scale', min: 0.001, max: 0.02, step: 0.001 },
+  { key: 'driftSpeed', labelFr: 'Dérive', labelEn: 'Drift', min: 0, max: 3, step: 0.1 },
+  { key: 'pointerStrength', labelFr: 'Répulsion', labelEn: 'Repulsion', min: 0, max: 6, step: 0.2 },
+  { key: 'trailFade', labelFr: 'Rémanence', labelEn: 'Trail', min: 0.01, max: 0.3, step: 0.01 },
 ];
 
 const DEFAULTS: Record<string, number> = {
@@ -64,7 +64,7 @@ export const flowFieldPiece: GenerativePiece = {
   id: 'flow-field',
   titleFr: 'Flow field',
   titleEn: 'Flow field',
-  descriptionFr: 'Des centaines de particules suivent un champ de bruit coherent.',
+  descriptionFr: 'Des centaines de particules suivent un champ de bruit cohérent.',
   descriptionEn: 'Hundreds of particles follow a coherent noise field.',
   params: PARAMS,
   defaults: DEFAULTS,
