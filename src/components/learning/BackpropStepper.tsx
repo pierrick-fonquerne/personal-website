@@ -26,28 +26,30 @@ interface Dictionary {
   readonly stDeltaHidden: string;
   readonly stGradHidden: string;
   readonly lossLabel: string;
+  readonly deltaOut: string;
 }
 
 const DICT: Record<Locale, Dictionary> = {
   fr: {
-    title: 'Retropropagation, etape par etape',
-    next: 'Etape suivante',
-    prev: 'Precedent',
+    title: 'Rétropropagation, étape par étape',
+    next: 'Étape suivante',
+    prev: 'Précédent',
     reset: 'Recommencer',
-    stepLabel: 'Etape',
-    diagramLabel: 'Reseau 2 entrees, 2 neurones caches, 1 sortie (reseau 2-2-1)',
+    stepLabel: 'Étape',
+    diagramLabel: 'Réseau 2 entrées, 2 neurones cachés, 1 sortie (réseau 2-2-1)',
     phaseForward: 'Forward',
     phaseBackward: 'Backward',
-    stInput: 'Entree x',
-    stHiddenPre: 'Pre-activation cachee z(1)',
-    stHiddenAct: 'Activation cachee a(1)',
-    stOutputPre: 'Pre-activation de sortie z(2)',
-    stOutputAct: 'Sortie a(2) et perte L',
+    stInput: 'Entrée x',
+    stHiddenPre: 'Pré-activation cachée z⁽¹⁾',
+    stHiddenAct: 'Activation cachée a⁽¹⁾',
+    stOutputPre: 'Pré-activation de sortie z⁽²⁾',
+    stOutputAct: 'Sortie a⁽²⁾ et perte L',
     stDeltaOut: "Signal d'erreur de sortie",
     stGradOut: 'Gradients couche de sortie',
-    stDeltaHidden: "Signaux d'erreur caches",
-    stGradHidden: 'Gradients couche cachee',
+    stDeltaHidden: "Signaux d'erreur cachés",
+    stGradHidden: 'Gradients couche cachée',
     lossLabel: 'Perte',
+    deltaOut: 'δ_sortie',
   },
   en: {
     title: 'Backpropagation, step by step',
@@ -59,15 +61,16 @@ const DICT: Record<Locale, Dictionary> = {
     phaseForward: 'Forward',
     phaseBackward: 'Backward',
     stInput: 'Input x',
-    stHiddenPre: 'Hidden pre-activation z(1)',
-    stHiddenAct: 'Hidden activation a(1)',
-    stOutputPre: 'Output pre-activation z(2)',
-    stOutputAct: 'Output a(2) and loss L',
+    stHiddenPre: 'Hidden pre-activation z⁽¹⁾',
+    stHiddenAct: 'Hidden activation a⁽¹⁾',
+    stOutputPre: 'Output pre-activation z⁽²⁾',
+    stOutputAct: 'Output a⁽²⁾ and loss L',
     stDeltaOut: 'Output error signal',
     stGradOut: 'Output layer gradients',
     stDeltaHidden: 'Hidden error signals',
     stGradHidden: 'Hidden layer gradients',
     lossLabel: 'Loss',
+    deltaOut: 'δ_out',
   },
 };
 
@@ -158,7 +161,7 @@ function buildSteps(t: Dictionary, locale: Locale): readonly StepCard[] {
       phase: 'backward',
       highlight: 'output',
       title: t.stDeltaOut,
-      formula: 'δₛₒᴵₜᵉᵉᵉ = 2(a⁽²⁾ - y) · a⁽²⁾(1 - a⁽²⁾)',
+      formula: `${t.deltaOut} = 2(a⁽²⁾ - y) · a⁽²⁾(1 - a⁽²⁾)`,
       value: formatNum(bwd.deltaOut, locale),
     },
     {
@@ -166,7 +169,7 @@ function buildSteps(t: Dictionary, locale: Locale): readonly StepCard[] {
       phase: 'backward',
       highlight: 'output',
       title: t.stGradOut,
-      formula: '∇w⁽²⁾ = δₛₒᴵₜᵉᵉᵉ · a⁽¹⁾  |  ∇b⁽²⁾ = δₛₒᴵₜᵉᵉᵉ',
+      formula: `∇w⁽²⁾ = ${t.deltaOut} · a⁽¹⁾  |  ∇b⁽²⁾ = ${t.deltaOut}`,
       value: `∇w⁽²⁾ = ${formatPair(bwd.gradW2[0] ?? 0, bwd.gradW2[1] ?? 0, locale)}  |  ∇b⁽²⁾ = ${formatNum(bwd.gradB2, locale)}`,
     },
     {
@@ -174,7 +177,7 @@ function buildSteps(t: Dictionary, locale: Locale): readonly StepCard[] {
       phase: 'backward',
       highlight: 'hidden',
       title: t.stDeltaHidden,
-      formula: 'δⱼ = w⁽²⁾ⱼ · δₛₒᴵₜᵉᵉᵉ · a⁽¹⁾ⱼ(1 - a⁽¹⁾ⱼ)',
+      formula: `δⱼ = w⁽²⁾ⱼ · ${t.deltaOut} · a⁽¹⁾ⱼ(1 - a⁽¹⁾ⱼ)`,
       value: formatPair(bwd.deltaHidden[0] ?? 0, bwd.deltaHidden[1] ?? 0, locale),
     },
     {
@@ -182,7 +185,7 @@ function buildSteps(t: Dictionary, locale: Locale): readonly StepCard[] {
       phase: 'backward',
       highlight: 'input',
       title: t.stGradHidden,
-      formula: '∇w⁽¹⁾ⱼᴵ = δⱼ · xᴵ  |  ∇b⁽¹⁾ = δ',
+      formula: '∇w⁽¹⁾ⱼᵢ = δⱼ · xᵢ  |  ∇b⁽¹⁾ = δ',
       value: `∇b⁽¹⁾ = ${formatPair(bwd.gradB1[0] ?? 0, bwd.gradB1[1] ?? 0, locale)}`,
     },
   ];

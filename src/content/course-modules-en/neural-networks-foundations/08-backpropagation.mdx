@@ -74,7 +74,7 @@ The sum runs over every neuron $k$ of the next layer that $j$ feeds. That is the
 
 Let us unroll this on a small toy network with two inputs, two hidden neurons and one output, with the following weights: the hidden layer has $W^{(1)} = \big[\,[0{,}1,\ 0{,}2],\ [0{,}3,\ 0{,}4]\,\big]$ and zero biases, the output has $w^{(2)} = (0{,}5,\ 0{,}6)$ and a bias $0{,}1$. We feed the input $x = (1,\ 2)$ with target $y = 1$.
 
-The forward pass gives $z^{(1)} = (0{,}5,\ 1{,}1)$, hence $a^{(1)} = (0{,}622,\ 0{,}750)$, then $z^{(2)} = 0{,}861$ and $a^{(2)} = 0{,}703$. The score is $L = (0{,}703 - 1)^2 = 0{,}088$. The backward pass gives first $\delta_{\text{out}} = -0{,}124$, from which we read the output gradients, then the hidden signals $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, from which we read the hidden-layer gradients. You will already notice that the hidden gradients are nearly ten times smaller than the output ones: remember it, act 3 will return to this.
+The forward pass gives $z^{(1)} = (0{,}5,\ 1{,}1)$, hence $a^{(1)} = (0{,}622,\ 0{,}750)$, then $z^{(2)} = 0{,}861$ and $a^{(2)} = 0{,}703$. The score is $L = (0{,}703 - 1)^2 = 0{,}088$. The backward pass gives first $\delta_{\text{out}} = -0{,}124$, from which we read the output gradients, then the hidden signals $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, from which we read the hidden-layer gradients. You will already notice that the hidden error signals are nearly ten times smaller than the output one: remember it, act 3 will return to this.
 
 Step through the component: the forward pass lights up the network from left to right, then the backward pass carries the error signal back from right to left.
 

@@ -74,7 +74,7 @@ La somme parcourt tous les neurones $k$ de la couche suivante que $j$ alimente. 
 
 Déroulons sur un petit réseau jouet à deux entrées, deux neurones cachés et une sortie, avec les poids suivants : la couche cachée a $W^{(1)} = \big[\,[0{,}1,\ 0{,}2],\ [0{,}3,\ 0{,}4]\,\big]$ et des biais nuls, la sortie a $w^{(2)} = (0{,}5,\ 0{,}6)$ et un biais $0{,}1$. On présente l'entrée $x = (1,\ 2)$ avec la cible $y = 1$.
 
-La passe avant donne $z^{(1)} = (0{,}5,\ 1{,}1)$, donc $a^{(1)} = (0{,}622,\ 0{,}750)$, puis $z^{(2)} = 0{,}861$ et $a^{(2)} = 0{,}703$. La note vaut $L = (0{,}703 - 1)^2 = 0{,}088$. La passe arrière donne d'abord $\delta_{\text{sortie}} = -0{,}124$, dont on tire les gradients de la sortie, puis les signaux cachés $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, dont on tire les gradients de la couche cachée. Tu remarqueras déjà que les gradients cachés sont presque dix fois plus petits que ceux de la sortie : retiens-le, l'acte 3 y reviendra.
+La passe avant donne $z^{(1)} = (0{,}5,\ 1{,}1)$, donc $a^{(1)} = (0{,}622,\ 0{,}750)$, puis $z^{(2)} = 0{,}861$ et $a^{(2)} = 0{,}703$. La note vaut $L = (0{,}703 - 1)^2 = 0{,}088$. La passe arrière donne d'abord $\delta_{\text{sortie}} = -0{,}124$, dont on tire les gradients de la sortie, puis les signaux cachés $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, dont on tire les gradients de la couche cachée. Tu remarqueras déjà que les signaux d'erreur cachés sont presque dix fois plus petits que celui de la sortie : retiens-le, l'acte 3 y reviendra.
 
 Avance pas à pas dans le composant : la passe avant éclaire le réseau de gauche à droite, puis la passe arrière fait remonter le signal d'erreur de droite à gauche.
 
