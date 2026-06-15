@@ -1,0 +1,11 @@
+slug: signal-d-erreur
+fr:
+  term: "Signal d'erreur"
+  definition: "Sensibilité de la perte à la pré-activation d'un neurone, notée delta = dL/dz. Elle mesure de combien la note changerait si l'entrée nette du neurone variait d'un cheveu. La rétropropagation calcule ce signal pour chaque neurone, de la sortie vers l'entrée, puis en déduit le gradient de chaque poids par la règle dL/dw = delta multiplié par l'activation amont."
+en:
+  term: Error signal
+  definition: "The sensitivity of the loss to a neuron's pre-activation, written delta = dL/dz. It measures how much the score would change if the neuron's net input shifted by a hair. Backpropagation computes this signal for every neuron, from output back to input, then derives each weight's gradient through the rule dL/dw = delta times the upstream activation."
+seeAlso:
+  - backpropagation
+  - gradient
+  - derivee-partielle

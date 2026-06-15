@@ -1,22 +1,327 @@
 ---
 course: neural-networks-foundations
 order: 8
-title: 'Backpropagation : le gradient'
-subtitle: "L'algorithme qui rend l'apprentissage possible, expliqué étape par étape."
-estimatedMinutes: 18
-published: false
+title: La rétropropagation
+subtitle: 'Un seul passage arrière qui récupère le gradient de tous les poids : la règle de la chaîne, industrialisée.'
+estimatedMinutes: 22
+published: true
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import BackpropStepper from '../../../components/learning/BackpropStepper.tsx';
+import VanishingGradientSimulator from '../../../components/learning/VanishingGradientSimulator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 7, on a appris à calculer $\frac{dL}{dw}$ pour un poids isolé, en multipliant des dérivées locales le long du graphe d'un neurone. C'était la règle de la chaîne, posée brique par brique. Mais un réseau réel n'a pas un poids : il en a des milliers, enchaînés sur plusieurs couches. Refaire ce calcul de zéro pour chaque poids serait ruineux.
+
+La question de ce chapitre est donc précise : comment obtenir la dérivée de la note par rapport à tous les poids d'un coup, en un seul passage, sans répéter mille fois les mêmes multiplications ? La réponse est un algorithme d'une élégance rare, et tu en as déjà tous les morceaux. Il ne reste qu'à les organiser.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : le forward pass d'un réseau, couche par couche (chapitre 6), la fonction de coût et sa surface (chapitre 6), la règle de la chaîne et la dérivée de la sigmoïde $\sigma'(z) = \sigma(z)\,(1 - \sigma(z))$ (chapitre 7).
+
+**Ce qu'il n'est pas nécessaire de connaître** : la descente de gradient (chapitre 9). Ici, on apprend à calculer le gradient de tous les poids, pas encore à s'en servir pour les corriger.
+
+**Niveau de rigueur** : on définit le signal d'erreur d'un neurone, on déroule entièrement les deux passes sur un petit réseau, on lit l'algorithme comme un parcours du graphe de calcul, et quatre exercices papier-crayon aux corrigés détaillés ligne par ligne.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : le coût de la force brute
 
-- Règle de la chaîne et dérivées partielles, expliquées intuitivement
-- Calculer le gradient pour chaque poids du réseau
-- Pourquoi "rétro"-propagation : sens de la dépendance dans le graphe
+Reprends la fin du chapitre 7. Pour un seul neurone, on avait
 
-La backpropagation est souvent présentée comme magique. Ce n'en est pas : c'est l'application répétée de la règle de la chaîne, organisée pour réutiliser les calculs intermédiaires. Une fois la mécanique vue, plus rien n'est obscur.
+$$
+\frac{dL}{dw} = \underbrace{2(a - y)}_{dL/da} \cdot \underbrace{a(1 - a)}_{da/dz} \cdot \underbrace{x}_{dz/dw}.
+$$
+
+Trois facteurs, multipliés le long du chemin $w \to z \to a \to L$. Simple. Maintenant, empile deux couches. La note dépend des poids de la dernière couche, mais aussi de ceux de la couche cachée, qui agissent plus tôt et dont l'effet doit traverser toute la suite du réseau avant d'atteindre la note.
+
+L'approche naïve consiste à traiter chaque poids séparément : pour chacun, repartir de la note et redescendre la chaîne de dérivées jusqu'à lui. Le problème saute aux yeux dès qu'on compte. Deux poids qui finissent au même neurone de sortie partagent exactement le même début de chaîne. Le recalculer pour chacun, c'est refaire la même multiplication encore et encore. Sur un réseau à un million de poids, c'est un million de chaînes presque identiques, recalculées en pure perte.
+
+L'idée libératrice tient en une phrase : et si on calculait une seule fois les morceaux communs, qu'on les mémorisait, et qu'on les réutilisait ? C'est précisément ce que fait la rétropropagation. Le mot désigne l'algorithme qui calcule le gradient de la note par rapport à chaque poids en remontant le réseau de la sortie vers l'entrée, en réutilisant les résultats intermédiaires au lieu de les recalculer.
+
+## Acte 2 : le signal d'erreur et les deux passes
+
+Le morceau commun à toutes les chaînes qui passent par un neurone, c'est la sensibilité de la note à ce neurone. On lui donne un nom et un symbole. Le <Term slug="signal-d-erreur">signal d'erreur</Term> d'un neurone, noté $\delta$, est la dérivée de la note par rapport à la pré-activation de ce neurone :
+
+$$
+\delta = \frac{\partial L}{\partial z}.
+$$
+
+Il se lit : de combien la note changerait si l'entrée nette $z$ de ce neurone variait d'un cheveu. Une fois ce nombre connu pour un neurone, le gradient de chacun de ses poids entrants s'en déduit d'un seul produit. C'est la formule maîtresse du chapitre :
+
+$$
+\frac{\partial L}{\partial w_{ij}} = \delta_j \cdot a_i,
+$$
+
+le signal d'erreur du neurone d'arrivée $j$, multiplié par l'activation du neurone de départ $i$. Tout le travail se réduit donc à calculer les $\delta$. Et pour cela, on procède en deux passes.
+
+**La passe avant mémorise.** On fait d'abord un forward pass normal, des entrées vers la sortie, mais cette fois on garde en mémoire chaque pré-activation $z$ et chaque activation $a$. Elles vont resservir.
+
+**La passe arrière propage l'erreur.** La <Term slug="passe-arriere">passe arrière</Term> part de la sortie et remonte. Au neurone de sortie, le signal d'erreur combine la pente de la note et la pente de l'activation :
+
+$$
+\delta_{\text{sortie}} = \frac{dL}{da}\,\sigma'(z) = 2(a - y)\,a(1 - a).
+$$
+
+Puis on recule d'une couche. Le signal d'erreur d'un neurone caché $j$ est l'erreur des neurones qu'il alimente, ramenée jusqu'à lui en la pondérant par les poids de connexion, puis modulée par sa propre pente locale :
+
+$$
+\delta_j = \Big( \sum_k w_{jk}\,\delta_k \Big)\,\sigma'(z_j).
+$$
+
+La somme parcourt tous les neurones $k$ de la couche suivante que $j$ alimente. C'est là tout le sens du préfixe : l'erreur se propage à rebours, de la sortie vers l'entrée, chaque neurone recevant la part d'erreur qu'il a contribué à créer en aval.
+
+Déroulons sur un petit réseau jouet à deux entrées, deux neurones cachés et une sortie, avec les poids suivants : la couche cachée a $W^{(1)} = \big[\,[0{,}1,\ 0{,}2],\ [0{,}3,\ 0{,}4]\,\big]$ et des biais nuls, la sortie a $w^{(2)} = (0{,}5,\ 0{,}6)$ et un biais $0{,}1$. On présente l'entrée $x = (1,\ 2)$ avec la cible $y = 1$.
+
+La passe avant donne $z^{(1)} = (0{,}5,\ 1{,}1)$, donc $a^{(1)} = (0{,}622,\ 0{,}750)$, puis $z^{(2)} = 0{,}861$ et $a^{(2)} = 0{,}703$. La note vaut $L = (0{,}703 - 1)^2 = 0{,}088$. La passe arrière donne d'abord $\delta_{\text{sortie}} = -0{,}124$, dont on tire les gradients de la sortie, puis les signaux cachés $\delta^{(1)} = (-0{,}015,\ -0{,}014)$, dont on tire les gradients de la couche cachée. Tu remarqueras déjà que les signaux d'erreur cachés sont presque dix fois plus petits que celui de la sortie : retiens-le, l'acte 3 y reviendra.
+
+Avance pas à pas dans le composant : la passe avant éclaire le réseau de gauche à droite, puis la passe arrière fait remonter le signal d'erreur de droite à gauche.
+
+<BackpropStepper client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Pendant la passe avant, chaque neurone range son activation. Pendant la passe arrière, ces activations ressortent telles quelles dans les produits : rien n'est recalculé, tout est réutilisé.
+- Le signal d'erreur de sortie se répartit vers les neurones cachés en suivant les poids $w^{(2)}$ à rebours. Un neurone caché relié par un poids fort reçoit une plus grosse part de l'erreur.
+- Chaque gradient de poids est le produit de deux nombres déjà calculés : le signal d'erreur du neurone d'arrivée et l'activation du neurone de départ. La formule maîtresse, en acte.
+
+## Acte 3 : pourquoi « rétro », et le produit qui s'effondre
+
+Le sens de la passe arrière n'est pas un choix arbitraire, il est imposé par le graphe. Lire un réseau comme un <Term slug="graphe-de-calcul">graphe de calcul</Term>, c'est voir chaque valeur comme un noeud et chaque dépendance comme une flèche. Or les flèches du calcul vont de l'entrée vers la sortie : $x$ détermine $z$, qui détermine $a$, qui détermine $L$. Les dérivées, elles, voyagent dans le sens inverse, car pour savoir comment $L$ dépend d'un poids profond, il faut remonter toute la chaîne qui sépare ce poids de la note. Le calcul descend, l'erreur remonte.
+
+Cette remontée a une conséquence lourde. Le signal d'erreur d'un neurone profond est un produit : à chaque couche traversée vers l'arrière, on multiplie par un nouveau facteur $\sigma'(z)$. Or la dérivée de la sigmoïde ne dépasse jamais $0{,}25$, sa valeur maximale, atteinte en $z = 0$. Multiplier des nombres tous inférieurs à $0{,}25$, couche après couche, fait fondre le résultat de façon exponentielle. Au bout de quelques couches, le signal d'erreur des premières couches est si petit qu'elles n'apprennent presque plus. C'est le <Term slug="vanishing-gradient">vanishing gradient</Term>, la disparition du gradient, et tu en as vu le germe dès le réseau jouet, où les gradients cachés étaient déjà bien plus petits que ceux de la sortie.
+
+Empile des couches dans le simulateur et regarde le gradient s'effondrer. Bascule l'activation pour comparer : la sigmoïde écrase tout, alors que ReLU, dont la dérivée vaut $1$ dans sa zone active, laisse passer le signal.
+
+<VanishingGradientSimulator
+  client:visible
+  defaultActivation="sigmoid"
+  defaultLayers={6}
+  labels={{
+    layersLabel: 'Profondeur (couches)',
+    helpText: "Glisse pour empiler des couches et regarde le produit des dérivées s'effondrer.",
+    layerPrefix: 'Couche',
+  }}
+/>
+
+Trois choses à observer en jouant :
+
+- En sigmoïde, chaque couche ajoutée divise le gradient par au moins quatre. Sur six couches, il ne reste presque rien pour les premières.
+- En ReLU, la dérivée vaut $1$ dans la zone active, donc le produit ne s'écrase pas de la même façon. C'est l'une des grandes raisons du passage massif à ReLU.
+- Le phénomène est une pure conséquence de la rétropropagation : le gradient profond est un produit de dérivées locales, et un produit de petits nombres est minuscule.
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne. On garde le réseau jouet de l'acte 2, et on te donne les valeurs de sigmoïde utiles : $\sigma(0{,}5) = 0{,}622$ et $\sigma(1{,}1) = 0{,}750$.
+
+**Exercice 1.** Fais la passe avant du réseau jouet. Calcule $z^{(1)}$, $a^{(1)}$, puis $z^{(2)}$, en utilisant les valeurs de sigmoïde fournies.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : une passe avant à la main">
+**Étape 1.** Calcule la pré-activation du premier neurone caché.
+
+$$
+z^{(1)}_1 = 0{,}1 \cdot 1 + 0{,}2 \cdot 2 + 0 = 0{,}5.
+$$
+
+**Étape 2.** Calcule celle du second neurone caché.
+
+$$
+z^{(1)}_2 = 0{,}3 \cdot 1 + 0{,}4 \cdot 2 + 0 = 1{,}1.
+$$
+
+**Étape 3.** Applique la sigmoïde, avec les valeurs fournies.
+
+$$
+a^{(1)} = \big(\sigma(0{,}5),\ \sigma(1{,}1)\big) = (0{,}622,\ 0{,}750).
+$$
+
+**Étape 4.** Calcule la pré-activation de sortie.
+
+$$
+z^{(2)} = 0{,}5 \cdot 0{,}622 + 0{,}6 \cdot 0{,}750 + 0{,}1 = 0{,}311 + 0{,}450 + 0{,}1 = 0{,}861.
+$$
+
+**Résultat.** $z^{(1)} = (0{,}5,\ 1{,}1)$, $a^{(1)} = (0{,}622,\ 0{,}750)$ et $z^{(2)} = 0{,}861$, exactement ce qu'affiche le composant.
+
+</Callout>
+
+**Exercice 2.** On donne $a^{(2)} = 0{,}703$ et la cible $y = 1$. Calcule le signal d'erreur de sortie $\delta_{\text{sortie}}$, puis le gradient $\partial L / \partial w^{(2)}_1$ du premier poids de sortie.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : le signal d'erreur de sortie">
+**Étape 1.** Écris le signal d'erreur de sortie.
+
+$$
+\delta_{\text{sortie}} = 2(a^{(2)} - y)\,a^{(2)}(1 - a^{(2)}).
+$$
+
+**Étape 2.** Calcule l'écart à la cible.
+
+$$
+a^{(2)} - y = 0{,}703 - 1 = -0{,}297.
+$$
+
+**Étape 3.** Calcule la pente locale de la sigmoïde de sortie.
+
+$$
+a^{(2)}(1 - a^{(2)}) = 0{,}703 \cdot 0{,}297 = 0{,}209.
+$$
+
+**Étape 4.** Assemble le signal d'erreur.
+
+$$
+\delta_{\text{sortie}} = 2 \cdot (-0{,}297) \cdot 0{,}209 = -0{,}124.
+$$
+
+**Étape 5.** Multiplie par l'activation amont $a^{(1)}_1 = 0{,}622$ pour le gradient du poids.
+
+$$
+\frac{\partial L}{\partial w^{(2)}_1} = \delta_{\text{sortie}} \cdot a^{(1)}_1 = -0{,}124 \cdot 0{,}622 = -0{,}077.
+$$
+
+**Résultat.** $\delta_{\text{sortie}} = -0{,}124$ et $\partial L / \partial w^{(2)}_1 = -0{,}077$.
+
+</Callout>
+
+**Exercice 3.** Rétropropage le signal jusqu'au premier neurone caché. Calcule $\delta^{(1)}_1$, puis le gradient $\partial L / \partial w^{(1)}_{11}$ (le poids de la première entrée vers le premier neurone caché). On rappelle $a^{(1)}_1 = 0{,}622$, $w^{(2)}_1 = 0{,}5$ et $\delta_{\text{sortie}} = -0{,}124$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : rétropropager vers une couche cachée">
+**Étape 1.** Écris le signal d'erreur du neurone caché. Il n'a qu'un neurone aval, la sortie, donc la somme se réduit à un terme.
+
+$$
+\delta^{(1)}_1 = w^{(2)}_1\,\delta_{\text{sortie}}\,\cdot\,a^{(1)}_1(1 - a^{(1)}_1).
+$$
+
+**Étape 2.** Calcule la part d'erreur ramenée par le poids de sortie.
+
+$$
+w^{(2)}_1\,\delta_{\text{sortie}} = 0{,}5 \cdot (-0{,}124) = -0{,}062.
+$$
+
+**Étape 3.** Calcule la pente locale du neurone caché.
+
+$$
+a^{(1)}_1(1 - a^{(1)}_1) = 0{,}622 \cdot 0{,}378 = 0{,}235.
+$$
+
+**Étape 4.** Assemble le signal d'erreur caché.
+
+$$
+\delta^{(1)}_1 = -0{,}062 \cdot 0{,}235 = -0{,}015.
+$$
+
+**Étape 5.** Multiplie par l'entrée $x_1 = 1$ pour le gradient du poids.
+
+$$
+\frac{\partial L}{\partial w^{(1)}_{11}} = \delta^{(1)}_1 \cdot x_1 = -0{,}015 \cdot 1 = -0{,}015.
+$$
+
+**Résultat.** $\delta^{(1)}_1 = -0{,}015$ et $\partial L / \partial w^{(1)}_{11} = -0{,}015$. Le signal caché est bien plus petit que celui de sortie : le produit a commencé à fondre.
+
+</Callout>
+
+**Exercice 4.** Pour comprendre le vanishing gradient, suppose une chaîne de neurones sigmoïdes tous centrés en $z = 0$, où $\sigma'(0) = 0{,}25$. Donne le facteur multiplicatif accumulé après 3 couches, puis après 6 couches.
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : le produit qui s'effondre">
+**Étape 1.** À chaque couche traversée vers l'arrière, le signal est multiplié par $\sigma'(0) = 0{,}25$.
+
+**Étape 2.** Après 3 couches, le facteur est le produit de trois fois $0{,}25$.
+
+$$
+0{,}25^3 = 0{,}015625 \approx 0{,}016.
+$$
+
+**Étape 3.** Après 6 couches, on multiplie six fois.
+
+$$
+0{,}25^6 = 0{,}000244 \approx 0{,}00024.
+$$
+
+**Résultat.** Le gradient des premières couches est divisé par environ $64$ après 3 couches, et par plus de $4000$ après 6 couches. Le signal s'évanouit, et c'est exactement ce que montre le simulateur.
+
+</Callout>
+
+## En une phrase
+
+La rétropropagation calcule le gradient de tous les poids en une passe avant qui mémorise les activations et une passe arrière qui propage le signal d'erreur de la sortie vers l'entrée, chaque gradient de poids étant le produit du signal d'erreur du neurone d'arrivée par l'activation du neurone de départ.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Que représente le signal d’erreur δ d’un neurone ?',
+      options: [
+        'La valeur de sortie du neurone',
+        'La dérivée de la note par rapport à la pré-activation de ce neurone',
+        'Le nombre de poids qui entrent dans le neurone',
+        'La somme des poids du neurone',
+      ],
+      answer: 1,
+      explain:
+        'Le signal d’erreur δ = ∂L/∂z mesure la sensibilité de la note à la pré-activation du neurone. Une fois connu, il donne le gradient de chaque poids entrant par un simple produit.',
+    },
+    {
+      q: 'Pourquoi la passe avant mémorise-t-elle les activations ?',
+      options: [
+        'Pour les afficher à l’écran',
+        'Parce que la passe arrière les réutilise dans les produits, au lieu de les recalculer',
+        'Pour économiser de la mémoire',
+        'Parce que la sigmoïde l’exige',
+      ],
+      answer: 1,
+      explain:
+        'Le gradient d’un poids est le produit d’un signal d’erreur par une activation amont. En gardant les activations de la passe avant, la passe arrière les réutilise directement : c’est ce qui rend l’algorithme efficace.',
+    },
+    {
+      q: 'Comment obtient-on le signal d’erreur d’un neurone caché ?',
+      options: [
+        'En additionnant ses poids',
+        'En prenant la dérivée de la note seule',
+        'En sommant les signaux d’erreur aval pondérés par les poids, puis en multipliant par σ’(z)',
+        'En copiant le signal d’erreur de sortie',
+      ],
+      answer: 2,
+      explain:
+        'δ_caché = (somme des δ aval pondérés par les poids de connexion) multiplié par σ’(z). L’erreur des neurones alimentés est ramenée jusqu’au neurone caché, puis modulée par sa pente locale.',
+    },
+    {
+      q: 'Pourquoi parle-t-on de propagation « arrière » ?',
+      options: [
+        'Parce que le réseau calcule de droite à gauche',
+        'Parce que les dérivées remontent le graphe de calcul, en sens inverse du calcul',
+        'Parce que l’entrée est à droite',
+        'Parce que la sigmoïde est symétrique',
+      ],
+      answer: 1,
+      explain:
+        'Le calcul va de l’entrée vers la sortie, mais pour savoir comment la note dépend d’un poids profond, il faut remonter toute la chaîne. Les dérivées voyagent donc à rebours.',
+    },
+    {
+      q: 'D’où vient le vanishing gradient avec la sigmoïde ?',
+      options: [
+        'D’un bug dans la rétropropagation',
+        'Du fait que σ’(z) ≤ 0,25, donc le produit sur plusieurs couches s’écrase',
+        'Du fait que les poids sont trop grands',
+        'Du biais nul',
+      ],
+      answer: 1,
+      explain:
+        'Le signal d’erreur profond est un produit de facteurs σ’(z), tous inférieurs à 0,25. Multiplier de tels nombres couche après couche fait fondre le gradient de façon exponentielle.',
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 9
+
+On sait maintenant calculer, en un seul passage arrière, le gradient de la note par rapport à chaque poids du réseau. On tient donc la boussole complète : pour chaque poids, dans quel sens et de combien le bouger ferait baisser la note. Mais savoir où descendre n'est pas descendre. De combien avancer à chaque pas ? Que se passe-t-il si le pas est trop grand, ou trop petit ? La descente de gradient, au chapitre 9, transforme ce gradient en une règle de mise à jour des poids, et fait enfin apprendre le réseau.
+
+## Sources
+
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Section 6.5 (rétropropagation et différentiation). https://www.deeplearningbook.org
+- Nielsen, M. (2015). _Neural Networks and Deep Learning_. Chapitre 2, sur l'algorithme de rétropropagation. http://neuralnetworksanddeeplearning.com/chap2.html
