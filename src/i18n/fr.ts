@@ -165,6 +165,7 @@ const fr: Translations = {
     ddd: 'Domain-Driven Design',
     'mediator-sagas': 'Mediator et sagas',
     'event-sourcing-cqrs': 'Event Sourcing et CQRS',
+    messaging: 'Messaging et systèmes distribués',
     'linear-algebra': 'Algèbre linéaire',
     'differential-calculus': 'Calcul différentiel',
     probabilities: 'Probabilités et statistiques',

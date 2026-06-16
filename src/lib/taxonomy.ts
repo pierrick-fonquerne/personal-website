@@ -28,7 +28,7 @@ export const ACADEMIC_STAGES = ['lycee', 'prepa', 'licence', 'master'] as const;
 export type AcademicStage = (typeof ACADEMIC_STAGES)[number];
 
 export const SUBTHEMES_BY_THEME = {
-  architecture: ['clean-architecture', 'ddd', 'mediator-sagas', 'event-sourcing-cqrs'],
+  architecture: ['clean-architecture', 'ddd', 'mediator-sagas', 'event-sourcing-cqrs', 'messaging'],
   math: [
     'foundations',
     'linear-algebra',
