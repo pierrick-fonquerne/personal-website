@@ -1,0 +1,10 @@
+slug: message-de-commande
+fr:
+  term: Message de commande
+  definition: Message qui exprime une intention, un ordre adressé à un destinataire précis pour qu'il fasse quelque chose (par exemple « Prélève le paiement »). Il est nommé à l'impératif, possède en principe un seul gestionnaire, et l'émetteur attend qu'un effet se produise. À distinguer du message d'événement, qui constate un fait déjà arrivé.
+en:
+  term: Command message
+  definition: A message that expresses an intention, an order addressed to a specific recipient asking it to do something (for example "Charge the payment"). It is named in the imperative, in principle has a single handler, and the sender expects an effect to happen. To be distinguished from an event message, which states a fact that already occurred.
+seeAlso:
+  - message-d-evenement
+  - communication-asynchrone

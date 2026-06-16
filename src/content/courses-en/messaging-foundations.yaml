@@ -1,0 +1,18 @@
+slug: messaging-foundations
+title: 'Talking with messages: reliability in distributed systems'
+summary: "How do several services of the same system talk to each other without falling together? This architecture course starts from the guarantees, not the technologies: it first explains what a message promises (and does not), then shows how RabbitMQ and Kafka, its two archetypes, keep those promises. Coupling, delivery semantics, ordering and idempotence, the transactional outbox, poison messages, backpressure, sagas: each chapter closes a reliability gap opened by the previous one. The examples are real (Hexeract, the Rust messaging framework) and compared against a second .NET lens (Wolverine). Running thread: placing an e-commerce order, hardened chapter after chapter."
+tags:
+  - architecture
+  - messaging
+  - distributed-systems
+  - rabbitmq
+  - kafka
+  - reliability
+  - hexeract
+theme: architecture
+subtheme: messaging
+level: intermediate
+estimatedMinutes: 18
+modules:
+  - 00-why-talk-with-messages
+published: false

@@ -1,0 +1,18 @@
+slug: messaging-foundations
+title: 'Parler par messages : la fiabilité des systèmes distribués'
+summary: "Comment plusieurs services d'un même système se parlent-ils sans tomber ensemble ? Ce cours d'architecture part des garanties, pas des technos : il explique d'abord ce qu'un message promet (et ne promet pas), puis montre comment RabbitMQ et Kafka, ses deux archétypes, tiennent ces promesses. Couplage, sémantiques de livraison, ordre et idempotence, outbox transactionnel, messages empoisonnés, backpressure, sagas : chaque chapitre ferme une faille de fiabilité ouverte par le précédent. Les exemples sont réels (Hexeract, le framework Rust de messaging) et comparés à une seconde lentille .NET (Wolverine). Fil rouge : passer une commande e-commerce, durcie chapitre après chapitre."
+tags:
+  - architecture
+  - messaging
+  - distributed-systems
+  - rabbitmq
+  - kafka
+  - reliability
+  - hexeract
+theme: architecture
+subtheme: messaging
+level: intermediate
+estimatedMinutes: 18
+modules:
+  - 00-pourquoi-parler-par-messages
+published: false
