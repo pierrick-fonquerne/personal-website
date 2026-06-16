@@ -134,6 +134,7 @@ const fr: Translations = {
     comingSoon: 'À venir',
     glossaryLink: 'Glossaire →',
     tracksLink: 'Parcours →',
+    onThisPage: 'Sur cette page',
     personalNoteEyebrow: 'Note personnelle',
   },
   themes: {
