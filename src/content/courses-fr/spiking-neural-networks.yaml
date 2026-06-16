@@ -1,5 +1,5 @@
 slug: spiking-neural-networks
-title: 'Réseaux de neurones impulsionnels : le neurone qui calcule dans le temps'
+title: 'Réseaux de neurones impulsionnels'
 summary: Un cours universitaire accessible sur les réseaux de neurones impulsionnels (SNN). On part de la limite du neurone classique, qui ignore le temps, pour reconstruire un neurone à état qui intègre, fuit et décharge des impulsions. De la détection de coïncidence au gradient de substitution et au matériel neuromorphique.
 tags:
   - réseaux-impulsionnels
@@ -23,3 +23,4 @@ personalNote: |
   Je ne suis ni neuroscientifique ni chercheur en IA de formation. Je rédige ce cours comme je l'aurais voulu en l'abordant : rigoureux sur les définitions, honnête sur ce qu'on ne sait pas encore, et toujours accompagné de quelque chose à manipuler pour que l'intuition rentre.
 published: true
 publishedAt: 2026-06-12
+order: 2

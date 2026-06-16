@@ -1,0 +1,166 @@
+---
+import type { CourseNavTheme } from '../../lib/course-nav';
+
+interface Props {
+  navThemes: CourseNavTheme[];
+  onThisPageLabel: string;
+  glossaryHref: string;
+  glossaryLabel: string;
+  tracksHref?: string;
+  tracksLabel?: string;
+}
+
+const { navThemes, onThisPageLabel, glossaryHref, glossaryLabel, tracksHref, tracksLabel } =
+  Astro.props;
+---
+
+<nav data-course-rail aria-label={onThisPageLabel} class="sticky top-24 hidden self-start lg:block">
+  <div class="mb-4 flex flex-col gap-1 border-b border-dashed border-[var(--color-line)] pb-3">
+    <a
+      href={glossaryHref}
+      class="font-mono text-[11px] tracking-[0.12em] text-[var(--color-accent)] uppercase hover:underline"
+    >
+      {glossaryLabel}
+    </a>
+    {
+      tracksHref && tracksLabel && (
+        <a
+          href={tracksHref}
+          class="font-mono text-[11px] tracking-[0.12em] text-[var(--color-accent)] uppercase hover:underline"
+        >
+          {tracksLabel}
+        </a>
+      )
+    }
+  </div>
+  <p class="mb-3 font-mono text-[10px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+    {onThisPageLabel}
+  </p>
+  <ul class="border-l border-[var(--color-line)] text-[12px]">
+    {
+      navThemes.map((navTheme) => (
+        <li>
+          <a
+            href={`#${navTheme.anchorId}`}
+            data-theme-target={navTheme.theme}
+            class="rail-theme flex items-center gap-2 py-1 pl-4 font-semibold text-[var(--color-fg)] no-underline"
+          >
+            {navTheme.label}
+            <span class="ml-auto rounded-full border border-[var(--color-line)] px-1.5 font-mono text-[9px] text-[var(--color-fg-dim)]">
+              {navTheme.count}
+            </span>
+          </a>
+          {navTheme.subthemes.length > 0 && (
+            <ul data-sub-group={navTheme.theme} hidden>
+              {navTheme.subthemes.map((subtheme) => (
+                <li>
+                  <a
+                    href={`#${subtheme.anchorId}`}
+                    class="block py-0.5 pl-7 text-[11px] text-[var(--color-fg-muted)] no-underline hover:text-[var(--color-fg)]"
+                  >
+                    {subtheme.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  .rail-theme {
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+    transition:
+      color 0.15s,
+      border-color 0.15s;
+  }
+  .rail-theme.is-active {
+    border-left-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+</style>
+
+<script>
+  let teardown: (() => void) | null = null;
+
+  function initCourseRail(): void {
+    teardown?.();
+    teardown = null;
+    const rail = document.querySelector<HTMLElement>('[data-course-rail]');
+    if (rail === null) {
+      return;
+    }
+    const sections = Array.from(document.querySelectorAll<HTMLElement>('[data-theme-section]'));
+    if (sections.length === 0) {
+      return;
+    }
+
+    const themeLinks = new Map<string, HTMLElement>();
+    rail.querySelectorAll<HTMLElement>('[data-theme-target]').forEach((link) => {
+      const theme = link.dataset.themeTarget;
+      if (theme !== undefined) {
+        themeLinks.set(theme, link);
+      }
+    });
+    const subGroups = Array.from(rail.querySelectorAll<HTMLElement>('[data-sub-group]'));
+
+    let activeTheme = '';
+    function setActive(theme: string): void {
+      if (theme === activeTheme) {
+        return;
+      }
+      activeTheme = theme;
+      themeLinks.forEach((link, key) => {
+        link.classList.toggle('is-active', key === theme);
+      });
+      subGroups.forEach((group) => {
+        group.hidden = group.dataset.subGroup !== theme;
+      });
+    }
+
+    const visible = new Set<string>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const theme = (entry.target as HTMLElement).dataset.themeSection;
+          if (theme === undefined) {
+            continue;
+          }
+          if (entry.isIntersecting) {
+            visible.add(theme);
+          } else {
+            visible.delete(theme);
+          }
+        }
+        const firstVisible = sections.find(
+          (section) =>
+            section.dataset.themeSection !== undefined &&
+            visible.has(section.dataset.themeSection),
+        );
+        const next = firstVisible?.dataset.themeSection;
+        if (next !== undefined) {
+          setActive(next);
+        }
+      },
+      { rootMargin: '-15% 0px -75% 0px', threshold: 0 },
+    );
+    sections.forEach((section) => observer.observe(section));
+
+    const firstTheme = sections[0].dataset.themeSection;
+    if (firstTheme !== undefined) {
+      setActive(firstTheme);
+    }
+    teardown = () => observer.disconnect();
+  }
+
+  initCourseRail();
+  document.addEventListener('astro:page-load', initCourseRail);
+  document.addEventListener('astro:before-swap', () => {
+    teardown?.();
+    teardown = null;
+  });
+</script>

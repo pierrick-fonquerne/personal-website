@@ -5,6 +5,9 @@ import { listCourses } from '../../lib/courses';
 import { localizedPath, useTranslations } from '../../lib/i18n';
 import { SUBTHEMES_BY_THEME, THEMES } from '../../lib/taxonomy';
 import { listTracks } from '../../lib/tracks';
+import CourseCard from '../../components/courses/CourseCard.astro';
+import CourseRail from '../../components/courses/CourseRail.astro';
+import { buildCourseNav } from '../../lib/course-nav';
 
 const locale = 'fr' as const;
 const t = useTranslations(locale);
@@ -18,10 +21,31 @@ const groups = THEMES.map((theme) => ({
     .map((sub) => ({
       sub,
       subLabel: t.subthemes[sub] ?? sub,
-      courses: courses.filter((c) => c.data.theme === theme && c.data.subtheme === sub),
+      courses: courses
+        .filter((c) => c.data.theme === theme && c.data.subtheme === sub)
+        .sort((a, b) => {
+          const aOrder = a.data.order ?? Number.POSITIVE_INFINITY;
+          const bOrder = b.data.order ?? Number.POSITIVE_INFINITY;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+          const aDate = a.data.publishedAt?.getTime() ?? 0;
+          const bDate = b.data.publishedAt?.getTime() ?? 0;
+          return bDate - aDate;
+        }),
     }))
     .filter((s) => s.courses.length > 0),
 })).filter((g) => g.subthemes.length > 0);
+
+const navThemes = buildCourseNav(
+  groups.map((group) => ({
+    theme: group.theme,
+    themeLabel: group.themeLabel,
+    subthemes: group.subthemes.map((subtheme) => ({
+      sub: subtheme.sub,
+      subLabel: subtheme.subLabel,
+      courseCount: subtheme.courses.length,
+    })),
+  })),
+);
 ---
 
 <BaseLayout
@@ -40,25 +64,6 @@ const groups = THEMES.map((theme) => ({
     <p class="mt-4 text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
       {t.courses.indexLead}
     </p>
-
-    <div class="mt-6 flex flex-wrap gap-5">
-      <a
-        href="/glossary"
-        class="inline-block font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase hover:underline"
-      >
-        {t.courses.glossaryLink}
-      </a>
-      {
-        hasTracks && (
-          <a
-            href={localizedPath('/tracks', locale)}
-            class="inline-block font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase hover:underline"
-          >
-            {t.courses.tracksLink}
-          </a>
-        )
-      }
-    </div>
 
     <aside
       class="mt-8 rounded-md border border-l-4 border-[var(--color-line)] border-l-[var(--color-accent)] bg-[var(--color-bg-elevated)] p-4 text-[13px] leading-relaxed text-[var(--color-fg-muted)]"
@@ -79,80 +84,64 @@ const groups = THEMES.map((theme) => ({
       </p>
     </aside>
 
-    <div class="mt-20 space-y-24">
-      {
-        groups.map(({ theme, themeLabel, subthemes }) => (
-          <section aria-labelledby={`theme-${theme}`}>
-            <header class="mb-10 border-b border-[var(--color-line)] pb-4">
-              <h2
-                id={`theme-${theme}`}
-                class="font-display text-[clamp(24px,5vw,36px)] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
-              >
-                {themeLabel}
-              </h2>
-            </header>
+    <div
+      class="mt-16 lg:grid lg:grid-cols-[minmax(0,1fr)_210px] lg:items-start lg:gap-x-10"
+    >
+      <div class="space-y-24">
+        {
+          groups.map(({ theme, themeLabel, subthemes }) => (
+            <section aria-labelledby={`theme-${theme}`} data-theme-section={theme}>
+              <header class="mb-10 border-b border-[var(--color-line)] pb-4">
+                <h2
+                  id={`theme-${theme}`}
+                  class="font-display text-[clamp(24px,5vw,36px)] leading-[1.15] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+                >
+                  {themeLabel}
+                </h2>
+              </header>
 
-            <div class="space-y-12">
-              {subthemes.map(({ sub, subLabel, courses: subCourses }) => (
-                <div>
-                  <h3
-                    id={`sub-${sub}`}
-                    class="mb-5 font-mono text-[12px] tracking-[0.18em] text-[var(--color-accent)] uppercase"
-                  >
-                    {subLabel}
-                  </h3>
-                  <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                    {subCourses.map((course) => {
-                      const href = localizedPath(
-                        `/interactive-courses/${course.data.slug}`,
-                        locale,
-                      );
-                      return (
+              <div class="space-y-12">
+                {subthemes.map(({ sub, subLabel, courses: subCourses }) => (
+                  <div>
+                    <h3
+                      id={`sub-${sub}`}
+                      class="mb-5 font-mono text-[12px] tracking-[0.18em] text-[var(--color-accent)] uppercase"
+                    >
+                      {subLabel}
+                    </h3>
+                    <ul class="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+                      {subCourses.map((course) => (
                         <li>
-                          <a
-                            href={href}
-                            class="group flex h-full flex-col rounded-md border border-[var(--color-line)] bg-[var(--color-bg-elevated)] p-5 transition-colors hover:border-[var(--color-line-strong)]"
-                          >
-                            <div class="flex items-center gap-2 font-mono text-[11px] tracking-[0.14em] text-[var(--color-fg-dim)] uppercase">
-                              <span>{course.data.level}</span>
-                              <span aria-hidden="true">·</span>
-                              <span>
-                                {course.data.modules.length} {t.courses.modulesUnit}
-                              </span>
-                              <span aria-hidden="true">·</span>
-                              <span>
-                                {course.data.estimatedMinutes} {t.courses.minutesUnit}
-                              </span>
-                            </div>
-                            <h4 class="font-display mt-3 text-[20px] font-bold tracking-[-0.01em] text-[var(--color-fg)] group-hover:text-[var(--color-accent)]">
-                              {course.data.title}
-                            </h4>
-                            <p class="mt-2 text-[14px] leading-relaxed text-[var(--color-fg-muted)]">
-                              {course.data.summary}
-                            </p>
-                            {course.data.tags.length > 0 && (
-                              <ul class="mt-4 flex flex-wrap gap-1.5">
-                                {course.data.tags.map((tag) => (
-                                  <li class="rounded border border-[var(--color-line)] px-2 py-0.5 font-mono text-[10px] tracking-[0.08em] text-[var(--color-fg-dim)] uppercase">
-                                    {tag}
-                                  </li>
-                                ))}
-                              </ul>
-                            )}
-                            <span class="mt-5 font-mono text-[12px] tracking-[0.14em] text-[var(--color-accent)] uppercase opacity-0 transition-opacity group-hover:opacity-100">
-                              {t.courses.cardCta} →
-                            </span>
-                          </a>
+                          <CourseCard
+                            href={localizedPath(`/interactive-courses/${course.data.slug}`, locale)}
+                            level={course.data.level}
+                            moduleCount={course.data.modules.length}
+                            estimatedMinutes={course.data.estimatedMinutes}
+                            title={course.data.title}
+                            summary={course.data.summary}
+                            tags={course.data.tags}
+                            modulesUnit={t.courses.modulesUnit}
+                            minutesUnit={t.courses.minutesUnit}
+                          />
                         </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </section>
-        ))
-      }
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))
+        }
+      </div>
+
+      <CourseRail
+        navThemes={navThemes}
+        onThisPageLabel={t.courses.onThisPage}
+        glossaryHref={localizedPath('/glossary', locale)}
+        glossaryLabel={t.courses.glossaryLink}
+        tracksHref={hasTracks ? localizedPath('/tracks', locale) : undefined}
+        tracksLabel={t.courses.tracksLink}
+      />
     </div>
   </section>
 </BaseLayout>

@@ -142,6 +142,7 @@ export interface Translations {
     comingSoon: string;
     glossaryLink: string;
     tracksLink: string;
+    onThisPage: string;
     personalNoteEyebrow: string;
   };
   themes: Record<
@@ -424,6 +425,7 @@ const en: Translations = {
     comingSoon: 'Coming soon',
     glossaryLink: 'Glossary →',
     tracksLink: 'Tracks →',
+    onThisPage: 'On this page',
     personalNoteEyebrow: 'Personal note',
   },
   themes: {
