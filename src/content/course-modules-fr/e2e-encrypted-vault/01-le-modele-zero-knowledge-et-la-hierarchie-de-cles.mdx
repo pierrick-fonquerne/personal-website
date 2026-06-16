@@ -1,0 +1,168 @@
+---
+course: e2e-encrypted-vault
+order: 1
+title: 'Le modèle zero-knowledge et la hiérarchie de clés'
+subtitle: "Stocker ses fichiers chez quelqu'un d'autre sans qu'il puisse les lire : un choix d'architecture irréversible, une hiérarchie d'enveloppes, et une attaque subtile sur la dérivation de clés."
+estimatedMinutes: 24
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+
+Tu veux stocker tes fichiers sur un serveur : le tien, celui d'un hébergeur, peu importe. La question qui structure toute l'architecture tient en une phrase : **qui détient les clés ?** La réponse engage tout le reste, jusqu'à la façon dont une miniature d'image sera générée ou dont un lien de partage fonctionnera. Ce chapitre pose les deux modèles possibles, puis construit la fondation du modèle le plus exigeant : la hiérarchie de clés d'un coffre-fort _zero-knowledge_.
+
+À la fin de ce chapitre, tu sauras expliquer pourquoi le chiffrement de bout en bout est un choix d'architecture irréversible, dessiner une hiérarchie de clés par enveloppes, justifier la double dérivation qui sépare authentification et chiffrement, et reconnaître une attaque par affaiblissement de paramètres KDF.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : ce qu'est un chiffrement symétrique (une clé, un texte clair, un texte chiffré), et l'idée générale d'une fonction de hachage.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les détails des primitives (AEAD, Argon2, BLAKE3) — elles sont introduites au fil du cours, par leur rôle plutôt que par leurs mathématiques.
+
+</Callout>
+
+## Deux modèles de confiance
+
+Quand un service stocke tes fichiers chiffrés, il existe exactement deux endroits où les clés peuvent vivre.
+
+**Modèle 1 : le chiffrement côté serveur.** Le serveur chiffre tes données au repos (sur ses disques) et en transit (TLS), mais c'est lui qui détient les clés. Les bénéfices sont immédiats : le serveur peut générer des aperçus, indexer le contenu pour la recherche plein-texte, produire des miniatures, réparer un mot de passe oublié. Le coût est tout aussi immédiat : le serveur — et quiconque le compromet, l'administre ou le contraint légalement — peut lire tes fichiers.
+
+**Modèle 2 : le chiffrement de bout en bout (E2E), dit _zero-knowledge_.** Les clés ne quittent jamais tes appareils. Le serveur ne voit que des blobs opaques : il stocke, il sert, il ne comprend rien. Même compromis de fond en comble, il n'a rien d'exploitable à offrir. Le coût : toutes les fonctionnalités qui exigeaient de lire le contenu doivent migrer côté client. La prévisualisation se fait dans le navigateur, la recherche se fait sur un index chiffré, et un mot de passe perdu ne peut pas être « réinitialisé » par le support — il n'y a mathématiquement rien à réinitialiser.
+
+<Callout kind="warn" title="Un choix irréversible">
+  Le zero-knowledge n'est pas une fonctionnalité qu'on ajoute en v2 : c'est une décision qui
+  contraint le format de stockage, le protocole, la conception de chaque écran. Greffer du E2E sur
+  un système conçu côté serveur impose de re-chiffrer toutes les données et de réécrire toutes les
+  fonctionnalités qui lisaient le contenu. Dans l'autre sens, relâcher du E2E vers du serveur est
+  trivial — c'est précisément pour ça qu'il faut choisir E2E dès le premier octet stocké, ou assumer
+  de ne jamais l'avoir.
+</Callout>
+
+## Le problème du mot de passe unique
+
+Tout part d'un secret humain : une phrase de passe. Et immédiatement, deux exigences contradictoires apparaissent.
+
+D'une part, le serveur doit pouvoir **authentifier** l'utilisateur : vérifier que c'est bien toi, pour te servir tes blobs et pas ceux d'un autre. Il lui faut donc _quelque chose_ dérivé de ta phrase de passe. D'autre part, ta phrase de passe doit produire la **clé de chiffrement** de tes données — et celle-là, le serveur ne doit jamais la voir, sinon le zero-knowledge s'effondre.
+
+Envoyer la phrase de passe au serveur pour les deux usages est éliminatoire. La solution standard : une **double dérivation à séparation de domaines**. La phrase de passe passe une seule fois dans une fonction de dérivation coûteuse (Argon2id), qui produit une pré-clé. Cette pré-clé est ensuite étirée en deux clés indépendantes par une dérivation rapide avec deux contextes distincts :
+
+- une **clé d'authentification** (_auth key_), envoyée au serveur — qui la re-hache avant de la stocker, comme un mot de passe classique ;
+- une **clé maîtresse** (_master key_), qui ne quitte jamais le client.
+
+Les deux clés sont cryptographiquement indépendantes : connaître l'une ne donne aucune information sur l'autre. Le serveur authentifie sans pouvoir déchiffrer.
+
+<Callout kind="note" title="Pourquoi Argon2id ?">
+  Une phrase de passe humaine a peu d'entropie : il faut rendre chaque essai de force brute coûteux.
+  Argon2id est une fonction *memory-hard* : chaque évaluation exige des dizaines de mégaoctets de
+  mémoire, ce qui neutralise les attaques massivement parallèles sur GPU et ASIC. Les paramètres
+  (mémoire, itérations, parallélisme) sont stockés par utilisateur et pourront être relevés à mesure
+  que le matériel progresse.
+</Callout>
+
+## La hiérarchie d'enveloppes
+
+Pourrait-on chiffrer tous les fichiers directement avec la clé maîtresse ? Oui, et ce serait une erreur. Le jour où tu changes de phrase de passe, la clé maîtresse change — et il faudrait re-chiffrer des téraoctets. La parade est un grand classique : le **chiffrement par enveloppes** (_envelope encryption_). Chaque clé n'en chiffre qu'une autre, et seule la dernière chiffre des données.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    PP[Phrase de passe] -->|Argon2id| PK[Pré-clé]
+    PK -->|dérivation contexte auth| AUTH[Clé d'authentification<br/><i>envoyée au serveur</i>]
+    PK -->|dérivation contexte master| MK[Clé maîtresse<br/><i>ne quitte jamais le client</i>]
+    MK -->|enveloppe| AK[Clé de compte<br/><i>aléatoire, stockée chiffrée</i>]
+    RK[Clé de récupération<br/><i>kit imprimable</i>] -->|enveloppe| AK
+    AK -->|enveloppe| FK[Clé de fichier<br/><i>aléatoire, une par fichier</i>]
+    FK -->|chiffre| CH[Morceaux du fichier]
+    style MK fill:#7c5cff,color:#fff
+    style AK fill:#2d9d78,color:#fff`}
+  caption="La hiérarchie de clés : chaque niveau n'enveloppe que le suivant"
+/>
+
+Détaillons les niveaux, parce que chacun répond à un problème précis.
+
+- **La clé de compte (_account key_)** est aléatoire — elle ne dérive de rien. Elle est stockée sur le serveur, chiffrée sous la clé maîtresse. Changer de phrase de passe revient à re-chiffrer cette unique enveloppe : 32 octets, pas des téraoctets. C'est toute la valeur de l'indirection.
+- **Les clés de fichier (_file keys_)** sont aléatoires elles aussi, une par fichier, chacune stockée chiffrée sous la clé de compte, dans les métadonnées du fichier. Deux fichiers identiques ont des clés différentes — on verra au chapitre 3 pourquoi c'est une propriété de sécurité et pas un gaspillage.
+- **La clé de récupération (_recovery key_)** est une seconde enveloppe de la clé de compte. Générée à l'inscription, affichée une seule fois sous forme de code transcriptible (et imprimable), elle est l'unique filet de sécurité si la phrase de passe est perdue.
+
+<Callout kind="tip" title="Le kit de récupération n'est pas une option">
+  Dans un système zero-knowledge, perdre la phrase de passe sans kit de récupération signifie perdre
+  les données — et c'est *prouvable* : le serveur ne détient rien qui permette de les retrouver.
+  C'est le détail d'expérience utilisateur qui sépare un produit utilisable d'un piège à données.
+  Techniquement, c'est une seconde enveloppe de la clé de compte : si on la prévoit dès le format
+  initial, le coût d'implémentation est quasi nul.
+</Callout>
+
+## L'attaque par affaiblissement des paramètres
+
+Voici maintenant la subtilité qui distingue un design correct d'un design qui _a l'air_ correct. Les paramètres Argon2id (mémoire, itérations, sel) sont stockés côté serveur : le client en a besoin pour re-dériver les mêmes clés à chaque connexion. Donc, au moment du login, **c'est le serveur qui annonce les paramètres au client**.
+
+Vois-tu l'attaque ? Un serveur compromis répond : « tes paramètres sont 8 Mio de mémoire, 1 itération ». Le client obéit, dérive avec ces paramètres faibles, envoie la clé d'authentification correspondante. Le serveur détient maintenant un hash dérivé d'une fonction _triviale_ à attaquer : la force brute hors-ligne sur la phrase de passe redevient praticable, et avec elle la reconstruction de la clé maîtresse. La garantie zero-knowledge entière repose sur la solidité de la dérivation — et le serveur vient de la désactiver à distance.
+
+La parade est simple et doit être _côté client_ : un **plancher de validation**. Le client refuse toute dérivation dont les paramètres sont inférieurs à un minimum codé en dur (par exemple la base de référence OWASP pour Argon2id : 19 Mio, 2 itérations). Des paramètres faibles ne produisent pas une dérivation faible : ils produisent une erreur.
+
+C'est un patron de raisonnement général à retenir : **dans un protocole où une partie non fiable fournit des paramètres de sécurité, l'autre partie doit imposer un plancher**. On le retrouve dans les négociations TLS (suites cryptographiques interdites), et on le reverra au chapitre 4.
+
+## Vérifie ta compréhension
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: "Pourquoi le passage du chiffrement côté serveur au chiffrement de bout en bout est-il qualifié d'irréversible ?",
+      options: [
+        'Parce que les algorithmes de chiffrement ne peuvent pas être changés une fois choisis',
+        "Parce qu'il impose de re-chiffrer toutes les données et de déplacer côté client toutes les fonctionnalités qui lisaient le contenu",
+        'Parce que les utilisateurs perdent leurs données lors de la migration',
+        'Parce que le serveur garde une copie des anciennes clés',
+      ],
+      answer: 1,
+      explain:
+        "Le E2E contraint le format de stockage et la conception de chaque fonctionnalité (aperçus, recherche, partage). Greffer du E2E après coup exige de tout re-chiffrer et de tout réécrire ; relâcher du E2E vers du serveur, en revanche, est trivial. D'où la règle : choisir avant le premier octet stocké.",
+    },
+    {
+      q: 'Quel problème la double dérivation à séparation de domaines résout-elle ?',
+      options: [
+        'Elle accélère la connexion en mettant la clé en cache',
+        "Elle permet au serveur d'authentifier l'utilisateur sans jamais pouvoir reconstituer la clé de chiffrement",
+        'Elle permet de changer de phrase de passe sans re-chiffrer les données',
+        'Elle protège contre les attaques par rejeu réseau',
+      ],
+      answer: 1,
+      explain:
+        "Une même phrase de passe produit deux clés indépendantes via deux contextes de dérivation distincts : la clé d'authentification part au serveur, la clé maîtresse reste sur le client. Connaître l'une ne donne rien sur l'autre. (Le changement de phrase de passe sans re-chiffrement, lui, est résolu par l'enveloppe de la clé de compte.)",
+    },
+    {
+      q: "Que permet l'indirection « clé maîtresse → clé de compte » ?",
+      options: [
+        'De partager des fichiers entre utilisateurs',
+        'De déchiffrer plus vite les gros fichiers',
+        "De changer de phrase de passe en ne re-chiffrant que 32 octets (l'enveloppe), jamais les données",
+        "D'éviter d'utiliser Argon2id",
+      ],
+      answer: 2,
+      explain:
+        'La clé de compte est aléatoire et ne dérive pas de la phrase de passe : elle est simplement stockée chiffrée sous la clé maîtresse. Changer la phrase de passe change la clé maîtresse, donc re-chiffre cette unique enveloppe — les téraoctets de données chiffrés sous les clés de fichier ne bougent pas.',
+    },
+    {
+      q: 'Un serveur compromis annonce au client des paramètres Argon2id très faibles au moment du login. Quelle est la bonne défense ?',
+      options: [
+        'Chiffrer les paramètres KDF pour que le serveur ne puisse pas les modifier',
+        'Utiliser un sel plus long',
+        'Un plancher de validation côté client : refuser toute dérivation sous un minimum codé en dur',
+        'Re-dériver les clés deux fois pour vérifier la cohérence',
+      ],
+      answer: 2,
+      explain:
+        "Le client ne peut pas faire confiance aux paramètres reçus d'une partie non fiable : il doit imposer son propre plancher et traiter des paramètres trop faibles comme une erreur, pas comme une consigne. Chiffrer les paramètres ne résout rien : c'est le serveur qui les stocke et le client doit pouvoir les lire avant d'avoir la moindre clé.",
+    },
+  ]}
+/>
+
+## Ce qu'il faut retenir
+
+- Deux modèles de confiance : **côté serveur** (fonctionnalités faciles, serveur = point de compromission unique) et **zero-knowledge** (le serveur ne voit que des blobs ; toute l'intelligence migre côté client). Le choix est **irréversible** en pratique : il se prend avant le premier octet stocké.
+- La **double dérivation à séparation de domaines** sépare ce que le serveur doit connaître (clé d'authentification) de ce qu'il ne doit jamais voir (clé maîtresse), à partir d'une seule phrase de passe passée dans Argon2id.
+- La **hiérarchie d'enveloppes** (maîtresse → compte → fichier → données) localise chaque changement : nouvelle phrase de passe = 32 octets re-chiffrés ; nouvelle clé par fichier = isolation entre fichiers.
+- Le **kit de récupération** est une seconde enveloppe de la clé de compte — indispensable, car sans lui la perte de la phrase de passe est une perte de données mathématiquement irrémédiable.
+- Quand une partie **non fiable fournit des paramètres de sécurité**, l'autre partie impose un **plancher** : sans plancher KDF côté client, un serveur compromis peut rendre la phrase de passe brute-forçable à distance.

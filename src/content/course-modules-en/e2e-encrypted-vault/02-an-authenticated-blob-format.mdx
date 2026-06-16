@@ -1,0 +1,148 @@
+---
+course: e2e-encrypted-vault
+order: 2
+title: 'An authenticated blob format'
+subtitle: 'AEAD, nonces, domain separation and a header covered by the tag: the four decisions that make an encrypted blob unreadable, unmodifiable, and unreplayable in another role.'
+estimatedMinutes: 22
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+
+Chapter 1 settled who holds which keys. This one decides **what an encrypted byte looks like on the server's disk**. It is a format-design exercise — and a storage format freezes fast: the first blob written in production must remain decryptable in ten years. Every decision made here is a near-permanent commitment.
+
+By the end of this chapter, you will be able to read the structure of an encrypted blob, explain why a cleartext header must still be authenticated, and use domain separation so a blob can never be replayed in another role.
+
+## AEAD: encrypting is not enough
+
+Encryption alone guarantees **confidentiality**: without the key, the content is unreadable. It does not guarantee **integrity**: an attacker who cannot read can still _modify_ — flip bits of the ciphertext and observe what decryption produces. The most famous attacks of recent history (padding oracles, bit-flipping on unauthenticated modes) exploit exactly that gap.
+
+The modern answer is **AEAD**: _Authenticated Encryption with Associated Data_. An AEAD primitive produces, alongside the ciphertext, an **authentication tag**: at decryption time, the slightest modification of the ciphertext invalidates the tag and decryption fails — cleanly, revealing nothing. The "AD" in AEAD matters just as much: **associated data** (AAD) can be bound to the blob without being encrypted. It is not secret, but it is covered by the tag: if it differs between encryption and decryption, opening fails. Keep this intuition: **AAD binds a ciphertext to its usage context**.
+
+Our primitive of choice: **XChaCha20-Poly1305**. Two precise reasons:
+
+1. **192-bit nonces.** A nonce (_number used once_) must never be reused with the same key — that is catastrophic for these constructions. At 192 bits, every nonce can be drawn at random: the collision probability is negligible at any realistic scale. Short-nonce variants (96 bits) require synchronized counters, which are fragile in a distributed system.
+2. **Constant-time execution everywhere.** ChaCha20 does not rely on in-memory lookup tables: no timing side channel, even compiled to WebAssembly in a browser — where software AES implementations are notoriously tricky. And our web client will run precisely this cryptography in WASM.
+
+## The structure of a blob
+
+Every encrypted object in the system — file chunk, metadata, key envelope — shares the same structure:
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    V["Version<br/>1 byte, cleartext"] --> N["Nonce<br/>24 bytes, cleartext"] --> C["Ciphertext + tag<br/>AEAD"]
+    style V fill:#e8590c,color:#fff
+    style N fill:#1971c2,color:#fff
+    style C fill:#2d9d78,color:#fff`}
+  caption="The blob format: version, nonce, then the authenticated payload"
+/>
+
+The **nonce** is cleartext out of necessity: you must read it to decrypt, and it is not secret — its uniqueness matters, not its confidentiality. The **version byte** is cleartext for a deeper reason: **crypto-agility**. The day a primitive must be replaced (discovered weakness, post-quantum migration), new blobs will carry version 2 — and the client must read the version _before_ knowing how to decrypt the rest. A format without a version byte is a format you can only evolve by breaking everything.
+
+## The cleartext header must be authenticated
+
+Here is the chapter's subtlest trap. The version byte is cleartext, _outside_ the ciphertext. The AEAD tag covers the ciphertext… but who covers the version byte?
+
+Nobody, unless you are careful. An attacker — typically the server — could then modify that byte without invalidating the tag. Today, with a single version, the effect is nil. But in a future two-version system, flipping a v2 blob's label to v1 would send the decryptor down the wrong parsing logic: a **cross-version confusion**, classic hunting ground for format attacks.
+
+The fix costs zero bytes: **fold the header into the AAD**. At encryption and decryption alike, the effective AAD is the concatenation of the version byte and the application context. The version byte stays readable in the clear, but modifying it invalidates the tag: the header is cleartext _and_ authenticated.
+
+<Callout kind="warn" title="Authenticate everything you parse">
+  General rule of cryptographic format design: **every field the decryptor reads and interprets must
+  be covered by the tag**, whether encrypted or not. Most format vulnerabilities come from control
+  fields — versions, lengths, types — left outside authentication. And this kind of fix must land
+  *before* the first production blob: afterwards, it is a full format migration.
+</Callout>
+
+## Domain separation: one blob, one role
+
+Picture the complete system: key envelopes, file metadata, directory objects, data chunks — all encrypted, many under the same account key. The server stores all these blobs. What happens if it serves one _in place of_ another? If a metadata blob is presented where the client expects a key envelope?
+
+If nothing distinguishes the blobs, decryption _succeeds_ — the key is right — and the client interprets valid bytes in the wrong role. That is a **type-confusion attack**, cryptographic edition. The defense is elegant: every blob family gets a unique **context string**, passed as AAD:
+
+```text
+vault/v1/account-key-envelope/master
+vault/v1/account-key-envelope/recovery
+vault/v1/file-key-envelope
+vault/v1/file-manifest
+vault/v1/tree
+vault/v1/chunk
+```
+
+A blob sealed with the `file-manifest` context can only be opened with that same context: presented as `tree`, the tag no longer matches and opening fails. **Every blob is cryptographically bound to its role.** The server can shuffle blobs all it wants: the client detects it every time.
+
+Note the refinement on the account-key envelopes: the master-key envelope and the recovery-key envelope carry _different_ contexts. Both protect the same account key, but a server serving the recovery envelope in the master envelope's slot is detected immediately. This is defense in depth: the attack leads nowhere in the current threat model, but the distinction costs two string constants and turns a silent confusion into a clean failure.
+
+<Callout kind="note" title="Deliberately opaque errors">
+  At decryption time, every failure cause — wrong key, modified data, wrong context — produces the
+  same generic error. Distinguishing causes in the error message would hand an *oracle* to an
+  attacker able to observe failures. The rule: on cryptographic failure, fail indistinguishably.
+</Callout>
+
+## Check your understanding
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'What does an AEAD provide over "plain" encryption?',
+      options: [
+        'Faster encryption thanks to parallelism',
+        'Integrity: any modification of the ciphertext or the associated data invalidates the tag and makes decryption fail',
+        'Shorter keys at equal security',
+        'Built-in data compression',
+      ],
+      answer: 1,
+      explain:
+        'Encryption alone protects confidentiality but not integrity: a ciphertext can be modified without being read. AEAD adds an authentication tag covering both the ciphertext and the associated data (AAD) — the slightest alteration makes opening fail.',
+    },
+    {
+      q: 'Why pick an AEAD variant with 192-bit nonces for this system?',
+      options: [
+        'Because encryption is stronger with a longer nonce',
+        'Because long nonces can be drawn at random with no realistic collision risk, where short nonces would require synchronized counters',
+        'Because 96-bit nonces are no longer standardized',
+        'So the nonce can double as a backup key',
+      ],
+      answer: 1,
+      explain:
+        'Reusing a nonce under the same key is catastrophic. At 192 bits, random generation makes collisions negligible at any realistic scale — no shared state to maintain across devices. A nonce adds no "strength" to the encryption: its uniqueness is what matters.',
+    },
+    {
+      q: 'The version byte is stored in the clear. How do you prevent an attacker from modifying it without touching the ciphertext?',
+      options: [
+        'By encrypting it too',
+        'By duplicating it at the end of the blob',
+        'By folding it into the AAD: it stays readable, but modifying it invalidates the tag',
+        'By signing it with a dedicated asymmetric key',
+      ],
+      answer: 2,
+      explain:
+        'Encrypting it is impossible: you must read it before knowing how to decrypt (crypto-agility). The solution: include it in the AEAD associated data. It is then cleartext AND authenticated — the "authenticate everything you parse" principle.',
+    },
+    {
+      q: 'What is the purpose of the distinct context strings (file-manifest, tree, chunk…) passed as AAD?',
+      options: [
+        'Speeding up blob lookup on the server',
+        'Preventing nonce collisions across blob families',
+        'Binding each blob to its role: a blob served in place of another type fails decryption instead of being interpreted in the wrong role',
+        'Encrypting each blob family with a different algorithm',
+      ],
+      answer: 2,
+      explain:
+        'This is domain separation: same key, different contexts. A malicious server swapping blobs (an envelope in place of a manifest, a recovery envelope in place of a master envelope) causes a clean tag failure instead of a silent type confusion.',
+    },
+  ]}
+/>
+
+## Key takeaways
+
+- An encrypted storage format is a **long-term commitment**: the first production blob freezes the decisions. Format fixes happen _before_, not after.
+- **AEAD** brings integrity on top of confidentiality, and **AAD** binds each blob to its context without encrypting it.
+- **Random 192-bit nonces** eliminate the counter-coordination problem; constant-time execution matters all the more because the crypto will run in WASM in the browser.
+- **The cleartext header (version) must be authenticated**: folded into the AAD, it stays readable but tamper-proof — "authenticate everything you parse".
+- **Domain separation** (one context string per blob family, down to distinguishing the master and recovery envelopes) turns any blob shuffling by the server into a detectable failure.
+- Decryption errors are **opaque**: distinguishing causes would provide an oracle.
