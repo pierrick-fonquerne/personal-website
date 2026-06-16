@@ -18,6 +18,7 @@ const courseSchema = z.object({
   personalNote: z.string().optional(),
   published: z.boolean().default(false),
   publishedAt: z.coerce.date().optional(),
+  order: z.number().int().optional(),
 });
 
 const moduleSchema = z.object({

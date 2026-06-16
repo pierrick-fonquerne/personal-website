@@ -21,7 +21,16 @@ const groups = THEMES.map((theme) => ({
     .map((sub) => ({
       sub,
       subLabel: t.subthemes[sub] ?? sub,
-      courses: courses.filter((c) => c.data.theme === theme && c.data.subtheme === sub),
+      courses: courses
+        .filter((c) => c.data.theme === theme && c.data.subtheme === sub)
+        .sort((a, b) => {
+          const aOrder = a.data.order ?? Number.POSITIVE_INFINITY;
+          const bOrder = b.data.order ?? Number.POSITIVE_INFINITY;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+          const aDate = a.data.publishedAt?.getTime() ?? 0;
+          const bDate = b.data.publishedAt?.getTime() ?? 0;
+          return bDate - aDate;
+        }),
     }))
     .filter((s) => s.courses.length > 0),
 })).filter((g) => g.subthemes.length > 0);
