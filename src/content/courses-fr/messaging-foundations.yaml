@@ -15,4 +15,5 @@ level: intermediate
 estimatedMinutes: 18
 modules:
   - 00-pourquoi-parler-par-messages
-published: false
+published: true
+publishedAt: 2026-06-16
