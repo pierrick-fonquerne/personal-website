@@ -24,7 +24,18 @@ export interface Translations {
     projects: string;
     courses: string;
     research: string;
+    gallery: string;
     about: string;
+  };
+  art: {
+    eyebrow: string;
+    galleryTitle: string;
+    galleryLead: string;
+    surprise: string;
+    exportPng: string;
+    copyLink: string;
+    copied: string;
+    backToGallery: string;
   };
   toolbar: {
     print: string;
@@ -305,7 +316,18 @@ const en: Translations = {
     projects: 'Projects',
     courses: 'Courses',
     research: 'Research',
+    gallery: 'Gallery',
     about: 'About',
+  },
+  art: {
+    eyebrow: 'Gallery',
+    galleryTitle: 'Code art',
+    galleryLead: 'Playable generative pieces. Open one, tweak the sliders, surprise yourself, export the image or share the exact composition.',
+    surprise: 'Surprise me',
+    exportPng: 'PNG',
+    copyLink: 'Copy link',
+    copied: 'Copied',
+    backToGallery: 'Back to the gallery',
   },
   toolbar: {
     print: 'Print chapter',

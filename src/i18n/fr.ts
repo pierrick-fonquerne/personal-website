@@ -14,7 +14,18 @@ const fr: Translations = {
     projects: 'Projets',
     courses: 'Cours',
     research: 'Recherche',
+    gallery: 'Galerie',
     about: 'À propos',
+  },
+  art: {
+    eyebrow: 'Galerie',
+    galleryTitle: 'Code art',
+    galleryLead: "Des pièces génératives jouables. Ouvre-en une, bouge les curseurs, laisse-toi surprendre, exporte l'image ou partage la composition exacte.",
+    surprise: 'Surprends-moi',
+    exportPng: 'PNG',
+    copyLink: 'Copier le lien',
+    copied: 'Copié',
+    backToGallery: 'Retour à la galerie',
   },
   toolbar: {
     print: 'Imprimer le chapitre',

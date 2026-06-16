@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Eyebrow from '../../../components/ui/Eyebrow.astro';
+import ArtCanvas from '../../../components/art/ArtCanvas';
+import { PIECES } from '../../../lib/generative/pieces/registry';
+import { defaultConfig } from '../../../lib/generative/pieces/art-config';
+import { dailySeed } from '../../../lib/generative/flow-field';
+import { useTranslations } from '../../../lib/i18n';
+
+const locale = 'fr' as const;
+const t = useTranslations(locale);
+const seed = dailySeed(new Date());
+const cards = PIECES.map((piece) => ({
+  piece,
+  config: defaultConfig(piece.params, piece.defaults, seed),
+}));
+---
+
+<BaseLayout
+  title={`${t.art.galleryTitle} · Pierrick Fonquerne`}
+  description="Galerie de pièces génératives jouables de Pierrick Fonquerne."
+  current="/gallery/code-art"
+  locale={locale}
+>
+  <section class="container-page py-16">
+    <Eyebrow text={t.art.eyebrow} />
+    <h1
+      class="font-display mt-4 text-[clamp(28px,6vw,44px)] leading-[1.1] font-bold tracking-[-0.02em] text-[var(--color-fg)]"
+    >
+      {t.art.galleryTitle}
+    </h1>
+    <p class="mt-4 max-w-2xl text-[17px] leading-relaxed text-[var(--color-fg-muted)]">
+      {t.art.galleryLead}
+    </p>
+
+    <div class="mt-12 grid gap-6 sm:grid-cols-2">
+      {
+        cards.map(({ piece, config }) => (
+          <a
+            href={`/gallery/code-art/${piece.id}`}
+            class="group block overflow-hidden rounded-lg border border-[var(--color-line)] transition-colors hover:border-[var(--color-accent)]"
+          >
+            <div class="aspect-[4/3] bg-[var(--color-bg)]">
+              <ArtCanvas client:visible pieceId={piece.id} config={config} interactive={false} />
+            </div>
+            <div class="p-5">
+              <h2 class="font-display text-[20px] font-bold text-[var(--color-fg)]">
+                {piece.titleFr}
+              </h2>
+              <p class="mt-1 text-[14px] text-[var(--color-fg-muted)]">{piece.descriptionFr}</p>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</BaseLayout>
