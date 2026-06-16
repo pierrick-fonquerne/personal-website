@@ -19,5 +19,5 @@ modules:
   - 02-un-format-de-blob-authentifie
   - 03-chunking-content-addressing-et-arbre-de-merkle
   - 04-le-modele-de-menace-a-lepreuve
-published: true
+published: false
 publishedAt: 2026-06-06

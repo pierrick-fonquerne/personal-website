@@ -19,5 +19,5 @@ modules:
   - 02-an-authenticated-blob-format
   - 03-chunking-content-addressing-and-merkle-trees
   - 04-stress-testing-the-threat-model
-published: true
+published: false
 publishedAt: 2026-06-06
