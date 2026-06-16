@@ -1,0 +1,283 @@
+---
+course: messaging-foundations
+order: 0
+title: 'Pourquoi parler par messages'
+subtitle: "Quand un service en appelle cinq autres pour valider une commande, un seul qui tombe fait tout échouer. Le message asynchrone change la donne : voici pourquoi, et ce qu'il promet vraiment."
+estimatedMinutes: 18
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import CouplingPlayground from '../../../components/learning/CouplingPlayground.tsx';
+
+Tu cliques sur « Payer ». Derrière ce clic, ton service de commande doit prévenir le paiement, réserver le stock, planifier l'expédition, envoyer un email de confirmation et créditer le programme de fidélité. La question de tout ce cours commence ici : comment ces services se parlent-ils sans tomber ensemble ?
+
+<Callout kind="info" title="Avant de commencer">
+Ce chapitre suppose que tu as déjà écrit ou lu du code où un service en appelle un autre (un appel de fonction, une requête HTTP vers une API). Tu n'as pas besoin de connaître RabbitMQ, Kafka, ni la moindre théorie des systèmes distribués : c'est précisément ce que le cours va construire, brique par brique.
+</Callout>
+
+## L'appel direct, ou le coup de téléphone
+
+La façon la plus naturelle de faire parler deux services, c'est l'appel direct. Ton service de commande appelle le service de paiement, comme tu passerais un coup de téléphone : tu composes le numéro, et tu attends que l'autre décroche et te réponde avant de raccrocher.
+
+Tant que tout le monde décroche vite, c'est parfait. Mais regarde ce qui se passe quand ta commande doit prévenir les cinq services, un par un, en attendant chaque réponse :
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    O[Service commande] --> P[Paiement]
+    P --> S[Stock]
+    S --> E[Expédition]
+    E --> M[Email]
+    M --> F[Fidélité]
+    style O fill:#7c5cff,color:#fff`}
+  caption="Appel synchrone en chaîne : la commande attend chaque service avant de passer au suivant"
+/>
+
+Deux ennuis surgissent. D'abord le temps : si chacun met cent millisecondes, l'utilisateur attend la somme, donc une demi-seconde, juste pour voir « Commande validée ». Ensuite la fragilité : si le service d'email est en panne, l'appel échoue, et toute la commande échoue avec lui, alors que l'email n'est qu'un détail de confort. Un maillon faible casse toute la chaîne.
+
+## Le message, ou la boîte aux lettres
+
+Change d'image. Au lieu de téléphoner, ta commande écrit un mot et le dépose dans une boîte aux lettres. Elle repart aussitôt, sans attendre que quiconque l'ait lu. Chaque service relève la boîte quand il peut et traite le mot à son rythme.
+
+C'est ça, un message : une information déposée quelque part, que l'émetteur n'attend pas de voir traitée. La <Term slug="communication-asynchrone">communication asynchrone</Term> est ce mode d'échange où l'on dépose et où l'on poursuit, par opposition à l'appel synchrone où l'on reste bloqué jusqu'à la réponse.
+
+L'email en panne ? Son mot patiente dans la boîte. La commande, elle, est déjà validée. Le service d'email traitera son courrier dès qu'il redémarre. Le maillon faible ne casse plus rien : il prend juste du retard, tout seul, dans son coin.
+
+## Trois façons d'être couplé
+
+Pour comprendre ce que le message nous fait gagner, il faut nommer ce dont il nous libère : le couplage. Deux services sont couplés quand l'un ne peut pas fonctionner correctement sans une propriété de l'autre. On distingue trois formes utiles.
+
+- Le <Term slug="couplage-temporel">couplage temporel</Term> : les deux doivent être disponibles au même instant. C'est le coup de téléphone : si l'autre ne décroche pas maintenant, l'échange échoue.
+- Le couplage de disponibilité : la santé de l'appelant dépend de la santé de l'appelé. Si le paiement tombe, la commande tombe.
+- Le couplage de localisation : l'appelant doit savoir où joindre l'appelé (son adresse, son port).
+
+L'appel synchrone direct cumule les trois. Le message asynchrone les desserre : il intercale une boîte (une file, un journal) qui accepte le dépôt même quand le destinataire est absent. L'émetteur n'a plus besoin de savoir qui lira, ni quand, ni même si quelqu'un lira.
+
+<Callout kind="note" title="Asynchrone ne veut pas dire instantané">
+Déposer un message est presque immédiat pour l'émetteur, mais le travail réel, lui, se produit plus tard. On n'a pas supprimé le délai de traitement : on l'a déplacé hors du chemin de l'utilisateur. La confirmation « Commande validée » ne dit plus « tout est fait », elle dit « tout est pris en compte ». Cette nuance portera tout le cours, jusqu'aux garanties de livraison du chapitre trois.
+</Callout>
+
+## Commande ou événement : deux intentions, deux messages
+
+Tous les messages ne se ressemblent pas. Deux intentions très différentes se cachent derrière le mot « message », et les confondre est la première erreur classique.
+
+Un <Term slug="message-de-commande">message de commande</Term> exprime un ordre adressé à un destinataire précis : « Prélève le paiement ». Il se nomme à l'impératif, vise en principe un seul gestionnaire, et l'émetteur attend qu'un effet se produise. C'est encore proche du coup de téléphone, mais déposé dans une boîte.
+
+Un <Term slug="message-d-evenement">message d'événement</Term> annonce un fait déjà survenu : « Commande payée ». Il se nomme au passé, il est diffusé à qui veut l'écouter, et l'émetteur ignore qui le consomme, voire si quelqu'un le consomme. Le stock, l'expédition, l'email et la fidélité peuvent tous réagir au même événement, chacun de son côté.
+
+Cette bascule est profonde. Avec des commandes, ta commande sait encore qui appeler : elle pilote. Avec des événements, elle annonce juste « je suis payée » et se désintéresse de la suite : ce sont les autres qui s'abonnent. C'est le degré ultime de découplage, et c'est ce qui permet d'ajouter un sixième service demain sans toucher au service de commande.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    O[OrderPaid<br/><i>événement : fait passé</i>] --> S[Stock]
+    O --> E[Expédition]
+    O --> M[Email]
+    O --> F[Fidélité]
+    style O fill:#7c5cff,color:#fff`}
+  caption="Un seul événement OrderPaid, plusieurs abonnés indépendants : l'émetteur ne les connaît pas"
+/>
+
+## Joue avec le couplage
+
+Le composant ci-dessous met les deux mondes côte à côte. Tu passes une commande qui doit prévenir cinq services. Choisis le mode (synchrone ou asynchrone), coupe un service en cliquant dessus pour le mettre en panne, puis observe deux choses : combien de temps l'appelant reste bloqué, et ce qu'il advient de chaque service.
+
+<CouplingPlayground
+  client:load
+  consumers={[
+    { id: 'payment', label: 'Paiement', latencyMs: 50 },
+    { id: 'stock', label: 'Stock', latencyMs: 30 },
+    { id: 'shipping', label: 'Expédition', latencyMs: 20 },
+    { id: 'email', label: 'Email', latencyMs: 10 },
+    { id: 'loyalty', label: 'Fidélité', latencyMs: 15 },
+  ]}
+  copy={{
+    heading: 'Passer une commande',
+    modeLabel: 'Mode',
+    modeSync: 'Synchrone',
+    modeAsync: 'Asynchrone',
+    triggerLabel: 'Passer commande',
+    consumersHeader: 'Services à prévenir',
+    statusHealthy: 'Sain',
+    statusDown: 'En panne',
+    blockingLabel: 'Blocage appelant :',
+    blockingUnit: 'ms',
+    verdictSuccess: 'Commande validée',
+    verdictFailure: 'Échec : erreur propagée à l\'utilisateur',
+    outcomeProcessed: 'Traité',
+    outcomePending: 'En attente (file)',
+    outcomeBlocker: 'A bloqué la chaîne',
+    outcomeSkipped: 'Non atteint',
+    legendBlocking: 'Temps que l\'utilisateur attend avant de voir la confirmation.',
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+- En mode synchrone, que devient le temps de blocage quand tu ajoutes des services sains ? Et en mode asynchrone ?
+- Coupe le service d'email. Pourquoi le mode synchrone fait-il échouer toute la commande, alors que le mode asynchrone la valide quand même ?
+- En mode synchrone, coupe le paiement (le premier de la liste). Que deviennent les services placés après lui ? Pourquoi restent-ils « non atteints » ?
+
+## Côté code : « envoyer un message » dans deux frameworks
+
+L'idée de commande contre événement n'est pas qu'une vue de l'esprit : les frameworks de messaging la rendent explicite jusque dans leurs noms de méthodes. Regarde la même intention dans deux outils, l'un en Rust, l'autre en .NET.
+
+Avec Hexeract, un framework de messaging en Rust, une commande attend un résultat et un événement se contente d'être publié :
+
+```rust
+// Commande : un ordre adressé, on attend le résultat.
+impl Command for ProcessPayment {
+    type Output = PaymentId;
+}
+let payment_id = mediator.send(ProcessPayment { order_id, amount_cents }).await?;
+
+// Événement : un fait passé, diffusé. L'émetteur ignore qui écoute.
+impl Event for OrderPaid {
+    const EVENT_TYPE: &'static str = "orders.paid";
+}
+mediator.publish(OrderPaid { order_id }).await?;
+```
+
+Avec Wolverine, son équivalent en .NET, la distinction se lit dans le choix de la méthode du bus :
+
+```csharp
+// Commande : exécute maintenant et attends le résultat.
+var status = await bus.InvokeAsync<PaymentStatus>(new ProcessPayment(orderId, amountCents));
+
+// Événement : publie à qui veut écouter, sans rien attendre.
+await bus.PublishAsync(new OrderPaid(orderId));
+```
+
+Le couple est le même des deux côtés : un verbe qui attend un résultat pour la commande (`send`, `InvokeAsync`), un verbe qui diffuse sans attendre pour l'événement (`publish`, `PublishAsync`). Retiens le motif, pas la syntaxe : c'est l'intention du message qui choisit la méthode, jamais l'inverse.
+
+<Callout kind="tip" title="Décoder publish et send">
+`publish` se lit « je diffuse ce fait, libre à vous d'y réagir ». `send` (ou `InvokeAsync`) se lit « je t'ordonne ceci et j'attends ta réponse ». Si tu hésites entre les deux pour un message, demande-toi : est-ce que je décris quelque chose qui vient d'arriver (événement), ou est-ce que je réclame quelque chose qui doit arriver (commande) ?
+</Callout>
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : commande ou événement ?
+
+Classe chacun de ces quatre messages en commande ou en événement, en t'appuyant sur le temps du verbe et sur le destinataire : (a) « Prélève le paiement », (b) « Commande payée », (c) « Envoie l'email de confirmation », (d) « Stock réservé ».
+
+### Exercice 2 : combien de temps attend l'utilisateur ?
+
+Cinq services doivent être prévenus, avec des temps de traitement de 50, 30, 20, 10 et 15 millisecondes. Combien de temps l'utilisateur attend-il en mode synchrone, où l'appelant traite les services en série ? Et en mode asynchrone, où déposer un message coûte environ 5 millisecondes ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : commande ou événement ?">
+On classe chaque message en commande (ordre, futur, destinataire unique) ou événement (fait, passé, diffusé). On s'appuie sur le temps du verbe et sur la question « qui décide de la suite ? ».
+
+**Étape 1.** « Prélève le paiement » est un ordre à l'impératif, adressé au seul service de paiement.
+
+C'est une **commande**.
+
+**Étape 2.** « Commande payée » constate un fait déjà arrivé, que plusieurs services peuvent vouloir connaître.
+
+C'est un **événement**.
+
+**Étape 3.** « Envoie l'email de confirmation » est un ordre adressé au seul service d'email.
+
+C'est une **commande**.
+
+**Étape 4.** « Stock réservé » constate un fait accompli, diffusable.
+
+C'est un **événement**.
+
+**Résultat.** Le verbe à l'impératif et le destinataire unique trahissent la commande ; le verbe au passé et la diffusion trahissent l'événement.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : combien de temps attend l'utilisateur ?">
+Cinq services doivent être prévenus, avec des temps de traitement de 50, 30, 20, 10 et 15 millisecondes. On compare le temps que l'utilisateur attend en synchrone et en asynchrone.
+
+**Étape 1.** En mode synchrone, l'appelant attend les services en série : il additionne tous les temps.
+
+$$
+50 + 30 + 20 + 10 + 15
+$$
+
+**Étape 2.** On fait la somme pas à pas.
+
+$$
+50 + 30 = 80
+$$
+
+$$
+80 + 20 = 100
+$$
+
+$$
+100 + 10 + 15 = 125
+$$
+
+L'utilisateur attend donc 125 millisecondes, et ce total grandit avec chaque service ajouté.
+
+**Étape 3.** En mode asynchrone, l'appelant dépose un message et repart. Il ne paie que le coût du dépôt, soit environ 5 millisecondes, quel que soit le nombre de services.
+
+$$
+5 \ \text{ms, indépendamment du nombre de services}
+$$
+
+**Résultat.** Le synchrone fait payer la somme des traitements à l'utilisateur (125 ms ici, davantage demain) ; l'asynchrone lui fait payer un coût quasi constant, car le travail réel sort de son chemin.
+</Callout>
+
+## En une phrase
+
+Parler par messages, c'est remplacer un appel direct, qui couple deux services dans le temps et dans la panne, par un dépôt asynchrone qui les découple : l'émetteur poursuit son travail, et l'on distingue la commande, qui ordonne et attend, de l'événement, qui constate et diffuse.
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'Pourquoi un appel synchrone direct est-il fragile quand un service appelé tombe en panne ?',
+      options: [
+        "Parce que l'émetteur reste couplé à la disponibilité de l'appelé : la panne se propage et fait échouer l'opération entière.",
+        'Parce que le message est perdu pour toujours.',
+        "Parce que le service appelé renvoie toujours une erreur 500.",
+      ],
+      answer: 0,
+      explain:
+        "L'appel synchrone cumule les couplages temporel et de disponibilité. Si l'appelé n'est pas joignable à l'instant de l'appel, l'appelant échoue avec lui. Le message asynchrone supprime ce couplage en intercalant une file qui accepte le dépôt malgré la panne.",
+    },
+    {
+      q: "Quelle est la différence essentielle entre un message de commande et un message d'événement ?",
+      options: [
+        "La commande ordonne une action future à un destinataire précis et attend un effet ; l'événement constate un fait passé et se diffuse à des abonnés inconnus.",
+        'La commande est rapide, l\'événement est lent.',
+        'La commande utilise RabbitMQ, l\'événement utilise Kafka.',
+      ],
+      answer: 0,
+      explain:
+        "C'est l'intention qui sépare les deux : un ordre adressé (impératif, destinataire unique, on attend un résultat) contre un fait annoncé (passé, diffusé, l'émetteur ignore qui réagit). Le choix de l'intention détermine ensuite le verbe employé, send ou publish.",
+    },
+    {
+      q: 'En mode asynchrone, que devient le message destiné à un service momentanément en panne ?',
+      options: [
+        "Il patiente dans la file et sera traité quand le service redémarre ; l'appelant, lui, n'est pas affecté.",
+        "Il est immédiatement rejeté et l'opération échoue.",
+        'Il force le service en panne à redémarrer aussitôt.',
+      ],
+      answer: 0,
+      explain:
+        "C'est tout l'intérêt du découplage : le message déposé attend son consommateur. Le service en panne prend du retard tout seul, sans entraîner l'appelant ni les autres consommateurs. La suite du cours montrera ce qu'il faut garantir pour que ce message ne soit ni perdu ni traité deux fois.",
+    },
+  ]}
+/>
+
+## Vers le chapitre suivant
+
+On a opposé deux familles de messages : la commande qui ordonne, l'événement qui constate. Mais il manque un cas courant : quand un service a seulement besoin de demander une information, sans rien changer ni rien ordonner. « Quel est le solde de fidélité de ce client ? » n'est ni un ordre ni un fait passé. C'est une troisième famille, la requête, et c'est par elle que le chapitre suivant complétera la taxinomie des messages avant qu'on attaque les garanties de livraison.
+
+## Sources
+
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. [Référence de l'éditeur](https://www.enterpriseintegrationpatterns.com/)
+- Hohpe, G. & Woolf, B. « Command Message » et « Event Message ». *Enterprise Integration Patterns*. [Command Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CommandMessage.html), [Event Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/EventMessage.html)
+- Wolverine. *Message Bus Basics: InvokeAsync, SendAsync, PublishAsync*. Documentation officielle. [wolverinefx.net](https://wolverinefx.net/guide/messaging/message-bus.html)

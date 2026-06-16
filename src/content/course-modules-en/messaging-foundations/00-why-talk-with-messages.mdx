@@ -1,0 +1,283 @@
+---
+course: messaging-foundations
+order: 0
+title: 'Why talk with messages'
+subtitle: "When one service calls five others to confirm an order, a single one going down makes everything fail. The asynchronous message changes that: here is why, and what it really promises."
+estimatedMinutes: 18
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import CouplingPlayground from '../../../components/learning/CouplingPlayground.tsx';
+
+You click "Pay". Behind that click, your order service must notify payment, reserve stock, schedule shipping, send a confirmation email and credit the loyalty program. The question that opens this whole course starts right here: how do these services talk to each other without falling together?
+
+<Callout kind="info" title="Before we start">
+This chapter assumes you have already written or read code where one service calls another (a function call, an HTTP request to an API). You do not need to know RabbitMQ, Kafka, or any distributed-systems theory: that is precisely what the course will build, brick by brick.
+</Callout>
+
+## The direct call, or the phone call
+
+The most natural way to make two services talk is the direct call. Your order service calls the payment service, just as you would make a phone call: you dial the number, and you wait for the other side to pick up and answer before hanging up.
+
+As long as everyone picks up quickly, this is perfect. But look at what happens when your order has to notify all five services, one by one, waiting for each reply:
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    O[Order service] --> P[Payment]
+    P --> S[Stock]
+    S --> E[Shipping]
+    E --> M[Email]
+    M --> F[Loyalty]
+    style O fill:#7c5cff,color:#fff`}
+  caption="Synchronous call chain: the order waits for each service before moving to the next"
+/>
+
+Two troubles arise. First, time: if each one takes a hundred milliseconds, the user waits for the sum, so half a second, just to see "Order accepted". Second, fragility: if the email service is down, the call fails, and the whole order fails with it, even though the email is just a comfort detail. One weak link breaks the entire chain.
+
+## The message, or the mailbox
+
+Change the image. Instead of phoning, your order writes a note and drops it into a mailbox. It leaves at once, without waiting for anyone to have read it. Each service checks the mailbox when it can and processes the note at its own pace.
+
+That is what a message is: a piece of information dropped somewhere, that the sender does not wait to see processed. <Term slug="communication-asynchrone">Asynchronous communication</Term> is this exchange mode where you drop and carry on, as opposed to the synchronous call where you stay blocked until the reply.
+
+The email service is down? Its note waits in the mailbox. The order, meanwhile, is already accepted. The email service will handle its mail as soon as it restarts. The weak link no longer breaks anything: it simply falls behind, on its own, in its corner.
+
+## Three ways of being coupled
+
+To understand what the message buys us, we must name what it frees us from: coupling. Two services are coupled when one cannot work properly without some property of the other. There are three useful forms.
+
+- <Term slug="couplage-temporel">Temporal coupling</Term>: both must be available at the same instant. That is the phone call: if the other does not pick up now, the exchange fails.
+- Availability coupling: the health of the caller depends on the health of the callee. If payment goes down, the order goes down.
+- Location coupling: the caller must know where to reach the callee (its address, its port).
+
+The direct synchronous call accumulates all three. The asynchronous message loosens them: it inserts a mailbox (a queue, a log) that accepts the drop even when the recipient is absent. The sender no longer needs to know who will read, nor when, nor even whether anyone will read at all.
+
+<Callout kind="note" title="Asynchronous does not mean instant">
+Dropping a message is almost immediate for the sender, but the real work happens later. We have not removed the processing delay: we have moved it off the user's path. The "Order accepted" confirmation no longer says "everything is done", it says "everything is taken into account". This nuance will carry the whole course, all the way to the delivery guarantees of chapter three.
+</Callout>
+
+## Command or event: two intentions, two messages
+
+Not all messages are alike. Two very different intentions hide behind the word "message", and confusing them is the first classic mistake.
+
+A <Term slug="message-de-commande">command message</Term> expresses an order addressed to a specific recipient: "Charge the payment". It is named in the imperative, in principle targets a single handler, and the sender expects an effect to happen. It is still close to the phone call, but dropped in a mailbox.
+
+An <Term slug="message-d-evenement">event message</Term> announces a fact that already happened: "Order paid". It is named in the past tense, it is broadcast to whoever wants to listen, and the sender does not know who consumes it, or even whether anyone does. Stock, shipping, email and loyalty can all react to the same event, each on its own side.
+
+This switch runs deep. With commands, your order still knows who to call: it drives. With events, it just announces "I am paid" and loses interest in the rest: it is the others who subscribe. This is the ultimate degree of decoupling, and it is what lets you add a sixth service tomorrow without touching the order service.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    O[OrderPaid<br/><i>event: past fact</i>] --> S[Stock]
+    O --> E[Shipping]
+    O --> M[Email]
+    O --> F[Loyalty]
+    style O fill:#7c5cff,color:#fff`}
+  caption="A single OrderPaid event, several independent subscribers: the sender does not know them"
+/>
+
+## Play with coupling
+
+The component below puts both worlds side by side. You place an order that must notify five services. Choose the mode (synchronous or asynchronous), take a service down by clicking on it, then watch two things: how long the caller stays blocked, and what happens to each service.
+
+<CouplingPlayground
+  client:load
+  consumers={[
+    { id: 'payment', label: 'Payment', latencyMs: 50 },
+    { id: 'stock', label: 'Stock', latencyMs: 30 },
+    { id: 'shipping', label: 'Shipping', latencyMs: 20 },
+    { id: 'email', label: 'Email', latencyMs: 10 },
+    { id: 'loyalty', label: 'Loyalty', latencyMs: 15 },
+  ]}
+  copy={{
+    heading: 'Place an order',
+    modeLabel: 'Mode',
+    modeSync: 'Synchronous',
+    modeAsync: 'Asynchronous',
+    triggerLabel: 'Place order',
+    consumersHeader: 'Services to notify',
+    statusHealthy: 'Healthy',
+    statusDown: 'Down',
+    blockingLabel: 'Caller blocked:',
+    blockingUnit: 'ms',
+    verdictSuccess: 'Order accepted',
+    verdictFailure: 'Failure: error propagated to the user',
+    outcomeProcessed: 'Processed',
+    outcomePending: 'Pending (queue)',
+    outcomeBlocker: 'Broke the chain',
+    outcomeSkipped: 'Not reached',
+    legendBlocking: 'Time the user waits before seeing the confirmation.',
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+- In synchronous mode, what happens to the blocking time when you add healthy services? And in asynchronous mode?
+- Take the email service down. Why does synchronous mode make the whole order fail, while asynchronous mode still accepts it?
+- In synchronous mode, take payment down (the first in the list). What happens to the services placed after it? Why do they stay "not reached"?
+
+## In code: "sending a message" in two frameworks
+
+The idea of command versus event is not just a mental view: messaging frameworks make it explicit right down to their method names. Look at the same intention in two tools, one in Rust, the other in .NET.
+
+With Hexeract, a messaging framework in Rust, a command awaits a result and an event simply gets published:
+
+```rust
+// Command: an addressed order, we await the result.
+impl Command for ProcessPayment {
+    type Output = PaymentId;
+}
+let payment_id = mediator.send(ProcessPayment { order_id, amount_cents }).await?;
+
+// Event: a past fact, broadcast. The sender does not know who listens.
+impl Event for OrderPaid {
+    const EVENT_TYPE: &'static str = "orders.paid";
+}
+mediator.publish(OrderPaid { order_id }).await?;
+```
+
+With Wolverine, its .NET counterpart, the distinction is read in the choice of the bus method:
+
+```csharp
+// Command: execute now and await the result.
+var status = await bus.InvokeAsync<PaymentStatus>(new ProcessPayment(orderId, amountCents));
+
+// Event: publish to whoever wants to listen, without waiting.
+await bus.PublishAsync(new OrderPaid(orderId));
+```
+
+The pair is the same on both sides: a verb that awaits a result for the command (`send`, `InvokeAsync`), a verb that broadcasts without waiting for the event (`publish`, `PublishAsync`). Remember the pattern, not the syntax: it is the message's intention that chooses the method, never the other way around.
+
+<Callout kind="tip" title="Decoding publish and send">
+`publish` reads as "I broadcast this fact, feel free to react". `send` (or `InvokeAsync`) reads as "I order you this and I await your reply". If you hesitate between the two for a message, ask yourself: am I describing something that just happened (event), or am I demanding something that must happen (command)?
+</Callout>
+
+## Exercises
+
+Grab a pen and paper. The solutions are right below, to be looked at only after you have tried.
+
+### Exercise 1: command or event?
+
+Classify each of these four messages as a command or an event, relying on the verb tense and on the recipient: (a) "Charge the payment", (b) "Order paid", (c) "Send the confirmation email", (d) "Stock reserved".
+
+### Exercise 2: how long does the user wait?
+
+Five services must be notified, with processing times of 50, 30, 20, 10 and 15 milliseconds. How long does the user wait in synchronous mode, where the caller handles the services in series? And in asynchronous mode, where dropping a message costs about 5 milliseconds?
+
+<Callout kind="tip" title="Solution to exercise 1: command or event?">
+We classify each message as a command (order, future, single recipient) or an event (fact, past, broadcast). We rely on the verb tense and on the question "who decides what comes next?".
+
+**Step 1.** "Charge the payment" is an imperative order, addressed to the payment service alone.
+
+It is a **command**.
+
+**Step 2.** "Order paid" states a fact that already happened, which several services may want to know about.
+
+It is an **event**.
+
+**Step 3.** "Send the confirmation email" is an order addressed to the email service alone.
+
+It is a **command**.
+
+**Step 4.** "Stock reserved" states an accomplished fact, broadcastable.
+
+It is an **event**.
+
+**Result.** The imperative verb and the single recipient give away the command; the past-tense verb and the broadcast give away the event.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: how long does the user wait?">
+Five services must be notified, with processing times of 50, 30, 20, 10 and 15 milliseconds. We compare the time the user waits in synchronous and in asynchronous mode.
+
+**Step 1.** In synchronous mode, the caller waits for the services in series: it adds up all the times.
+
+$$
+50 + 30 + 20 + 10 + 15
+$$
+
+**Step 2.** We sum step by step.
+
+$$
+50 + 30 = 80
+$$
+
+$$
+80 + 20 = 100
+$$
+
+$$
+100 + 10 + 15 = 125
+$$
+
+So the user waits 125 milliseconds, and this total grows with every added service.
+
+**Step 3.** In asynchronous mode, the caller drops a message and leaves. It only pays the cost of the drop, about 5 milliseconds, whatever the number of services.
+
+$$
+5 \ \text{ms, regardless of the number of services}
+$$
+
+**Result.** The synchronous mode makes the user pay the sum of the processing times (125 ms here, more tomorrow); the asynchronous mode makes them pay a near-constant cost, because the real work leaves their path.
+</Callout>
+
+## In one sentence
+
+Talking with messages means replacing a direct call, which couples two services in time and in failure, with an asynchronous drop that decouples them: the sender carries on with its work, and we distinguish the command, which orders and waits, from the event, which states and broadcasts.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Try again"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'Why is a direct synchronous call fragile when a called service goes down?',
+      options: [
+        "Because the sender stays coupled to the callee's availability: the failure propagates and makes the whole operation fail.",
+        'Because the message is lost forever.',
+        'Because the called service always returns a 500 error.',
+      ],
+      answer: 0,
+      explain:
+        "The synchronous call accumulates temporal and availability coupling. If the callee is not reachable at the instant of the call, the caller fails with it. The asynchronous message removes that coupling by inserting a queue that accepts the drop despite the failure.",
+    },
+    {
+      q: 'What is the essential difference between a command message and an event message?',
+      options: [
+        "The command orders a future action to a specific recipient and awaits an effect; the event states a past fact and is broadcast to unknown subscribers.",
+        'The command is fast, the event is slow.',
+        'The command uses RabbitMQ, the event uses Kafka.',
+      ],
+      answer: 0,
+      explain:
+        "Intention separates the two: an addressed order (imperative, single recipient, a result is awaited) versus an announced fact (past, broadcast, the sender does not know who reacts). The choice of intention then determines the verb used, send or publish.",
+    },
+    {
+      q: 'In asynchronous mode, what happens to the message destined for a momentarily down service?',
+      options: [
+        "It waits in the queue and will be processed when the service restarts; the caller is not affected.",
+        'It is immediately rejected and the operation fails.',
+        'It forces the down service to restart at once.',
+      ],
+      answer: 0,
+      explain:
+        "That is the whole point of decoupling: the dropped message waits for its consumer. The down service falls behind on its own, without dragging the caller or the other consumers with it. The rest of the course will show what must be guaranteed so this message is neither lost nor processed twice.",
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+We contrasted two families of messages: the command that orders, the event that states. But one common case is missing: when a service only needs to ask for information, without changing or ordering anything. "What is this customer's loyalty balance?" is neither an order nor a past fact. It is a third family, the query, and it is through it that the next chapter will complete the taxonomy of messages before we tackle delivery guarantees.
+
+## Sources
+
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. [Publisher reference](https://www.enterpriseintegrationpatterns.com/)
+- Hohpe, G. & Woolf, B. "Command Message" and "Event Message". *Enterprise Integration Patterns*. [Command Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CommandMessage.html), [Event Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/EventMessage.html)
+- Wolverine. *Message Bus Basics: InvokeAsync, SendAsync, PublishAsync*. Official documentation. [wolverinefx.net](https://wolverinefx.net/guide/messaging/message-bus.html)

@@ -1,0 +1,10 @@
+slug: couplage-temporel
+fr:
+  term: Couplage temporel
+  definition: "Dépendance qui force deux services à être disponibles au même instant pour qu'un échange réussisse. Un appel synchrone direct couple temporellement l'appelant et l'appelé : si l'appelé est en panne ou lent, l'appelant attend ou échoue. Le message asynchrone supprime ce couplage en intercalant une file qui accepte la demande même quand le destinataire est absent."
+en:
+  term: Temporal coupling
+  definition: "A dependency that forces two services to be available at the same instant for an exchange to succeed. A direct synchronous call temporally couples the caller and the callee: if the callee is down or slow, the caller waits or fails. An asynchronous message removes this coupling by inserting a queue that accepts the request even when the recipient is absent."
+seeAlso:
+  - communication-asynchrone
+  - message-d-evenement

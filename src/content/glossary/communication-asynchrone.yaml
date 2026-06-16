@@ -1,0 +1,10 @@
+slug: communication-asynchrone
+fr:
+  term: Communication asynchrone
+  definition: Mode d'échange où l'émetteur dépose un message et poursuit son travail sans attendre que le destinataire l'ait traité. Le message patiente dans une file ou un journal jusqu'à ce qu'un consommateur le prenne. S'oppose à la communication synchrone, où l'appelant reste bloqué jusqu'à la réponse.
+en:
+  term: Asynchronous messaging
+  definition: An exchange mode where the sender drops a message and carries on without waiting for the recipient to process it. The message waits in a queue or a log until a consumer picks it up. It contrasts with synchronous communication, where the caller stays blocked until the reply arrives.
+seeAlso:
+  - couplage-temporel
+  - message-de-commande

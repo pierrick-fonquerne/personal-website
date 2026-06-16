@@ -1,0 +1,10 @@
+slug: message-d-evenement
+fr:
+  term: Message d'événement
+  definition: Message qui annonce un fait déjà survenu (par exemple « Commande payée »). Il est nommé au passé, diffusé à qui veut l'écouter, et l'émetteur ignore qui le consomme, voire si quelqu'un le consomme. Plusieurs abonnés peuvent réagir au même événement. À distinguer du message de commande, qui demande une action future à un destinataire unique.
+en:
+  term: Event message
+  definition: A message that announces a fact that already happened (for example "Order paid"). It is named in the past tense, broadcast to whoever wants to listen, and the sender does not know who consumes it, or even whether anyone does. Several subscribers can react to the same event. To be distinguished from a command message, which asks a single recipient for a future action.
+seeAlso:
+  - message-de-commande
+  - couplage-temporel
