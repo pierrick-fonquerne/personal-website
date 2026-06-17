@@ -1,0 +1,13 @@
+slug: mediateur
+fr:
+  term: Médiateur
+  definition: "Objet qui centralise l'acheminement des messages à l'intérieur d'un même processus, en mémoire. Au lieu que l'émetteur référence directement le bon gestionnaire, il remet le message au médiateur, qui sait à quel handler le router : un seul pour une commande ou une requête, zéro à plusieurs abonnés pour un événement. Il se distingue du bus ou broker, qui rend le même service mais à travers le réseau, entre processus."
+  source: Gamma et al., 1994
+en:
+  term: Mediator
+  definition: "An object that centralizes message routing inside a single process, in memory. Instead of the sender referencing the right handler directly, it hands the message to the mediator, which knows which handler to route it to: a single one for a command or a query, zero to many subscribers for an event. It differs from a bus or broker, which provides the same service but across the network, between processes."
+  source: Gamma et al., 1994
+seeAlso:
+  - message-de-commande
+  - message-de-requete
+  - message-d-evenement

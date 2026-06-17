@@ -1,0 +1,14 @@
+slug: message-de-requete
+fr:
+  term: Message de requête
+  definition: "Message qui demande une information à un destinataire précis sans rien changer à l'état du système (par exemple « Quel est le solde de fidélité de ce client ? »). Il se formule comme une question, vise un seul gestionnaire, et l'émetteur attend toujours une donnée en retour. C'est la troisième famille de messages, à côté de la commande qui ordonne et de l'événement qui constate."
+  source: Hohpe & Woolf, 2003
+en:
+  term: Query message
+  definition: "A message that asks a specific recipient for information without changing any system state (for example \"What is this customer's loyalty balance?\"). It is phrased as a question, targets a single handler, and the sender always expects data in return. It is the third family of messages, alongside the command that orders and the event that states a fact."
+  source: Hohpe & Woolf, 2003
+seeAlso:
+  - message-de-commande
+  - message-d-evenement
+  - separation-commande-requete
+  - requete-reponse

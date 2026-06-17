@@ -1,0 +1,12 @@
+slug: separation-commande-requete
+fr:
+  term: Séparation commande-requête
+  definition: "Principe de conception selon lequel une opération doit soit changer l'état du système sans rien renvoyer d'utile (une commande), soit renvoyer une donnée sans rien changer (une requête), jamais les deux à la fois. Énoncé par Bertrand Meyer (Command-Query Separation, CQS), il rend chaque message lisible : on sait au premier coup d'oeil s'il écrit ou s'il lit. C'est la ligne qui sépare proprement la commande de la requête."
+  source: Meyer, 1988
+en:
+  term: Command-query separation
+  definition: "A design principle stating that an operation must either change the system state while returning nothing useful (a command), or return data while changing nothing (a query), never both at once. Coined by Bertrand Meyer (Command-Query Separation, CQS), it makes every message readable: you can tell at a glance whether it writes or reads. It is the line that cleanly separates a command from a query."
+  source: Meyer, 1988
+seeAlso:
+  - message-de-commande
+  - message-de-requete

@@ -1,0 +1,275 @@
+---
+course: messaging-foundations
+order: 1
+title: 'The three families of messages'
+subtitle: "The previous chapter set the command against the event. But asking for information is neither. Here is the third family, and the clean line that separates all three."
+estimatedMinutes: 19
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import MessageTaxonomyExplorer from '../../../components/learning/MessageTaxonomyExplorer.tsx';
+
+In the previous chapter, we separated two families of messages: the command, which orders ("Charge the payment"), and the event, which states a fact ("Order paid"). But pick up the scenario just before the payment: the order service must first check that the customer's card has not expired. "Is the card valid?" orders nothing and states no past fact. How do we name this move, and where do we file it?
+
+<Callout kind="info" title="Before we start">
+This chapter follows directly from chapter zero: you need to have kept the distinction between the command, which orders and awaits an effect, and the event, which announces a fact that already happened. You still do not need to know RabbitMQ or Kafka: we stay on the intent of the message, not yet on the machine that routes it.
+</Callout>
+
+## The missing question
+
+When your order service asks "Is the customer's card valid?", it is not trying to change the world: it is trying to know it. It awaits an answer, here a simple yes or no, and it needs that answer right now to decide what comes next. It is not an order, because nothing is changed. It is not a past fact being broadcast, because no one else is concerned and the sender awaits a specific reply.
+
+It is a third intent, as common as the other two: to ask. A <Term slug="message-de-requete">query message</Term> puts a question to a specific recipient and always awaits data in return, without changing any system state. "What is this customer's loyalty balance?", "Does this shipping address exist?", "How many units are left in stock?": all queries.
+
+The analogy from chapter zero still holds, but it needs refining. A command is dropping a note in a mailbox. A query is stepping up to a counter: you ask your question, and you stay there while the clerk checks the register and answers. You wait for the answer, but you asked for nothing to change.
+
+## Read or write: the dividing line
+
+Why separate the query from the command, when both address a single recipient? Because they do not do the same thing to the system. The command **writes**: it changes a state (a payment charged, a stock decreased). The query **reads**: it returns information without touching anything.
+
+This distinction has a name and a principle. <Term slug="separation-commande-requete">Command-query separation</Term>, stated by Bertrand Meyer in 1988, says that an operation must do one or the other, never both: either it changes state and returns nothing useful (command), or it returns data and changes nothing (query). A method that reserves the stock *and* returns the remaining stock mixes both roles, and that is exactly what we want to avoid.
+
+The payoff for reasoning is huge: a query is safe to replay (running it ten times changes nothing), a command is not (replaying it charges ten times). Knowing at a glance whether a message reads or writes is knowing whether it is dangerous to repeat. We will come back to this at length with delivery semantics.
+
+<Callout kind="note" title="Query does not mean slow">
+"Query" is often confused with "blocking synchronous call". These are two distinct things. A query describes an *intent* (read data), not a *technique* for routing. You can perfectly well send a query asynchronously and receive the answer later on a return channel. The intent (read) and the mode (synchronous or asynchronous) are two independent axes.
+</Callout>
+
+## Three families, two questions
+
+We now have everything we need to file any message. Two questions are enough, asked in order.
+
+The first question is about the recipient: is the message **addressed to a single known recipient**, or **broadcast to unknown subscribers**? If the sender does not know who is listening and awaits no return, it is an event, and the second question does not even arise. Broadcast is the trait that isolates the event.
+
+The second question only serves addressed messages: does this message **write** the state, or only **read** it? If it writes, it is a command. If it reads, it is a query.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    M[A message] -->|broadcast to unknowns| E[Event]
+    M -->|addressed to one| Q{writes or reads?}
+    Q -->|writes| C[Command]
+    Q -->|reads| R[Query]
+    style E fill:#f59e0b,color:#fff
+    style C fill:#7c5cff,color:#fff
+    style R fill:#38bdf8,color:#fff`}
+  caption="Decision tree: two questions file any message into one of the three families"
+/>
+
+Here are the three families side by side, on the criteria that matter.
+
+| Criterion | Command | Query | Event |
+|---|---|---|---|
+| Intent | Order | Ask | State a fact |
+| Verb tense | Imperative | Interrogative | Past |
+| Example | "Charge the payment" | "Is the card valid?" | "Order paid" |
+| Recipient | One, known | One, known | Unknown, broadcast |
+| Effect on state | Writes | Reads | States an already written fact |
+| Reply expected | An effect, sometimes a result | Always data | None |
+| Number of handlers | One | One | Zero to many |
+
+A useful note to avoid slipping up: command and query resemble each other in form (a single recipient, a precise exchange), but differ in effect (write versus read). Query and event resemble each other in the absence of an order, but differ in reach (one recipient versus a broadcast). Each pair shares one trait and opposes another: that is why you need both questions, not just one.
+
+## Sort the messages yourself
+
+The component below gives you six messages drawn from our e-commerce order. Drag each one into one of the three bins, or use the buttons. When you are done, check: every misplaced card reveals its true family and the reason, along the two axes we just laid out.
+
+<MessageTaxonomyExplorer
+  client:load
+  messages={[
+    { id: 'payment-charge', label: 'Charge the payment', isBroadcast: false, mutatesState: true },
+    { id: 'card-valid', label: "Is the customer's card valid?", isBroadcast: false, mutatesState: false },
+    { id: 'order-paid', label: 'Order paid', isBroadcast: true, mutatesState: true },
+    { id: 'stock-reserve', label: 'Reserve the stock', isBroadcast: false, mutatesState: true },
+    { id: 'loyalty-balance', label: "What is the customer's loyalty balance?", isBroadcast: false, mutatesState: false },
+    { id: 'stock-reserved', label: 'Stock reserved', isBroadcast: true, mutatesState: true },
+  ]}
+  copy={{
+    heading: 'Sort the messages',
+    instructions: "Drag each message into the right family, or use the buttons. Then check: every misplaced card reveals its true family and why.",
+    unassignedHeader: 'Messages to sort',
+    binCommand: 'Command',
+    binQuery: 'Query',
+    binEvent: 'Event',
+    assignLabel: 'Put in',
+    removeLabel: 'Remove',
+    checkLabel: 'Check',
+    resetLabel: 'Reset',
+    scoreLabel: 'Correctly sorted:',
+    correctLabel: 'Correct',
+    incorrectLabel: 'Rethink',
+    axisBroadcast: 'broadcast to unknown subscribers',
+    axisPointToPoint: 'addressed to a single recipient',
+    axisWrites: 'it changes state',
+    axisReads: 'it only reads',
+    expectedPrefix: 'Right family:',
+  }}
+/>
+
+Three questions to ask while sorting:
+
+- The two queries (the card validity, the loyalty balance) change nothing. What lets you tell them apart from commands, which resemble them in form?
+- "Order paid" and "Stock reserved" are in the past tense. Why are they events and not commands, even though they do speak of a write?
+- If you hesitate on a card, which question do you ask first: "writes or reads?" or "addressed or broadcast?" Why does the order matter?
+
+## In code: three families, three routings
+
+Messaging frameworks do not just distinguish the families on paper: they route them differently. And here appears a piece we used in chapter zero without naming it. The <Term slug="mediateur">mediator</Term> is the object that, in memory and inside a single process, receives a message and routes it to the right handler: one for a command or a query, zero to many for an event.
+
+<Callout kind="tip" title="Mediator in memory, bus over the network">
+The mediator routes messages inside a single process, without a network: it is a plain function call that finds the right handler. When services live in different processes or machines, that role is played by a bus or broker (RabbitMQ, Kafka), which carries the message over the network. Same idea of routing, two scales. Chapter two will open exactly this box: broker versus log.
+</Callout>
+
+With Hexeract, a messaging framework in Rust, each family has its own verb on the mediator. The query, new here, is declared with the `Query` trait and a return type, then sent with `query`:
+
+```rust
+// Query: we read, we await data, nothing is modified.
+impl Query for GetLoyaltyBalance {
+    type Output = LoyaltyPoints;
+}
+let balance = mediator.query(GetLoyaltyBalance { customer_id }).await?;
+
+// For reference, the two families from chapter zero:
+let payment_id = mediator.send(ProcessPayment { order_id, amount_cents }).await?; // command
+mediator.publish(OrderPaid { order_id }).await?;                                  // event
+```
+
+The trio is crisp: `send` to order, `query` to ask, `publish` to broadcast. Command-query separation is written into the type: `Command` and `Query` are two distinct traits, and the compiler refuses to confuse one with the other.
+
+With Wolverine, its .NET counterpart, the query has no dedicated verb: it borrows the request-reply channel. You send a message and await its typed reply with the same method as the command that returns a result:
+
+```csharp
+// Query: a request that returns a typed reply (request-reply).
+var balance = await bus.InvokeAsync<LoyaltyBalance>(new GetLoyaltyBalance(customerId));
+
+// The command that returns a result uses the same verb.
+var status = await bus.InvokeAsync<PaymentStatus>(new ProcessPayment(orderId, amountCents));
+
+// The event, in turn, returns nothing.
+await bus.PublishAsync(new OrderPaid(orderId));
+```
+
+Two philosophies, then. Hexeract makes the query a first-class type, distinct from the command. Wolverine treats it as a case of <Term slug="requete-reponse">request-reply</Term>: send something and await a correlated reply. Both are legitimate, and remembering this difference will spare you many sterile debates: what matters is not the framework's verb, but the intent you identified before writing it.
+
+## Exercises
+
+Take pen and paper. The solutions are right below, to look at only after you have tried.
+
+### Exercise 1: sort six messages
+
+Classify each of these six messages as a command, a query, or an event, by asking the two questions in order (addressed or broadcast, then writes or reads): (a) "Cancel the order", (b) "Is the customer of age?", (c) "Payment declined", (d) "Compute the shipping cost", (e) "What is the delivery status?", (f) "Email sent".
+
+### Exercise 2: repair a violation of command-query separation
+
+A developer wrote a single operation `ReserveStockAndGetRemaining` that, in one call, reserves three units of a product *and* returns the number of remaining units. Explain how it violates command-query separation, then propose the split into two messages, naming each one and stating its family.
+
+<Callout kind="tip" title="Solution to exercise 1: sort six messages">
+For each message we ask the first question (addressed to one, or broadcast to unknowns?), then, if it is addressed, the second (writes or reads?).
+
+**Step 1.** "Cancel the order" is an order addressed to the order service, and it changes state (the order moves to cancelled).
+
+It is a **command**.
+
+**Step 2.** "Is the customer of age?" is a question addressed to a specific service, changing nothing.
+
+It is a **query**.
+
+**Step 3.** "Payment declined" states a fact that already happened, which several services may want to know (the order, loyalty, the dunning process).
+
+It is an **event**.
+
+**Step 4.** "Compute the shipping cost" asks a specific service for a result. Watch the trap: "compute" sounds like an order, but nothing is written into the system, we only read a result.
+
+It is a **query**.
+
+**Step 5.** "What is the delivery status?" is an addressed question, with no write.
+
+It is a **query**.
+
+**Step 6.** "Email sent" states an accomplished fact, broadcastable.
+
+It is an **event**.
+
+**Result.** One command (a), three queries (b, d, e), two events (c, f). The trap was (d): the imperative tense is not enough, it is the effect on state that decides between command and query.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: repair a violation of command-query separation">
+We recall the rule: an operation writes (command) or reads (query), never both.
+
+**Step 1.** We identify the two roles mixed inside `ReserveStockAndGetRemaining`.
+
+Reserving three units **changes state**: it is a write, so a command role.
+
+Returning the number of remaining units **reads state**: it is a read, so a query role.
+
+**Step 2.** We split into two distinct messages, each with a single role.
+
+A command `ReserveStock` that reserves the three units and does not return the count.
+
+A query `GetRemainingStock` that returns the remaining units without reserving anything.
+
+**Step 3.** We check the payoff. The query `GetRemainingStock` is now safe to replay: running it again reserves nothing. The command `ReserveStock` still must be handled with care, but its danger is isolated and visible.
+
+**Result.** One command (`ReserveStock`, writes) plus one query (`GetRemainingStock`, reads). Each message has a single role, and you can tell at first glance which one is dangerous to repeat.
+</Callout>
+
+## In one sentence
+
+Every message belongs to one of three families, told apart by two questions: broadcast to unknowns, it is an event; addressed to a single recipient, it is a command if it writes the state, a query if it only reads it.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'Which question tells a command apart from a query, once we know both are addressed to a single recipient?',
+      options: [
+        'Does the message change state (command) or only read it (query)?',
+        'Is the message fast (query) or slow (command)?',
+        'Does the message use RabbitMQ (command) or Kafka (query)?',
+      ],
+      answer: 0,
+      explain:
+        "This is command-query separation: an operation writes the state without returning anything useful (command), or returns data without changing anything (query). Speed and routing technology are axes independent of the intent.",
+    },
+    {
+      q: 'Why is a query safe to replay, unlike a command?',
+      options: [
+        'Because it only reads: running it ten times changes nothing, whereas a replayed command writes ten times.',
+        'Because a query is always cached by the network.',
+        'Because a query never crosses the network.',
+      ],
+      answer: 0,
+      explain:
+        "A query reads the state without modifying it: it is idempotent by nature. A command writes, so repeating it produces repeated effects. This property will become central in the chapter on delivery semantics.",
+    },
+    {
+      q: 'How do Hexeract and Wolverine express the query, and what should you take away?',
+      options: [
+        "Hexeract makes it a dedicated type (the Query trait), Wolverine treats it as request-reply (InvokeAsync): intent comes before the framework's verb.",
+        'Both forbid queries to force the use of events.',
+        'Hexeract and Wolverine use exactly the same method under the same name.',
+      ],
+      answer: 0,
+      explain:
+        "Hexeract separates Command and Query into two traits; Wolverine folds the query into the request-reply channel of InvokeAsync, shared with the command that returns a result. Two legitimate design choices: what matters is having identified the intent before choosing the verb.",
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+We now know *what* we send: commands, queries, events. But from the start, we have treated "the mailbox" as a black box that accepts deposits and distributes them. Yet there are two great ways to build that box, two philosophies that do not keep the same promises. The first, the broker, delivers each message to a consumer then forgets it, like a postman. The second, the log, keeps every message in order, like a register everyone rereads at their own pace. Chapter two opens the box and pits these two worlds against each other, RabbitMQ versus Kafka.
+
+## Sources
+
+- Meyer, B. (1988). *Object-Oriented Software Construction*. Prentice Hall. Command-Query Separation principle. [Publisher reference](https://bertrandmeyer.com/oosc2/)
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. [Publisher reference](https://www.enterpriseintegrationpatterns.com/)
+- Hohpe, G. & Woolf, B. "Command Message" and "Request-Reply". *Enterprise Integration Patterns*. [Command Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CommandMessage.html), [Request-Reply](https://www.enterpriseintegrationpatterns.com/patterns/messaging/RequestReply.html)
+- Wolverine. *Message Bus Basics: InvokeAsync, SendAsync, PublishAsync*. Official documentation. [wolverinefx.net](https://wolverinefx.net/guide/messaging/message-bus.html)
