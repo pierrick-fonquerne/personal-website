@@ -284,12 +284,6 @@ export interface Translations {
     legalLink: string;
     rssLabel: string;
   };
-  consent: {
-    message: string;
-    accept: string;
-    decline: string;
-    learnMore: string;
-  };
   legal: {
     indexTitle: string;
     linkLabel: string;
@@ -737,12 +731,6 @@ const en: Translations = {
     contactTitle: '// Contact',
     legalLink: 'Legal',
     rssLabel: 'RSS feed',
-  },
-  consent: {
-    message: 'This site uses Umami Analytics to measure audience anonymously, without cookies.',
-    accept: 'Accept',
-    decline: 'Decline',
-    learnMore: 'Learn more',
   },
   legal: {
     indexTitle: 'Legal Notice',

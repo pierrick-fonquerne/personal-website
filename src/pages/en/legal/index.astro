@@ -27,7 +27,7 @@ const t = useTranslations(locale);
         </p>
         <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
           <p>Pierrick Fonquerne</p>
-          <p>Individual — Limoux, Aude, France</p>
+          <p>Individual - Limoux, Aude, France</p>
           <p>
             Contact:
             <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
@@ -49,7 +49,7 @@ const t = useTranslations(locale);
           Hosting
         </p>
         <div class="space-y-1 text-sm leading-relaxed text-[var(--color-fg-muted)]">
-          <p>OVH SAS — 2 rue Kellermann, 59100 Roubaix, France</p>
+          <p>OVH SAS - 2 rue Kellermann, 59100 Roubaix, France</p>
           <p>
             <a href="https://www.ovhcloud.com" target="_blank" rel="noopener noreferrer" class="text-[var(--color-accent)] transition-colors hover:underline">
               www.ovhcloud.com
@@ -73,13 +73,20 @@ const t = useTranslations(locale);
         </p>
         <div class="space-y-3 text-sm leading-relaxed text-[var(--color-fg-muted)]">
           <p>
-            This site uses <strong class="font-medium text-[var(--color-fg)]">Umami Analytics</strong>, a self-hosted, cookieless, GDPR-compliant audience measurement tool. No cookie is placed in your browser. IP addresses are anonymized before storage. No data is shared with third parties.
+            This site uses <strong class="font-medium text-[var(--color-fg)]">Umami Analytics</strong>, a self-hosted, cookieless, GDPR-compliant audience measurement tool. No cookie is placed in your browser. IP addresses are not retained. No data is shared with third parties.
           </p>
           <p>
-            Audience measurement is only activated after your explicit consent. You may withdraw your consent at any time by clearing the
-            <code class="rounded bg-[var(--color-hover)] px-1.5 py-0.5 font-mono text-xs">analytics-consent</code>
-            key from your localStorage (via your browser's developer tools).
+            Audience measurement is anonymous and falls under the consent exemption for audience analytics. It is active by default. You may opt out at any time in two ways: by enabling the <strong class="font-medium text-[var(--color-fg)]">Do Not Track</strong> or <strong class="font-medium text-[var(--color-fg)]">Global Privacy Control</strong> setting in your browser (honored automatically), or via the button below.
           </p>
+          <div class="pt-1">
+            <button
+              id="analytics-optout-btn"
+              type="button"
+              class="rounded-lg border border-[var(--color-line-strong)] px-4 py-1.5 text-sm text-[var(--color-fg-muted)] transition-colors duration-200 hover:bg-[var(--color-hover)]"
+            >
+              Loading...
+            </button>
+          </div>
           <p>
             In accordance with the GDPR, you have the right to access, correct, and delete your data. Contact:
             <a href="mailto:contact@pierrickfonquerne.com" class="text-[var(--color-accent)] transition-colors hover:underline">
@@ -110,3 +117,44 @@ const t = useTranslations(locale);
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  const UMAMI_DISABLED_KEY = 'umami.disabled';
+
+  function updateButton() {
+    const btn = document.getElementById('analytics-optout-btn') as HTMLButtonElement | null;
+    if (!btn) return;
+    let isOptedOut = false;
+    try {
+      isOptedOut = localStorage.getItem(UMAMI_DISABLED_KEY) === '1';
+    } catch {
+      /* localStorage unavailable */
+    }
+    if (isOptedOut) {
+      btn.textContent = 'Analytics: disabled. Re-enable.';
+    } else {
+      btn.textContent = 'Analytics: active. Opt out.';
+    }
+  }
+
+  // Event delegation - survives view transitions
+  document.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest('#analytics-optout-btn')) return;
+    try {
+      const isOptedOut = localStorage.getItem(UMAMI_DISABLED_KEY) === '1';
+      if (isOptedOut) {
+        localStorage.removeItem(UMAMI_DISABLED_KEY);
+      } else {
+        localStorage.setItem(UMAMI_DISABLED_KEY, '1');
+      }
+    } catch {
+      /* localStorage unavailable */
+    }
+    updateButton();
+  });
+
+  document.addEventListener('astro:page-load', updateButton);
+  updateButton();
+</script>
