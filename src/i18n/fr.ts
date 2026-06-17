@@ -437,13 +437,6 @@ const fr: Translations = {
     legalLink: 'Mentions légales',
     rssLabel: 'Flux RSS',
   },
-  consent: {
-    message:
-      "Ce site utilise Umami Analytics pour mesurer l'audience de manière anonyme, sans cookie.",
-    accept: 'Accepter',
-    decline: 'Refuser',
-    learnMore: 'En savoir plus',
-  },
   legal: {
     indexTitle: 'Mentions légales',
     linkLabel: 'Mentions légales',

@@ -1,0 +1,70 @@
+---
+import type { Locale } from '../../lib/i18n';
+
+interface Props {
+  locale: Locale;
+  umamiSiteId: string;
+  umamiUrl: string;
+}
+
+const { umamiSiteId, umamiUrl } = Astro.props;
+---
+
+<div
+  id="analytics-loader"
+  style="display:none"
+  data-website-id={umamiSiteId}
+  data-umami-url={umamiUrl}
+  aria-hidden="true"
+></div>
+
+<script>
+  function injectUmami() {
+    if (window.__umamiLoaded) return;
+    const loader = document.getElementById('analytics-loader') as HTMLElement | null;
+    const websiteId = loader?.dataset.websiteId;
+    const umamiUrl = loader?.dataset.umamiUrl;
+    if (!websiteId || !umamiUrl) return;
+    window.__umamiLoaded = true;
+    const s = document.createElement('script');
+    s.defer = true;
+    s.src = `${umamiUrl}/script.js`;
+    s.dataset.websiteId = websiteId;
+    document.head.appendChild(s);
+  }
+
+  function readSignals(): { doNotTrack: boolean; globalPrivacyControl: boolean; optedOut: boolean } {
+    let optedOut = false;
+    try {
+      optedOut = localStorage.getItem('umami.disabled') === '1';
+    } catch {
+      /* localStorage unavailable */
+    }
+
+    const doNotTrack =
+      navigator.doNotTrack === '1' ||
+      (window as unknown as { doNotTrack?: string }).doNotTrack === '1' ||
+      (navigator as unknown as { msDoNotTrack?: string }).msDoNotTrack === '1';
+
+    const globalPrivacyControl =
+      (navigator as unknown as { globalPrivacyControl?: boolean }).globalPrivacyControl === true;
+
+    return { doNotTrack, globalPrivacyControl, optedOut };
+  }
+
+  function init() {
+    const { doNotTrack, globalPrivacyControl, optedOut } = readSignals();
+    const shouldLoad = !doNotTrack && !globalPrivacyControl && !optedOut;
+    if (shouldLoad) {
+      injectUmami();
+    }
+  }
+
+  // Reset before each navigation so Umami is re-evaluated on the new page
+  document.addEventListener('astro:before-swap', () => {
+    window.__umamiLoaded = false;
+  });
+
+  document.addEventListener('astro:page-load', init);
+  init();
+</script>
