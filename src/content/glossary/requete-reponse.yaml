@@ -1,0 +1,12 @@
+slug: requete-reponse
+fr:
+  term: Requête-réponse
+  definition: "Schéma d'échange où l'émetteur envoie une requête puis attend, sur un canal de retour, la réponse correspondante. C'est le motif naturel de la requête : « Quel est le solde ? » appelle « 240 points ». Pour relier chaque réponse à sa requête quand plusieurs circulent, on attache souvent un identifiant de corrélation. Décrit par Hohpe & Woolf sous le nom Request-Reply."
+  source: Hohpe & Woolf, 2003
+en:
+  term: Request-reply
+  definition: "An exchange pattern where the sender issues a request then waits, on a return channel, for the matching reply. It is the natural shape of a query: \"What is the balance?\" calls for \"240 points\". To match each reply to its request when several are in flight, a correlation identifier is often attached. Described by Hohpe & Woolf as Request-Reply."
+  source: Hohpe & Woolf, 2003
+seeAlso:
+  - message-de-requete
+  - separation-commande-requete

@@ -1,0 +1,275 @@
+---
+course: messaging-foundations
+order: 1
+title: 'Les trois familles de messages'
+subtitle: "Le chapitre précédent opposait la commande et l'événement. Mais demander une information n'est ni l'un ni l'autre. Voici la troisième famille, et la ligne nette qui les sépare toutes les trois."
+estimatedMinutes: 19
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import MessageTaxonomyExplorer from '../../../components/learning/MessageTaxonomyExplorer.tsx';
+
+Au chapitre précédent, on a séparé deux familles de messages : la commande, qui ordonne (« Prélève le paiement »), et l'événement, qui constate (« Commande payée »). Mais reprends le scénario juste avant le paiement : le service de commande doit d'abord vérifier que la carte du client n'est pas expirée. « La carte est-elle valide ? » n'ordonne rien et ne constate aucun fait passé. Comment nommer ce geste, et où le ranger ?
+
+<Callout kind="info" title="Avant de commencer">
+Ce chapitre prolonge directement le chapitre zéro : il faut en avoir retenu la distinction entre la commande, qui ordonne et attend un effet, et l'événement, qui annonce un fait déjà survenu. Tu n'as toujours pas besoin de connaître RabbitMQ ni Kafka : on reste sur l'intention du message, pas encore sur la machine qui l'achemine.
+</Callout>
+
+## La question manquante
+
+Quand ton service de commande demande « La carte du client est-elle valide ? », il ne cherche pas à changer le monde : il cherche à le connaître. Il attend une réponse, ici un simple oui ou non, et il en a besoin tout de suite pour décider de la suite. Ce n'est pas un ordre, car rien n'est modifié. Ce n'est pas un fait passé que l'on diffuse, car personne d'autre n'est concerné et l'émetteur attend un retour précis.
+
+C'est une troisième intention, aussi courante que les deux autres : demander. Un <Term slug="message-de-requete">message de requête</Term> pose une question à un destinataire précis et attend toujours une donnée en retour, sans rien changer à l'état du système. « Quel est le solde de fidélité de ce client ? », « Cette adresse de livraison existe-t-elle ? », « Combien reste-t-il en stock ? » : autant de requêtes.
+
+L'analogie du chapitre zéro tient toujours, mais il faut l'affiner. La commande, c'est déposer un mot dans une boîte aux lettres. La requête, c'est se présenter à un guichet : on pose sa question, et on reste là, le temps que l'employé consulte son registre et réponde. On attend la réponse, mais on n'a rien demandé de changer.
+
+## Lire ou écrire : la ligne de partage
+
+Pourquoi séparer la requête de la commande, alors que les deux s'adressent à un seul destinataire ? Parce qu'elles ne font pas la même chose au système. La commande **écrit** : elle change un état (un paiement prélevé, un stock diminué). La requête **lit** : elle renvoie une information sans rien toucher.
+
+Cette distinction porte un nom et un principe. La <Term slug="separation-commande-requete">séparation commande-requête</Term>, énoncée par Bertrand Meyer en 1988, dit qu'une opération doit faire l'un ou l'autre, jamais les deux : soit elle change l'état et ne renvoie rien d'utile (commande), soit elle renvoie une donnée et ne change rien (requête). Une méthode qui réserve le stock *et* renvoie le stock restant mélange les deux rôles, et c'est exactement ce qu'on cherche à éviter.
+
+Le gain est immense pour raisonner : une requête est rejouable sans risque (la relancer dix fois ne change rien), une commande ne l'est pas (la rejouer prélève dix fois). Savoir, au premier coup d'oeil, si un message lit ou écrit, c'est savoir s'il est dangereux de le répéter. On y reviendra longuement avec les sémantiques de livraison.
+
+<Callout kind="note" title="Requête n'est pas lenteur">
+On confond souvent « requête » avec « appel synchrone bloquant ». Ce sont deux choses distinctes. La requête décrit une *intention* (lire une donnée), pas une *technique* d'acheminement. On peut très bien envoyer une requête de façon asynchrone et recevoir la réponse plus tard sur un canal de retour. L'intention (lire) et le mode (synchrone ou asynchrone) sont deux axes indépendants.
+</Callout>
+
+## Trois familles, deux questions
+
+On a maintenant tout pour ranger n'importe quel message. Deux questions suffisent, posées dans l'ordre.
+
+La première question porte sur le destinataire : le message est-il **adressé à un seul destinataire connu**, ou **diffusé à des abonnés inconnus** ? Si l'émetteur ne sait pas qui écoute et n'attend aucun retour, c'est un événement, et la seconde question ne se pose même pas. La diffusion est le trait qui isole l'événement.
+
+La seconde question ne sert qu'aux messages adressés : ce message **écrit-il** l'état, ou le **lit-il** seulement ? S'il écrit, c'est une commande. S'il lit, c'est une requête.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    M[Un message] -->|diffusé à des inconnus| E[Événement]
+    M -->|adressé à un seul| Q{écrit ou lit ?}
+    Q -->|écrit| C[Commande]
+    Q -->|lit| R[Requête]
+    style E fill:#f59e0b,color:#fff
+    style C fill:#7c5cff,color:#fff
+    style R fill:#38bdf8,color:#fff`}
+  caption="Arbre de décision : deux questions classent tout message dans l'une des trois familles"
+/>
+
+Voici les trois familles côte à côte, sur les critères qui comptent.
+
+| Critère | Commande | Requête | Événement |
+|---|---|---|---|
+| Intention | Ordonner | Demander | Constater |
+| Temps du verbe | Impératif | Interrogatif | Passé |
+| Exemple | « Prélève le paiement » | « La carte est-elle valide ? » | « Commande payée » |
+| Destinataire | Un seul, connu | Un seul, connu | Inconnus, diffusé |
+| Effet sur l'état | Écrit | Lit | Constate un fait déjà écrit |
+| Réponse attendue | Un effet, parfois un résultat | Toujours une donnée | Aucune |
+| Nombre de gestionnaires | Un | Un | Zéro à plusieurs |
+
+Une remarque utile pour ne pas se tromper : commande et requête se ressemblent par la forme (un destinataire unique, un échange précis), mais s'opposent par l'effet (écrire contre lire). Requête et événement se ressemblent par l'absence d'ordre, mais s'opposent par la portée (un destinataire contre une diffusion). Chaque paire partage un trait et en oppose un autre : c'est pourquoi il faut les deux questions, pas une seule.
+
+## Range les messages toi-même
+
+Le composant ci-dessous te donne six messages tirés de notre commande e-commerce. Fais glisser chacun dans l'un des trois bacs, ou sers-toi des boutons. Quand tu as fini, vérifie : chaque carte mal classée révèle sa vraie famille et la raison, sur les deux axes que l'on vient de poser.
+
+<MessageTaxonomyExplorer
+  client:load
+  messages={[
+    { id: 'payment-charge', label: 'Prélève le paiement', isBroadcast: false, mutatesState: true },
+    { id: 'card-valid', label: 'La carte du client est-elle valide ?', isBroadcast: false, mutatesState: false },
+    { id: 'order-paid', label: 'Commande payée', isBroadcast: true, mutatesState: true },
+    { id: 'stock-reserve', label: 'Réserve le stock', isBroadcast: false, mutatesState: true },
+    { id: 'loyalty-balance', label: 'Quel est le solde de fidélité du client ?', isBroadcast: false, mutatesState: false },
+    { id: 'stock-reserved', label: 'Stock réservé', isBroadcast: true, mutatesState: true },
+  ]}
+  copy={{
+    heading: 'Range les messages',
+    instructions: "Fais glisser chaque message dans la bonne famille, ou utilise les boutons. Vérifie ensuite : chaque carte mal rangée révèle sa vraie famille et pourquoi.",
+    unassignedHeader: 'Messages à classer',
+    binCommand: 'Commande',
+    binQuery: 'Requête',
+    binEvent: 'Événement',
+    assignLabel: 'Ranger dans',
+    removeLabel: 'Retirer',
+    checkLabel: 'Vérifier',
+    resetLabel: 'Recommencer',
+    scoreLabel: 'Bien classés :',
+    correctLabel: 'Juste',
+    incorrectLabel: 'À revoir',
+    axisBroadcast: 'diffusé à des abonnés inconnus',
+    axisPointToPoint: 'adressé à un destinataire unique',
+    axisWrites: "il change l'état",
+    axisReads: 'il lit seulement',
+    expectedPrefix: 'Bonne famille :',
+  }}
+/>
+
+Trois questions à te poser en classant :
+
+- Les deux requêtes (la validité de la carte, le solde de fidélité) ne changent rien. Qu'est-ce qui te permet de les distinguer des commandes, qui leur ressemblent par la forme ?
+- « Commande payée » et « Stock réservé » sont au passé. Pourquoi sont-ils des événements et non des commandes, alors qu'ils parlent bien d'une écriture ?
+- Si tu hésites sur une carte, quelle question poses-tu en premier : « écrit ou lit ? » ou « adressé ou diffusé ? » Pourquoi l'ordre compte-t-il ?
+
+## Côté code : trois familles, trois acheminements
+
+Les frameworks de messaging ne se contentent pas de distinguer les familles sur le papier : ils les acheminent différemment. Et c'est ici qu'apparaît une pièce dont on s'est servi au chapitre zéro sans la nommer. Le <Term slug="mediateur">médiateur</Term> est l'objet qui, en mémoire et dans un seul processus, reçoit un message et le route vers le bon gestionnaire : un seul pour une commande ou une requête, zéro à plusieurs pour un événement.
+
+<Callout kind="tip" title="Médiateur en mémoire, bus sur le réseau">
+Le médiateur achemine les messages à l'intérieur d'un même processus, sans réseau : c'est un simple appel de fonction qui trouve le bon handler. Quand les services vivent dans des processus ou des machines différents, ce rôle est tenu par un bus ou broker (RabbitMQ, Kafka), qui fait passer le message sur le réseau. Même idée d'acheminement, deux échelles. Le chapitre deux ouvrira justement cette boîte : courtier contre journal.
+</Callout>
+
+Avec Hexeract, un framework de messaging en Rust, chaque famille a son verbe sur le médiateur. La requête, nouvelle ici, se déclare avec le trait `Query` et un type de retour, puis s'envoie avec `query` :
+
+```rust
+// Requête : on lit, on attend une donnée, rien n'est modifié.
+impl Query for GetLoyaltyBalance {
+    type Output = LoyaltyPoints;
+}
+let balance = mediator.query(GetLoyaltyBalance { customer_id }).await?;
+
+// Pour mémoire, les deux familles du chapitre zéro :
+let payment_id = mediator.send(ProcessPayment { order_id, amount_cents }).await?; // commande
+mediator.publish(OrderPaid { order_id }).await?;                                  // événement
+```
+
+Le trio est limpide : `send` pour ordonner, `query` pour demander, `publish` pour diffuser. La séparation commande-requête est inscrite dans le type : `Command` et `Query` sont deux traits distincts, et le compilateur refuse de confondre l'un avec l'autre.
+
+Avec Wolverine, son équivalent en .NET, la requête n'a pas de verbe dédié : elle emprunte le canal de la demande-réponse. On envoie un message et on attend sa réponse typée avec la même méthode que la commande qui renvoie un résultat :
+
+```csharp
+// Requête : une demande qui renvoie une réponse typée (request-reply).
+var balance = await bus.InvokeAsync<LoyaltyBalance>(new GetLoyaltyBalance(customerId));
+
+// La commande qui renvoie un résultat utilise le même verbe.
+var status = await bus.InvokeAsync<PaymentStatus>(new ProcessPayment(orderId, amountCents));
+
+// L'événement, lui, ne renvoie rien.
+await bus.PublishAsync(new OrderPaid(orderId));
+```
+
+Deux philosophies, donc. Hexeract fait de la requête un type de premier rang, distinct de la commande. Wolverine la traite comme un cas de la <Term slug="requete-reponse">requête-réponse</Term> : envoyer quelque chose et attendre une réponse corrélée. Les deux sont légitimes, et retenir cette différence t'évitera bien des débats stériles : ce qui compte n'est pas le verbe du framework, mais l'intention que tu as identifiée avant de l'écrire.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : classer six messages
+
+Classe chacun de ces six messages en commande, requête ou événement, en posant les deux questions dans l'ordre (adressé ou diffusé, puis écrit ou lit) : (a) « Annule la commande », (b) « Le client est-il majeur ? », (c) « Paiement refusé », (d) « Calcule les frais de port », (e) « Quel est le statut de la livraison ? », (f) « Email envoyé ».
+
+### Exercice 2 : réparer une violation de la séparation commande-requête
+
+Un développeur a écrit une seule opération `ReserveStockAndGetRemaining` qui, en un appel, réserve trois unités d'un produit *et* renvoie le nombre d'unités restantes. Explique en quoi elle viole la séparation commande-requête, puis propose le découpage en deux messages, en nommant chacun et en indiquant sa famille.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : classer six messages">
+On pose pour chaque message la première question (adressé à un seul, ou diffusé à des inconnus ?), puis, s'il est adressé, la seconde (écrit ou lit ?).
+
+**Étape 1.** « Annule la commande » est un ordre adressé au service de commande, et il change l'état (la commande passe à annulée).
+
+C'est une **commande**.
+
+**Étape 2.** « Le client est-il majeur ? » est une question adressée à un service précis, sans rien changer.
+
+C'est une **requête**.
+
+**Étape 3.** « Paiement refusé » constate un fait déjà survenu, que plusieurs services peuvent vouloir connaître (la commande, la fidélité, la relance).
+
+C'est un **événement**.
+
+**Étape 4.** « Calcule les frais de port » demande un résultat à un service précis. Attention au piège : « calcule » sonne comme un ordre, mais rien n'est écrit dans le système, on lit seulement un résultat.
+
+C'est une **requête**.
+
+**Étape 5.** « Quel est le statut de la livraison ? » est une question adressée, sans écriture.
+
+C'est une **requête**.
+
+**Étape 6.** « Email envoyé » constate un fait accompli, diffusable.
+
+C'est un **événement**.
+
+**Résultat.** Une commande (a), trois requêtes (b, d, e), deux événements (c, f). Le piège était (d) : le temps impératif ne suffit pas, c'est l'effet sur l'état qui tranche entre commande et requête.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : réparer une violation de la séparation commande-requête">
+On rappelle la règle : une opération écrit (commande) ou lit (requête), jamais les deux.
+
+**Étape 1.** On identifie les deux rôles mélangés dans `ReserveStockAndGetRemaining`.
+
+Réserver trois unités **change l'état** : c'est une écriture, donc un rôle de commande.
+
+Renvoyer le nombre d'unités restantes **lit l'état** : c'est une lecture, donc un rôle de requête.
+
+**Étape 2.** On sépare en deux messages distincts, chacun avec un seul rôle.
+
+Une commande `ReserveStock` qui réserve les trois unités et ne renvoie pas le décompte.
+
+Une requête `GetRemainingStock` qui renvoie les unités restantes sans rien réserver.
+
+**Étape 3.** On vérifie le gain. La requête `GetRemainingStock` est désormais rejouable sans risque : la relancer ne réserve rien. La commande `ReserveStock`, elle, reste à manier avec précaution, mais son danger est isolé et visible.
+
+**Résultat.** Une commande (`ReserveStock`, écrit) plus une requête (`GetRemainingStock`, lit). Chaque message a un rôle unique, et l'on sait au premier regard lequel est dangereux à répéter.
+</Callout>
+
+## En une phrase
+
+Tout message appartient à l'une de trois familles, que l'on distingue par deux questions : diffusé à des inconnus, c'est un événement ; adressé à un seul destinataire, c'est une commande s'il écrit l'état, une requête s'il le lit seulement.
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Quelle question distingue une commande d'une requête, une fois qu'on sait que les deux sont adressées à un destinataire unique ?",
+      options: [
+        "Le message change-t-il l'état (commande) ou le lit-il seulement (requête) ?",
+        'Le message est-il rapide (requête) ou lent (commande) ?',
+        "Le message utilise-t-il RabbitMQ (commande) ou Kafka (requête) ?",
+      ],
+      answer: 0,
+      explain:
+        "C'est la séparation commande-requête : une opération écrit l'état sans rien renvoyer d'utile (commande), ou renvoie une donnée sans rien changer (requête). La vitesse et la technologie d'acheminement sont des axes indépendants de l'intention.",
+    },
+    {
+      q: "Pourquoi une requête est-elle sans danger à rejouer, contrairement à une commande ?",
+      options: [
+        "Parce qu'elle ne fait que lire : la relancer dix fois ne change rien, alors qu'une commande rejouée écrit dix fois.",
+        "Parce qu'une requête est toujours mise en cache par le réseau.",
+        "Parce qu'une requête ne traverse jamais le réseau.",
+      ],
+      answer: 0,
+      explain:
+        "La requête lit l'état sans le modifier : elle est idempotente par nature. Une commande écrit, donc la répéter produit des effets répétés. Cette propriété deviendra centrale au chapitre sur les sémantiques de livraison.",
+    },
+    {
+      q: 'Comment Hexeract et Wolverine expriment-ils la requête, et que faut-il en retenir ?',
+      options: [
+        "Hexeract en fait un type dédié (trait Query), Wolverine la traite comme une demande-réponse (InvokeAsync) : l'intention prime sur le verbe du framework.",
+        "Les deux interdisent les requêtes pour forcer l'usage d'événements.",
+        'Hexeract et Wolverine emploient exactement la même méthode au même nom.',
+      ],
+      answer: 0,
+      explain:
+        "Hexeract distingue Command et Query par deux traits ; Wolverine replie la requête dans le canal request-reply de InvokeAsync, partagé avec la commande qui renvoie un résultat. Deux choix de conception légitimes : ce qui compte est d'avoir identifié l'intention avant de choisir le verbe.",
+    },
+  ]}
+/>
+
+## Vers le chapitre suivant
+
+On sait maintenant *quoi* on s'envoie : des commandes, des requêtes, des événements. Mais depuis le début, on traite « la boîte aux lettres » comme une boîte noire qui accepte les dépôts et les distribue. Or il existe deux grandes façons de construire cette boîte, deux philosophies qui ne tiennent pas les mêmes promesses. La première, le courtier, distribue chaque message à un consommateur puis l'oublie, comme un facteur. La seconde, le journal, conserve tous les messages dans l'ordre, comme un registre que chacun relit à son rythme. Le chapitre deux ouvre la boîte et confronte ces deux mondes, RabbitMQ contre Kafka.
+
+## Sources
+
+- Meyer, B. (1988). *Object-Oriented Software Construction*. Prentice Hall. Principe de séparation commande-requête (Command-Query Separation). [Référence de l'éditeur](https://bertrandmeyer.com/oosc2/)
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. [Référence de l'éditeur](https://www.enterpriseintegrationpatterns.com/)
+- Hohpe, G. & Woolf, B. « Command Message » et « Request-Reply ». *Enterprise Integration Patterns*. [Command Message](https://www.enterpriseintegrationpatterns.com/patterns/messaging/CommandMessage.html), [Request-Reply](https://www.enterpriseintegrationpatterns.com/patterns/messaging/RequestReply.html)
+- Wolverine. *Message Bus Basics: InvokeAsync, SendAsync, PublishAsync*. Documentation officielle. [wolverinefx.net](https://wolverinefx.net/guide/messaging/message-bus.html)

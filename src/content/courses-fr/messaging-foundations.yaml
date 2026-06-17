@@ -12,8 +12,15 @@ tags:
 theme: architecture
 subtheme: messaging
 level: intermediate
-estimatedMinutes: 18
+estimatedMinutes: 37
 modules:
   - 00-pourquoi-parler-par-messages
+  - 01-les-trois-familles-de-messages
+personalNote: |
+  Ce cours est né d'un projet parallèle : écrire Hexeract, mon framework de messaging en Rust. À mesure que je le construisais, je me suis rendu compte que je ne maîtrisais vraiment une notion qu'une fois capable de l'enseigner. L'outbox transactionnel, les sémantiques de livraison, le backpressure : autant de pièces que j'ai d'abord codées, puis voulu comprendre assez profondément pour les expliquer simplement.
+
+  Je l'ai donc écrit pour exploiter au maximum ce que m'apprenait Hexeract, et pour transmettre la version que j'aurais aimé lire en démarrant : partir des garanties, pas des technos, et toujours avec un exemple réel sous les yeux.
+
+  Je ne prétends pas tout maîtriser des systèmes distribués. Je partage le chemin, les bons choix comme les pièges, avec l'honnêteté de quelqu'un qui apprend en construisant.
 published: true
 publishedAt: 2026-06-16
