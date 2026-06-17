@@ -12,7 +12,7 @@ tags:
 theme: architecture
 subtheme: messaging
 level: intermediate
-estimatedMinutes: 18
+estimatedMinutes: 37
 modules:
   - 00-pourquoi-parler-par-messages
   - 01-les-trois-familles-de-messages
