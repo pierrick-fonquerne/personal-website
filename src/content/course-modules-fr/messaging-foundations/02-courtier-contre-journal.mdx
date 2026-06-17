@@ -1,0 +1,276 @@
+---
+course: messaging-foundations
+order: 2
+title: 'Courtier contre journal'
+subtitle: "Le chapitre précédent traitait la boîte aux lettres comme une boîte noire. On l'ouvre. Il y a deux façons de la construire, et toute la différence tient à une question : qui se souvient de ce qui a déjà été lu ?"
+estimatedMinutes: 22
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import BrokerVsLogVisualizer from '../../../components/learning/BrokerVsLogVisualizer.tsx';
+
+Au chapitre précédent, on a appris à nommer ce qu'on s'envoie : des commandes, des requêtes, des événements. Mais on a traité « la boîte aux lettres » qui les transporte comme une boîte noire qui accepte les dépôts et les distribue. Reprends le scénario : ton service de commande publie l'événement « Commande payée ». Que devient ce message une fois déposé ? Est-il remis à un lecteur puis détruit, ou conservé et relisible plus tard ? Et qui, du système ou du lecteur, se souvient de ce qui a déjà été lu ? La réponse partage le monde du messaging en deux familles d'outils, et ce chapitre ouvre la boîte pour les confronter.
+
+<Callout kind="info" title="Avant de commencer">
+Ce chapitre prolonge les deux précédents : il faut avoir retenu les trois familles de messages (commande, requête, événement) et la différence entre un acheminement en mémoire (le médiateur) et un acheminement sur le réseau (le bus). Tu n'as pas besoin de savoir installer RabbitMQ ni Kafka, ni de connaître leurs protocoles : on raisonne sur le modèle, pas sur la machine.
+</Callout>
+
+## Le facteur et le registre
+
+Au chapitre un, on a esquissé l'image en une phrase. Déroule-la maintenant.
+
+Imagine d'abord un facteur. Tu lui confies une lettre, il la porte à un destinataire, le destinataire signe, et le facteur jette sa copie : sa mission est finie, il ne garde aucune trace. Si quelqu'un d'autre voulait lire cette lettre demain, c'est trop tard, elle a été remise une fois puis oubliée. Le facteur sait seulement ce qu'il lui reste à distribuer ; une fois distribué, plus rien.
+
+Imagine maintenant un grand registre relié, posé sur une table. Chaque message qui arrive y est recopié à la suite, sur une nouvelle ligne numérotée, et rien n'est jamais effacé. N'importe qui peut s'asseoir, poser un doigt sur une ligne, lire vers le bas à son rythme, et revenir en arrière s'il le souhaite. Deux lecteurs avancent indépendamment : l'un peut être à la ligne 40, l'autre encore à la ligne 12. Le registre, lui, ne retient pas qui a lu quoi : c'est chaque lecteur qui se souvient de l'endroit où il en est.
+
+Ces deux images ne sont pas des décorations : ce sont les deux grandes architectures du messaging. Le facteur, c'est le <Term slug="courtier-de-messages">courtier de messages</Term>, dont RabbitMQ est l'archétype. Le registre, c'est le <Term slug="journal-de-messages">journal de messages</Term>, dont Kafka est l'archétype. Tout le chapitre consiste à comprendre pourquoi ce choix d'image change profondément ce que le système sait faire.
+
+## Le courtier : distribuer puis oublier
+
+Commençons par le facteur. Un courtier gère des files. Tu publies un message, il le range dans une file, et il le remet à un consommateur qui s'y est branché. Dès que le consommateur confirme qu'il l'a bien reçu et traité, le courtier retire le message de la file. Il a disparu. Personne ne le relira.
+
+Que se passe-t-il quand plusieurs consommateurs se branchent sur la même file ? Le courtier les sert chacun à tour de rôle : le premier message à l'un, le suivant à un autre, et ainsi de suite. Chaque message ne va donc qu'à un seul consommateur, et le travail se répartit tout seul entre eux. C'est le motif des consommateurs concurrents : pour traiter plus vite, on ajoute des consommateurs sur la même file, et le courtier équilibre la charge. C'est exactement ce qu'on veut pour un pool de travailleurs qui prélèvent des paiements : chaque paiement doit être traité une fois et une seule, par n'importe lequel d'entre eux.
+
+Le point capital est ailleurs. Où vit l'information « ce message reste-t-il à traiter ? » Elle vit dans le courtier. C'est lui qui tient la file, lui qui sait ce qui reste, lui qui efface après confirmation. Le consommateur, lui, ne retient rien : il reçoit, il traite, il confirme, il oublie. Conséquence directe et lourde : un consommateur qui arrive trop tard ne verra jamais les messages déjà distribués et effacés. Ils n'existent plus nulle part.
+
+<Callout kind="note" title="Effacer n'est pas instantané, mais c'est définitif">
+En pratique, un courtier ne supprime pas le message à la microseconde où il le livre : il attend l'acquittement du consommateur, et peut le redonner à un autre si le premier tombe en panne avant de confirmer. Mais une fois le message acquitté, il est bien retiré pour de bon. Le moment précis de cet acquittement, avant ou après le traitement, décide de garanties subtiles : c'est tout le sujet du chapitre suivant. Retiens ici la finalité : acquitté égale effacé.
+</Callout>
+
+## Le journal : conserver et laisser relire
+
+Passons au registre. Un journal est une suite de messages écrits les uns à la suite des autres, et jamais effacés : on ne fait qu'ajouter à la fin. C'est ce qu'on appelle une structure en ajout seul. Chaque message reçoit en y entrant un numéro de position définitif, croissant : le premier message est à la position 0, le suivant à 1, et ainsi de suite.
+
+Comment un consommateur lit-il ce journal ? Il garde un curseur : le numéro du prochain message qu'il compte lire. Ce curseur porte un nom, l'<Term slug="offset">offset</Term>, et voici la bascule de tout le chapitre : l'offset appartient au consommateur, pas au journal. Le journal ne sait pas, et n'a pas à savoir, qui a lu jusqu'où. C'est chaque lecteur qui tient son offset et le fait avancer à mesure qu'il lit.
+
+De là découle tout ce qui distingue le journal du courtier. Comme l'offset vit chez le lecteur et que le message reste, un nouveau lecteur peut très bien remettre son offset à 0 et relire tout l'historique depuis le début. Et plusieurs lecteurs indépendants peuvent lire le même journal sans se gêner, chacun à sa position. Pour organiser ces lecteurs, on les réunit en <Term slug="groupe-de-consommateurs">groupes de consommateurs</Term> : à l'intérieur d'un groupe, les membres se partagent le travail et chaque message n'est traité qu'une fois, exactement comme les consommateurs concurrents d'un courtier ; mais deux groupes distincts ont chacun leur propre offset, si bien qu'un même message est lu une fois par chaque groupe. Trois groupes branchés sur le journal, c'est trois lectures complètes et indépendantes du même flux.
+
+<Callout kind="tip" title="Le journal n'est pas qu'une seule ligne">
+Pour tenir la charge, un journal réel ne range pas tout dans une unique suite : il découpe le flux en plusieurs morceaux appelés partitions, lus en parallèle. Cela permet le débit, mais introduit une subtilité sur l'ordre des messages que l'on gardera entière pour le chapitre quatre, consacré à l'ordre et à l'idempotence. Pour l'instant, raisonne sur une seule suite de positions : l'idée d'offset reste exactement la même.
+</Callout>
+
+Reste une nuance honnête : « jamais effacé » a une limite pratique. Un journal conserve les messages pendant une durée, ou jusqu'à une taille, que l'on configure : c'est la rétention. Tant que la rétention couvre la période voulue, on peut relire ; au-delà, les vieux messages finissent par être recyclés. La relecture est donc possible, mais bornée par ce qu'on a décidé de garder.
+
+## La bascule : qui détient la position de lecture ?
+
+On peut maintenant mettre les deux mondes face à face. La vraie différence n'est pas « file contre suite de lignes » : c'est l'endroit où vit la position de lecture, et tout le reste en découle.
+
+| Critère | Courtier (file) | Journal (log) |
+|---|---|---|
+| Qui détient la position de lecture | Le courtier | Le consommateur (son offset) |
+| Sort d'un message lu | Effacé après acquittement | Conservé, relisible |
+| Un même message peut être lu par | Un seul consommateur | Autant de groupes que l'on veut |
+| Plusieurs consommateurs sur le flux | Se partagent (consommateurs concurrents) | Se partagent dans un groupe, plusieurs groupes en parallèle |
+| Relire l'historique | Impossible (effacé) | Possible (rembobiner l'offset), borné par la rétention |
+| Un lecteur tardif voit le passé | Non | Oui, tant que la rétention le couvre |
+| Archétype | RabbitMQ | Kafka |
+
+Lis la troisième colonne comme une cascade : parce que l'offset vit chez le consommateur et que le message reste, on peut relire, on peut rembobiner, on peut brancher autant de groupes qu'on veut. Et lis la deuxième de même : parce que le courtier détient la position et efface, il sert vite et simplement un travail à répartir, mais il ne sait pas revenir en arrière. Aucun des deux n'est « meilleur » : ils répondent à deux besoins différents, qu'on va apprendre à reconnaître.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    M[Un message lu] --> Q{qui détient la position ?}
+    Q -->|le courtier| B[effacé après acquittement<br/>un seul lecteur, pas de relecture]
+    Q -->|le consommateur, son offset| L[conservé<br/>plusieurs groupes, relecture possible]
+    style B fill:#7c5cff,color:#fff
+    style L fill:#38bdf8,color:#fff`}
+  caption="La position de lecture côté courtier vit dans le courtier ; côté journal, elle vit dans le consommateur. Tout le reste en découle."
+/>
+
+## Observe la bascule toi-même
+
+Le composant ci-dessous fait tourner le même flux de messages dans les deux modèles, côte à côte. Produis quelques messages, puis joue.
+
+Côté courtier, distribue les messages à des consommateurs concurrents et regarde la file se vider : chaque message part vers un seul consommateur, puis disparaît. Côté journal, fais avancer l'offset des groupes et regarde que rien ne s'efface. Enfin, le geste révélateur : ajoute un lecteur tardif. Côté courtier, il arrive devant une file vide, il n'a rien à lire. Côté journal, il repart de l'offset 0 et relit tout l'historique. C'est toute la différence, en un bouton.
+
+<BrokerVsLogVisualizer
+  client:load
+  initialWorkerIds={['A', 'B']}
+  initialGroupIds={['facturation', 'fidélité']}
+  messageLabels={[
+    'Commande payée',
+    'Stock réservé',
+    'Colis expédié',
+    'Facture émise',
+    'Commande livrée',
+  ]}
+  copy={{
+    heading: 'Courtier contre journal',
+    instructions: "Produis des messages, puis distribue-les côté courtier et fais avancer les offsets côté journal. Pour finir, ajoute un lecteur tardif et compare ce qu'il voit de chaque côté.",
+    brokerTitle: 'Courtier (file)',
+    logTitle: 'Journal (log)',
+    queueLabel: "File d'attente",
+    workersLabel: 'Consommateurs concurrents',
+    produceLabel: 'Produire un message',
+    deliverLabel: 'Distribuer le suivant',
+    addWorkerLabel: 'Ajouter un consommateur',
+    advanceLabel: 'Lire le suivant',
+    addGroupLabel: 'Ajouter un lecteur tardif',
+    rewindLabel: 'Rembobiner à zéro',
+    resetLabel: 'Recommencer',
+    handledLabel: 'traités',
+    offsetLabel: 'offset',
+    unreadLabel: 'non lus',
+    caughtUpLabel: 'à jour',
+    emptyQueueLabel: 'file vide : rien à distribuer',
+    emptyLogLabel: 'journal vide',
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+- Après avoir tout distribué côté courtier, ajoute un consommateur puis clique « Distribuer le suivant ». Pourquoi ne reçoit-il rien, alors qu'un nouveau groupe côté journal, lui, peut tout relire ?
+- Fais avancer l'offset du groupe « facturation » sans toucher à « fidélité ». Qu'est-ce que cela montre sur l'indépendance des deux offsets ?
+- Côté courtier, le compteur « traités » de tes consommateurs augmente, mais la file se vide. Côté journal, les offsets avancent mais le nombre de messages ne baisse jamais. Quelle propriété de chaque modèle cette asymétrie résume-t-elle ?
+
+## Côté code : un courtier dans l'âme, un journal en face
+
+Voyons comment ces deux modèles apparaissent dans du vrai code. Et c'est ici qu'un aveu utile s'impose.
+
+Hexeract, le framework Rust de messaging qui nous sert de fil rouge, est un courtier dans l'âme. Son bus s'appuie sur RabbitMQ : on publie un message sur une file, un travailleur la consomme, l'acquitte, et le message disparaît. Plusieurs travailleurs sur la même file forment des consommateurs concurrents, et RabbitMQ répartit entre eux.
+
+```rust
+// Publier : le message part vers une file, sous une clé de routage.
+let transport = RabbitMqTransport::new(&amqp_url).await?;
+transport
+    .publish("orders.order-paid", &OrderPaid { order_id })
+    .await?;
+
+// Consommer : un travailleur lit la file et traite chaque message.
+// Lancer plusieurs travailleurs sur la MEME file, c'est des consommateurs
+// concurrents : RabbitMQ les sert à tour de rôle, chaque message à un seul.
+let worker = RabbitMqWorkerBuilder::new(connection)
+    .queue("orders.order-paid")
+    .register_handler::<OrderPaid, _>(NotifyShippingHandler)
+    .build()?;
+worker.run(cancel).await?;
+```
+
+Cherche un offset, un groupe de consommateurs, une relecture dans Hexeract : tu n'en trouveras pas, et c'est volontaire. Un message acquitté y est retiré, point. Loin d'être un manque, c'est la preuve par le code de ce que dit ce chapitre : un courtier efface, il ne conserve pas. Pour obtenir un journal, il faut un autre modèle, pas une option de plus sur le même.
+
+Wolverine, son équivalent en .NET, est instructif parce qu'il sait parler aux deux mondes. Avec un transport RabbitMQ, on règle le nombre de consommateurs concurrents sur une file. Avec un transport Kafka, on rejoint un groupe de consommateurs et l'on choisit où poser l'offset, y compris au tout début pour relire.
+
+```csharp
+// Côté courtier (RabbitMQ) : plusieurs consommateurs se partagent la file.
+opts.ListenToRabbitQueue("orders.order-paid")
+    .ListenerCount(5); // cinq consommateurs concurrents sur la même file
+
+// Côté journal (Kafka) : un groupe lit le topic et tient son offset.
+// AutoOffsetReset.Earliest dit : si ce groupe est nouveau, repars du début
+// et relis tout l'historique conservé.
+opts.ListenToKafkaTopic("orders.order-paid")
+    .ConfigureConsumer(config =>
+    {
+        config.GroupId = "fraud-detection";
+        config.AutoOffsetReset = AutoOffsetReset.Earliest;
+    });
+```
+
+Deux lignes résument la bascule : `ListenerCount` ajoute des consommateurs qui se partagent une file que le courtier vide ; `GroupId` plus `AutoOffsetReset.Earliest` crée un lecteur qui détient son offset et peut rembobiner. Le même message « Commande payée », selon la boîte qu'on choisit, est soit distribué une fois puis oublié, soit conservé et relu par autant de groupes qu'on veut.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : choisir la bonne boîte
+
+Pour notre commande e-commerce, deux besoins distincts. (a) Un pool de travailleurs prélève les paiements : chaque paiement doit être traité une fois et une seule, par n'importe quel travailleur libre. (b) L'événement « Commande payée » doit être reçu par trois services qui en font des choses différentes : la facturation, la fidélité, et l'analytique ; et chacun doit pouvoir rejouer les événements après une panne. Pour chaque besoin, dis si un courtier ou un journal convient mieux, et justifie en une phrase à partir de la position de lecture.
+
+### Exercice 2 : le service qui arrive en retard
+
+Un nouveau service de détection de fraude doit analyser tous les paiements des sept derniers jours, y compris ceux survenus avant son déploiement. Première question : avec un courtier, pourquoi est-ce tout simplement impossible ? Deuxième question : avec un journal, comment t'y prends-tu concrètement, et de quel réglage la réussite dépend-elle ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : choisir la bonne boîte">
+On raisonne à chaque fois sur une seule question : où doit vivre la position de lecture, et a-t-on besoin de relire ?
+
+**Étape 1.** Le besoin (a), prélever les paiements, demande qu'un message aille à un seul travailleur, sans relecture.
+
+C'est exactement ce que fait un courtier avec des consommateurs concurrents : un pool de travailleurs sur une file, chaque paiement traité une fois puis effacé. Le courtier convient.
+
+**Étape 2.** Le besoin (b) demande que le même événement soit reçu par trois services indépendants, et rejouable après panne.
+
+Un courtier effacerait le message dès le premier service servi : les deux autres ne le verraient jamais. Il faut donc un journal, avec trois groupes de consommateurs (facturation, fidélité, analytique). Chaque groupe a son offset, donc lit tout le flux, et peut rejouer en rembobinant.
+
+**Résultat.** (a) un courtier (un seul lecteur par message, pas de relecture) ; (b) un journal (plusieurs groupes indépendants, relecture possible). Le critère qui tranche est toujours le même : un seul lecteur sans retour en arrière, ou plusieurs lecteurs avec relecture.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : le service qui arrive en retard">
+On part de l'endroit où vit la position de lecture dans chaque modèle.
+
+**Étape 1.** Avec un courtier, les paiements des sept derniers jours ont déjà été distribués à leurs consommateurs et acquittés.
+
+Acquitté égale effacé : ces messages n'existent plus nulle part. Le service de fraude qui se branche aujourd'hui trouve une file qui ne contient que les paiements à venir. Relire le passé est impossible, car il n'y a plus de passé à lire.
+
+**Étape 2.** Avec un journal, les paiements sont conservés, et l'offset appartient au consommateur.
+
+Le service de fraude crée un nouveau groupe de consommateurs et place son offset au début de la fenêtre voulue (par exemple le plus tôt disponible, comme `AutoOffsetReset.Earliest`). Il relit alors tous les paiements conservés, puis continue avec les nouveaux.
+
+**Étape 3.** On nomme le réglage dont tout dépend.
+
+La relecture n'est possible que si la rétention du journal couvre les sept jours. Si le journal ne garde que trois jours, les quatre plus anciens ont été recyclés et sont perdus, journal ou pas.
+
+**Résultat.** Impossible avec un courtier (messages effacés) ; possible avec un journal via un nouveau groupe rembobiné, à la stricte condition que la rétention couvre la période demandée.
+</Callout>
+
+## En une phrase
+
+Un courtier distribue chaque message à un seul consommateur puis l'efface, en gardant lui-même la position de lecture ; un journal conserve les messages et laisse chaque consommateur tenir son propre offset, ce qui autorise plusieurs lecteurs indépendants et la relecture de l'historique.
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Quelle est la vraie différence de fond entre un courtier et un journal ?",
+      options: [
+        "L'endroit où vit la position de lecture : dans le courtier, qui efface après acquittement, ou chez le consommateur, sous forme d'offset, le message restant conservé.",
+        'Le courtier est rapide et le journal est lent.',
+        "Le courtier ne transporte que des commandes et le journal que des événements.",
+      ],
+      answer: 0,
+      explain:
+        "Tout en découle : comme le courtier détient la position et efface, il n'y a ni relecture ni lecteur tardif ; comme le consommateur détient son offset sur un message conservé, on peut rembobiner et brancher plusieurs groupes.",
+    },
+    {
+      q: "Pourquoi trois groupes de consommateurs branchés sur le même journal lisent-ils chacun tout le flux, alors que trois consommateurs concurrents sur une file de courtier se le partagent ?",
+      options: [
+        "Parce que chaque groupe a son propre offset sur un journal qui conserve les messages, tandis que sur une file le courtier efface le message dès qu'un consommateur l'a pris.",
+        'Parce que Kafka duplique physiquement chaque message en trois exemplaires à la production.',
+        'Parce que les groupes de consommateurs désactivent le partage de charge interne.',
+      ],
+      answer: 0,
+      explain:
+        "Au sein d'un groupe, les membres se partagent le travail (un message une fois). Entre groupes, les offsets sont indépendants sur un même journal conservé, donc chaque groupe relit tout. Sur un courtier, l'effacement empêche tout second lecteur.",
+    },
+    {
+      q: "Un nouveau service doit traiter des messages produits avant son démarrage. Que peut-on dire ?",
+      options: [
+        "Avec un journal il le peut en rembobinant son offset, dans la limite de la rétention ; avec un courtier c'est impossible car les messages acquittés sont effacés.",
+        "C'est toujours possible, quel que soit le modèle, en redémarrant le courtier.",
+        "C'est impossible dans les deux modèles : un message déjà produit n'est jamais relisible.",
+      ],
+      answer: 0,
+      explain:
+        "Le journal conserve et l'offset appartient au consommateur : un nouveau groupe rembobiné relit l'historique, tant que la rétention le couvre. Le courtier, lui, a déjà effacé : il n'y a plus rien à relire.",
+    },
+  ]}
+/>
+
+## Vers le chapitre suivant
+
+On sait maintenant ce que devient un message : effacé après acquittement chez le courtier, conservé et relisible chez le journal. Mais on a glissé sur un mot lourd de conséquences : l'acquittement. Reviens au facteur. Acquitte-t-il la lettre au moment où il te la tend, ou seulement après que tu l'as signée ? S'il jette sa copie en te la tendant et que tu la fais tomber dans une flaque, elle est perdue : personne ne la rejouera. S'il attend ta signature et que la foudre tombe juste après que tu as signé mais avant qu'il ne note ta signature, il reviendra demain te livrer la même lettre : tu la recevras deux fois. Perdre une fois, ou recevoir deux fois : ce dilemme n'est pas un détail technique, c'est le choix des sémantiques de livraison. Le chapitre trois place l'instant de l'acquittement sous le microscope et montre quelles garanties, at-most-once, at-least-once, effectively-once, on peut réellement tenir.
+
+## Sources
+
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. Motifs « Message Broker », « Competing Consumers », « Point-to-Point Channel » et « Publish-Subscribe Channel ». [Référence de l'éditeur](https://www.enterpriseintegrationpatterns.com/)
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapitre 11 « Stream Processing » (courtiers de messages classiques contre journaux). O'Reilly. [Référence de l'éditeur](https://dataintensive.net/)
+- Apache Kafka. *Documentation : Consumers, Consumer Groups, Offsets*. [kafka.apache.org](https://kafka.apache.org/documentation/#intro_consumers)
+- RabbitMQ. *Consumers and Acknowledgements*. [rabbitmq.com](https://www.rabbitmq.com/docs/consumers)
+- Wolverine. *Kafka Transport* et *RabbitMQ Listeners*. Documentation officielle. [Kafka](https://wolverinefx.net/guide/messaging/transports/kafka.html), [RabbitMQ](https://wolverinefx.net/guide/messaging/transports/rabbitmq/listening.html)

@@ -1,0 +1,13 @@
+slug: journal-de-messages
+fr:
+  term: Journal de messages
+  definition: "Suite ordonnée et append-only de messages que l'on conserve au lieu de les effacer après lecture. L'archetype est Kafka : chaque message reçoit une position fixe, et plusieurs lecteurs peuvent le relire indépendamment, chacun à son rythme. À l'inverse du courtier, l'état de lecture ne vit pas dans le journal mais chez le consommateur, sous la forme d'un offset."
+  source: Kleppmann, 2017
+en:
+  term: Message log
+  definition: "An ordered, append-only sequence of messages kept instead of being erased after reading. The archetype is Kafka: each message gets a fixed position, and several readers can re-read it independently, each at its own pace. Unlike the broker, the read state does not live in the log but in the consumer, as an offset."
+  source: Kleppmann, 2017
+seeAlso:
+  - courtier-de-messages
+  - offset
+  - groupe-de-consommateurs

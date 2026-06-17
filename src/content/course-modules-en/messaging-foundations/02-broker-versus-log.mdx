@@ -1,0 +1,276 @@
+---
+course: messaging-foundations
+order: 2
+title: 'Broker versus log'
+subtitle: "The previous chapter treated the mailbox as a black box. We open it. There are two ways to build it, and the whole difference comes down to one question: who remembers what has already been read?"
+estimatedMinutes: 22
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import BrokerVsLogVisualizer from '../../../components/learning/BrokerVsLogVisualizer.tsx';
+
+In the previous chapter, we learned to name what we send each other: commands, queries, events. But we treated the "mailbox" that carries them as a black box that accepts drop-offs and hands them out. Take the scenario again: your order service publishes the event "Order paid". What becomes of that message once dropped off? Is it handed to a reader then destroyed, or kept and re-readable later? And who, the system or the reader, remembers what has already been read? The answer splits the messaging world into two families of tools, and this chapter opens the box to compare them.
+
+<Callout kind="info" title="Before you start">
+This chapter builds on the two previous ones: you need to have kept the three families of messages (command, query, event) and the difference between in-memory routing (the mediator) and network routing (the bus). You do not need to know how to install RabbitMQ or Kafka, nor their protocols: we reason about the model, not the machine.
+</Callout>
+
+## The mailman and the ledger
+
+In chapter one, we sketched the image in a single sentence. Unfold it now.
+
+Picture a mailman first. You hand him a letter, he carries it to a recipient, the recipient signs, and the mailman throws away his copy: his job is done, he keeps no trace. If someone else wanted to read that letter tomorrow, it is too late, it was delivered once then forgotten. The mailman only knows what he still has to deliver; once delivered, nothing remains.
+
+Now picture a large bound ledger lying on a table. Every message that arrives is copied onto the next numbered line, and nothing is ever erased. Anyone can sit down, put a finger on a line, read downward at their own pace, and go back up if they wish. Two readers move independently: one may be on line 40, the other still on line 12. The ledger itself does not remember who read what: it is each reader who remembers where they are.
+
+These two images are not decoration: they are the two great architectures of messaging. The mailman is the <Term slug="courtier-de-messages">message broker</Term>, whose archetype is RabbitMQ. The ledger is the <Term slug="journal-de-messages">message log</Term>, whose archetype is Kafka. The whole chapter is about understanding why this choice of image deeply changes what the system can do.
+
+## The broker: deliver then forget
+
+Let us start with the mailman. A broker manages queues. You publish a message, it files it into a queue, and it hands it to a consumer plugged into that queue. As soon as the consumer confirms it received and processed it, the broker removes the message from the queue. It is gone. No one will re-read it.
+
+What happens when several consumers plug into the same queue? The broker serves them in turn: the first message to one, the next to another, and so on. Each message therefore goes to a single consumer, and the work splits itself among them. This is the competing consumers pattern: to process faster, you add consumers on the same queue, and the broker balances the load. It is exactly what you want for a pool of workers charging payments: each payment must be processed once and only once, by any one of them.
+
+The crucial point lies elsewhere. Where does the information "is this message still to be processed?" live? It lives in the broker. It holds the queue, it knows what remains, it erases after confirmation. The consumer keeps nothing: it receives, processes, confirms, forgets. A direct and heavy consequence: a consumer that arrives too late will never see the messages already delivered and erased. They no longer exist anywhere.
+
+<Callout kind="note" title="Erasing is not instant, but it is final">
+In practice a broker does not delete the message the microsecond it delivers it: it waits for the consumer's acknowledgement, and may hand it to another if the first crashes before confirming. But once the message is acknowledged, it is removed for good. The exact moment of that acknowledgement, before or after processing, decides subtle guarantees: that is the whole subject of the next chapter. Keep here the outcome: acknowledged equals erased.
+</Callout>
+
+## The log: keep and let re-read
+
+Now the ledger. A log is a sequence of messages written one after another, and never erased: you only ever append to the end. This is what we call an append-only structure. Each message, as it enters, receives a permanent, increasing position number: the first message is at position 0, the next at 1, and so on.
+
+How does a consumer read this log? It keeps a cursor: the number of the next message it plans to read. This cursor has a name, the <Term slug="offset">offset</Term>, and here is the pivot of the whole chapter: the offset belongs to the consumer, not to the log. The log does not know, and need not know, who has read up to where. It is each reader who holds its offset and advances it as it reads.
+
+From there follows everything that sets the log apart from the broker. Because the offset lives in the reader and the message stays, a new reader can simply reset its offset to 0 and re-read the whole history from the start. And several independent readers can read the same log without getting in each other's way, each at its own position. To organize these readers, they are gathered into <Term slug="groupe-de-consommateurs">consumer groups</Term>: inside a group, members share the work and each message is processed only once, exactly like a broker's competing consumers; but two distinct groups each have their own offset, so the same message is read once by each group. Three groups plugged into the log means three complete and independent readings of the same stream.
+
+<Callout kind="tip" title="The log is not just one line">
+To handle load, a real log does not keep everything in a single sequence: it splits the stream into several pieces called partitions, read in parallel. This enables throughput, but introduces a subtlety about message ordering that we will keep whole for chapter four, devoted to ordering and idempotence. For now, reason about a single sequence of positions: the idea of an offset stays exactly the same.
+</Callout>
+
+One honest nuance remains: "never erased" has a practical limit. A log keeps messages for a duration, or up to a size, that you configure: this is retention. As long as retention covers the period you want, you can re-read; beyond that, old messages eventually get recycled. Replay is therefore possible, but bounded by what you chose to keep.
+
+## The pivot: who holds the read position?
+
+We can now put the two worlds face to face. The real difference is not "a queue versus a sequence of lines": it is where the read position lives, and everything else follows.
+
+| Criterion | Broker (queue) | Log |
+|---|---|---|
+| Who holds the read position | The broker | The consumer (its offset) |
+| Fate of a read message | Erased after acknowledgement | Kept, re-readable |
+| The same message can be read by | A single consumer | As many groups as you want |
+| Several consumers on the stream | Share it (competing consumers) | Share within a group, several groups in parallel |
+| Re-read history | Impossible (erased) | Possible (rewind the offset), bounded by retention |
+| A late reader sees the past | No | Yes, as long as retention covers it |
+| Archetype | RabbitMQ | Kafka |
+
+Read the third column as a cascade: because the offset lives in the consumer and the message stays, you can re-read, you can rewind, you can plug in as many groups as you like. And read the second the same way: because the broker holds the position and erases, it serves fast and simply a workload to spread out, but it cannot go back. Neither is "better": they answer two different needs, which we will learn to recognize.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    M[A read message] --> Q{who holds the position?}
+    Q -->|the broker| B[erased after acknowledgement<br/>one reader, no replay]
+    Q -->|the consumer, its offset| L[kept<br/>several groups, replay possible]
+    style B fill:#7c5cff,color:#fff
+    style L fill:#38bdf8,color:#fff`}
+  caption="On the broker side the read position lives in the broker; on the log side it lives in the consumer. Everything else follows."
+/>
+
+## See the pivot yourself
+
+The component below runs the same stream of messages through both models, side by side. Produce a few messages, then play.
+
+On the broker side, deliver the messages to competing consumers and watch the queue empty: each message goes to a single consumer, then disappears. On the log side, advance the groups' offsets and watch that nothing is erased. Finally, the revealing move: add a late reader. On the broker side, it faces an empty queue, it has nothing to read. On the log side, it starts from offset 0 and re-reads the whole history. That is the whole difference, in one button.
+
+<BrokerVsLogVisualizer
+  client:load
+  initialWorkerIds={['A', 'B']}
+  initialGroupIds={['billing', 'loyalty']}
+  messageLabels={[
+    'Order paid',
+    'Stock reserved',
+    'Parcel shipped',
+    'Invoice issued',
+    'Order delivered',
+  ]}
+  copy={{
+    heading: 'Broker versus log',
+    instructions: 'Produce messages, then deliver them on the broker side and advance the offsets on the log side. To finish, add a late reader and compare what it sees on each side.',
+    brokerTitle: 'Broker (queue)',
+    logTitle: 'Log',
+    queueLabel: 'Queue',
+    workersLabel: 'Competing consumers',
+    produceLabel: 'Produce a message',
+    deliverLabel: 'Deliver the next',
+    addWorkerLabel: 'Add a consumer',
+    advanceLabel: 'Read the next',
+    addGroupLabel: 'Add a late reader',
+    rewindLabel: 'Rewind to zero',
+    resetLabel: 'Reset',
+    handledLabel: 'handled',
+    offsetLabel: 'offset',
+    unreadLabel: 'unread',
+    caughtUpLabel: 'caught up',
+    emptyQueueLabel: 'empty queue: nothing to deliver',
+    emptyLogLabel: 'empty log',
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+- After delivering everything on the broker side, add a consumer then click "Deliver the next". Why does it receive nothing, while a new group on the log side can re-read everything?
+- Advance the offset of the "billing" group without touching "loyalty". What does this show about the independence of the two offsets?
+- On the broker side, your consumers' "handled" counter rises, but the queue empties. On the log side, the offsets advance but the number of messages never drops. Which property of each model does this asymmetry capture?
+
+## In code: a broker at heart, a log facing it
+
+Let us see how these two models appear in real code. And here a useful admission is in order.
+
+Hexeract, the Rust messaging framework that serves as our running thread, is a broker at heart. Its bus builds on RabbitMQ: you publish a message to a queue, a worker consumes it, acknowledges it, and the message disappears. Several workers on the same queue form competing consumers, and RabbitMQ spreads the work among them.
+
+```rust
+// Publish: the message goes to a queue, under a routing key.
+let transport = RabbitMqTransport::new(&amqp_url).await?;
+transport
+    .publish("orders.order-paid", &OrderPaid { order_id })
+    .await?;
+
+// Consume: a worker reads the queue and processes each message.
+// Running several workers on the SAME queue is competing consumers:
+// RabbitMQ serves them in turn, each message to a single one.
+let worker = RabbitMqWorkerBuilder::new(connection)
+    .queue("orders.order-paid")
+    .register_handler::<OrderPaid, _>(NotifyShippingHandler)
+    .build()?;
+worker.run(cancel).await?;
+```
+
+Look for an offset, a consumer group, a replay in Hexeract: you will not find one, and that is deliberate. An acknowledged message is removed, full stop. Far from a gap, it is proof in code of what this chapter says: a broker erases, it does not keep. To get a log, you need another model, not one more option on the same one.
+
+Wolverine, its .NET counterpart, is instructive because it knows how to speak to both worlds. With a RabbitMQ transport, you set the number of competing consumers on a queue. With a Kafka transport, you join a consumer group and choose where to place the offset, including at the very beginning to re-read.
+
+```csharp
+// Broker side (RabbitMQ): several consumers share the queue.
+opts.ListenToRabbitQueue("orders.order-paid")
+    .ListenerCount(5); // five competing consumers on the same queue
+
+// Log side (Kafka): a group reads the topic and holds its offset.
+// AutoOffsetReset.Earliest says: if this group is new, start from the
+// beginning and re-read all the retained history.
+opts.ListenToKafkaTopic("orders.order-paid")
+    .ConfigureConsumer(config =>
+    {
+        config.GroupId = "fraud-detection";
+        config.AutoOffsetReset = AutoOffsetReset.Earliest;
+    });
+```
+
+Two lines capture the pivot: `ListenerCount` adds consumers that share a queue the broker empties; `GroupId` plus `AutoOffsetReset.Earliest` creates a reader that holds its offset and can rewind. The same "Order paid" message, depending on the box you choose, is either delivered once then forgotten, or kept and re-read by as many groups as you want.
+
+## Exercises
+
+Grab a pen and paper. The solutions are right below, to look at only after you have tried.
+
+### Exercise 1: choose the right box
+
+For our e-commerce order, two distinct needs. (a) A pool of workers charges payments: each payment must be processed once and only once, by any free worker. (b) The "Order paid" event must be received by three services that do different things with it: billing, loyalty, and analytics; and each must be able to replay the events after a crash. For each need, say whether a broker or a log fits better, and justify in one sentence based on the read position.
+
+### Exercise 2: the service that arrives late
+
+A new fraud-detection service must analyze all payments from the last seven days, including those that happened before its deployment. First question: with a broker, why is this simply impossible? Second question: with a log, how do you do it concretely, and on which setting does success depend?
+
+<Callout kind="tip" title="Solution to exercise 1: choose the right box">
+Each time, reason about a single question: where must the read position live, and do we need to re-read?
+
+**Step 1.** Need (a), charging payments, requires that a message go to a single worker, with no replay.
+
+This is exactly what a broker does with competing consumers: a pool of workers on a queue, each payment processed once then erased. The broker fits.
+
+**Step 2.** Need (b) requires the same event to be received by three independent services, and replayable after a crash.
+
+A broker would erase the message as soon as the first service is served: the other two would never see it. So you need a log, with three consumer groups (billing, loyalty, analytics). Each group has its offset, so reads the whole stream, and can replay by rewinding.
+
+**Result.** (a) a broker (one reader per message, no replay); (b) a log (several independent groups, replay possible). The deciding criterion is always the same: a single reader with no going back, or several readers with replay.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: the service that arrives late">
+Start from where the read position lives in each model.
+
+**Step 1.** With a broker, the payments of the last seven days have already been delivered to their consumers and acknowledged.
+
+Acknowledged equals erased: those messages no longer exist anywhere. The fraud service that plugs in today finds a queue containing only the payments to come. Re-reading the past is impossible, because there is no longer a past to read.
+
+**Step 2.** With a log, the payments are kept, and the offset belongs to the consumer.
+
+The fraud service creates a new consumer group and places its offset at the start of the desired window (for example the earliest available, like `AutoOffsetReset.Earliest`). It then re-reads all the retained payments, then continues with the new ones.
+
+**Step 3.** Name the setting everything depends on.
+
+Replay is only possible if the log's retention covers the seven days. If the log keeps only three days, the four oldest have been recycled and are lost, log or not.
+
+**Result.** Impossible with a broker (messages erased); possible with a log via a new rewound group, strictly on condition that retention covers the requested period.
+</Callout>
+
+## In one sentence
+
+A broker delivers each message to a single consumer then erases it, holding the read position itself; a log keeps the messages and lets each consumer hold its own offset, which allows several independent readers and the replay of history.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: 'What is the real, fundamental difference between a broker and a log?',
+      options: [
+        'Where the read position lives: in the broker, which erases after acknowledgement, or in the consumer, as an offset, with the message kept.',
+        'The broker is fast and the log is slow.',
+        'The broker only carries commands and the log only events.',
+      ],
+      answer: 0,
+      explain:
+        "Everything follows: because the broker holds the position and erases, there is no replay and no late reader; because the consumer holds its offset on a kept message, you can rewind and plug in several groups.",
+    },
+    {
+      q: 'Why do three consumer groups plugged into the same log each read the whole stream, while three competing consumers on a broker queue share it?',
+      options: [
+        "Because each group has its own offset on a log that keeps messages, whereas on a queue the broker erases the message as soon as a consumer takes it.",
+        'Because Kafka physically duplicates each message into three copies at production.',
+        'Because consumer groups disable internal load sharing.',
+      ],
+      answer: 0,
+      explain:
+        "Within a group, members share the work (one message once). Between groups, the offsets are independent on the same kept log, so each group re-reads everything. On a broker, erasing prevents any second reader.",
+    },
+    {
+      q: 'A new service must process messages produced before it started. What can we say?',
+      options: [
+        'With a log it can, by rewinding its offset, within the limit of retention; with a broker it is impossible because acknowledged messages are erased.',
+        'It is always possible, whatever the model, by restarting the broker.',
+        'It is impossible in both models: a message already produced is never re-readable.',
+      ],
+      answer: 0,
+      explain:
+        "The log keeps messages and the offset belongs to the consumer: a new rewound group re-reads history, as long as retention covers it. The broker has already erased: there is nothing left to re-read.",
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+We now know what becomes of a message: erased after acknowledgement at the broker, kept and re-readable at the log. But we glossed over a word heavy with consequences: acknowledgement. Go back to the mailman. Does he acknowledge the letter the moment he hands it to you, or only after you have signed? If he throws away his copy as he hands it to you and you drop it in a puddle, it is lost: no one will replay it. If he waits for your signature and lightning strikes just after you sign but before he notes it, he will come back tomorrow to deliver the same letter: you will receive it twice. Lose once, or receive twice: this dilemma is not a technical detail, it is the choice of delivery semantics. Chapter three puts the moment of acknowledgement under the microscope and shows which guarantees, at-most-once, at-least-once, effectively-once, you can really hold.
+
+## Sources
+
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns: Designing, Building, and Deploying Messaging Solutions*. Addison-Wesley. Patterns "Message Broker", "Competing Consumers", "Point-to-Point Channel" and "Publish-Subscribe Channel". [Publisher reference](https://www.enterpriseintegrationpatterns.com/)
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapter 11 "Stream Processing" (classic message brokers versus logs). O'Reilly. [Publisher reference](https://dataintensive.net/)
+- Apache Kafka. *Documentation: Consumers, Consumer Groups, Offsets*. [kafka.apache.org](https://kafka.apache.org/documentation/#intro_consumers)
+- RabbitMQ. *Consumers and Acknowledgements*. [rabbitmq.com](https://www.rabbitmq.com/docs/consumers)
+- Wolverine. *Kafka Transport* and *RabbitMQ Listeners*. Official documentation. [Kafka](https://wolverinefx.net/guide/messaging/transports/kafka.html), [RabbitMQ](https://wolverinefx.net/guide/messaging/transports/rabbitmq/listening.html)

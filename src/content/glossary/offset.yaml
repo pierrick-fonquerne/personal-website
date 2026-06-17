@@ -1,0 +1,13 @@
+slug: offset
+fr:
+  term: Offset
+  definition: "Position de lecture d'un consommateur dans un journal de messages : le numéro du prochain message qu'il lira. C'est le consommateur qui détient et fait avancer son offset, pas le journal. Deux lecteurs du même journal ont donc des offsets indépendants, et rembobiner un offset à une position antérieure suffit pour relire l'historique."
+  source: Kleppmann, 2017
+en:
+  term: Offset
+  definition: "A consumer's read position in a message log: the number of the next message it will read. The consumer owns and advances its own offset, not the log. Two readers of the same log therefore have independent offsets, and rewinding an offset to an earlier position is enough to re-read history."
+  source: Kleppmann, 2017
+seeAlso:
+  - journal-de-messages
+  - groupe-de-consommateurs
+  - courtier-de-messages
