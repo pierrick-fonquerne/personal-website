@@ -1,0 +1,13 @@
+slug: groupe-de-consommateurs
+fr:
+  term: Groupe de consommateurs
+  definition: "Ensemble de consommateurs qui partagent un même offset pour se répartir la lecture d'un journal : au sein du groupe, chaque message n'est traité qu'une fois. Plusieurs groupes distincts lisent le même journal indépendamment, chacun avec son propre offset, si bien qu'un message est relu autant de fois qu'il y a de groupes. C'est l'équivalent côté journal des consommateurs concurrents d'un courtier."
+  source: Kleppmann, 2017
+en:
+  term: Consumer group
+  definition: "A set of consumers that share a single offset to split the reading of a log: within the group, each message is processed only once. Several distinct groups read the same log independently, each with its own offset, so a message is re-read as many times as there are groups. It is the log-side counterpart of a broker's competing consumers."
+  source: Kleppmann, 2017
+seeAlso:
+  - journal-de-messages
+  - offset
+  - courtier-de-messages

@@ -1,0 +1,13 @@
+slug: courtier-de-messages
+fr:
+  term: Courtier de messages
+  definition: "Intermédiaire qui reçoit les messages, les range dans des files et remet chacun à un consommateur, puis l'efface une fois qu'il a été acquitté. L'archetype est RabbitMQ : un message livré et acquitté disparaît, il n'est pas conservé pour être relu. L'état de progression (ce qui reste à distribuer) vit dans le courtier, pas chez le lecteur."
+  source: Hohpe & Woolf, 2003
+en:
+  term: Message broker
+  definition: "An intermediary that receives messages, holds them in queues and hands each one to a consumer, then erases it once it has been acknowledged. The archetype is RabbitMQ: a delivered and acknowledged message is gone, it is not kept to be re-read. The progress state (what is left to deliver) lives in the broker, not in the reader."
+  source: Hohpe & Woolf, 2003
+seeAlso:
+  - journal-de-messages
+  - groupe-de-consommateurs
+  - mediateur
