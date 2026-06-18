@@ -1,0 +1,12 @@
+slug: dual-write
+fr:
+  term: Double écriture
+  definition: "Situation où un service doit modifier deux systèmes distincts pour une seule action, typiquement sa propre base de données et un broker de messages. Comme aucune transaction ne couvre les deux à la fois, une panne entre les deux écritures laisse une incohérence : la base est à jour mais le message n'est jamais parti, ou le message est parti mais la base a été annulée. C'est le problème que l'outbox transactionnel résout."
+  source: Richardson, Microservices Patterns
+en:
+  term: Dual write
+  definition: "A situation where a service must modify two distinct systems for a single action, typically its own database and a message broker. Since no single transaction spans both, a crash between the two writes leaves an inconsistency: the database is updated but the message was never sent, or the message was sent but the database was rolled back. This is the problem the transactional outbox solves."
+  source: Richardson, Microservices Patterns
+seeAlso:
+  - outbox-transactionnel
+  - relais-outbox

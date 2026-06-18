@@ -1,0 +1,13 @@
+slug: outbox-transactionnel
+fr:
+  term: Outbox transactionnel
+  definition: "Motif qui supprime le problème de la double écriture en n'écrivant qu'un seul système de façon atomique. Le service inscrit l'état métier ET une ligne décrivant le message à envoyer dans la même transaction de sa base de données. Un relais lit ensuite cette table outbox et publie les messages vers le broker. Une écriture distribuée impossible devient une écriture locale atomique suivie d'un relais."
+  source: Richardson, Microservices Patterns
+en:
+  term: Transactional outbox
+  definition: "A pattern that removes the dual-write problem by writing only one system atomically. The service records the business state AND a row describing the message to send in the same database transaction. A relay then reads this outbox table and publishes the messages to the broker. An impossible distributed write becomes a local atomic write followed by a relay."
+  source: Richardson, Microservices Patterns
+seeAlso:
+  - dual-write
+  - relais-outbox
+  - reclamation-de-ligne
