@@ -1,0 +1,27 @@
+slug: egide
+category: opensource
+status: active
+period: "2026 - aujourd'hui"
+stack:
+  - Rust
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/egide
+    type: repo
+fr:
+  title: Egide
+  tagline: Plateforme de gestion des secrets, des clés et des certificats.
+  summary: >-
+    Gestion centralisée des secrets, chiffrement (KMS), PKI interne et
+    chiffrement à la demande (Transit), réunis dans un seul outil. Les clés ne
+    quittent jamais votre infrastructure. Auto-hébergeable, conçue pour la
+    conformité RGPD.
+en:
+  title: Egide
+  tagline: A platform for secrets, keys and certificates.
+  summary: >-
+    Centralized secrets management, encryption (KMS), an internal PKI and
+    encryption as a service (Transit), unified in a single tool. Your keys
+    never leave your infrastructure. Self-hostable, designed for GDPR
+    compliance.
+published: true

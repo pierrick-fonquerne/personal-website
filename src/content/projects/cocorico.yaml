@@ -1,0 +1,29 @@
+slug: cocorico
+category: opensource
+status: active
+period: "2026 - aujourd'hui"
+featured: true
+stack:
+  - Rust
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/cocorico
+    type: repo
+fr:
+  title: Cocorico
+  tagline: Cockpit terminal de coding agentique multi-projets.
+  summary: >-
+    Cockpit en terminal pour piloter des agents de code sur plusieurs projets à
+    la fois, chacun avec son onglet et sa session. Un moteur de contexte
+    partagé massif (index de code hybride et mémoire durable) garde le bon code
+    et les bonnes décisions sous la main. Agnostique au modèle, pensé pour les
+    développeurs.
+en:
+  title: Cocorico
+  tagline: A multi-project agentic coding cockpit in the terminal.
+  summary: >-
+    A terminal cockpit to drive coding agents across many projects at once,
+    each with its own tab and session. A massive shared-context engine (a
+    hybrid code index plus durable memory) keeps the right code and decisions
+    at hand. Model-agnostic, built developer-first.
+published: true
