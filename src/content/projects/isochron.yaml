@@ -1,0 +1,28 @@
+slug: isochron
+category: opensource
+status: active
+period: "2026 - aujourd'hui"
+stack:
+  - Rust
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/isochron
+    type: repo
+  - label: crates.io
+    href: https://crates.io/crates/isochron
+    type: crates
+fr:
+  title: Isochron
+  tagline: Moteur d'occurrences cron en Rust pur.
+  summary: >-
+    Analyse les expressions cron standard (Vixie) et calcule les occurrences
+    suivantes et précédentes en UTC strict. Pur, déterministe, sans async ni
+    unsafe, conçu comme une brique de planification fiable.
+en:
+  title: Isochron
+  tagline: A pure-Rust cron occurrence engine.
+  summary: >-
+    Parses Vixie-standard cron expressions and computes next and previous
+    occurrences in strict UTC. Pure, deterministic, with no async and no
+    unsafe, designed as a dependable scheduling primitive.
+published: true

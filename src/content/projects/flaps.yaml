@@ -1,0 +1,31 @@
+slug: flaps
+category: opensource
+status: active
+period: "2026 - aujourd'hui"
+stack:
+  - Rust
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/flaps
+    type: repo
+fr:
+  title: Flaps
+  tagline: Serveur et SDK de feature flags en Rust.
+  summary: >-
+    Plateforme de feature flags qui compile un modèle riche (projets,
+    environnements, segments, règles de ciblage) en un artefact flagd canonique
+    par environnement. Le même artefact est évalué à distance via OFREP et
+    dans le processus en sous-milliseconde, sans divergence possible. Rollouts
+    progressifs déterministes et kill switch instantané pour les équipes en
+    trunk-based.
+en:
+  title: Flaps
+  tagline: A feature flag server and SDK in Rust.
+  summary: >-
+    A feature flag platform that compiles a rich model (projects, environments,
+    segments, targeting rules) into one canonical flagd ruleset per
+    environment. The same artifact is evaluated remotely over OFREP and
+    in-process in sub-millisecond time, with no divergence by construction.
+    Deterministic progressive rollouts and an instant kill switch for
+    trunk-based teams.
+published: true

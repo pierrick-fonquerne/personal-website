@@ -1,0 +1,26 @@
+slug: eidosdb
+category: opensource
+status: active
+period: "2026 - aujourd'hui"
+stack:
+  - Rust
+  - Recherche vectorielle
+links:
+  - label: Code source
+    href: https://github.com/nubster-opensources/eidosdb
+    type: repo
+fr:
+  title: EidosDB
+  tagline: Base de données vectorielle en Rust pur.
+  summary: >-
+    Index vectoriel pur Rust qui sert la recherche des plus proches voisins
+    approximatifs (ANN) à partir d'embeddings pré-calculés, sans inférence
+    embarquée ni JVM. Binaire unique, déployable en périphérie.
+en:
+  title: EidosDB
+  tagline: A pure-Rust vector database.
+  summary: >-
+    A pure-Rust vector index serving approximate nearest neighbor search from
+    precomputed embeddings, with no embedded inference and no JVM. A single
+    binary, edge-deployable.
+published: true
