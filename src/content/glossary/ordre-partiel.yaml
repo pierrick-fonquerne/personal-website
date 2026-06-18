@@ -1,0 +1,13 @@
+slug: ordre-partiel
+fr:
+  term: Ordre partiel
+  definition: "Garantie selon laquelle les messages ne sont ordonnés qu'à l'intérieur de chaque partition, pas sur l'ensemble du journal. Un journal offre un ordre partiel, pas un ordre total : deux messages d'une même partition gardent leur ordre relatif, mais deux messages de partitions différentes n'ont aucun ordre défini entre eux. C'est pourquoi il faut une clé qui regroupe les messages causalement liés dans une même partition."
+  source: Kleppmann, 2017
+en:
+  term: Partial order
+  definition: "The guarantee that messages are ordered only within each partition, not across the whole log. A log offers a partial order, not a total order: two messages in the same partition keep their relative order, but two messages in different partitions have no defined order between them. This is why you need a key that groups causally related messages into the same partition."
+  source: Kleppmann, 2017
+seeAlso:
+  - partition
+  - cle-de-partition
+  - offset

@@ -1,0 +1,13 @@
+slug: cle-de-partition
+fr:
+  term: Clé de partition
+  definition: "Valeur qui sert à router un message vers une partition, en général par hachage. Deux messages portant la même clé de partition tombent toujours sur la même partition, donc restent ordonnés entre eux ; des messages de clés différentes se répartissent sur plusieurs partitions et se traitent en parallèle. Bien la choisir (par exemple l'identifiant de commande) achète l'ordre par clé sans sacrifier le débit. Elle répond à la question : quels messages doivent rester ordonnés ensemble ?"
+  source: Apache Kafka, Documentation
+en:
+  term: Partition key
+  definition: "The value used to route a message to a partition, usually by hashing it. Two messages with the same partition key always land on the same partition, so they stay ordered relative to one another; messages with different keys spread across partitions and are processed in parallel. Choosing it well (for example the order id) buys per-key ordering without sacrificing throughput. It answers the question: which messages must stay ordered together?"
+  source: Apache Kafka, Documentation
+seeAlso:
+  - partition
+  - ordre-partiel
+  - groupe-de-consommateurs

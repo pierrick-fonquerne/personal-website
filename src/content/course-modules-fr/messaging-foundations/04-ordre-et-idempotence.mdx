@@ -1,0 +1,262 @@
+---
+course: messaging-foundations
+order: 4
+title: 'Ordre et idempotence'
+subtitle: "Le chapitre précédent a promis un consommateur qui reconnaît un message déjà traité, sans dire comment. Le voici. Mais en le construisant, on découvre que la redélivraison ne fait pas qu'apporter des doublons : elle peut aussi tout remettre dans le désordre, et l'idempotence seule n'y suffit pas."
+estimatedMinutes: 24
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import OrderingIdempotencyLab from '../../../components/learning/OrderingIdempotencyLab.tsx';
+
+Au chapitre trois, on a sauvé le paiement avec une formule : au moins une fois, plus un traitement idempotent. On a même décrit le geste, le consommateur « reconnaît » un message déjà vu et ne refait pas l'effet. Mais reconnaît comment ? Avec quelle clé, rangée où, et surtout : qu'est-ce qui empêche une panne, tombée juste entre le prélèvement et la note « déjà fait », de tout faire recommencer ? Et même cela réglé, une seconde menace attend. La livraison au moins une fois ne se contente pas de répéter des messages, elle peut aussi les rejouer dans le mauvais ordre. Si « commande expédiée » repasse avant « commande payée », aucune déduplication au monde ne te sauvera. Ce chapitre construit les deux remparts : l'un contre le doublon, l'autre contre le désordre.
+
+<Callout kind="info" title="Avant de commencer">
+Ce chapitre prolonge directement le chapitre trois : il faut avoir compris l'idée de livraison au moins une fois, le rôle de l'acquittement, et pourquoi le « exactly-once » de livraison est impossible (le problème des deux généraux). On réutilise aussi deux mots du chapitre deux, l'offset et le groupe de consommateurs. Tu n'as besoin ni de connaître un broker en particulier, ni d'écrire du SQL : les transactions seront décrites, pas codées en détail.
+</Callout>
+
+## Deux blessures, pas une
+
+Repartons du constat du chapitre trois. Choisir « au moins une fois », c'est accepter que le système redélivre tant qu'il n'a pas reçu d'acquittement. Cette redélivraison t'inflige en réalité deux blessures distinctes, et on les confond souvent.
+
+La première, on la connaît : le **doublon**. Le même message arrive deux fois, et un traitement naïf applique deux fois l'effet. Double débit.
+
+La seconde est plus sournoise : le **désordre**. Quand le système rejoue des messages, ou quand plusieurs travailleurs consomment la même file en parallèle, rien ne garantit que « payée » soit traité avant « expédiée ». Un message en retard, une redélivraison, un travailleur plus lent que l'autre, et l'ordre causal se brise.
+
+Ces deux blessures appellent deux remèdes différents, et c'est tout le sujet du chapitre. Contre le doublon : l'idempotence, qu'on va enfin construire pour de vrai. Contre le désordre : l'ordre par partition. Les deux reposent sur le choix d'une **clé**, mais ce n'est pas la même clé, et elles ne répondent pas à la même question.
+
+## Construire le consommateur idempotent
+
+On commence par honorer la promesse du chapitre trois. Un <Term slug="consommateur-idempotent">consommateur idempotent</Term> est un consommateur dont le traitement donne le même résultat qu'un message arrive une fois ou dix. Pour y parvenir, il lui faut deux choses : un moyen de reconnaître un message déjà traité, et une garantie que cette reconnaissance ne puisse jamais mentir.
+
+Le moyen de reconnaître, c'est la <Term slug="cle-de-deduplication">clé de déduplication</Term>. C'est l'identité que le consommateur retient pour répondre à la question : est-ce que j'ai déjà traité ce message ? Deux candidats naturels. Le plus simple, l'identifiant de message stable, posé par le producteur et conservé à travers toutes les redélivraisons : deux copies du même message portent le même identifiant. Le plus robuste, une clé métier : le numéro de commande, l'identifiant de la transaction de paiement. La clé métier a un avantage subtil : elle déduplique même deux messages techniquement différents qui décrivent le même fait métier.
+
+Le consommateur range ces clés dans une petite table, qu'on appelle souvent une boîte de réception, ou inbox. Avant d'agir, il regarde : si la clé y est déjà, il a déjà traité ce message, il l'écarte et acquitte sans rien refaire. Sinon, il traite, puis il inscrit la clé.
+
+Et c'est là que se cache le vrai piège, celui que le chapitre trois avait laissé en suspens. Regarde cette version naïve, en deux temps :
+
+```text
+1. appliquer l'effet      (debiter 49 euros)
+2. inscrire la cle dans l'inbox
+```
+
+Que se passe-t-il si la machine s'éteint entre l'étape 1 et l'étape 2 ? L'effet a eu lieu, mais la clé n'est pas enregistrée. À la redélivraison, le consommateur consulte son inbox, n'y trouve pas la clé, et débite une seconde fois. On a écrit du code « idempotent » qui ne l'est pas : on a simplement rouvert le problème des deux généraux à l'intérieur de notre propre base de données.
+
+<Callout kind="warn" title="Le coeur de l'idempotence : l'atomicité">
+L'idempotence n'est pas « tenir une liste des messages vus ». C'est garantir que l'effet et l'inscription de la clé se produisent **ensemble ou pas du tout**. La seule façon propre : englober les deux dans une même transaction de base de données. Soit la transaction valide, et alors l'effet ET la clé sont enregistrés ; soit elle échoue, et alors ni l'un ni l'autre, le message sera rejoué proprement. C'est l'atomicité qui rend l'idempotence vraie, pas la liste.
+</Callout>
+
+Tant que l'effet vit dans la même base que l'inbox, c'est faisable : une seule transaction couvre les deux. Quand l'effet sort de la base (appeler une API de paiement externe), le problème se durcit, et on retombe sur des stratégies plus lourdes que ce chapitre garde pour plus tard. Retiens l'essentiel : la clé répond à « est-ce le même message », et l'atomicité répond à « puis-je faire confiance à ma réponse ».
+
+## La seconde blessure : l'ordre
+
+Le consommateur idempotent neutralise les doublons. Il ne touche pas à l'ordre. Reprenons notre commande : trois faits se succèdent, « créée », puis « payée », puis « expédiée ». Si la redélivraison fait arriver « expédiée » avant « payée », un consommateur parfaitement idempotent expédiera une commande non payée, sans la moindre alerte. L'idempotence vérifie « ai-je déjà vu ce message », jamais « est-ce le bon moment pour ce message ».
+
+D'où vient le désordre ? De deux sources. La redélivraison, qui réinjecte un message en retard après que les suivants sont déjà passés. Et surtout le parallélisme : pour aller vite, on fait consommer une même file par plusieurs travailleurs d'un groupe de consommateurs. Deux messages partis dans l'ordre peuvent être traités dans le désordre, simplement parce qu'un travailleur est plus lent que l'autre.
+
+La solution porte un nom précis. On découpe le flux en <Term slug="partition">partitions</Term>, des sous-flux dont chacun garde ses messages dans l'ordre. La règle d'or : l'ordre n'est garanti qu'à l'intérieur d'une partition, jamais entre partitions. C'est ce qu'on appelle un <Term slug="ordre-partiel">ordre partiel</Term>, par opposition à un ordre total qui rangerait tous les messages du système sur une seule ligne. Un ordre total tuerait le parallélisme : un seul message à la fois, pour tout le monde. L'ordre partiel est le compromis qui sauve à la fois la cohérence et le débit.
+
+Reste à décider quels messages atterrissent dans quelle partition. C'est le rôle de la <Term slug="cle-de-partition">clé de partition</Term>. Tous les messages qui partagent la même clé tombent dans la même partition, donc restent ordonnés entre eux ; des clés différentes se répartissent sur des partitions différentes et se traitent en parallèle. Pour notre commerce, la bonne clé saute aux yeux : l'identifiant de commande. Tous les événements de la commande numéro 42 vont dans la même partition et gardent leur ordre ; la commande 42 et la commande 43 vivent dans des partitions séparées et avancent de front.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    P[Producteur] -->|cle = commande 42| A
+    P -->|cle = commande 43| B
+    subgraph Partition A
+      A["cree 42 -> paye 42 -> expedie 42"]
+    end
+    subgraph Partition B
+      B["cree 43 -> paye 43 -> expedie 43"]
+    end
+    A --> WA[Travailleur 1]
+    B --> WB[Travailleur 2]
+    style A fill:#34d399,color:#062
+    style B fill:#34d399,color:#062`}
+  caption="La clé de partition route les messages d'une même commande vers la même partition : l'ordre y est préservé, et deux commandes distinctes restent traitées en parallèle."
+/>
+
+Si la clé de partition répond à « quels messages doivent rester ordonnés ensemble », la clé de déduplication répondait à « est-ce le même message ». Deux clés, deux questions, deux blessures soignées. Il est temps de les voir agir ensemble.
+
+## Observe les deux remparts
+
+Le composant ci-dessous prend une commande dont les événements ont été livrés par un broker au moins une fois : dans le désordre (expédiée avant payée) et avec un doublon (payée deux fois). Tu actives, ou non, chacun des deux remparts, et tu regardes l'état final.
+
+Commence sans rien : la commande est doublement abîmée, double prélèvement et expédiée avant d'être payée. Active la déduplication seule : le doublon disparaît, mais la commande reste expédiée avant paiement. C'est la leçon centrale, l'idempotence ne répare pas l'ordre. Active l'ordre par partition seul : la séquence redevient cohérente, mais le double prélèvement revient. Ce n'est qu'avec les deux remparts levés ensemble que la commande est enfin correcte.
+
+<OrderingIdempotencyLab
+  client:load
+  copy={{
+    heading: 'Ordre et idempotence',
+    instructions: "Le broker livre les événements d'une commande dans le désordre et avec un doublon. Active la déduplication, l'ordre par partition, ou les deux, et observe l'état final de la commande.",
+    deliveredLabel: 'Ce que le broker livre (au moins une fois)',
+    processedLabel: 'Ce que le consommateur traite',
+    dedupLabel: 'Déduplication (inbox)',
+    orderingLabel: 'Ordre par partition',
+    onLabel: 'on',
+    offLabel: 'off',
+    createdLabel: 'Créée',
+    paidLabel: 'Payée',
+    shippedLabel: 'Expédiée',
+    skipDuplicateLabel: 'doublon ignoré',
+    outOfOrderLabel: 'hors ordre',
+    chargeCountLabel: 'Prélèvements',
+    finalStateLabel: 'État final',
+    shippedBeforePaidLabel: 'Expédiée avant paiement',
+    verdictCorrectLabel: 'Correct',
+    verdictDuplicateLabel: 'Doublon',
+    verdictDisorderedLabel: 'Désordre',
+    verdictCorruptLabel: 'Corrompu',
+    resetLabel: 'Recommencer',
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+- Avec la déduplication seule active, le double prélèvement disparaît mais le verdict reste « Désordre ». Qu'est-ce que la déduplication ne regarde jamais ?
+- Avec l'ordre par partition seul, la séquence est remise dans le bon ordre, mais les prélèvements affichent deux. Pourquoi remettre dans l'ordre ne supprime-t-il pas le doublon ?
+- Quelle est la seule combinaison qui affiche « Correct », et qu'est-ce que cela dit sur la relation entre les deux remparts ?
+
+## Côté code : Wolverine en une ligne, Hexeract en toute honnêteté
+
+Voyons ces idées dans du vrai code. Et la leçon est instructive : selon le framework, soit l'outil te livre les deux remparts presque gratuitement, soit il te donne juste les fondations et nomme honnêtement ce qui reste à ta charge.
+
+Commençons par le cas où tout est fourni. Wolverine, sur un transport Kafka, donne l'ordre par clé et la déduplication chacun en une ligne. L'ordre d'abord : on attache une clé de partition à chaque message, et Kafka garantit que tous les messages de même clé restent ordonnés.
+
+```csharp
+// Tous les messages d'une meme commande partagent la cle de partition,
+// donc ils atterrissent sur la meme partition et restent ordonnes.
+await bus.PublishAsync(
+    new OrderShipped(orderId),
+    new DeliveryOptions { PartitionKey = orderId.ToString() });
+```
+
+La déduplication ensuite. La boîte de réception durable persiste chaque message reçu avant de valider l'offset, ce qui donne une livraison au moins une fois ; et la même persistance sert à reconnaître un identifiant déjà traité pour l'écarter. C'est exactement le consommateur idempotent de ce chapitre, atomicité comprise, replié dans un appel.
+
+```csharp
+// Persiste avant de valider l'offset (au moins une fois)
+// ET deduplique par identifiant de message : effectivement une fois.
+opts.ListenToKafkaTopic("orders.charge-payment")
+    .UseDurableInbox();
+```
+
+Hexeract, le framework Rust qui nous sert de fil rouge, est plus brut, et c'est précisément ce qui le rend pédagogique : il ne cache pas ce qu'il ne fait pas. Côté ordre, son énumération de types d'échange ne propose pas de partitionnement par clé, et le commentaire d'un de ses champs prévient noir sur blanc que l'ordre de distribution est au mieux best-effort, jamais garanti, parce que plusieurs travailleurs peuvent relayer en parallèle. Côté déduplication, Hexeract ne fournit pas d'inbox toute faite : il propage un identifiant de message stable et documente que les handlers doivent être idempotents.
+
+```rust
+// Hexeract te donne la cle, pas le magasin.
+// raw_publish.rs, en toutes lettres :
+// "propagating a stable message_id lets consumers deduplicate on it"
+// handler.rs, le contrat :
+// "Handlers MUST be idempotent because the same message can arrive more than once"
+```
+
+Deux philosophies, une même leçon. Wolverine remplit le contrat pour toi ; Hexeract te tend les outils et te nomme le contrat. Dans les deux cas, l'effectively-once n'est jamais magique : c'est de l'au-moins-une-fois, plus une déduplication, plus une clé de partition bien choisie. Aucun framework ne te dispense de choisir tes deux clés.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : choisir la clé de partition
+
+Ton système de commerce traite les événements de milliers de commandes, passées par des centaines de clients. Pour chaque commande, l'ordre « créée, payée, expédiée » doit être respecté. On te propose trois clés de partition possibles : (a) une clé constante, identique pour tous les messages ; (b) l'identifiant du client ; (c) l'identifiant de la commande. Pour chacune, dis si l'ordre par commande est respecté, et ce qu'il advient du parallélisme. Conclus par le meilleur choix.
+
+### Exercice 2 : l'idempotence sans atomicité
+
+Un travailleur déduplique avec une inbox, mais son code fait les choses en deux temps : d'abord il appelle l'API de paiement pour débiter 49 euros, ensuite, dans une instruction séparée, il insère l'identifiant du message dans sa table inbox. La machine s'éteint juste après le débit, avant l'insertion. Décris ce qui se passe à la redélivraison du message. Combien de fois les 49 euros sont-ils prélevés ? Puis propose la correction en une phrase.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : choisir la clé de partition">
+On juge chaque clé sur deux critères : l'ordre par commande est-il garanti, et le parallélisme est-il préservé ?
+
+**Étape 1.** La clé constante (a) met tout dans une seule partition.
+
+Tous les messages partagent la même clé, donc la même partition. L'ordre par commande est bien respecté, puisque tout est ordonné. Mais il n'y a qu'une seule partition pour tout le système : un seul message à la fois, aucun parallélisme. C'est un ordre total déguisé, et il étrangle le débit.
+
+**Étape 2.** L'identifiant du client (b) regroupe trop largement.
+
+Tous les messages d'un même client tombent dans la même partition. L'ordre par commande est respecté, car les commandes d'un client y restent ordonnées. Mais un client qui passe beaucoup de commandes voit toutes ses commandes sérialisées dans une seule partition, sans raison : deux commandes différentes du même client n'ont aucun besoin d'être ordonnées l'une par rapport à l'autre. On perd du parallélisme pour rien.
+
+**Étape 3.** L'identifiant de la commande (c) regroupe juste ce qu'il faut.
+
+Tous les événements d'une commande partagent la clé, donc la partition, donc l'ordre. Deux commandes distinctes ont des clés distinctes et se répartissent sur des partitions différentes : elles avancent en parallèle.
+
+**Résultat.** La clé de commande (c). Elle garantit exactement l'ordre nécessaire, ni plus ni moins, et préserve le parallélisme maximal entre commandes. La bonne clé de partition est la plus fine qui respecte encore les contraintes d'ordre.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : l'idempotence sans atomicité">
+La panne tombe entre l'effet et l'inscription de la clé. C'est le scénario qui démasque une fausse idempotence.
+
+**Étape 1.** Au premier passage, l'effet a lieu mais la clé n'est jamais inscrite.
+
+Le débit de 49 euros est exécuté. Puis, avant l'insertion dans l'inbox, la machine s'éteint. La table inbox ne contient donc aucune trace de ce message.
+
+**Étape 2.** Aucun acquittement n'étant revenu, le broker redélivre le message.
+
+Le travailleur reçoit à nouveau « débiter 49 euros ». Il consulte son inbox pour voir s'il l'a déjà traité.
+
+**Étape 3.** L'inbox est vide pour cette clé, donc le travailleur croit que c'est un message neuf.
+
+Il débite une seconde fois. Les 49 euros sont prélevés **deux fois**. L'inbox existait, mais elle n'a rien empêché.
+
+**Résultat.** Deux prélèvements. La correction tient en une phrase : envelopper le débit et l'insertion de la clé dans **une seule transaction**, pour qu'ils réussissent ou échouent ensemble. C'est l'atomicité qui fait l'idempotence, pas la simple présence d'une inbox.
+</Callout>
+
+## En une phrase
+
+La livraison au moins une fois inflige deux blessures distinctes, le doublon et le désordre : on neutralise le doublon avec un consommateur idempotent qui inscrit sa clé de déduplication atomiquement avec l'effet, et on neutralise le désordre avec un ordre partiel obtenu en routant par clé de partition les messages qui doivent rester ordonnés ensemble.
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Pourquoi un consommateur parfaitement idempotent peut-il quand même corrompre une commande ?",
+      options: [
+        "Parce que l'idempotence neutralise les doublons mais ne touche pas à l'ordre : un message en retard ou un travailleur parallèle peut faire traiter « expédiée » avant « payée ».",
+        "Parce que l'idempotence ralentit le traitement et provoque des pertes.",
+        "Parce que la déduplication efface des messages au hasard.",
+      ],
+      answer: 0,
+      explain:
+        "L'idempotence vérifie « ai-je déjà vu ce message », jamais « est-ce le bon moment ». Le désordre est une seconde blessure, soignée par l'ordre par partition, pas par la déduplication.",
+    },
+    {
+      q: "Qu'est-ce qui rend un consommateur réellement idempotent ?",
+      options: [
+        "L'atomicité : l'effet et l'inscription de la clé de déduplication se produisent dans une même transaction, ensemble ou pas du tout.",
+        "Le fait de tenir une liste des messages déjà reçus, peu importe quand on l'écrit.",
+        "Le fait d'acquitter le message avant de le traiter.",
+      ],
+      answer: 0,
+      explain:
+        "Si l'effet et l'inscription de la clé sont en deux temps, une panne entre les deux rouvre le problème des deux généraux dans la base : la redélivraison ne trouve pas la clé et refait l'effet. Seule la transaction unique garantit l'idempotence.",
+    },
+    {
+      q: "À quoi sert la clé de partition ?",
+      options: [
+        "À router vers la même partition les messages qui doivent rester ordonnés entre eux, tout en laissant les autres se traiter en parallèle.",
+        "À dédupliquer les messages en comparant leur identifiant.",
+        "À chiffrer le contenu des messages sensibles.",
+      ],
+      answer: 0,
+      explain:
+        "L'ordre n'est garanti qu'à l'intérieur d'une partition (ordre partiel). La clé de partition décide quels messages partagent une partition : la prendre la plus fine possible (l'identifiant de commande) donne l'ordre nécessaire sans sacrifier le parallélisme.",
+    },
+  ]}
+/>
+
+## Vers le chapitre suivant
+
+On a blindé le consommateur : il déduplique avec sa clé, il respecte l'ordre par partition, et l'atomicité de l'inbox rend son idempotence vraie. Mais toute cette belle mécanique repose sur une supposition cachée du côté du producteur. On a dit « le producteur publie un message quand l'état métier change ». Mais comment garantit-il que les deux arrivent ensemble ? Imagine : le service enregistre la commande dans sa base, valide la transaction, puis tente de publier « commande créée » sur le broker, et c'est là que le réseau le lâche. La base dit « commande créée », le broker n'a jamais reçu le message, et aucune redélivraison ne le sauvera : il n'a jamais existé. Le symétrique nous guette aussi, publier puis échouer à valider la base. Écrire l'état métier et émettre le message dans la même transaction, voilà le dernier verrou. C'est l'**outbox transactionnel** que construit le chapitre cinq.
+
+## Sources
+
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapitre 11 « Stream Processing » (partitionnement, ordre par clé, traitement idempotent). O'Reilly. [Référence de l'éditeur](https://dataintensive.net/)
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns*, motif « Idempotent Receiver ». Addison-Wesley. [Catalogue des motifs](https://www.enterpriseintegrationpatterns.com/patterns/messaging/IdempotentReceiver.html)
+- Apache Kafka. *Documentation : Design, Message Ordering and Partitioning*. [kafka.apache.org](https://kafka.apache.org/documentation/#design)
+- Wolverine. *Kafka Transport : Partition Keys and Durable Inbox*. Documentation officielle. [Transport Kafka](https://wolverinefx.net/guide/messaging/transports/kafka.html), [Durabilité](https://wolverinefx.net/guide/durability/)

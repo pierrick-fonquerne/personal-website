@@ -1,0 +1,13 @@
+slug: consommateur-idempotent
+fr:
+  term: Consommateur idempotent
+  definition: "Consommateur dont le traitement produit le même résultat qu'un message soit reçu une fois ou plusieurs fois. Il garde la trace de chaque message déjà traité par sa clé de déduplication et, dans la même transaction que l'effet, marque cette clé comme vue : à la redélivraison d'un doublon, il reconnaît la clé et saute l'effet. L'atomicité entre appliquer l'effet et marquer la clé est essentielle, sinon une panne entre les deux rouvre le problème des deux généraux dans sa propre base."
+  source: Hohpe & Woolf, Enterprise Integration Patterns
+en:
+  term: Idempotent consumer
+  definition: "A consumer whose processing produces the same result whether a message is handled once or several times. It tracks every already-processed message by its deduplication key and, in the same transaction as the effect, marks that key as seen: on a redelivered duplicate it recognizes the key and skips the effect. The atomicity between applying the effect and recording the key is essential, otherwise a crash between the two reopens the two generals problem inside its own database."
+  source: Hohpe & Woolf, Enterprise Integration Patterns
+seeAlso:
+  - idempotence
+  - cle-de-deduplication
+  - livraison-au-moins-une-fois

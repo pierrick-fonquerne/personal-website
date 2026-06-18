@@ -1,0 +1,13 @@
+slug: partition
+fr:
+  term: Partition
+  definition: "Sous-flux d'un journal de messages qui contient un sous-ensemble ordonné des messages. On découpe un journal en plusieurs partitions pour que des consommateurs les lisent en parallèle. L'ordre n'est garanti qu'à l'intérieur d'une même partition, jamais entre partitions. Chaque message est affecté à une partition selon sa clé de partition."
+  source: Kleppmann, 2017
+en:
+  term: Partition
+  definition: "A sub-stream of a message log that holds an ordered subset of the messages. A log is split into several partitions so that consumers can read them in parallel. Ordering is guaranteed only within a single partition, never across partitions. Each message is assigned to a partition by its partition key."
+  source: Kleppmann, 2017
+seeAlso:
+  - cle-de-partition
+  - ordre-partiel
+  - journal-de-messages
