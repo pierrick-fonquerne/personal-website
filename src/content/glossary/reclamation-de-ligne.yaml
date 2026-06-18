@@ -1,0 +1,12 @@
+slug: reclamation-de-ligne
+fr:
+  term: Réclamation de ligne
+  definition: "Verrou qui permet à un relais de prendre une ligne de la table outbox sans qu'un relais concurrent ne prenne la même. En SQL, la clause FOR UPDATE SKIP LOCKED : chaque relais réclame des lignes encore libres et saute celles déjà verrouillées par un autre. Sans ce verrou, plusieurs relais publieraient le même message, un double-dispatch."
+  source: PostgreSQL, Documentation (SELECT FOR UPDATE SKIP LOCKED)
+en:
+  term: Row claim
+  definition: "A lock that lets a relay take a row from the outbox table without a concurrent relay taking the same one. In SQL, the FOR UPDATE SKIP LOCKED clause: each relay claims rows that are still free and skips those already locked by another. Without this lock, several relays would publish the same message, a double dispatch."
+  source: PostgreSQL, Documentation (SELECT FOR UPDATE SKIP LOCKED)
+seeAlso:
+  - relais-outbox
+  - outbox-transactionnel

@@ -1,0 +1,258 @@
+---
+course: messaging-foundations
+order: 5
+title: 'Dual write and the transactional outbox'
+subtitle: "We hardened the consumer in the previous chapter. But it all rested on a promise from the producer: to publish the message when the business state changes. Yet publishing touches two worlds at once, its database and the broker, and nothing makes them atomic together. This chapter fixes that last gap."
+estimatedMinutes: 25
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import OutboxSimulator from '../../../components/learning/OutboxSimulator.tsx';
+
+In chapter four, we made the consumer unbreakable: it deduplicates with its key, it respects partition ordering, and the atomicity of its inbox makes its idempotence true. But all this machinery rests on an assumption we never checked: that the producer, in turn, actually publishes its message at the right moment. Yet publishing is not a simple gesture. The service must do two things: record the business state in its database (the order is created) and announce that fact to the broker (the message goes out). Two distinct systems, two separate writes. What happens if the database says yes and the broker never hears the message? No redelivery will save it: it never existed. This chapter builds the last lock, the one that seals the write and the publication together.
+
+<Callout kind="info" title="Before we start">
+This chapter is the other half of chapter four: there, we protected the consumer; here, the producer. You need to have retained at-least-once delivery and the idempotent consumer from chapter four, because the outbox relies on them. You do not need to be a database expert: we will use the word transaction in the simple sense of "all succeeds or nothing does", and the SQL shown will be read in plain words.
+</Callout>
+
+## The trap of the dual write
+
+Take our order again. When a customer places it, the order service must do two things: write the order to its database, and publish "order created" so the payment service and the shipping service react. This is a <Term slug="dual-write">dual write</Term>: two systems to modify for a single business action. And there is no transaction that spans both your database and the broker. They are two separate worlds.
+
+Look at the two ways of doing it, and their shared flaw. First way, write the database first, publish next. If the machine crashes right after the database commit and before the publication, the order exists in the database but the message never left. The payment will never be triggered: the message is **lost**, and no one knows.
+
+Second way, publish first, write the database next. If the machine crashes after the publication and before the commit, the broker received "order created" for an order that, in the database, does not exist. The payment service will charge a customer whose order has vanished: this is a **phantom** message.
+
+Lost or phantom, either way the flaw is the same. Between the two writes slips a moment where a crash can desynchronize them, because no atomicity ties them. Holding a message in memory to retry later does not help either: that buffer lives in memory, and memory goes away with the crash. We need another idea.
+
+## The outbox: write only one world
+
+The idea has a fine pragmatism: since we cannot make two systems atomic, we write only one. We give up publishing directly to the broker. Instead, the service writes, in its **own database**, the business state AND a row describing the message to send, all in the **same transaction**. This table of pending messages is called the <Term slug="outbox-transactionnel">transactional outbox</Term>.
+
+The gain is immediate. Since the order and the outbox row are written in a single transaction of the same database, a crash can no longer separate them: either both are there, or neither. The "order in the database but message lost" scenario becomes impossible, because the message is no longer a fragile publication to another world, it is a plain row in the transaction that creates the order.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    S[Order service] -->|one transaction| DB
+    subgraph DB[Database]
+      O["order"]
+      X["outbox row<br/>(pending message)"]
+    end
+    DB --> R[Relay]
+    R -->|publishes then marks sent| B[Broker]
+    B --> C[Idempotent consumer]
+    style X fill:#34d399,color:#062
+    style O fill:#34d399,color:#062`}
+  caption="The business state and the message are born in the same transaction. A relay then reads the outbox table and publishes to the broker."
+/>
+
+But a row in a table does not send itself to the broker. One piece is missing: who reads this table and actually publishes?
+
+## The relay: from a fragile "publish" to "republish until success"
+
+That piece is the <Term slug="relais-outbox">outbox relay</Term>. It is a process separate from the business service, whose only task is a loop: read the outbox rows still pending, publish them to the broker, then mark them as sent. Nothing more.
+
+What is subtle is what the relay does with the "publish" that was giving us trouble. It too can publish a message then crash right before marking it sent. But this time, it does not matter: the row is still marked "pending" in the database, so on restart the relay finds it and republishes it. The price to pay is a possible duplicate. We recognize at-least-once delivery from chapter three, and this is exactly where we reap what we sowed in chapter four: this duplicate is absorbed downstream by the idempotent consumer. The producer-side outbox and the consumer-side inbox are the two jaws of the same pincer.
+
+## Watch the two methods
+
+The component below runs the same order through both methods: the naive dual write and the transactional outbox. You choose the crash point, and you compare what the database and the broker see at the end.
+
+Start with no crash: both methods work, database and broker agree. But then place the crash between the two writes. In dual write, the database keeps the order and the broker stays empty: inconsistent, message lost. In outbox, watch the difference: the two writes were in a single transaction (boxed with a dashed border), the crash did not separate them, the relay restarts, finds the pending row and publishes. Consistent, delivered after recovery. That is the whole lesson, in one toggle.
+
+<OutboxSimulator
+  client:load
+  copy={{
+    heading: 'Dual write versus outbox',
+    instructions: "An order must be written to the database AND announced to the broker. Choose the method and the crash point, then watch whether the database and the broker end up in agreement.",
+    modeLabel: 'Method',
+    modeDualWriteLabel: 'Dual write (naive)',
+    modeOutboxLabel: 'Transactional outbox',
+    crashLabel: 'Crash point',
+    crashNoneLabel: 'No crash',
+    crashMidLabel: 'Between the two writes',
+    transactionLabel: 'one single transaction',
+    dbLabel: 'Database',
+    brokerLabel: 'Broker',
+    dbHasOrderLabel: 'Order written',
+    brokerHasMessageLabel: 'Message received',
+    brokerNoMessageLabel: 'No message',
+    consistencyLabel: 'Consistency',
+    consistentStateLabel: 'Database and broker agree',
+    inconsistentStateLabel: 'Inconsistent',
+    stepCommitDbLabel: 'Write the order',
+    stepInsertOutboxLabel: 'Insert the outbox row',
+    stepPublishLabel: 'Publish to broker',
+    stepClaimLabel: 'Claim the row',
+    stepMarkSentLabel: 'Mark as sent',
+    stepCrashLabel: 'Crash',
+    stepRecoverRelayLabel: 'The relay restarts',
+    verdictByLuckLabel: 'Consistent, by luck',
+    verdictLostLabel: 'Inconsistent: message lost',
+    verdictConsistentLabel: 'Consistent',
+    verdictEventualLabel: 'Consistent after recovery',
+    resetLabel: 'Reset',
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+- In dual write with a crash, the database keeps the order but the broker stays empty. Why does the verdict speak of a lost message rather than a late message?
+- In outbox, what makes the crash between the two writes harmless, when it was fatal in dual write?
+- The outbox mode shows "consistent after recovery" and not just "consistent". What does this "after recovery" mean, and who pays the price of that delay?
+
+## Several relays: the row claim
+
+A single relay eventually becomes a bottleneck. So we want to run several in parallel. But a danger arises at once: if two relays read the same table and land on the same pending row, they both publish the same message. The duplicate is already handled by the idempotent consumer, but we would rather not cause it for free on every cycle.
+
+The guard is the <Term slug="reclamation-de-ligne">row claim</Term>. Each relay claims the rows it will process with a lock, in SQL the `FOR UPDATE SKIP LOCKED` clause: it takes the rows still free and skips those another relay has already locked. Two relays can no longer grab the same row. It is a partial order on the work, exactly in the spirit of chapter four, but applied to outbox rows rather than to messages.
+
+<Callout kind="warn" title="The trap I ran into: a claim that was too short">
+While building Hexeract's outbox, I ran into a real double-publication bug. A relay does not claim one row at a time but a batch, then publishes them one by one. The claim sets a lease (a duration during which the row is considered taken). My mistake: I had sized this lease to the duration of a single publication. As a result, for a batch of ten rows, the lease of the last rows expired before the relay reached them, another relay believed they were free, and republished them. The fix: size the lease to the worst case, the number of rows in the batch multiplied by the duration of one publication. The lesson: a lock only protects as long as it lasts, and its duration must cover all the work it covers.
+</Callout>
+
+## In code: two frameworks, the same pact
+
+Let us see the pattern in two ecosystems. The pact is identical: write the business state and the message in the same transaction, and let the message leave only after the commit.
+
+Hexeract, the Rust framework that serves as our common thread, exposes an idempotent insertion into the outbox, keyed on the event id, plus a relay (`OutboxWorker`) that polls the pending rows under `FOR UPDATE SKIP LOCKED` and marks them sent after success.
+
+```rust
+// On the write side: the event enters the outbox table idempotently.
+// The key is event_id: an already-seen insertion is ignored.
+// (insert_idempotent_sql: INSERT ... ON CONFLICT (event_id) DO NOTHING)
+outbox.enqueue_idempotent(event_id, "OrderCreated", &payload).await?;
+
+// On the relay side (OutboxWorker): selecting the pending rows.
+// A row is "pending" as long as delivered_at IS NULL.
+//   SELECT ... FROM outbox
+//   WHERE delivered_at IS NULL AND attempts < max_attempts
+//     AND (next_retry_at IS NULL OR next_retry_at <= now)
+//   ORDER BY id LIMIT n FOR UPDATE SKIP LOCKED
+// After a successful publish: mark_delivered (UPDATE SET delivered_at = now).
+```
+
+Wolverine, in .NET, provides the same pact turnkey with its durable outbox. On a Marten transaction, the published message is not sent right away: it is stored with the business write, and it will only leave after the commit.
+
+```csharp
+// The business state and the message in the same Marten transaction.
+session.Store(order);
+
+// This message does NOT go out before the transaction succeeds:
+// it is persisted with the order, then relayed after the commit.
+await outbox.PublishAsync(new OrderCreated(order.Id));
+
+await session.SaveChangesAsync();
+```
+
+Two languages, one idea: we never write the broker and the database in two separate gestures. We write the database once, the message with it, and a relay takes care of the rest. The word "outbox" carries the guarantee; the framework carries the plumbing.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, to look at only after trying.
+
+### Exercise 1: the two faces of the dual write
+
+An order service does two things for each order: write to the database and publish "order created". Consider two naive implementations. (a) It writes the database, then publishes. (b) It publishes, then writes the database. For each, a crash occurs at the worst moment, right between the two gestures. Describe the final state (what the database sees, what the broker sees) and name the flaw. Then explain in one sentence why the transactional outbox eliminates both at once.
+
+### Exercise 2: the relay that falls at the wrong moment
+
+An outbox relay reads a pending row, publishes it successfully to the broker, then its machine shuts down right before it could mark it sent. (i) Describe what happens when the relay restarts. (ii) How many times is the message published in total? (iii) Who, downstream, prevents this behavior from causing a double payment? Tie your answer to a mechanism seen in chapter four.
+
+<Callout kind="tip" title="Solution to exercise 1: the two faces of the dual write">
+We reason each time about the state of the two worlds after the crash.
+
+**Step 1.** Implementation (a), write the database then publish.
+
+The database committed the order. The crash falls before the publication. So the database contains the order, the broker received nothing. The message is **lost**: the payment will never be triggered, and no redelivery can replay a message that never left.
+
+**Step 2.** Implementation (b), publish then write the database.
+
+The publication succeeded. The crash falls before the database commit, which is therefore rolled back. The broker has "order created", but the database has no order. The message is **phantom**: the payment will run for an order that does not exist.
+
+**Step 3.** Why the outbox eliminates both.
+
+The outbox never writes two worlds again. It writes the order and the message row in a single transaction of the database: either both are there, or neither. There is no longer a moment between two writes where a crash could desynchronize them.
+
+**Result.** (a) lost message, (b) phantom message; both disappear because the outbox replaces two non-atomic writes with a single atomic write, followed by a relay.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: the relay that falls at the wrong moment">
+The crash falls after the successful publication, before the marking. This is the scenario that reveals the nature of the relay.
+
+**Step 1.** On restart, the row is still pending.
+
+The relay did not have time to mark the row sent. In the database, it is therefore still "pending" (its delivery timestamp is empty). The relay, resuming its loop, finds it again among the rows to publish.
+
+**Step 2.** It republishes it.
+
+Not knowing it had already published it just before the crash, the relay publishes the message a second time. In total, the message goes out **twice**: this is at-least-once delivery.
+
+**Step 3.** The idempotent consumer absorbs the duplicate.
+
+This is exactly chapter four's mechanism. The consumer recognizes, through its deduplication key, an already-processed message, and does not execute the payment a second time. The relay's double send therefore stays without consequence on the effect.
+
+**Result.** (i) the pending row is found and republished; (ii) the message is published twice; (iii) it is the idempotent consumer of chapter four that neutralizes the duplicate. The outbox guarantees we never lose; idempotence guarantees we never double the effect.
+</Callout>
+
+## In one sentence
+
+We cannot make a database and a broker atomic, so we write only one world: the business state and the message leave together in a transaction of the database (the transactional outbox), then a relay publishes at-least-once what the transaction sealed, and the idempotent consumer of chapter four absorbs the duplicates this relay may produce.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "What is the dual-write problem?",
+      options: [
+        "Having to modify two distinct systems (its database and the broker) for a single action, with no transaction spanning both: a crash between the two desynchronizes them.",
+        "Writing the same message twice by mistake in the database.",
+        "Having two consumers read the same message in parallel.",
+      ],
+      answer: 0,
+      explain:
+        "No transaction spans both the database and the broker. Between the two writes, a crash leaves either a lost message (database written, message not sent) or a phantom message (message sent, database rolled back).",
+    },
+    {
+      q: "How does the transactional outbox remove this problem?",
+      options: [
+        "By writing the business state AND a row describing the message in the same database transaction, then letting a relay publish that row to the broker.",
+        "By publishing the message twice to be sure it arrives.",
+        "By speeding up the broker so it never crashes.",
+      ],
+      answer: 0,
+      explain:
+        "We do not make two worlds atomic; we write only one. The order and the outbox row share a transaction, so a crash cannot separate them. The relay turns the fragile publish into republish until success.",
+    },
+    {
+      q: "Why must several relays claim their rows with FOR UPDATE SKIP LOCKED?",
+      options: [
+        "So that a relay skips the rows another has already locked, and two relays do not publish the same message.",
+        "To sort messages by arrival order in the broker.",
+        "To encrypt the rows of the outbox table.",
+      ],
+      answer: 0,
+      explain:
+        "Without a claim lock, two relays would read the same pending row and both publish it. FOR UPDATE SKIP LOCKED gives each row a single taker. Mind the lease duration: it must cover the whole claimed batch.",
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+The outbox plus the relay give us a solid guarantee: the message always ends up leaving, and the idempotent consumer absorbs the duplicates. But this guarantee has a dark side. The relay republishes as long as a message is not marked sent, and the consumer retries as long as a processing has not succeeded. What happens if a message can **never** be processed, because it is malformed or triggers a bug every time? The relay and the consumer will replay it indefinitely, and worse, this poison message can block the whole queue behind it while we keep trying. The "at-least-once" guarantee then becomes "forever, and at the expense of the others". Chapter six, "When a message is poison", learns to recognize these messages, to bound the attempts with a progressive backoff, and to set them aside cleanly in a dead-letter queue.
+
+## Sources
+
+- Richardson, C. (2018). *Microservices Patterns*, chapter 3 "Interprocess communication" and the "Transactional outbox" pattern. Manning. [microservices.io, Transactional Outbox](https://microservices.io/patterns/data/transactional-outbox.html)
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapter 11 "Stream Processing" (producer idempotence, exactly-once). O'Reilly. [Publisher reference](https://dataintensive.net/)
+- PostgreSQL. *Documentation: SELECT, FOR UPDATE SKIP LOCKED clause*. [postgresql.org](https://www.postgresql.org/docs/current/sql-select.html#SQL-FOR-UPDATE-SHARE)
+- Wolverine. *Durable Outbox and Marten Integration*. Official documentation. [Durability](https://wolverinefx.net/guide/durability/), [Marten Outbox](https://wolverinefx.net/guide/durability/marten/outbox.html)

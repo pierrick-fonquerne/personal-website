@@ -1,0 +1,13 @@
+slug: relais-outbox
+fr:
+  term: Relais d'outbox
+  definition: "Processus qui lit la table outbox, publie vers le broker les messages en attente, puis les marque comme envoyés. Il tourne séparément du service métier. Comme il peut publier un message puis tomber avant de le marquer envoyé, il le republiera : sa livraison est au moins une fois, et les doublons sont absorbés en aval par un consommateur idempotent."
+  source: Richardson, Microservices Patterns
+en:
+  term: Outbox relay
+  definition: "A process that reads the outbox table, publishes pending messages to the broker, then marks them as sent. It runs separately from the business service. Since it can publish a message then crash before marking it sent, it will republish it: its delivery is at-least-once, and duplicates are absorbed downstream by an idempotent consumer."
+  source: Richardson, Microservices Patterns
+seeAlso:
+  - outbox-transactionnel
+  - livraison-au-moins-une-fois
+  - reclamation-de-ligne
