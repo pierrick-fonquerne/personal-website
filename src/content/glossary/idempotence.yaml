@@ -1,0 +1,13 @@
+slug: idempotence
+fr:
+  term: Idempotence
+  definition: "Propriété d'un traitement dont l'exécution répétée produit le même résultat qu'une exécution unique. Appliquée au messaging, elle rend les doublons inoffensifs : un message déjà traité est reconnu et son effet n'est pas refait. C'est le mécanisme qui transforme une livraison au moins une fois en livraison effectivement une fois. La façon concrète de fabriquer un consommateur idempotent (clé de déduplication, atomicité) fait l'objet du chapitre suivant."
+  source: Hohpe & Woolf, 2003
+en:
+  term: Idempotence
+  definition: "The property of an operation whose repeated execution produces the same result as a single execution. Applied to messaging, it makes duplicates harmless: an already-processed message is recognized and its effect is not reapplied. It is the mechanism that turns at-least-once delivery into effectively-once delivery. How to concretely build an idempotent consumer (deduplication key, atomicity) is the subject of the next chapter."
+  source: Hohpe & Woolf, 2003
+seeAlso:
+  - livraison-au-moins-une-fois
+  - livraison-effectivement-une-fois
+  - acquittement

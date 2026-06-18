@@ -1,0 +1,13 @@
+slug: livraison-au-plus-une-fois
+fr:
+  term: Livraison au plus une fois
+  definition: "Garantie selon laquelle un message est traité zéro ou une fois, jamais davantage (en anglais at-most-once). On l'obtient en acquittant le message dès sa réception, avant de le traiter : une panne survenant entre l'acquittement et la fin du traitement perd le message, car il a déjà été effacé. On ne duplique jamais, mais on peut perdre. Adaptée aux flux où la perte occasionnelle est sans conséquence."
+  source: Kleppmann, 2017
+en:
+  term: At-most-once delivery
+  definition: "A guarantee that a message is processed zero or one time, never more. It is obtained by acknowledging the message as soon as it is received, before processing it: a crash between the acknowledgement and the end of processing loses the message, since it has already been erased. It never duplicates, but it can lose. Suited to streams where occasional loss is harmless."
+  source: Kleppmann, 2017
+seeAlso:
+  - acquittement
+  - livraison-au-moins-une-fois
+  - livraison-effectivement-une-fois

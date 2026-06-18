@@ -1,0 +1,270 @@
+---
+course: messaging-foundations
+order: 3
+title: 'Delivery semantics'
+subtitle: "The previous chapter dropped a word without digging into it: the acknowledgement. Everything turns on its timing. Acknowledge too early and you risk losing a message; acknowledge too late and you risk processing it twice. There is no third door, and this chapter explains why."
+estimatedMinutes: 22
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import DeliverySemanticsSimulator from '../../../components/learning/DeliverySemanticsSimulator.tsx';
+
+In chapter two, we saw what becomes of a message: erased after acknowledgement on the broker, kept and re-readable on the log. We even slipped in a loaded phrase: "acknowledged equals erased". But we left a gap. Go back to the postal carrier. At what exact instant does he write down "delivered"? The moment he hands you the envelope, or only after you have signed? Between those two instants hides the possibility of an accident, and depending on the choice your message is either lost or received twice. This chapter puts that instant under the microscope and gives you the precise vocabulary to describe what a system really promises when it says "I am delivering this message to you".
+
+<Callout kind="info" title="Before we start">
+This chapter builds on the previous two: you need the three families of messages (command, request, event) and the broker versus log mechanics, in particular the idea of an acknowledgement that erases a message on the broker side. You do not need to know TCP, AMQP, or computability theory: the two generals problem will be told, not formally proved. We reason about the model, not the protocol.
+</Callout>
+
+## The postal carrier and the instant of the acknowledgement
+
+Go back to the carrier from chapter two. He carries a letter, hands it to you, and at some point writes "delivered" in his notebook, then throws away his copy. That note is the <Term slug="acquittement">acknowledgement</Term>: the signal that says "this is settled, it can be erased". Once the copy is gone, no one will ever replay that letter. The acknowledgement is therefore not paperwork: it is the gesture that authorizes forgetting.
+
+The whole question is one word: when? Two instants are possible, and a single accident separates their consequences.
+
+First choice: the carrier writes "delivered" the moment he hands you the envelope, before you have even taken hold of it. If he throws away his copy at that instant and you drop the letter in a puddle right after, it is lost: he keeps no trace, no one will replay it for you. You received the letter at most once, maybe zero times.
+
+Second choice: the carrier waits for your signature before writing "delivered". But imagine lightning strikes just after you sign, and before he can record your signature in his notebook. From his point of view, the letter is not acknowledged: he will come back tomorrow to deliver the same one. So you will receive it at least once, sometimes twice.
+
+Lose once, or receive twice. This is no minor technicality: it is the heart of delivery semantics, and we are now going to give it its exact names.
+
+## The three promises
+
+For a given message, a messaging system always runs three actions: it **delivers** the message to the consumer, the consumer **processes** it (this is the real effect: charging a card, reserving stock, sending an email), and someone **acknowledges**. What changes everything is the order of these actions and what we do on a crash. Three disciplines exist, and only three.
+
+The first puts the acknowledgement **before** processing. We erase the message as soon as we receive it, then process it. If a crash happens between the acknowledgement and the end of processing, the message is already erased: no one will replay it, the effect will never happen. This is <Term slug="livraison-au-plus-une-fois">at-most-once delivery</Term>: the message is processed zero or one time, never more. We never duplicate, but we can lose.
+
+The second puts the acknowledgement **after** successful processing, and redelivers as long as no acknowledgement has come back. If a crash happens after processing but before the acknowledgement, the system, seeing no acknowledgement, redelivers the message, and the effect happens again. This is <Term slug="livraison-au-moins-une-fois">at-least-once delivery</Term>: the message is processed one time or more, never zero. We never lose, but we can duplicate.
+
+The third is everyone's dream: "exactly-once", neither loss nor duplicate. It is the guarantee we would always like to have. The trouble is that at the delivery level, it is impossible. The next section explains why, and the one after shows how we get close anyway.
+
+<Callout kind="tip" title="The basic dial: before or after?">
+If you remember only one thing, make it this. The semantic is not some mysterious property of the broker: it is the direct result of a choice of instant. Acknowledging before processing gives at-most-once (risk of loss). Acknowledging after processing gives at-least-once (risk of duplicate). Everything else follows.
+</Callout>
+
+## Why exactly-once delivery is impossible
+
+To grasp the obstacle, we tell an old riddle: the <Term slug="probleme-des-deux-generaux">two generals problem</Term>.
+
+Two allied armies camp on two hills, separated by a valley where the enemy stands. To win, they must attack **at the same time**: if only one charges, it is crushed. The generals can communicate only by sending messengers across the valley, and these messengers may be captured along the way. The first general sends "attack at dawn". But he will never know whether the messenger got through, so he needs an acknowledgement. The second sends back "agreed, at dawn". Except this second messenger may be captured too: the second general therefore does not know whether his acknowledgement arrived, and will not dare attack without being sure. We would then need an acknowledgement of the acknowledgement, then an acknowledgement of that one, forever. It can be proved that no protocol with a finite number of messages guarantees that both generals are jointly certain of the same plan.
+
+The link to our messages is direct. The sender can never be absolutely sure that the consumer processed the message exactly once, because the acknowledgement itself, the last messenger, can be lost. Faced with this uncertainty, it has only two possible behaviors: do not retry, and risk loss (at-most-once); or retry, and risk a duplicate (at-least-once). There is no third pure behavior at the delivery level. This is exactly why "exactly-once delivery" is a myth: it is not a limitation of today's tools, it is a fundamental impossibility.
+
+## The way out: at-least-once, plus idempotence
+
+If we cannot guarantee exact delivery, we move the problem. We accept duplicates at delivery (hence at-least-once), but we make them **harmless** at processing. Processing the same message twice must produce the same result as processing it once. This property is called <Term slug="idempotence">idempotence</Term>, and it is what saves the day.
+
+A simple image: pressing the "off" button on an already-off elevator changes nothing; pressing "call floor 3" a second time when it is already requested does not request it twice. The effect is the same whether you press once or ten times. An idempotent processing is the same: the second pass of an already-seen message does not redo the effect, it recognizes it and skips.
+
+The combination "at-least-once plus idempotent processing" has a name: <Term slug="livraison-effectivement-une-fois">effectively-once delivery</Term>. We do not remove delivery duplicates, we neutralize them. From the point of view of the observable effect, the payment is charged only once, even if the message arrived twice.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    A[exactly-once delivery] -->|impossible: two generals| B[give up perfect delivery]
+    B --> C[at-least-once<br/>duplicates are possible]
+    C --> D[idempotent processing<br/>a duplicate does not redo the effect]
+    D --> E[effectively-once<br/>effect applied a single time]
+    style A fill:#f87171,color:#fff
+    style E fill:#34d399,color:#062`}
+  caption="We do not reach exactly-once in delivery; we imitate it by combining at-least-once delivery with processing that absorbs duplicates."
+/>
+
+How do we concretely build an idempotent processing, and how do we keep track of already-seen messages without reopening the problem? That is the whole subject of the next chapter: we name it here, we build it there.
+
+<Callout kind="note" title="And Kafka's exactly-once, then?">
+You will sometimes read that Kafka offers "exactly-once". That is true, but bounded to its own world: inside Kafka, a transaction can read a message, write a result to another topic and commit the read position atomically, with no visible duplicate. As soon as an effect leaves Kafka, charging a real card, calling a real API, you fall back on the general rule: at-least-once, plus idempotence. The two generals problem is not bypassed, it is confined to a perimeter where the write and the acknowledgement live in the same place.
+</Callout>
+
+## Watch the instant of the crash
+
+The component below runs the same message, charging a payment, through all three disciplines at once. You choose the instant of the crash, and you compare.
+
+Start with no crash: all three charge once, all is well. Then place the crash **after delivery, before processing**: watch at-most-once lose the payment (zero charges), while the other two redeliver and end up at one. Finally place the crash **after processing, before acknowledgement**, the truly revealing moment: at-least-once charges **twice** (the duplicate), while effectively-once recognizes the already-seen message and stays at one. That is the whole lesson of the chapter, in one selector.
+
+<DeliverySemanticsSimulator
+  client:load
+  copy={{
+    heading: 'Delivery semantics',
+    instructions: 'Choose the instant of the crash, then compare the three disciplines on the same "charge the payment" message. The decisive case is the crash after processing, before acknowledgement.',
+    effectName: 'Payment charged',
+    crashPointLabel: 'Instant of the crash',
+    crashNoneLabel: 'No crash',
+    crashBeforeProcessLabel: 'After delivery, before processing',
+    crashAfterProcessLabel: 'After processing, before acknowledgement',
+    atMostOnceTitle: 'At-most-once',
+    atLeastOnceTitle: 'At-least-once',
+    effectivelyOnceTitle: 'Effectively-once',
+    atMostOnceHint: 'Acknowledges before processing',
+    atLeastOnceHint: 'Acknowledges after processing',
+    effectivelyOnceHint: 'At-least-once, plus idempotent processing',
+    effectCountLabel: 'Charges',
+    verdictLostLabel: 'Lost',
+    verdictDuplicateLabel: 'Duplicate',
+    verdictExactlyOnceLabel: 'Exactly once',
+    stepDeliverLabel: 'Deliver',
+    stepRedeliverLabel: 'Redeliver',
+    stepProcessLabel: 'Process (charge)',
+    stepSkipDuplicateLabel: 'Duplicate skipped',
+    stepAckLabel: 'Acknowledge',
+    stepCrashLabel: 'Crash',
+    stepLostLabel: 'Message lost',
+    attemptLabel: 'attempt',
+    resetLabel: 'Reset',
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+- With the crash "after delivery, before processing", why is at-most-once the only one to lose the message, even though it has not even charged yet?
+- With the crash "after processing, before acknowledgement", at-least-once and effectively-once both redeliver. What makes one charge twice and the other only once?
+- Which is the only column that shows "exactly once" whatever the instant of the crash, and what did it have to add to get there?
+
+## In code: Hexeract's three modes, Wolverine's safety net
+
+Let us see these disciplines in real code. The surprise is that they are not theories: they are dials you set by hand.
+
+Hexeract, the Rust messaging framework that runs as our common thread, exposes exactly these choices as an acknowledgement mode set on the worker. Its `AckMode` enum has three variants, and their names speak for themselves.
+
+```rust
+// At-least-once (the default): we acknowledge AFTER successful processing.
+// The broker redelivers as long as no acknowledgement arrives,
+// so a duplicate is possible: the handler MUST be idempotent.
+let worker = RabbitMqWorkerBuilder::new(connection)
+    .queue("orders.charge-payment")
+    .register_handler::<ChargePayment, _>(ChargePaymentHandler)
+    .ack_mode(AckMode::Manual)
+    .max_attempts(5) // number of redeliveries before giving up
+    .build()?;
+
+// At-most-once: we acknowledge ON RECEIPT, before the handler.
+// A crash after the acknowledgement and before the handler finishes loses the message.
+let logger = RabbitMqWorkerBuilder::new(connection)
+    .queue("analytics.click")
+    .register_handler::<ClickEvent, _>(RecordClickHandler)
+    .ack_mode(AckMode::AckOnReceive)
+    .build()?;
+```
+
+The comment on the `AckMode::Manual` variant in Hexeract's code states verbatim that handlers must be idempotent, because duplicates can occur. That is this chapter proved by code: choosing at-least-once forces you to plan for idempotence on the processing side. A third variant, `AckMode::Unacknowledged`, pushes the logic to the end: the broker expects no acknowledgement at all, it is all-or-nothing with no safety net, reserved for cases where loss is acceptable.
+
+Wolverine, its .NET counterpart, is instructive because it provides the idempotence safety net out of the box. On a Kafka transport, you ask the consumer to persist each received message before committing its read position, which gives at-least-once delivery; and the same persistence is used to recognize an already-processed identifier and discard it. Effectively-once delivery becomes a single line.
+
+```csharp
+// At-least-once: the message is persisted before committing the offset.
+// The same durable inbox deduplicates by message identifier,
+// so an already-processed message is discarded: effectively-once.
+opts.ListenToKafkaTopic("orders.charge-payment")
+    .UseDurableInbox();
+
+// You can also retry finely on a transient exception.
+chain.OnException<TransientException>()
+    .RetryWithCooldown(100.Milliseconds(), 250.Milliseconds());
+```
+
+Wolverine's documentation states it plainly: with the durable inbox, the system automatically discards any message it detects has already been handled, by comparing its identifier to those already seen. Two ecosystems, one same lesson: you explicitly choose your delivery semantic, and effectively-once is never magic, it is at-least-once plus deduplication.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, to look at only after you have tried.
+
+### Exercise 1: the right promise for the right message
+
+For our e-commerce order, two very different flows. (a) A stream of click events feeds an analytics dashboard: we receive thousands per minute, and losing a click now and then changes nothing about the trend. (b) Charging the order's payment: it must be neither forgotten (the customer would not pay) nor done twice (a double charge, a furious customer). For each one, say which delivery semantic you choose and why, in one sentence grounded in the instant of the acknowledgement.
+
+### Exercise 2: the accident at the worst moment
+
+A worker receives the message "charge 49 euros", performs the charge successfully, then its machine shuts down abruptly before it could acknowledge. Describe what happens next (i) if the worker is at-most-once, (ii) if it is at-least-once without idempotence, (iii) if it is at-least-once with idempotent processing. For each case, conclude with the number of times the 49 euros are actually charged.
+
+<Callout kind="tip" title="Solution to exercise 1: the right promise for the right message">
+We reason each time about the same question: what does a loss cost, and what does a duplicate cost?
+
+**Step 1.** The click stream (a) tolerates loss but values simplicity and throughput.
+
+Losing a click now and then does not distort a trend, whereas imposing an acknowledgement and redeliveries costs performance for nothing. So we acknowledge on receipt: at-most-once delivery fits.
+
+**Step 2.** Charging the payment (b) tolerates neither loss nor duplicate.
+
+Never losing requires acknowledging only after processing, hence at-least-once delivery. But this discipline allows duplicates, and a double charge is unacceptable. So we must add idempotence to neutralize the duplicates.
+
+**Result.** (a) at-most-once delivery, because loss is harmless and simplicity comes first; (b) at-least-once delivery plus idempotence, that is effectively-once, because neither loss nor duplicate is acceptable.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: the accident at the worst moment">
+The crash falls at the decisive moment: after processing, before the acknowledgement. That is precisely where the three disciplines diverge.
+
+**Step 1.** At-most-once, the acknowledgement happened on receipt, hence before the charge.
+
+The message was already erased when the machine shut down. The charge did happen once, and it will not be replayed. The 49 euros are charged **once**, by luck: if the crash had fallen before the charge, they would have been lost.
+
+**Step 2.** At-least-once without idempotence, no acknowledgement came back.
+
+The broker redelivers the message. The worker, which does not remember having already processed it, charges again. The 49 euros are charged **twice**: this is the double charge.
+
+**Step 3.** At-least-once with idempotent processing, the message is also redelivered.
+
+But this time, the worker recognizes an already-processed identifier and does not run the charge a second time: it acknowledges and moves on. The 49 euros are charged **once**.
+
+**Result.** (i) once (but fragile), (ii) twice (the duplicate), (iii) once (idempotence absorbed the redelivery). Only the third discipline is both safe against loss and safe against duplicates.
+</Callout>
+
+## In one sentence
+
+The instant of the acknowledgement relative to processing decides the guarantee: acknowledging before gives at-most-once (you can lose), acknowledging after gives at-least-once (you can duplicate), exactly-once delivery is impossible (two generals problem), and we imitate it with at-least-once delivery paired with idempotent processing, the effectively-once.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "What determines the delivery semantic of a message?",
+      options: [
+        'The instant of the acknowledgement relative to processing: before processing gives at-most-once, after gives at-least-once.',
+        'The network speed between the broker and the consumer.',
+        'Whether the message is a command or an event.',
+      ],
+      answer: 0,
+      explain:
+        'Acknowledging before processing allows loss (at-most-once); acknowledging after successful processing, while redelivering as long as no acknowledgement arrives, allows a duplicate (at-least-once). Everything follows from that instant.',
+    },
+    {
+      q: 'Why is exactly-once delivery impossible?',
+      options: [
+        'Because the acknowledgement itself can be lost (two generals problem): the sender must choose between not retrying (loss) or retrying (duplicate).',
+        'Because current brokers are not fast enough, but that will come.',
+        'Because Kafka allows only one read per message.',
+      ],
+      answer: 0,
+      explain:
+        'The two generals problem shows that no finite protocol guarantees agreement over an unreliable channel. The sender therefore has only two pure behaviors: risk loss or risk a duplicate. It is a fundamental impossibility, not a technical limitation.',
+    },
+    {
+      q: 'How do we get an effect applied a single time despite delivery duplicates, in practice?',
+      options: [
+        'By combining at-least-once delivery with idempotent processing that recognizes an already-processed message and does not redo its effect (effectively-once).',
+        'By turning on an exactly-once mode that prevents any redelivery.',
+        'By acknowledging each message exactly in the middle of processing.',
+      ],
+      answer: 0,
+      explain:
+        'We do not remove delivery duplicates, we neutralize them: the second pass of an already-seen message does not redo the effect. This is effectively-once, and the next chapter shows how to build that idempotent processing.',
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+We now know how to choose our delivery promise, and we have seen that the only safe way to neither lose nor duplicate goes through idempotence. But we invoked it without saying how we build it: how does a worker recognize an "already-processed" message? With what key, stored where, and validated how without reopening the two generals problem inside its own database? Another blind spot: at-least-once delivery redelivers messages, but in what order does it replay them? If "Order delivered" comes back before "Order paid", idempotence alone is no longer enough. Chapter four, "Ordering and idempotence", builds the idempotent consumer, its deduplication key, and handles ordering by key and by partition, the piece we carefully set aside in chapter two.
+
+## Sources
+
+- Akkoyunlu, E. A., Ekanadham, K. & Huber, R. V. (1975). "Some Constraints and Tradeoffs in the Design of Network Communications." *ACM SIGOPS Operating Systems Review* 9(5), 67-74. Original formulation of the two generals problem. [DOI 10.1145/1067629.806523](https://doi.org/10.1145/1067629.806523)
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapter 9 "Consistency and Consensus" and chapter 11 "Stream Processing" (delivery semantics, idempotence, exactly-once). O'Reilly. [Publisher reference](https://dataintensive.net/)
+- Apache Kafka. *Documentation: Message Delivery Semantics and Exactly-Once Semantics*. [kafka.apache.org](https://kafka.apache.org/documentation/#semantics)
+- RabbitMQ. *Consumer Acknowledgements and Publisher Confirms*. [rabbitmq.com](https://www.rabbitmq.com/docs/confirms)
+- Wolverine. *Durable Inbox and Idempotent Message Delivery*. Official documentation. [Durability](https://wolverinefx.net/guide/durability/), [Idempotency](https://wolverinefx.net/guide/durability/idempotency.html)

@@ -1,0 +1,13 @@
+slug: livraison-effectivement-une-fois
+fr:
+  term: Livraison effectivement une fois
+  definition: "Combinaison d'une livraison au moins une fois et d'un traitement idempotent, qui rend l'effet observable identique à un traitement unique (en anglais effectively-once). On ne supprime pas les doublons de livraison, on les neutralise : un message déjà traité est reconnu et son effet n'est pas refait. C'est l'approximation réaliste du exactly-once, impossible au niveau de la livraison à cause du problème des deux généraux."
+  source: Kleppmann, 2017
+en:
+  term: Effectively-once delivery
+  definition: "The combination of at-least-once delivery and idempotent processing, which makes the observable effect identical to a single processing. Delivery duplicates are not removed but neutralized: an already-processed message is recognized and its effect is not reapplied. It is the realistic approximation of exactly-once, which is impossible at the delivery level because of the two generals problem."
+  source: Kleppmann, 2017
+seeAlso:
+  - livraison-au-moins-une-fois
+  - idempotence
+  - probleme-des-deux-generaux

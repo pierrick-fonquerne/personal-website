@@ -1,0 +1,270 @@
+---
+course: messaging-foundations
+order: 3
+title: 'Sémantiques de livraison'
+subtitle: "Le chapitre précédent a posé un mot sans le creuser : l'acquittement. Tout se joue sur son instant. Acquitter trop tôt, c'est risquer de perdre un message ; acquitter trop tard, c'est risquer de le traiter deux fois. Il n'y a pas de troisième porte, et ce chapitre explique pourquoi."
+estimatedMinutes: 22
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import DeliverySemanticsSimulator from '../../../components/learning/DeliverySemanticsSimulator.tsx';
+
+Au chapitre deux, on a vu ce que devient un message : effacé après acquittement chez le courtier, conservé et relisible chez le journal. On a même glissé une phrase lourde de conséquences : « acquitté égale effacé ». Mais on a laissé un trou. Reviens au facteur. À quel instant exact note-t-il « livré » ? Au moment où il te tend l'enveloppe, ou seulement après que tu as signé ? Entre ces deux instants se cache la possibilité d'un accident, et selon le choix, ton message est soit perdu, soit reçu deux fois. Ce chapitre place cet instant sous le microscope et te donne le vocabulaire exact pour décrire ce qu'un système promet vraiment quand il dit « je te livre ce message ».
+
+<Callout kind="info" title="Avant de commencer">
+Ce chapitre prolonge les deux précédents : il faut avoir retenu les trois familles de messages (commande, requête, événement) et la mécanique courtier contre journal, en particulier l'idée d'acquittement qui efface un message côté courtier. Tu n'as pas besoin de connaître TCP, AMQP, ni la théorie de la calculabilité : le problème des deux généraux sera raconté, pas démontré formellement. On raisonne sur le modèle, pas sur le protocole.
+</Callout>
+
+## Le facteur et l'instant de l'acquittement
+
+Reprends le facteur du chapitre deux. Il porte une lettre, te la remet, et à un moment il note dans son carnet « distribué », puis il jette sa copie. Cette note, c'est l'<Term slug="acquittement">acquittement</Term> : le signal qui dit « c'est réglé, on peut effacer ». Une fois la copie jetée, plus personne ne pourra rejouer cette lettre. L'acquittement n'est donc pas un détail administratif : c'est le geste qui autorise l'oubli.
+
+Toute la question tient en un mot : quand ? Deux instants sont possibles, et un seul accident sépare leurs conséquences.
+
+Premier choix, le facteur note « distribué » au moment précis où il te tend l'enveloppe, avant même que tu l'aies prise en main. S'il jette sa copie à cet instant et que tu laisses tomber la lettre dans une flaque juste après, elle est perdue : il n'en garde aucune trace, personne ne te la rejouera. Tu as reçu la lettre au plus une fois, peut-être zéro.
+
+Second choix, le facteur attend ta signature avant de noter « distribué ». Mais imagine que la foudre tombe juste après que tu as signé, et avant qu'il ait pu inscrire ta signature dans son carnet. De son point de vue, la lettre n'est pas acquittée : il reviendra demain te livrer la même. Tu la recevras donc au moins une fois, parfois deux.
+
+Perdre une fois, ou recevoir deux fois. Ce n'est pas un dilemme technique mineur : c'est le coeur des sémantiques de livraison, et on va maintenant lui donner ses noms exacts.
+
+## Les trois promesses
+
+Un système de messages déroule toujours, pour un message donné, trois actions : il le **délivre** au consommateur, le consommateur le **traite** (c'est l'effet réel : débiter une carte, réserver un stock, envoyer un courriel), et quelqu'un **acquitte**. Ce qui change tout, c'est l'ordre de ces actions et ce qu'on fait en cas de panne. Trois disciplines existent, et seulement trois.
+
+La première place l'acquittement **avant** le traitement. On efface le message dès qu'on le reçoit, puis on le traite. Si une panne survient entre l'acquittement et la fin du traitement, le message est déjà effacé : personne ne le rejouera, l'effet n'aura jamais lieu. C'est la <Term slug="livraison-au-plus-une-fois">livraison au plus une fois</Term> (« at-most-once ») : le message est traité zéro ou une fois, jamais plus. On ne duplique jamais, mais on peut perdre.
+
+La deuxième place l'acquittement **après** un traitement réussi, et redélivre tant qu'aucun acquittement n'est revenu. Si une panne survient après le traitement mais avant l'acquittement, le système, ne voyant pas d'acquittement, redélivre le message, et l'effet se reproduit. C'est la <Term slug="livraison-au-moins-une-fois">livraison au moins une fois</Term> (« at-least-once ») : le message est traité une fois ou plus, jamais zéro. On ne perd jamais, mais on peut dupliquer.
+
+La troisième est le rêve de tout le monde : « exactly-once », exactement une fois, ni perte ni doublon. C'est la garantie qu'on aimerait toujours avoir. Le problème, c'est qu'au niveau de la livraison, elle est impossible. La section suivante explique pourquoi, et la section d'après montre comment on s'en approche quand même.
+
+<Callout kind="tip" title="Le réglage de base : avant ou après ?">
+Si tu ne devais retenir qu'une chose, ce serait celle-ci. La sémantique n'est pas une propriété mystérieuse du courtier : c'est le résultat direct d'un choix d'instant. Acquitter avant de traiter donne au plus une fois (risque de perte). Acquitter après avoir traité donne au moins une fois (risque de doublon). Tout le reste en découle.
+</Callout>
+
+## Pourquoi « exactly-once » de livraison est impossible
+
+Pour comprendre l'obstacle, on raconte une vieille énigme : le <Term slug="probleme-des-deux-generaux">problème des deux généraux</Term>.
+
+Deux armées alliées campent sur deux collines, séparées par une vallée où se tient l'ennemi. Pour gagner, elles doivent attaquer **au même moment** : si une seule charge, elle est écrasée. Les généraux ne peuvent communiquer qu'en envoyant des messagers à travers la vallée, et ces messagers peuvent être capturés en chemin. Le premier général envoie « attaque à l'aube ». Mais il ne saura jamais si le messager est passé, alors il a besoin d'un accusé de réception. Le second renvoie « d'accord, à l'aube ». Sauf que ce second messager peut être capturé lui aussi : le second général ne sait donc pas si son accusé est arrivé, et n'osera pas attaquer sans en être sûr. Il faudrait alors un accusé de l'accusé, puis un accusé de cet accusé, à l'infini. On démontre qu'aucun protocole à nombre fini de messages ne garantit que les deux généraux soient certains, ensemble, du même plan.
+
+Le lien avec nos messages est direct. L'émetteur ne peut jamais être absolument sûr que le consommateur a traité le message exactement une fois, parce que l'acquittement lui-même, le dernier messager, peut se perdre. Devant cette incertitude, il n'a que deux conduites possibles : ne pas réessayer, et risquer la perte (au plus une fois) ; ou réessayer, et risquer le doublon (au moins une fois). Il n'existe pas de troisième conduite pure au niveau de la livraison. C'est exactement pour cela que « exactly-once delivery » est un mythe : ce n'est pas une limite des outils d'aujourd'hui, c'est une impossibilité de fond.
+
+## La sortie : au moins une fois, plus l'idempotence
+
+Si on ne peut pas garantir la livraison exacte, on déplace le problème. On accepte les doublons à la livraison (donc au moins une fois), mais on les rend **inoffensifs** au traitement. Traiter deux fois le même message doit produire le même résultat que le traiter une seule fois. Cette propriété s'appelle l'<Term slug="idempotence">idempotence</Term>, et c'est elle qui sauve la mise.
+
+Une image simple : appuyer sur le bouton « éteindre » d'un ascenseur déjà éteint ne change rien ; appuyer une deuxième fois sur « appeler l'étage 3 » alors qu'il est déjà demandé ne le demande pas deux fois. L'effet est le même, qu'on appuie une ou dix fois. Un traitement idempotent, c'est pareil : le second passage d'un message déjà vu ne refait pas l'effet, il le reconnaît et passe son tour.
+
+La combinaison « au moins une fois plus traitement idempotent » porte un nom : la <Term slug="livraison-effectivement-une-fois">livraison effectivement une fois</Term> (« effectively-once »). On ne supprime pas les doublons de livraison, on les neutralise. Du point de vue de l'effet observable, le paiement n'est prélevé qu'une fois, même si le message est arrivé deux fois.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart TD
+    A[exactly-once de livraison] -->|impossible: deux generaux| B[on renonce a la livraison parfaite]
+    B --> C[au moins une fois<br/>les doublons sont possibles]
+    C --> D[traitement idempotent<br/>un doublon ne refait pas l'effet]
+    D --> E[effectively-once<br/>effet applique une seule fois]
+    style A fill:#f87171,color:#fff
+    style E fill:#34d399,color:#062`}
+  caption="On n'atteint pas exactly-once en livraison ; on l'imite en combinant une livraison au moins une fois et un traitement qui absorbe les doublons."
+/>
+
+Comment fabrique-t-on concrètement un traitement idempotent, et comment garde-t-on la trace des messages déjà vus sans rouvrir le problème ? C'est tout le sujet du chapitre suivant : on le nomme ici, on le construira là-bas.
+
+<Callout kind="note" title="Et le « exactly-once » de Kafka, alors ?">
+Tu liras parfois que Kafka offre du « exactly-once ». C'est vrai, mais borné à son propre monde : à l'intérieur de Kafka, une transaction peut lire un message, écrire un résultat dans un autre sujet et valider la position de lecture de façon atomique, sans doublon visible. Dès qu'un effet sort de Kafka, débiter une vraie carte, appeler une vraie API, tu retombes sur la règle générale : au moins une fois, plus idempotence. Le problème des deux généraux n'est pas contourné, il est confiné à un périmètre où l'écriture et l'acquittement vivent au même endroit.
+</Callout>
+
+## Observe le moment de la panne
+
+Le composant ci-dessous fait tourner le même message, débiter un paiement, dans les trois disciplines à la fois. Tu choisis l'instant de la panne, et tu compares.
+
+Commence sans panne : les trois prélèvent une fois, tout va bien. Place ensuite la panne **après réception, avant traitement** : regarde la livraison au plus une fois perdre le paiement (zéro prélèvement), tandis que les deux autres redélivrent et finissent à un. Place enfin la panne **après traitement, avant acquittement**, le moment vraiment révélateur : la livraison au moins une fois prélève **deux fois** (le doublon), pendant que la livraison effectivement une fois reconnaît le message déjà vu et reste à un. C'est toute la leçon du chapitre, en un sélecteur.
+
+<DeliverySemanticsSimulator
+  client:load
+  copy={{
+    heading: 'Sémantiques de livraison',
+    instructions: "Choisis le moment de la panne, puis compare les trois disciplines sur le même message « débiter le paiement ». Le cas décisif est la panne après traitement, avant acquittement.",
+    effectName: 'Paiement prélevé',
+    crashPointLabel: 'Moment de la panne',
+    crashNoneLabel: 'Aucune panne',
+    crashBeforeProcessLabel: 'Après réception, avant traitement',
+    crashAfterProcessLabel: 'Après traitement, avant acquittement',
+    atMostOnceTitle: 'Au plus une fois',
+    atLeastOnceTitle: 'Au moins une fois',
+    effectivelyOnceTitle: 'Effectivement une fois',
+    atMostOnceHint: 'Acquitte avant de traiter',
+    atLeastOnceHint: 'Acquitte après le traitement',
+    effectivelyOnceHint: 'Au moins une fois, plus traitement idempotent',
+    effectCountLabel: 'Prélèvements',
+    verdictLostLabel: 'Perdu',
+    verdictDuplicateLabel: 'Doublon',
+    verdictExactlyOnceLabel: 'Une fois exactement',
+    stepDeliverLabel: 'Délivrer',
+    stepRedeliverLabel: 'Redélivrer',
+    stepProcessLabel: 'Traiter (prélèvement)',
+    stepSkipDuplicateLabel: 'Doublon ignoré',
+    stepAckLabel: 'Acquitter',
+    stepCrashLabel: 'Panne',
+    stepLostLabel: 'Message perdu',
+    attemptLabel: 'tentative',
+    resetLabel: 'Recommencer',
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+- Avec la panne « après réception, avant traitement », pourquoi la livraison au plus une fois est-elle la seule à perdre le message, alors qu'elle n'a même pas encore prélevé ?
+- Avec la panne « après traitement, avant acquittement », la livraison au moins une fois et la livraison effectivement une fois redélivrent toutes les deux. Qu'est-ce qui fait que l'une prélève deux fois et l'autre une seule ?
+- Quelle est la seule colonne qui affiche « une fois exactement » quel que soit le moment de la panne, et qu'a-t-il fallu lui ajouter pour y arriver ?
+
+## Côté code : les trois modes d'Hexeract, le filet de Wolverine
+
+Voyons ces disciplines dans du vrai code. Et la surprise, c'est qu'elles ne sont pas des théories : ce sont des réglages qu'on pose à la main.
+
+Hexeract, le framework Rust de messaging qui nous sert de fil rouge, expose exactement ces choix sous la forme d'un mode d'acquittement réglable sur le travailleur. Son énumération `AckMode` a trois variantes, et leurs noms parlent d'eux-mêmes.
+
+```rust
+// Au moins une fois (le defaut) : on acquitte APRES un traitement reussi.
+// Le courtier redelivre tant qu'aucun acquittement n'arrive,
+// donc un doublon est possible : le handler DOIT etre idempotent.
+let worker = RabbitMqWorkerBuilder::new(connection)
+    .queue("orders.charge-payment")
+    .register_handler::<ChargePayment, _>(ChargePaymentHandler)
+    .ack_mode(AckMode::Manual)
+    .max_attempts(5) // nombre de redelivraisons avant d'abandonner
+    .build()?;
+
+// Au plus une fois : on acquitte DES la reception, avant le handler.
+// Une panne apres l'acquittement et avant la fin du handler perd le message.
+let logger = RabbitMqWorkerBuilder::new(connection)
+    .queue("analytics.click")
+    .register_handler::<ClickEvent, _>(RecordClickHandler)
+    .ack_mode(AckMode::AckOnReceive)
+    .build()?;
+```
+
+Le commentaire de la variante `AckMode::Manual` dans le code d'Hexeract dit textuellement que les handlers doivent être idempotents, parce que des doublons peuvent survenir. C'est la preuve par le code de ce chapitre : choisir « au moins une fois » oblige à prévoir l'idempotence côté traitement. Une troisième variante, `AckMode::Unacknowledged`, pousse la logique au bout : le courtier n'attend aucun acquittement, c'est du tout-ou-rien sans filet, à réserver aux cas où la perte est acceptable.
+
+Wolverine, son équivalent en .NET, est instructif parce qu'il fournit le filet d'idempotence prêt à l'emploi. Sur un transport Kafka, on demande au consommateur de persister chaque message reçu avant de valider sa position de lecture, ce qui donne une livraison au moins une fois ; et la même persistance sert à reconnaître un identifiant déjà traité pour l'écarter. La livraison effectivement une fois devient une seule ligne.
+
+```csharp
+// Au moins une fois : le message est persiste avant de valider l'offset.
+// La meme boite de reception durable deduplique par identifiant de message,
+// donc un message deja traite est ecarte : effectivement une fois.
+opts.ListenToKafkaTopic("orders.charge-payment")
+    .UseDurableInbox();
+
+// On peut aussi reessayer finement sur une exception transitoire.
+chain.OnException<TransientException>()
+    .RetryWithCooldown(100.Milliseconds(), 250.Milliseconds());
+```
+
+La documentation de Wolverine le formule clairement : avec la boîte de réception durable, le système écarte automatiquement tout message dont il détecte qu'il a déjà été traité, en comparant son identifiant à ceux déjà vus. Deux écosystèmes, une même leçon : on choisit explicitement sa sémantique de livraison, et le effectively-once n'est jamais magique, c'est de l'au-moins-une-fois plus une déduplication.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
+
+### Exercice 1 : la bonne promesse pour le bon message
+
+Pour notre commande e-commerce, deux flux très différents. (a) Un flux d'événements de clics alimente un tableau de bord d'analytique : on en reçoit des milliers par minute, et perdre un clic de temps en temps ne change rien à la tendance. (b) Le prélèvement du paiement de la commande : il ne faut ni l'oublier (le client ne paierait pas), ni le faire deux fois (double débit, client furieux). Pour chacun, dis quelle sémantique de livraison tu choisis et pourquoi, en une phrase appuyée sur l'instant de l'acquittement.
+
+### Exercice 2 : l'accident au pire moment
+
+Un travailleur reçoit le message « débiter 49 euros », exécute le prélèvement avec succès, puis sa machine s'éteint brutalement avant d'avoir pu acquitter. Décris ce qui se passe ensuite (i) si le travailleur est en livraison au plus une fois, (ii) s'il est en livraison au moins une fois sans idempotence, (iii) s'il est en livraison au moins une fois avec un traitement idempotent. Pour chaque cas, conclus par le nombre de fois où les 49 euros sont effectivement prélevés.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : la bonne promesse pour le bon message">
+On raisonne à chaque fois sur la même question : que coûte une perte, et que coûte un doublon ?
+
+**Étape 1.** Le flux de clics (a) tolère la perte mais valorise la simplicité et le débit.
+
+Perdre un clic de temps en temps ne fausse pas une tendance, alors qu'imposer un acquittement et des redélivraisons coûte de la performance pour rien. On acquitte donc dès la réception : la livraison au plus une fois convient.
+
+**Étape 2.** Le prélèvement du paiement (b) ne tolère ni la perte ni le doublon.
+
+Ne jamais perdre impose d'acquitter seulement après le traitement, donc une livraison au moins une fois. Mais cette discipline autorise les doublons, et un double débit est inacceptable. Il faut donc lui adjoindre l'idempotence pour neutraliser les doublons.
+
+**Résultat.** (a) livraison au plus une fois, car la perte est sans gravité et la simplicité prime ; (b) livraison au moins une fois plus idempotence, c'est-à-dire effectivement une fois, car ni la perte ni le doublon ne sont acceptables.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : l'accident au pire moment">
+La panne tombe au moment décisif : après le traitement, avant l'acquittement. C'est précisément là que les trois disciplines divergent.
+
+**Étape 1.** En livraison au plus une fois, l'acquittement a eu lieu à la réception, donc avant le prélèvement.
+
+Le message était déjà effacé quand la machine s'est éteinte. Le prélèvement a bien eu lieu une fois, et il ne sera pas rejoué. Les 49 euros sont prélevés **une fois**, par chance : si la panne était tombée avant le prélèvement, ils auraient été perdus.
+
+**Étape 2.** En livraison au moins une fois sans idempotence, aucun acquittement n'est revenu.
+
+Le courtier redélivre le message. Le travailleur, qui ne se souvient pas l'avoir déjà traité, prélève à nouveau. Les 49 euros sont prélevés **deux fois** : c'est le double débit.
+
+**Étape 3.** En livraison au moins une fois avec traitement idempotent, le message est aussi redélivré.
+
+Mais cette fois, le travailleur reconnaît un identifiant déjà traité et n'exécute pas le prélèvement une seconde fois : il acquitte et passe. Les 49 euros sont prélevés **une fois**.
+
+**Résultat.** (i) une fois (mais fragile), (ii) deux fois (le doublon), (iii) une fois (l'idempotence a absorbé la redélivraison). Seule la troisième discipline est à la fois sûre contre la perte et sûre contre le doublon.
+</Callout>
+
+## En une phrase
+
+L'instant de l'acquittement par rapport au traitement décide de la garantie : acquitter avant donne au plus une fois (on peut perdre), acquitter après donne au moins une fois (on peut dupliquer), le exactly-once de livraison est impossible (problème des deux généraux), et on l'imite par une livraison au moins une fois doublée d'un traitement idempotent, l'effectively-once.
+
+<Quiz
+  client:visible
+  submitLabel="Vérifier"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Qu'est-ce qui détermine la sémantique de livraison d'un message ?",
+      options: [
+        "L'instant de l'acquittement par rapport au traitement : avant le traitement donne au plus une fois, après donne au moins une fois.",
+        'La vitesse du réseau entre le courtier et le consommateur.',
+        'Le fait que le message soit une commande ou un événement.',
+      ],
+      answer: 0,
+      explain:
+        "Acquitter avant de traiter autorise la perte (au plus une fois) ; acquitter après un traitement réussi, en redélivrant tant qu'aucun acquittement n'arrive, autorise le doublon (au moins une fois). Tout découle de cet instant.",
+    },
+    {
+      q: "Pourquoi le « exactly-once » de livraison est-il impossible ?",
+      options: [
+        "Parce que l'acquittement lui-même peut se perdre (problème des deux généraux) : l'émetteur doit choisir entre ne pas réessayer (perte) ou réessayer (doublon).",
+        'Parce que les courtiers actuels ne sont pas assez rapides, mais cela viendra.',
+        "Parce que Kafka n'autorise qu'une seule lecture par message.",
+      ],
+      answer: 0,
+      explain:
+        "Le problème des deux généraux montre qu'aucun protocole fini ne garantit l'accord sur un canal non fiable. L'émetteur n'a donc que deux conduites pures : risquer la perte ou risquer le doublon. C'est une impossibilité de fond, pas une limite technique.",
+    },
+    {
+      q: "Comment obtient-on en pratique un effet appliqué une seule fois malgré les doublons de livraison ?",
+      options: [
+        "En combinant une livraison au moins une fois avec un traitement idempotent qui reconnaît un message déjà traité et n'en refait pas l'effet (effectively-once).",
+        'En activant un mode exactly-once qui empêche toute redélivraison.',
+        'En acquittant chaque message exactement au milieu du traitement.',
+      ],
+      answer: 0,
+      explain:
+        "On ne supprime pas les doublons de livraison, on les neutralise : le second passage d'un message déjà vu ne refait pas l'effet. C'est l'effectively-once, et le chapitre suivant montre comment fabriquer ce traitement idempotent.",
+    },
+  ]}
+/>
+
+## Vers le chapitre suivant
+
+On sait maintenant choisir sa promesse de livraison, et on a vu que la seule façon sûre de ne ni perdre ni dupliquer passe par l'idempotence. Mais on l'a invoquée sans dire comment on la fabrique : comment un travailleur reconnaît-il un message « déjà traité » ? Avec quelle clé, stockée où, et validée comment sans rouvrir le problème des deux généraux à l'intérieur de sa propre base ? Autre angle mort : la livraison au moins une fois redélivre les messages, mais dans quel ordre les rejoue-t-elle ? Si « Commande livrée » repasse avant « Commande payée », l'idempotence seule ne suffit plus. Le chapitre quatre, « Ordre et idempotence », construit le consommateur idempotent, sa clé de déduplication, et traite l'ordre par clé et par partition, ce morceau qu'on a soigneusement mis de côté au chapitre deux.
+
+## Sources
+
+- Akkoyunlu, E. A., Ekanadham, K. & Huber, R. V. (1975). « Some Constraints and Tradeoffs in the Design of Network Communications. » *ACM SIGOPS Operating Systems Review* 9(5), 67-74. Formulation d'origine du problème des deux généraux. [DOI 10.1145/1067629.806523](https://doi.org/10.1145/1067629.806523)
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapitre 9 « Consistency and Consensus » et chapitre 11 « Stream Processing » (sémantiques de livraison, idempotence, exactly-once). O'Reilly. [Référence de l'éditeur](https://dataintensive.net/)
+- Apache Kafka. *Documentation : Message Delivery Semantics et Exactly-Once Semantics*. [kafka.apache.org](https://kafka.apache.org/documentation/#semantics)
+- RabbitMQ. *Consumer Acknowledgements and Publisher Confirms*. [rabbitmq.com](https://www.rabbitmq.com/docs/confirms)
+- Wolverine. *Durable Inbox and Idempotent Message Delivery*. Documentation officielle. [Durabilité](https://wolverinefx.net/guide/durability/), [Idempotence](https://wolverinefx.net/guide/durability/idempotency.html)

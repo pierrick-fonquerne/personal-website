@@ -1,0 +1,13 @@
+slug: probleme-des-deux-generaux
+fr:
+  term: Problème des deux généraux
+  definition: "Résultat classique d'informatique théorique : sur un canal de communication non fiable, où chaque message peut se perdre, aucun protocole à nombre fini de messages ne permet à deux parties d'être certaines, ensemble, d'un même accord. Appliqué au messaging, il prouve que la livraison exactly-once est impossible, car l'acquittement lui-même peut se perdre : l'émetteur doit choisir entre risquer la perte ou risquer le doublon."
+  source: Akkoyunlu et al., 1975
+en:
+  term: Two generals problem
+  definition: "A classic result in theoretical computer science: over an unreliable communication channel, where any message can be lost, no protocol with a finite number of messages lets two parties become jointly certain of a shared agreement. Applied to messaging, it proves that exactly-once delivery is impossible, because the acknowledgement itself can be lost: the sender must choose between risking loss or risking a duplicate."
+  source: Akkoyunlu et al., 1975
+seeAlso:
+  - livraison-au-plus-une-fois
+  - livraison-au-moins-une-fois
+  - livraison-effectivement-une-fois

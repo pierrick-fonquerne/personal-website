@@ -1,0 +1,13 @@
+slug: acquittement
+fr:
+  term: Acquittement
+  definition: "Signal par lequel un consommateur confirme qu'un message a été pris en charge, autorisant le courtier à l'effacer. Son instant est décisif : acquitter avant de traiter expose à la perte (au plus une fois), acquitter après un traitement réussi expose au doublon en cas de redélivraison (au moins une fois). Tant qu'aucun acquittement n'arrive, le courtier peut redélivrer le message."
+  source: RabbitMQ, Consumer Acknowledgements
+en:
+  term: Acknowledgement
+  definition: "The signal by which a consumer confirms that a message has been handled, allowing the broker to erase it. Its timing is decisive: acknowledging before processing risks loss (at-most-once), acknowledging after successful processing risks a duplicate on redelivery (at-least-once). As long as no acknowledgement arrives, the broker may redeliver the message."
+  source: RabbitMQ, Consumer Acknowledgements
+seeAlso:
+  - livraison-au-plus-une-fois
+  - livraison-au-moins-une-fois
+  - courtier-de-messages
