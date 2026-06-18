@@ -82,7 +82,13 @@ export default function QuantifierLab({
   }
 
   function handleSwapAxes(): void {
+    // Reversing the quantifier prefix (for example forall-x exists-y becomes
+    // exists-y forall-x) flips which variable is outer AND swaps the two
+    // quantifiers. Doing only the first would turn forall-x exists-y into
+    // forall-y exists-x, a different and usually equivalent statement.
     setOuterVariable((v) => (v === 0 ? 1 : 0));
+    setOuterQuantifier(innerQuantifier);
+    setInnerQuantifier(outerQuantifier);
   }
 
   function handleReset(): void {
@@ -145,7 +151,7 @@ export default function QuantifierLab({
         {outerSymbol}
         {outerName}{' '}
         {innerSymbol}
-        {innerName} &middot; R({outerName}, {innerName})
+        {innerName} &middot; R({variableNames[0]}, {variableNames[1]})
       </p>
 
       {/* Grid */}
@@ -156,9 +162,9 @@ export default function QuantifierLab({
               {/* Top-left corner: outer axis label over inner axis */}
               <th
                 className="px-3 py-2 text-[11px] text-[var(--color-fg-dim)]"
-                aria-label={`${outerName} \\ ${innerName}`}
+                aria-label={`${variableNames[0]} \\ ${variableNames[1]}`}
               >
-                {outerName} \ {innerName}
+                {variableNames[0]} \ {variableNames[1]}
               </th>
               {domain.map((colLabel) => (
                 <th
@@ -211,7 +217,7 @@ export default function QuantifierLab({
                         <button
                           type="button"
                           aria-pressed={checked}
-                          aria-label={`R(${outerVariable === 0 ? rowLabel : colLabel}, ${outerVariable === 0 ? colLabel : rowLabel})`}
+                          aria-label={`R(${rowLabel}, ${colLabel})`}
                           onClick={() => toggleCell(i, j)}
                           className={`h-8 w-8 rounded border text-[13px] transition-colors ${
                             checked
