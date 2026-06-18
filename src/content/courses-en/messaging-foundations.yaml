@@ -12,12 +12,14 @@ tags:
 theme: architecture
 subtheme: messaging
 level: intermediate
-estimatedMinutes: 81
+estimatedMinutes: 130
 modules:
   - 00-why-talk-with-messages
   - 01-the-three-families-of-messages
   - 02-broker-versus-log
   - 03-delivery-semantics
+  - 04-ordering-and-idempotency
+  - 05-dual-write-and-outbox
 personalNote: |
   This course grew out of a side project: writing Hexeract, my messaging framework in Rust. As I built it, I realized I only truly mastered a concept once I could teach it. The transactional outbox, delivery semantics, backpressure: each is a piece I first coded, then wanted to understand deeply enough to explain simply.
 
