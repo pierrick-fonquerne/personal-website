@@ -1,0 +1,262 @@
+---
+course: messaging-foundations
+order: 4
+title: 'Ordering and idempotency'
+subtitle: "The previous chapter promised a consumer that recognizes an already-processed message, without saying how. Here it is. But while building it, we discover that redelivery does not only bring duplicates: it can also put everything out of order, and idempotence alone is not enough."
+estimatedMinutes: 24
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import OrderingIdempotencyLab from '../../../components/learning/OrderingIdempotencyLab.tsx';
+
+In chapter three, we saved the payment with a formula: at-least-once, plus idempotent processing. We even described the gesture, the consumer "recognizes" an already-seen message and does not redo the effect. But recognizes how? With what key, stored where, and above all: what stops a crash, landing right between the charge and the "already done" note, from making everything start over? And even once that is solved, a second threat is waiting. At-least-once delivery does not merely repeat messages, it can also replay them in the wrong order. If "order shipped" comes back before "order paid", no deduplication in the world will save you. This chapter builds both ramparts: one against the duplicate, the other against disorder.
+
+<Callout kind="info" title="Before we start">
+This chapter directly extends chapter three: you need to have understood at-least-once delivery, the role of the acknowledgement, and why "exactly-once" delivery is impossible (the two generals problem). We also reuse two words from chapter two, the offset and the consumer group. You need neither to know a particular broker, nor to write SQL: transactions will be described, not coded in detail.
+</Callout>
+
+## Two wounds, not one
+
+Let us start again from chapter three's observation. Choosing "at-least-once" means accepting that the system redelivers as long as it has not received an acknowledgement. This redelivery actually inflicts two distinct wounds on you, and they are often confused.
+
+The first one we know: the **duplicate**. The same message arrives twice, and a naive handler applies the effect twice. Double charge.
+
+The second is more insidious: **disorder**. When the system replays messages, or when several workers consume the same queue in parallel, nothing guarantees that "paid" is processed before "shipped". A late message, a redelivery, a worker slower than the other, and the causal order breaks.
+
+These two wounds call for two different remedies, and that is the whole subject of the chapter. Against the duplicate: idempotence, which we are finally going to build for real. Against disorder: partition ordering. Both rest on the choice of a **key**, but it is not the same key, and they do not answer the same question.
+
+## Building the idempotent consumer
+
+We start by honoring chapter three's promise. An <Term slug="consommateur-idempotent">idempotent consumer</Term> is a consumer whose processing gives the same result whether a message arrives once or ten times. To achieve this, it needs two things: a way to recognize an already-processed message, and a guarantee that this recognition can never lie.
+
+The way to recognize is the <Term slug="cle-de-deduplication">deduplication key</Term>. It is the identity the consumer keeps to answer the question: have I already processed this message? Two natural candidates. The simplest, the stable message id, set by the producer and kept across all redeliveries: two copies of the same message carry the same id. The most robust, a business key: the order number, the payment transaction id. The business key has a subtle advantage: it deduplicates even two technically different messages that describe the same business fact.
+
+The consumer stores these keys in a small table, often called an inbox. Before acting, it looks: if the key is already there, it has already processed this message, it discards it and acknowledges without redoing anything. Otherwise, it processes, then records the key.
+
+And here lies the real trap, the one chapter three left hanging. Look at this naive, two-step version:
+
+```text
+1. apply the effect       (charge 49 euros)
+2. record the key in the inbox
+```
+
+What happens if the machine shuts down between step 1 and step 2? The effect happened, but the key is not recorded. On redelivery, the consumer checks its inbox, does not find the key, and charges a second time. We have written "idempotent" code that is not: we have simply reopened the two generals problem inside our own database.
+
+<Callout kind="warn" title="The heart of idempotence: atomicity">
+Idempotence is not "keeping a list of seen messages". It is guaranteeing that the effect and the recording of the key happen **together or not at all**. The only clean way: wrap both in a single database transaction. Either the transaction commits, and then the effect AND the key are recorded; or it fails, and then neither, and the message will be replayed cleanly. It is atomicity that makes idempotence true, not the list.
+</Callout>
+
+As long as the effect lives in the same database as the inbox, this is feasible: one transaction covers both. When the effect leaves the database (calling an external payment API), the problem hardens, and we fall back on heavier strategies that this chapter keeps for later. Keep the essential: the key answers "is this the same message", and atomicity answers "can I trust my answer".
+
+## The second wound: ordering
+
+The idempotent consumer neutralizes duplicates. It does not touch ordering. Take our order again: three facts follow one another, "created", then "paid", then "shipped". If redelivery makes "shipped" arrive before "paid", a perfectly idempotent consumer will ship an unpaid order, without the slightest alert. Idempotence checks "have I already seen this message", never "is this the right moment for this message".
+
+Where does disorder come from? From two sources. Redelivery, which reinjects a late message after the following ones have already passed. And above all parallelism: to go fast, we have a single queue consumed by several workers of a consumer group. Two messages sent in order can be processed out of order, simply because one worker is slower than the other.
+
+The solution has a precise name. We split the stream into <Term slug="partition">partitions</Term>, sub-streams each of which keeps its messages in order. The golden rule: ordering is guaranteed only within a partition, never across partitions. This is what we call a <Term slug="ordre-partiel">partial order</Term>, as opposed to a total order that would line up all the system's messages on a single row. A total order would kill parallelism: one message at a time, for everyone. Partial order is the compromise that saves both consistency and throughput.
+
+It remains to decide which messages land in which partition. That is the role of the <Term slug="cle-de-partition">partition key</Term>. All messages that share the same key fall into the same partition, so they stay ordered relative to one another; different keys spread across different partitions and are processed in parallel. For our commerce, the right key is obvious: the order id. All events of order number 42 go into the same partition and keep their order; order 42 and order 43 live in separate partitions and move forward side by side.
+
+<MermaidDiagram
+  client:visible
+  definition={`flowchart LR
+    P[Producer] -->|key = order 42| A
+    P -->|key = order 43| B
+    subgraph Partition A
+      A["created 42 -> paid 42 -> shipped 42"]
+    end
+    subgraph Partition B
+      B["created 43 -> paid 43 -> shipped 43"]
+    end
+    A --> WA[Worker 1]
+    B --> WB[Worker 2]
+    style A fill:#34d399,color:#062
+    style B fill:#34d399,color:#062`}
+  caption="The partition key routes one order's messages to the same partition: order is preserved there, and two distinct orders stay processed in parallel."
+/>
+
+If the partition key answers "which messages must stay ordered together", the deduplication key answered "is this the same message". Two keys, two questions, two wounds healed. It is time to see them at work together.
+
+## Watch the two ramparts
+
+The component below takes an order whose events were delivered by an at-least-once broker: out of order (shipped before paid) and with a duplicate (paid twice). You turn on, or not, each of the two ramparts, and you watch the final state.
+
+Start with nothing: the order is doubly damaged, double charge and shipped before being paid. Turn on deduplication alone: the duplicate disappears, but the order stays shipped before payment. This is the central lesson, idempotence does not repair ordering. Turn on partition ordering alone: the sequence becomes coherent again, but the double charge comes back. Only with both ramparts raised together is the order finally correct.
+
+<OrderingIdempotencyLab
+  client:load
+  copy={{
+    heading: 'Ordering and idempotency',
+    instructions: "The broker delivers one order's events out of order and with a duplicate. Turn on deduplication, partition ordering, or both, and watch the order's final state.",
+    deliveredLabel: 'What the broker delivers (at-least-once)',
+    processedLabel: 'What the consumer processes',
+    dedupLabel: 'Deduplication (inbox)',
+    orderingLabel: 'Partition ordering',
+    onLabel: 'on',
+    offLabel: 'off',
+    createdLabel: 'Created',
+    paidLabel: 'Paid',
+    shippedLabel: 'Shipped',
+    skipDuplicateLabel: 'duplicate skipped',
+    outOfOrderLabel: 'out of order',
+    chargeCountLabel: 'Charges',
+    finalStateLabel: 'Final state',
+    shippedBeforePaidLabel: 'Shipped before paid',
+    verdictCorrectLabel: 'Correct',
+    verdictDuplicateLabel: 'Duplicate',
+    verdictDisorderedLabel: 'Disordered',
+    verdictCorruptLabel: 'Corrupt',
+    resetLabel: 'Reset',
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+- With deduplication alone on, the double charge disappears but the verdict stays "Disordered". What does deduplication never look at?
+- With partition ordering alone, the sequence is put back in the right order, but the charges show two. Why does putting things back in order not remove the duplicate?
+- What is the only combination that shows "Correct", and what does it say about the relationship between the two ramparts?
+
+## In code: Wolverine in one line, Hexeract in full honesty
+
+Let us see these ideas in real code. And the lesson is instructive: depending on the framework, either the tool hands you both ramparts almost for free, or it gives you just the foundations and honestly names what is left to you.
+
+Let us start with the case where everything is provided. Wolverine, on a Kafka transport, gives ordering by key and deduplication each in one line. Ordering first: we attach a partition key to each message, and Kafka guarantees that all messages with the same key stay ordered.
+
+```csharp
+// All messages of one order share the partition key,
+// so they land on the same partition and stay ordered.
+await bus.PublishAsync(
+    new OrderShipped(orderId),
+    new DeliveryOptions { PartitionKey = orderId.ToString() });
+```
+
+Deduplication next. The durable inbox persists each received message before committing the offset, which gives at-least-once delivery; and the same persistence serves to recognize an already-processed id and discard it. This is exactly this chapter's idempotent consumer, atomicity included, folded into one call.
+
+```csharp
+// Persists before committing the offset (at-least-once)
+// AND deduplicates by message id: effectively-once.
+opts.ListenToKafkaTopic("orders.charge-payment")
+    .UseDurableInbox();
+```
+
+Hexeract, the Rust framework that serves as our common thread, is more raw, and that is precisely what makes it pedagogical: it does not hide what it does not do. On ordering, its exchange-kind enum offers no partitioning by key, and the comment of one of its fields warns in plain text that dispatch ordering is at best best-effort, never guaranteed, because several workers can relay in parallel. On deduplication, Hexeract provides no ready-made inbox: it propagates a stable message id and documents that handlers must be idempotent.
+
+```rust
+// Hexeract gives you the key, not the store.
+// raw_publish.rs, verbatim:
+// "propagating a stable message_id lets consumers deduplicate on it"
+// handler.rs, the contract:
+// "Handlers MUST be idempotent because the same message can arrive more than once"
+```
+
+Two philosophies, one same lesson. Wolverine fills the contract for you; Hexeract hands you the tools and names the contract. In both cases, effectively-once is never magic: it is at-least-once, plus a deduplication, plus a well-chosen partition key. No framework spares you from choosing your two keys.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, to look at only after trying.
+
+### Exercise 1: choosing the partition key
+
+Your commerce system processes the events of thousands of orders, placed by hundreds of customers. For each order, the "created, paid, shipped" order must be respected. You are offered three possible partition keys: (a) a constant key, the same for all messages; (b) the customer id; (c) the order id. For each, say whether per-order ordering is respected, and what happens to parallelism. Conclude with the best choice.
+
+### Exercise 2: idempotence without atomicity
+
+A worker deduplicates with an inbox, but its code does things in two steps: first it calls the payment API to charge 49 euros, then, in a separate instruction, it inserts the message id into its inbox table. The machine shuts down right after the charge, before the insertion. Describe what happens on redelivery of the message. How many times are the 49 euros charged? Then propose the fix in one sentence.
+
+<Callout kind="tip" title="Solution to exercise 1: choosing the partition key">
+We judge each key on two criteria: is per-order ordering guaranteed, and is parallelism preserved?
+
+**Step 1.** The constant key (a) puts everything in a single partition.
+
+All messages share the same key, hence the same partition. Per-order ordering is indeed respected, since everything is ordered. But there is only one partition for the whole system: one message at a time, no parallelism. It is a total order in disguise, and it strangles throughput.
+
+**Step 2.** The customer id (b) groups too broadly.
+
+All messages of one customer fall into the same partition. Per-order ordering is respected, because a customer's orders stay ordered there. But a customer who places many orders sees all their orders serialized into one partition, for no reason: two different orders of the same customer have no need to be ordered relative to one another. We lose parallelism for nothing.
+
+**Step 3.** The order id (c) groups exactly what is needed.
+
+All events of one order share the key, hence the partition, hence the order. Two distinct orders have distinct keys and spread across different partitions: they move forward in parallel.
+
+**Result.** The order key (c). It guarantees exactly the necessary ordering, no more no less, and preserves maximum parallelism between orders. The right partition key is the finest one that still respects the ordering constraints.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: idempotence without atomicity">
+The crash lands between the effect and the recording of the key. This is the scenario that unmasks a fake idempotence.
+
+**Step 1.** On the first pass, the effect happens but the key is never recorded.
+
+The 49-euro charge is executed. Then, before the insertion into the inbox, the machine shuts down. The inbox table therefore contains no trace of this message.
+
+**Step 2.** No acknowledgement having come back, the broker redelivers the message.
+
+The worker receives "charge 49 euros" again. It checks its inbox to see whether it has already processed it.
+
+**Step 3.** The inbox is empty for this key, so the worker believes it is a fresh message.
+
+It charges a second time. The 49 euros are charged **twice**. The inbox existed, but it prevented nothing.
+
+**Result.** Two charges. The fix fits in one sentence: wrap the charge and the insertion of the key in **a single transaction**, so that they succeed or fail together. It is atomicity that makes idempotence, not the mere presence of an inbox.
+</Callout>
+
+## In one sentence
+
+At-least-once delivery inflicts two distinct wounds, the duplicate and disorder: we neutralize the duplicate with an idempotent consumer that records its deduplication key atomically with the effect, and we neutralize disorder with a partial order obtained by routing through a partition key the messages that must stay ordered together.
+
+<Quiz
+  client:visible
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+  questions={[
+    {
+      q: "Why can a perfectly idempotent consumer still corrupt an order?",
+      options: [
+        "Because idempotence neutralizes duplicates but does not touch ordering: a late message or a parallel worker can have \"shipped\" processed before \"paid\".",
+        "Because idempotence slows processing and causes losses.",
+        "Because deduplication erases messages at random.",
+      ],
+      answer: 0,
+      explain:
+        "Idempotence checks \"have I already seen this message\", never \"is this the right moment\". Disorder is a second wound, healed by partition ordering, not by deduplication.",
+    },
+    {
+      q: "What makes a consumer truly idempotent?",
+      options: [
+        "Atomicity: the effect and the recording of the deduplication key happen in a single transaction, together or not at all.",
+        "Keeping a list of already-received messages, no matter when you write it.",
+        "Acknowledging the message before processing it.",
+      ],
+      answer: 0,
+      explain:
+        "If the effect and the recording of the key are in two steps, a crash between them reopens the two generals problem in the database: redelivery does not find the key and redoes the effect. Only the single transaction guarantees idempotence.",
+    },
+    {
+      q: "What is the partition key for?",
+      options: [
+        "To route to the same partition the messages that must stay ordered relative to one another, while letting the others be processed in parallel.",
+        "To deduplicate messages by comparing their id.",
+        "To encrypt the content of sensitive messages.",
+      ],
+      answer: 0,
+      explain:
+        "Ordering is guaranteed only within a partition (partial order). The partition key decides which messages share a partition: taking it as fine as possible (the order id) gives the necessary ordering without sacrificing parallelism.",
+    },
+  ]}
+/>
+
+## Towards the next chapter
+
+We have hardened the consumer: it deduplicates with its key, it respects partition ordering, and the atomicity of the inbox makes its idempotence true. But all this fine machinery rests on a hidden assumption on the producer's side. We said "the producer publishes a message when the business state changes". But how does it guarantee that the two happen together? Imagine: the service records the order in its database, commits the transaction, then tries to publish "order created" on the broker, and that is when the network drops it. The database says "order created", the broker never received the message, and no redelivery will save it: it never existed. The mirror case threatens us too, publishing then failing to commit the database. Writing the business state and emitting the message in the same transaction, that is the last lock. It is the **transactional outbox** that chapter five builds.
+
+## Sources
+
+- Kleppmann, M. (2017). *Designing Data-Intensive Applications*, chapter 11 "Stream Processing" (partitioning, ordering by key, idempotent processing). O'Reilly. [Publisher reference](https://dataintensive.net/)
+- Hohpe, G. & Woolf, B. (2003). *Enterprise Integration Patterns*, "Idempotent Receiver" pattern. Addison-Wesley. [Pattern catalog](https://www.enterpriseintegrationpatterns.com/patterns/messaging/IdempotentReceiver.html)
+- Apache Kafka. *Documentation: Design, Message Ordering and Partitioning*. [kafka.apache.org](https://kafka.apache.org/documentation/#design)
+- Wolverine. *Kafka Transport: Partition Keys and Durable Inbox*. Official documentation. [Kafka transport](https://wolverinefx.net/guide/messaging/transports/kafka.html), [Durability](https://wolverinefx.net/guide/durability/)

@@ -1,0 +1,13 @@
+slug: cle-de-deduplication
+fr:
+  term: Clé de déduplication
+  definition: "Identifiant qu'un consommateur utilise pour reconnaître un message qu'il a déjà traité. C'est souvent l'identifiant de message stable fourni par le courtier, parfois une clé métier (un numéro de commande). Elle est rangée dans une table de réception (inbox) : un message redélivré dont la clé y figure déjà est écarté. Elle répond à la question : est-ce le même message ?"
+  source: Kleppmann, 2017
+en:
+  term: Deduplication key
+  definition: "The identifier a consumer uses to recognize a message it has already processed. It is often the stable message id provided by the broker, sometimes a business key (an order number). It is stored in an inbox table: a redelivered message whose key is already present is discarded. It answers the question: is this the same message?"
+  source: Kleppmann, 2017
+seeAlso:
+  - consommateur-idempotent
+  - idempotence
+  - acquittement
