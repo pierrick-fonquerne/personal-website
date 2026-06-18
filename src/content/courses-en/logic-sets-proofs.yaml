@@ -13,4 +13,5 @@ level: intro
 estimatedMinutes: 150
 modules:
   - 01-propositions-connectives
+  - 02-predicates-quantifiers
 published: true

@@ -1,0 +1,312 @@
+---
+course: logic-sets-proofs
+order: 2
+title: Predicates and quantifiers
+subtitle: "How 'for all' and 'there exists' turn an open statement into a truth, and why the order of quantifiers changes everything."
+estimatedMinutes: 26
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import QuantifierLab from '../../../components/learning/QuantifierLab.tsx';
+
+export const quantifierLabLabels = {
+  relationCaption:
+    'Relation R(x, y): click a cell to link or unlink x (row) and y (column).',
+  outerLabel: 'Outer quantifier (written first)',
+  innerLabel: 'Inner quantifier (second)',
+  forall: '∀ (for all)',
+  exists: '∃ (there exists)',
+  swapAxes: 'Swap the axes (∀x∃y ↔ ∃y∀x)',
+  reset: 'Reset',
+  verdictTrue: 'TRUE',
+  verdictFalse: 'FALSE',
+  witnessLabel: 'witness',
+  counterExampleLabel: 'counter-example',
+};
+
+In [chapter 1](/en/interactive-courses/logic-sets-proofs/01-propositions-connectives) we carefully refused to call "$x > 3$" a proposition: there is no way to say whether it is true or false until $x$ is fixed. Yet mathematics overflows with statements of this kind. How do we give them a truth value, and therefore the right to enter a proof?
+
+The answer comes in two gestures: naming these open statements, the predicates, then closing them with two tiny, formidable words, "for all" and "there exists". By the end of this chapter you will know how to turn any open statement into a proposition, how to negate it correctly, and you will have understood the trap that everyone falls into: the order in which you stack "for all" and "there exists".
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow along**: chapter 1 (propositions, the five connectives, negation and De Morgan's laws). We will build directly on it.
+
+**What you do not need to know**: formal set theory (chapter 3), proof techniques (chapter 4). We will speak of a "set" in the intuitive sense of a collection of objects, and that will be enough.
+
+**Level of rigour**: formal definitions, true and false examples systematically set against each other, and an interactive manipulation for the trickiest point.
+</Callout>
+
+## The open statement
+
+Take "$x > 3$" again. It is not a proposition, but it is not noise either: as soon as you replace $x$ by a number, the sentence becomes true ($x = 5$) or false ($x = 1$). It is a form with a blank to fill in.
+
+A <Term slug="predicat">predicate</Term> is exactly that: a statement containing one or more variables, whose truth value depends on what you put in the blanks. We write it like a function: $P(x)$, $Q(x, y)$. Here $P(x)$ means "$x > 3$", and:
+
+- $P(5)$ is the proposition "$5 > 3$", true.
+- $P(1)$ is the proposition "$1 > 3$", false.
+
+As long as the variable stays free, $P(x)$ is neither true nor false: it waits. There are two ways to push it into the state of a proposition. The first we just saw: **substitute** a value. The second, far more powerful, is to **quantify** the variable, that is, to say in one stroke something about all possible values, or about at least one.
+
+## What the variable ranges over: the domain of discourse
+
+Before quantifying, a question we cannot dodge: what does $x$ range over? The integers? The reals? The inhabitants of a city? This reference set is called the <Term slug="domaine-de-discours">domain of discourse</Term>, and it is part of the statement just as much as the predicate is.
+
+This is not bureaucratic detail. Consider "there exists a number whose square is $2$":
+
+- over the domain of integers, it is **false** (no integer squared gives $2$);
+- over the domain of reals, it is **true** ($\sqrt{2}$ exists).
+
+Same predicate, same quantifier, opposite truths: only the domain changed. Remember the rule: a quantified statement with no stated domain is incomplete.
+
+## The two quantifiers
+
+To quantify is to **bind** the variable: it stops being a free blank and becomes the subject of a global claim. There are two ways to do it.
+
+### For all: ∀
+
+The <Term slug="quantificateur-universel">universal quantifier</Term> is written $\forall$ and read "for all" or "for every". The statement
+
+$$
+\forall x,\ P(x)
+$$
+
+reads "for every $x$ in the domain, $P(x)$ is true". It claims that **each** element, without exception, satisfies the predicate.
+
+- Over the integers, $\forall n,\ n + 0 = n$ is true.
+- Over the integers, $\forall n,\ n > 3$ is false (take $n = 2$).
+
+### There exists: ∃
+
+The <Term slug="quantificateur-existentiel">existential quantifier</Term> is written $\exists$ and read "there exists". The statement
+
+$$
+\exists x,\ P(x)
+$$
+
+reads "there exists at least one $x$ in the domain such that $P(x)$ is true". Such an $x$ is called a **witness**. Beware the everyday sense: "there exists" does not mean "there exists a unique". One witness is enough, several are allowed.
+
+- Over the integers, $\exists n,\ n > 3$ is true ($n = 4$ is a witness, so is $n = 100$).
+- Over the integers, $\exists n,\ n^2 = 2$ is false: no witness.
+
+<Callout kind="tip" title="Reading the exact order of the symbols">
+We write the quantifier, then the variable, then a comma, then the predicate: $\forall x,\ P(x)$. The comma reads "we have" or "such that". Keep the habit of **saying** the statement out loud in full: "for all $x$, we have $P$ of $x$". A statement you can say aloud is a statement you have understood.
+</Callout>
+
+## Negating a quantifier
+
+How do you refute "for all $x$, $P(x)$"? Not by checking every case, that would be endless. A **single** failure is enough. And symmetrically, negating "there exists" amounts to saying "none", hence "all fail". These two rules follow directly from chapter 1's De Morgan laws, extended from the finite to the infinite:
+
+<Formula caption="Negation of the quantifiers">¬(∀x, P(x)) ≡ ∃x, ¬P(x) | ¬(∃x, P(x)) ≡ ∀x, ¬P(x)</Formula>
+
+In plain words: negating "all satisfy $P$" gives "there is one that does not"; negating "there is one that satisfies $P$" gives "all fail to". The quantifier flips, and the negation slides inward, onto the predicate. This is exactly De Morgan's move ($\lnot$ turns $\land$ into $\lor$), seen here as an infinite "and" becoming an infinite "or".
+
+From the first rule comes the most economical tool in mathematics. To demolish a universal claim, you exhibit a <Term slug="contre-exemple">counter-example</Term>: a single element of the domain where the predicate is false. A counter-example does not "argue" with a conjecture, it kills it.
+
+<Callout kind="note" title="A famous counter-example">
+  Fermat conjectured that all numbers $2^{2^n} + 1$ are prime. True for $n = 0, 1, 2, 3, 4$. Then Euler, in 1732, computes the case $n = 5$: $2^{32} + 1 = 4\,294\,967\,297 = 641 \times 6\,700\,417$. A single counter-example, and the "for all" collapses. This is the negation $¬(\forall x, P(x)) \equiv \exists x, \lnot P(x)$ at work.
+</Callout>
+
+## The trap: the order of quantifiers
+
+Here is the point that trips everyone up, and the true reason for this chapter. When you stack two different quantifiers, **their order changes the meaning**. Compare:
+
+<Formula caption="Two statements that do not say the same thing">∀x ∃y, R(x, y) | ∃y ∀x, R(x, y)</Formula>
+
+- $\forall x\, \exists y,\ R(x, y)$: "for each $x$, there exists a $y$ (which may depend on $x$) such that $R$". Each one has *its* partner, possibly different.
+- $\exists y\, \forall x,\ R(x, y)$: "there exists one $y$ that works for all $x$ at once". A *universal* partner, the same for everyone.
+
+The analogy that engraves the difference: "**everyone has a mother**" ($\forall x\, \exists y$, $y$ is the mother of $x$) is true. "**there exists a mother of everyone**" ($\exists y\, \forall x$) is false, thankfully. Same words, reversed order, opposite truths.
+
+Manipulate it yourself below. The grid is the relation $R(x, y)$: a checked cell means "$x$ is linked to $y$". It starts on the **diagonal**: each one is linked to itself, and to no one else. **Your mission**: leave the statement on $\forall x\, \exists y$ and read the verdict, then click "Swap the axes" to move to $\exists y\, \forall x$ without changing anything else. The same table, two verdicts.
+
+<InteractivePrint
+  label="Figure: quantifier lab over an editable relation"
+  description="A 3x3 grid over the domain {Alice, Bob, Carol}, rows for x and columns for y, initialized on the diagonal (each element linked only to itself). With the order for-all-x there-exists-y, the statement is TRUE because each x has a witness, itself. Swapping the axes to there-exists-y for-all-x makes the statement FALSE because no y is linked to all x. The component highlights the decisive row or column (witness or counter-example) and shows the verdict."
+>
+  <QuantifierLab
+    client:visible
+    domain={['Alice', 'Bob', 'Carol']}
+    initialRelation={[
+      [true, false, false],
+      [false, true, false],
+      [false, false, true],
+    ]}
+    variableNames={['x', 'y']}
+    labels={quantifierLabLabels}
+  />
+</InteractivePrint>
+
+To pin down the direction of the arrows, the diagram below sets the two readings side by side on the diagonal. On the left, each $x$ points to its own witness: three arrows, the universal-existential statement holds. On the right, we look for a single $y$ that all reach: no column receives three arrows, the existential-universal statement fails.
+
+<MermaidDiagram
+  client:visible
+  caption="∀x ∃y (each reaches some y) holds on the diagonal, ∃y ∀x (one y reached by all) fails"
+  definition={`graph LR
+    A["x = Alice"] --> a["y = Alice"]
+    B["x = Bob"] --> b["y = Bob"]
+    C["x = Carol"] --> c["y = Carol"]`}
+/>
+
+<Callout kind="warn" title="The rule to remember">
+  You can **always** slide a "there exists" leftward above a "for all", but not the other way round: $\exists y\, \forall x,\ R(x, y)$ entails $\forall x\, \exists y,\ R(x, y)$, never the converse. A universal partner serves everyone, so each one has a partner. But each having their own does not manufacture a common partner.
+</Callout>
+
+## In one sentence
+
+A predicate is an open statement; quantifying it with "for all" or "there exists" over a stated domain closes it into a true-or-false proposition, its negation swaps the two quantifiers, and their order is never innocent.
+
+## Towards chapter 3
+
+We kept talking about the "domain of discourse", the set the variables range over, settling for an intuitive idea: a collection of objects. But what is a set, exactly? How do we describe one, how do we test whether an object belongs to it, how do we build new ones from old? The quantifiers of this chapter will become the very language of that construction: "$A \subseteq B$" will read "$\forall x,\ x \in A \Rightarrow x \in B$". That is all of chapter 3, set theory.
+
+## Exercises
+
+Take a pen and paper. The solutions are right below, look at them only after trying.
+
+### Exercise 1: negate cleanly
+
+The domain is the set of human beings. Consider the statement "everyone loves at least one person", written $\forall x\, \exists y,\ A(x, y)$ where $A(x, y)$ means "$x$ loves $y$". Write its negation by sliding the $\lnot$ all the way to the predicate, then translate it into plain English.
+
+### Exercise 2: the order decides
+
+The domain is the set of strictly positive integers $\{1, 2, 3, \dots\}$. Let $R(x, y)$ be "$y > x$". Determine whether $\forall x\, \exists y,\ R(x, y)$ is true, then whether $\exists y\, \forall x,\ R(x, y)$ is true. Justify each answer.
+
+<Callout kind="tip" title="Solution to exercise 1: negate cleanly">
+We start from the statement and apply the quantifier negation rules twice.
+
+**Step 1.** We negate the whole:
+
+$$
+\lnot \big( \forall x\, \exists y,\ A(x, y) \big)
+$$
+
+**Step 2.** Negating a "for all" gives a "there exists", and the $\lnot$ moves in one notch:
+
+$$
+\exists x,\ \lnot \big( \exists y,\ A(x, y) \big)
+$$
+
+**Step 3.** Negating a "there exists" gives a "for all", and the $\lnot$ finally reaches the predicate:
+
+$$
+\exists x\, \forall y,\ \lnot A(x, y)
+$$
+
+**Translation.** "There exists someone who loves no one." Each quantifier has flipped, and the negation has ended its run on $A(x, y)$.
+
+**Reading.** To refute "everyone loves someone", it suffices to exhibit **one** person whom we show loves **no** $y$. That is again a counter-example, on the outer statement.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: the order decides">
+We recall the domain: the strictly positive integers, and $R(x, y)$: "$y > x$".
+
+**Part A.** We test $\forall x\, \exists y,\ R(x, y)$, that is "for each $x$, there exists a larger $y$".
+
+**Step 1.** Let $x$ be any positive integer.
+
+**Step 2.** We propose $y = x + 1$. Then $y > x$, so $R(x, y)$ is true.
+
+$$
+y = x + 1 \ \Rightarrow\ y > x
+$$
+
+**Step 3.** This witness exists for any $x$, so the statement is **true**.
+
+**Part B.** We test $\exists y\, \forall x,\ R(x, y)$, that is "there exists a $y$ greater than all $x$".
+
+**Step 4.** Suppose such a $y$ exists. It would have to satisfy $y > x$ for all $x$, in particular for $x = y$.
+
+**Step 5.** We would get $y > y$, which is impossible.
+
+$$
+y > y \ \text{ is false for every integer } y
+$$
+
+**Result.** No $y$ works: the statement is **false**. Same predicate and same words as in part A, reversed order, reversed truth.
+</Callout>
+
+<InteractivePrint
+  label="Quiz: chapter 2 recap (interactive)"
+  description="A multiple-choice quiz that checks the chapter takeaways: the nature of a predicate, the role of the domain of discourse, negating a quantifier, the counter-example, and the order of quantifiers. Five questions with an explanation of the right answer on submission."
+>
+  <Quiz
+    client:visible
+    submitLabel="Check"
+    resetLabel="Reset"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Why is "x > 3" not a proposition?',
+        options: [
+          'Because it contains the symbol >',
+          'Because its truth value depends on x, which is free',
+          'Because it is always false',
+          'Because 3 is not a variable',
+        ],
+        answer: 1,
+        explain:
+          'It is a predicate: as long as x stays a free variable, the statement is neither true nor false. Fixing it (x = 5) or quantifying it turns it into a proposition.',
+      },
+      {
+        q: 'The statement "∃x, x² = 2" is...',
+        options: [
+          'true for any domain',
+          'false for any domain',
+          'false over the integers, true over the reals',
+          'without a truth value',
+        ],
+        answer: 2,
+        explain:
+          'The domain of discourse is part of the statement: no integer works, but √2 is a real witness. Stating the domain is mandatory.',
+      },
+      {
+        q: 'What is the negation of "∀x, P(x)"?',
+        options: ['∀x, ¬P(x)', '∃x, ¬P(x)', '¬∃x, P(x)', '∀x, P(x)'],
+        answer: 1,
+        explain:
+          'Negating a "for all" gives a "there exists" over the negation of the predicate: a single counter-example is enough to defeat a universal statement.',
+      },
+      {
+        q: 'To refute "all numbers of this form are prime", you must...',
+        options: [
+          'check that none is prime',
+          'exhibit a single number of this form that is not prime',
+          'check the first five cases',
+          'prove they are all even',
+        ],
+        answer: 1,
+        explain:
+          'A single counter-example is enough, exactly like Euler with 2^32 + 1 = 641 × 6 700 417. It is the direct reading of ¬(∀x, P(x)) ≡ ∃x, ¬P(x).',
+      },
+      {
+        q: 'What can you deduce from "∃y ∀x, R(x, y)" (one y works for all x)?',
+        options: [
+          'Nothing about ∀x ∃y',
+          'That ∀x ∃y, R(x, y) is also true',
+          'That ∀x ∃y, R(x, y) is false',
+          'That R is symmetric',
+        ],
+        answer: 1,
+        explain:
+          'A universal partner serves each one in particular, so ∃y∀x entails ∀x∃y. The converse is false in general: "everyone has a mother" does not imply "there exists a mother of everyone".',
+      },
+    ]}
+  />
+</InteractivePrint>
+
+## Sources
+
+- Frege, G. (1879). _Begriffsschrift_. Louis Nebert. The birth certificate of quantifier notation.
+- Euler, L. (1732). "Observationes de theoremate quodam Fermatiano aliisque ad numeros primos spectantibus." _Commentarii academiae scientiarum Petropolitanae_. The refutation of Fermat's conjecture on Fermat numbers.
+
+### Further reading
+
+- Cori, R. & Lascar, D. (2003). _Mathematical Logic, Part 1_. Oxford University Press. The rigorous treatment of predicate calculus.
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Chapters 2 and 3, excellent on quantifiers and their negation.
+- Halmos, P. (1960). _Naive Set Theory_. Van Nostrand. To ease into chapter 3.

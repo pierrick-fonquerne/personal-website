@@ -1,0 +1,19 @@
+slug: domaine-de-discours
+fr:
+  term: Domaine de discours
+  definition: >
+    L'ensemble des objets sur lesquels portent les variables d'un prédicat quantifié.
+    La vérité d'un énoncé quantifié en dépend entièrement : « ∃x, x² = 2 » est faux
+    sur les entiers mais vrai sur les réels. Préciser le domaine n'est donc pas un
+    détail, c'est une partie de l'énoncé.
+en:
+  term: Domain of discourse
+  definition: >
+    The set of objects that the variables of a quantified predicate range over.
+    The truth of a quantified statement depends entirely on it: "∃x, x² = 2" is false
+    over the integers but true over the reals. Stating the domain is therefore not a
+    detail, it is part of the statement.
+seeAlso:
+  - predicat
+  - quantificateur-universel
+  - quantificateur-existentiel

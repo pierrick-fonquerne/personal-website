@@ -1,0 +1,312 @@
+---
+course: logic-sets-proofs
+order: 2
+title: Prédicats et quantificateurs
+subtitle: "Comment « pour tout » et « il existe » transforment un énoncé ouvert en vérité, et pourquoi l'ordre des quantificateurs change tout."
+estimatedMinutes: 26
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import QuantifierLab from '../../../components/learning/QuantifierLab.tsx';
+
+export const quantifierLabLabels = {
+  relationCaption:
+    'Relation R(x, y) : clique une case pour relier ou délier x (ligne) et y (colonne).',
+  outerLabel: 'Quantificateur externe (le premier écrit)',
+  innerLabel: 'Quantificateur interne (le second)',
+  forall: '∀ (pour tout)',
+  exists: '∃ (il existe)',
+  swapAxes: 'Échanger les axes (∀x∃y ↔ ∃y∀x)',
+  reset: 'Réinitialiser',
+  verdictTrue: 'VRAI',
+  verdictFalse: 'FAUX',
+  witnessLabel: 'témoin',
+  counterExampleLabel: 'contre-exemple',
+};
+
+Au [chapitre 1](/interactive-courses/logic-sets-proofs/01-propositions-connecteurs), on a soigneusement refusé d'appeler « $x > 3$ » une proposition : impossible de dire si c'est vrai ou faux tant que $x$ n'est pas fixé. Pourtant les mathématiques débordent d'énoncés de ce genre. Comment leur rendre une valeur de vérité, et donc le droit d'entrer dans une démonstration ?
+
+La réponse tient en deux gestes : nommer ces énoncés à trou, ce sont les prédicats, puis les fermer avec deux mots minuscules et redoutables, « pour tout » et « il existe ». À la fin de ce chapitre, tu sauras transformer n'importe quel énoncé ouvert en proposition, le nier correctement, et tu auras compris le piège qui fait trébucher tout le monde : l'ordre dans lequel on empile « pour tout » et « il existe ».
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : le chapitre 1 (propositions, les cinq connecteurs, la négation et les lois de De Morgan). On s'appuiera directement dessus.
+
+**Ce qu'il n'est pas nécessaire de connaître** : la théorie des ensembles formelle (chapitre 3), les techniques de démonstration (chapitre 4). On parlera d'« ensemble » au sens intuitif de collection d'objets, cela suffira.
+
+**Niveau de rigueur** : définitions formelles, exemples vrais et faux systématiquement opposés, et une manipulation interactive pour le point le plus délicat.
+</Callout>
+
+## L'énoncé à trou
+
+Reprends « $x > 3$ ». Ce n'est pas une proposition, mais ce n'est pas du bruit non plus : dès qu'on remplace $x$ par un nombre, la phrase devient vraie ($x = 5$) ou fausse ($x = 1$). C'est un formulaire avec une case à remplir.
+
+Un <Term slug="predicat">prédicat</Term> est exactement cela : un énoncé contenant une ou plusieurs variables, dont la valeur de vérité dépend de ce qu'on met dans les cases. On le note comme une fonction : $P(x)$, $Q(x, y)$. Ici $P(x)$ signifie « $x > 3$ », et :
+
+- $P(5)$ est la proposition « $5 > 3$ », vraie.
+- $P(1)$ est la proposition « $1 > 3$ », fausse.
+
+Tant que la variable reste libre, $P(x)$ n'est ni vrai ni faux : il attend. Il y a deux façons de le faire passer à l'état de proposition. La première, on vient de la voir : **substituer** une valeur. La seconde, bien plus puissante, est de **quantifier** la variable, c'est-à-dire dire d'un coup quelque chose sur toutes les valeurs possibles, ou sur au moins une.
+
+## Sur quoi varie la variable : le domaine de discours
+
+Avant de quantifier, une question qu'on ne peut pas esquiver : $x$ varie sur quoi ? Les entiers ? Les réels ? Les habitants d'une ville ? Cet ensemble de référence s'appelle le <Term slug="domaine-de-discours">domaine de discours</Term>, et il fait partie de l'énoncé au même titre que le prédicat.
+
+Ce n'est pas un détail bureaucratique. Considère « il existe un nombre dont le carré vaut $2$ » :
+
+- sur le domaine des entiers, c'est **faux** (aucun entier au carré ne donne $2$) ;
+- sur le domaine des réels, c'est **vrai** ($\sqrt{2}$ existe).
+
+Même prédicat, même quantificateur, vérités opposées : seul le domaine a changé. Retiens la règle : un énoncé quantifié sans domaine précisé est incomplet.
+
+## Les deux quantificateurs
+
+Quantifier, c'est **lier** la variable : elle cesse d'être une case libre pour devenir le sujet d'une affirmation globale. Il y a deux manières de le faire.
+
+### Pour tout : ∀
+
+Le <Term slug="quantificateur-universel">quantificateur universel</Term> se note $\forall$ et se lit « pour tout » ou « quel que soit ». L'énoncé
+
+$$
+\forall x,\ P(x)
+$$
+
+se lit « pour tout $x$ du domaine, $P(x)$ est vrai ». Il affirme que **chaque** élément, sans exception, satisfait le prédicat.
+
+- Sur les entiers, $\forall n,\ n + 0 = n$ est vrai.
+- Sur les entiers, $\forall n,\ n > 3$ est faux (prends $n = 2$).
+
+### Il existe : ∃
+
+Le <Term slug="quantificateur-existentiel">quantificateur existentiel</Term> se note $\exists$ et se lit « il existe ». L'énoncé
+
+$$
+\exists x,\ P(x)
+$$
+
+se lit « il existe au moins un $x$ du domaine tel que $P(x)$ est vrai ». Un tel $x$ s'appelle un **témoin**. Attention au sens courant : « il existe » ne veut pas dire « il existe un unique ». Un témoin suffit, plusieurs sont permis.
+
+- Sur les entiers, $\exists n,\ n > 3$ est vrai ($n = 4$ est un témoin, $n = 100$ aussi).
+- Sur les entiers, $\exists n,\ n^2 = 2$ est faux : aucun témoin.
+
+<Callout kind="tip" title="Lire l'ordre exact des symboles">
+On écrit le quantificateur, puis la variable, puis une virgule, puis le prédicat : $\forall x,\ P(x)$. La virgule se lit « on a » ou « tel que ». Garde l'habitude de **prononcer** l'énoncé en entier : « pour tout $x$, on a $P$ de $x$ ». Un énoncé qu'on sait dire à voix haute est un énoncé qu'on a compris.
+</Callout>
+
+## Nier un quantificateur
+
+Comment réfute-t-on « pour tout $x$, $P(x)$ » ? Pas en vérifiant tous les cas, ce serait sans fin. Il suffit d'**un seul** raté. Et symétriquement, nier « il existe » revient à dire « aucun », donc « tous échouent ». Ces deux règles sont la suite directe des lois de De Morgan du chapitre 1, étendues du fini à l'infini :
+
+<Formula caption="Négation des quantificateurs">¬(∀x, P(x)) ≡ ∃x, ¬P(x) | ¬(∃x, P(x)) ≡ ∀x, ¬P(x)</Formula>
+
+En clair : nier « tous vérifient $P$ » donne « il en existe un qui ne le vérifie pas » ; nier « il en existe un qui vérifie $P$ » donne « tous ne le vérifient pas ». Le quantificateur bascule, et la négation glisse à l'intérieur, sur le prédicat. C'est exactement le mouvement de De Morgan ($\lnot$ transforme $\land$ en $\lor$), vu ici comme un « et » infini qui devient un « ou » infini.
+
+De la première règle naît l'outil le plus économique des mathématiques. Pour démolir une affirmation universelle, on exhibe un <Term slug="contre-exemple">contre-exemple</Term> : un seul élément du domaine où le prédicat est faux. Un contre-exemple ne « discute » pas une conjecture, il la tue.
+
+<Callout kind="note" title="Un contre-exemple célèbre">
+  Fermat conjecturait que tous les nombres $2^{2^n} + 1$ sont premiers. Vrai pour $n = 0, 1, 2, 3, 4$. Puis Euler, en 1732, calcule le cas $n = 5$ : $2^{32} + 1 = 4\,294\,967\,297 = 641 \times 6\,700\,417$. Un seul contre-exemple, et le « pour tout » s'effondre. C'est la mécanique de la négation $¬(\forall x, P(x)) \equiv \exists x, \lnot P(x)$ à l'oeuvre.
+</Callout>
+
+## Le piège : l'ordre des quantificateurs
+
+Voici le point qui fait trébucher tout le monde, et la vraie raison d'être de ce chapitre. Quand on empile deux quantificateurs différents, **leur ordre change le sens**. Compare :
+
+<Formula caption="Deux énoncés qui ne disent pas la même chose">∀x ∃y, R(x, y) | ∃y ∀x, R(x, y)</Formula>
+
+- $\forall x\, \exists y,\ R(x, y)$ : « pour chaque $x$, il existe un $y$ (qui peut dépendre de $x$) tel que $R$ ». Chacun a *son* partenaire, possiblement différent.
+- $\exists y\, \forall x,\ R(x, y)$ : « il existe un $y$ qui marche pour tous les $x$ à la fois ». Un partenaire *universel*, le même pour tout le monde.
+
+L'analogie qui grave la différence : « **tout le monde a une mère** » ($\forall x\, \exists y$, $y$ est la mère de $x$) est vrai. « **il existe une mère de tout le monde** » ($\exists y\, \forall x$) est faux, heureusement. Mêmes mots, ordre inversé, vérités opposées.
+
+Manipule-le toi-même ci-dessous. La grille est la relation $R(x, y)$ : une case cochée signifie « $x$ est relié à $y$ ». Elle démarre sur la **diagonale** : chacun est relié à lui-même, et à personne d'autre. **Ta mission** : laisse l'énoncé sur $\forall x\, \exists y$ et lis le verdict, puis clique « Échanger les axes » pour passer à $\exists y\, \forall x$ sans rien changer d'autre. Le même tableau, deux verdicts.
+
+<InteractivePrint
+  label="Figure : laboratoire des quantificateurs sur une relation à éditer"
+  description="Grille 3x3 sur le domaine {Alice, Bob, Carol}, lignes pour x et colonnes pour y, initialisée sur la diagonale (chaque élément relié à lui-même seulement). Avec l'ordre pour-tout-x il-existe-y, l'énoncé est VRAI car chaque x a un témoin, lui-même. En échangeant les axes vers il-existe-y pour-tout-x, l'énoncé devient FAUX car aucun y n'est relié à tous les x. Le composant surligne la ligne ou la colonne décisive (témoin ou contre-exemple) et affiche le verdict."
+>
+  <QuantifierLab
+    client:visible
+    domain={['Alice', 'Bob', 'Carol']}
+    initialRelation={[
+      [true, false, false],
+      [false, true, false],
+      [false, false, true],
+    ]}
+    variableNames={['x', 'y']}
+    labels={quantifierLabLabels}
+  />
+</InteractivePrint>
+
+Pour se convaincre du sens des flèches, le diagramme suivant met côte à côte les deux lectures sur la diagonale. À gauche, chaque $x$ pointe vers son propre témoin : trois flèches, l'énoncé universel-existentiel tient. À droite, on cherche un seul $y$ que tous atteignent : aucune colonne ne reçoit trois flèches, l'énoncé existentiel-universel tombe.
+
+<MermaidDiagram
+  client:visible
+  caption="∀x ∃y (chacun atteint un y) tient sur la diagonale, ∃y ∀x (un y atteint par tous) échoue"
+  definition={`graph LR
+    A["x = Alice"] --> a["y = Alice"]
+    B["x = Bob"] --> b["y = Bob"]
+    C["x = Carol"] --> c["y = Carol"]`}
+/>
+
+<Callout kind="warn" title="La règle à retenir">
+  On peut **toujours** faire glisser un « il existe » vers la gauche au-dessus d'un « pour tout », mais pas l'inverse : $\exists y\, \forall x,\ R(x, y)$ entraîne $\forall x\, \exists y,\ R(x, y)$, jamais le contraire. Un partenaire universel sert tout le monde, donc chacun a un partenaire. Mais que chacun ait le sien ne fabrique pas de partenaire commun.
+</Callout>
+
+## En une phrase
+
+Un prédicat est un énoncé à trou ; le quantifier par « pour tout » ou « il existe » sur un domaine précis le referme en une proposition vraie ou fausse, sa négation échange les deux quantificateurs, et leur ordre n'est jamais innocent.
+
+## Vers le chapitre 3
+
+On a parlé sans cesse du « domaine de discours », l'ensemble sur lequel varient les variables, en se contentant d'une idée intuitive : une collection d'objets. Mais qu'est-ce qu'un ensemble, au juste ? Comment le décrit-on, comment teste-t-on qu'un objet lui appartient, comment en fabrique-t-on de nouveaux à partir d'anciens ? Les quantificateurs de ce chapitre vont devenir le langage même de cette construction : « $A \subseteq B$ » se dira « $\forall x,\ x \in A \Rightarrow x \in B$ ». C'est tout le chapitre 3, la théorie des ensembles.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, regarde-les seulement après avoir essayé.
+
+### Exercice 1 : nier proprement
+
+Le domaine est l'ensemble des êtres humains. Soit l'énoncé « tout le monde aime au moins une personne », écrit $\forall x\, \exists y,\ A(x, y)$ où $A(x, y)$ signifie « $x$ aime $y$ ». Écrire sa négation en faisant glisser le $\lnot$ jusqu'au prédicat, puis la traduire en français courant.
+
+### Exercice 2 : l'ordre décide
+
+Le domaine est l'ensemble des entiers strictement positifs $\{1, 2, 3, \dots\}$. On pose $R(x, y)$ : « $y > x$ ». Déterminer si $\forall x\, \exists y,\ R(x, y)$ est vrai, puis si $\exists y\, \forall x,\ R(x, y)$ est vrai. Justifier chaque réponse.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : nier proprement">
+On part de l'énoncé et on applique deux fois les règles de négation des quantificateurs.
+
+**Étape 1.** On nie le tout :
+
+$$
+\lnot \big( \forall x\, \exists y,\ A(x, y) \big)
+$$
+
+**Étape 2.** La négation d'un « pour tout » donne un « il existe », et le $\lnot$ entre d'un cran :
+
+$$
+\exists x,\ \lnot \big( \exists y,\ A(x, y) \big)
+$$
+
+**Étape 3.** La négation d'un « il existe » donne un « pour tout », et le $\lnot$ atteint enfin le prédicat :
+
+$$
+\exists x\, \forall y,\ \lnot A(x, y)
+$$
+
+**Traduction.** « Il existe quelqu'un qui n'aime personne. » Chaque quantificateur a basculé, et la négation a fini sa course sur $A(x, y)$.
+
+**Lecture.** Pour réfuter « tout le monde aime quelqu'un », il suffit d'exhiber **une** personne dont on montre qu'elle n'aime **aucun** $y$. C'est encore un contre-exemple, mais sur l'énoncé externe.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : l'ordre décide">
+On rappelle le domaine : les entiers strictement positifs, et $R(x, y)$ : « $y > x$ ».
+
+**Partie A.** On teste $\forall x\, \exists y,\ R(x, y)$, c'est-à-dire « pour chaque $x$, il existe un $y$ plus grand ».
+
+**Étape 1.** Soit $x$ un entier positif quelconque.
+
+**Étape 2.** On propose $y = x + 1$. Alors $y > x$, donc $R(x, y)$ est vrai.
+
+$$
+y = x + 1 \ \Rightarrow\ y > x
+$$
+
+**Étape 3.** Ce témoin existe pour n'importe quel $x$, donc l'énoncé est **vrai**.
+
+**Partie B.** On teste $\exists y\, \forall x,\ R(x, y)$, c'est-à-dire « il existe un $y$ plus grand que tous les $x$ ».
+
+**Étape 4.** Supposons qu'un tel $y$ existe. Il devrait vérifier $y > x$ pour tout $x$, en particulier pour $x = y$.
+
+**Étape 5.** On obtiendrait $y > y$, ce qui est impossible.
+
+$$
+y > y \ \text{ est faux pour tout entier } y
+$$
+
+**Résultat.** Aucun $y$ ne convient : l'énoncé est **faux**. Mêmes prédicat et mêmes mots qu'en partie A, ordre inversé, vérité inversée.
+</Callout>
+
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 2 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : la nature d'un prédicat, le rôle du domaine de discours, la négation d'un quantificateur, le contre-exemple, et l'ordre des quantificateurs. Cinq questions avec explication de la bonne réponse à la validation."
+>
+  <Quiz
+    client:visible
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'Pourquoi « x > 3 » n’est-il pas une proposition ?',
+        options: [
+          'Parce qu’il contient le symbole >',
+          'Parce que sa valeur de vérité dépend de x, qui est libre',
+          'Parce qu’il est toujours faux',
+          'Parce que 3 n’est pas une variable',
+        ],
+        answer: 1,
+        explain:
+          'C’est un prédicat : tant que x reste une variable libre, l’énoncé n’est ni vrai ni faux. Le fixer (x = 5) ou le quantifier le transforme en proposition.',
+      },
+      {
+        q: 'L’énoncé « ∃x, x² = 2 » est...',
+        options: [
+          'vrai quel que soit le domaine',
+          'faux quel que soit le domaine',
+          'faux sur les entiers, vrai sur les réels',
+          'sans valeur de vérité',
+        ],
+        answer: 2,
+        explain:
+          'Le domaine de discours fait partie de l’énoncé : aucun entier ne convient, mais √2 est un témoin réel. Préciser le domaine est obligatoire.',
+      },
+      {
+        q: 'Quelle est la négation de « ∀x, P(x) » ?',
+        options: ['∀x, ¬P(x)', '∃x, ¬P(x)', '¬∃x, P(x)', '∀x, P(x)'],
+        answer: 1,
+        explain:
+          'Nier un « pour tout » donne un « il existe » portant sur la négation du prédicat : il suffit d’un contre-exemple pour mettre en défaut un énoncé universel.',
+      },
+      {
+        q: 'Pour réfuter « tous les nombres de cette forme sont premiers », il faut...',
+        options: [
+          'vérifier qu’aucun n’est premier',
+          'exhiber un seul nombre de cette forme qui n’est pas premier',
+          'vérifier les cinq premiers cas',
+          'démontrer qu’ils sont tous pairs',
+        ],
+        answer: 1,
+        explain:
+          'Un seul contre-exemple suffit, exactement comme Euler avec 2^32 + 1 = 641 × 6 700 417. C’est la lecture directe de ¬(∀x, P(x)) ≡ ∃x, ¬P(x).',
+      },
+      {
+        q: 'Que peut-on déduire de « ∃y ∀x, R(x, y) » (un y marche pour tous les x) ?',
+        options: [
+          'Rien sur ∀x ∃y',
+          'Que ∀x ∃y, R(x, y) est aussi vrai',
+          'Que ∀x ∃y, R(x, y) est faux',
+          'Que R est symétrique',
+        ],
+        answer: 1,
+        explain:
+          'Un partenaire universel sert chacun en particulier, donc ∃y∀x entraîne ∀x∃y. L’implication inverse, elle, est fausse en général : « tout le monde a une mère » n’implique pas « il existe une mère de tout le monde ».',
+      },
+    ]}
+  />
+</InteractivePrint>
+
+## Sources
+
+- Frege, G. (1879). _Begriffsschrift_. Louis Nebert. L'acte de naissance de la notation des quantificateurs.
+- Euler, L. (1732). « Observationes de theoremate quodam Fermatiano aliisque ad numeros primos spectantibus. » _Commentarii academiae scientiarum Petropolitanae_. La réfutation de la conjecture de Fermat sur les nombres de Fermat.
+
+### Pour aller plus loin
+
+- Cori, R. & Lascar, D. (2003). _Logique mathématique, tome 1_. Dunod. Le traitement rigoureux du calcul des prédicats.
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Chapitres 2 et 3, excellents sur les quantificateurs et leur négation.
+- Halmos, P. (1960). _Naive Set Theory_. Van Nostrand. Pour préparer le chapitre 3 en douceur.

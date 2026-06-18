@@ -1,0 +1,19 @@
+slug: quantificateur-existentiel
+fr:
+  term: Quantificateur existentiel
+  definition: >
+    Le symbole ∃, qui se lit « il existe ». L'énoncé ∃x, P(x) est vrai dès qu'au
+    moins un élément du domaine de discours rend le prédicat P vrai. Cet élément
+    s'appelle un témoin. L'existence n'exige pas l'unicité : un ou plusieurs témoins
+    suffisent.
+en:
+  term: Existential quantifier
+  definition: >
+    The symbol ∃, read "there exists". The statement ∃x, P(x) is true as soon as at
+    least one element of the domain of discourse makes the predicate P true. Such an
+    element is called a witness. Existence does not require uniqueness: one or several
+    witnesses are enough.
+seeAlso:
+  - predicat
+  - quantificateur-universel
+  - domaine-de-discours
