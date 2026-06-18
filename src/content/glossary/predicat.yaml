@@ -1,0 +1,20 @@
+slug: predicat
+fr:
+  term: Prédicat
+  definition: >
+    Énoncé contenant une ou plusieurs variables libres, dont la valeur de vérité
+    dépend de ce que l'on substitue à ces variables. « x > 3 » est un prédicat :
+    il n'est ni vrai ni faux tant que x n'est pas fixé ou quantifié. Une fois toutes
+    ses variables fixées ou liées par un quantificateur, un prédicat devient une
+    proposition.
+en:
+  term: Predicate
+  definition: >
+    A statement containing one or more free variables, whose truth value depends on
+    what is substituted for those variables. "x > 3" is a predicate: it is neither
+    true nor false until x is fixed or quantified. Once all its variables are fixed
+    or bound by a quantifier, a predicate becomes a proposition.
+seeAlso:
+  - proposition
+  - quantificateur-universel
+  - quantificateur-existentiel

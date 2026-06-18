@@ -1,0 +1,12 @@
+slug: quantificateur-universel
+fr:
+  term: Quantificateur universel
+  definition: Le symbole ∀, qui se lit « pour tout » ou « quel que soit ». L'énoncé ∀x, P(x) est vrai lorsque le prédicat P est vrai pour chaque élément du domaine de discours, sans exception. Pour le mettre en défaut, il suffit d'un seul contre-exemple.
+en:
+  term: Universal quantifier
+  definition: The symbol ∀, read "for all" or "for every". The statement ∀x, P(x) is true when the predicate P holds for every element of the domain of discourse, without exception. A single counter-example is enough to refute it.
+seeAlso:
+  - predicat
+  - quantificateur-existentiel
+  - domaine-de-discours
+  - contre-exemple

@@ -1,0 +1,19 @@
+slug: contre-exemple
+fr:
+  term: Contre-exemple
+  definition: >
+    Un élément du domaine qui rend faux un énoncé universel. Pour réfuter « ∀x, P(x) »,
+    il suffit d'exhiber un seul x tel que P(x) est faux : c'est la traduction directe
+    de l'équivalence ¬(∀x, P(x)) ≡ ∃x, ¬P(x). Un contre-exemple démolit une conjecture
+    sans qu'il soit besoin d'en dire plus.
+en:
+  term: Counter-example
+  definition: >
+    An element of the domain that makes a universal statement false. To refute "∀x, P(x)",
+    it suffices to exhibit a single x such that P(x) is false: this is the direct reading
+    of the equivalence ¬(∀x, P(x)) ≡ ∃x, ¬P(x). A counter-example demolishes a conjecture
+    with nothing more to add.
+seeAlso:
+  - quantificateur-universel
+  - quantificateur-existentiel
+  - implication
