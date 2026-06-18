@@ -1,0 +1,14 @@
+slug: livraison-au-moins-une-fois
+fr:
+  term: Livraison au moins une fois
+  definition: "Garantie selon laquelle un message est traité une fois ou plus, jamais zéro (en anglais at-least-once). On l'obtient en acquittant seulement après un traitement réussi et en redélivrant tant qu'aucun acquittement n'arrive : une panne survenant après le traitement mais avant l'acquittement provoque une redélivraison, donc un doublon. On ne perd jamais, mais on peut dupliquer ; c'est pourquoi le traitement doit être idempotent."
+  source: Kleppmann, 2017
+en:
+  term: At-least-once delivery
+  definition: "A guarantee that a message is processed one or more times, never zero. It is obtained by acknowledging only after successful processing and redelivering as long as no acknowledgement arrives: a crash after processing but before the acknowledgement triggers a redelivery, hence a duplicate. It never loses, but it can duplicate; this is why the processing must be idempotent."
+  source: Kleppmann, 2017
+seeAlso:
+  - acquittement
+  - livraison-au-plus-une-fois
+  - livraison-effectivement-une-fois
+  - idempotence
