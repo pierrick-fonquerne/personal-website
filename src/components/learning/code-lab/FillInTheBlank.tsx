@@ -28,7 +28,7 @@ export interface FillInCopy {
   readonly hintLabel?: string;
   /** Hint text keyed by blank id. */
   readonly hints?: Record<string, string>;
-  /** Base accessible label for input fields. Defaults to "Champ a completer". */
+  /** Base accessible label for input fields. Defaults to "Champ à compléter". */
   readonly inputAriaLabel?: string;
 }
 
@@ -43,7 +43,7 @@ export interface FillInTheBlankProps {
 // Constants
 // ---------------------------------------------------------------------------
 
-const DEFAULT_INPUT_ARIA_LABEL = 'Champ a completer';
+const DEFAULT_INPUT_ARIA_LABEL = 'Champ à compléter';
 
 // ---------------------------------------------------------------------------
 // Helper: build solution code string from segments + blanks
@@ -168,7 +168,7 @@ export default function FillInTheBlank({
 
       {/* Editable code zone - hidden when solution is revealed */}
       <div className={isRevealed ? 'hidden' : undefined}>
-        <pre className="cl-fill__code overflow-x-auto rounded-md bg-[#24292e] p-4 font-mono text-sm leading-relaxed">
+        <pre className="cl-fill__code overflow-x-auto rounded-md bg-[var(--color-bg-elevated)] p-4 font-mono text-sm leading-relaxed">
           <code>
             {segments.map((seg, index) => {
               if (seg.kind === 'text') {
@@ -201,7 +201,7 @@ export default function FillInTheBlank({
                     className={[
                       'cl-fill__input',
                       'inline-block rounded border px-1 font-mono text-sm',
-                      'bg-[#1a1f24] text-[var(--color-fg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/50',
+                      'bg-[var(--color-bg)] text-[var(--color-fg)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]/50',
                       status === 'correct'
                         ? 'cl-fill__input--correct border-green-500/70'
                         : status === 'incorrect'

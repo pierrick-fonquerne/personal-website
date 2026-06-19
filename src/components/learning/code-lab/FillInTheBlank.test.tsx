@@ -24,12 +24,12 @@ const CONTENT_TWO: FillInContent = {
 };
 
 const COPY: FillInCopy = {
-  instructions: 'Completez le code ci-dessous.',
-  checkLabel: 'Verifier',
+  instructions: 'Complétez le code ci-dessous.',
+  checkLabel: 'Vérifier',
   revealLabel: 'Voir la solution',
   hideLabel: 'Masquer la solution',
-  resetLabel: 'Reinitialiser',
-  statusIncomplete: 'Certaines reponses sont incorrectes.',
+  resetLabel: 'Réinitialiser',
+  statusIncomplete: 'Certaines réponses sont incorrectes.',
   statusComplete: 'Bravo, tout est correct !',
   hintLabel: 'Indice',
   hints: { decl: 'Pensez au constructeur de MessageBus.' },
@@ -43,7 +43,7 @@ const COPY: FillInCopy = {
 describe('FillInTheBlank - rendu de base', () => {
   it('affiche les instructions', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
-    expect(screen.getByText('Completez le code ci-dessous.')).toBeDefined();
+    expect(screen.getByText('Complétez le code ci-dessous.')).toBeDefined();
   });
 
   it('rend un input par trou', () => {
@@ -65,9 +65,9 @@ describe('FillInTheBlank - rendu de base', () => {
     expect(screen.getByText(';')).toBeDefined();
   });
 
-  it('le bouton Verifier est present', () => {
+  it('le bouton Vérifier est present', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
-    expect(screen.getByRole('button', { name: 'Verifier' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Vérifier' })).toBeDefined();
   });
 
   it('le bouton Voir la solution est present', () => {
@@ -75,9 +75,9 @@ describe('FillInTheBlank - rendu de base', () => {
     expect(screen.getByRole('button', { name: 'Voir la solution' })).toBeDefined();
   });
 
-  it('le bouton Reinitialiser est present quand resetLabel est fourni', () => {
+  it('le bouton Réinitialiser est present quand resetLabel est fourni', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
-    expect(screen.getByRole('button', { name: 'Reinitialiser' })).toBeDefined();
+    expect(screen.getByRole('button', { name: 'Réinitialiser' })).toBeDefined();
   });
 });
 
@@ -90,7 +90,7 @@ describe('FillInTheBlank - verification', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     expect(input.getAttribute('data-blank-status')).toBe('correct');
   });
 
@@ -98,13 +98,13 @@ describe('FillInTheBlank - verification', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'mauvaise reponse' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     expect(input.getAttribute('data-blank-status')).toBe('incorrect');
   });
 
   it('un champ vide apres Verifier porte data-blank-status="empty"', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     const input = screen.getByRole('textbox');
     expect(input.getAttribute('data-blank-status')).toBe('empty');
   });
@@ -113,7 +113,7 @@ describe('FillInTheBlank - verification', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     expect(screen.getByText('Bravo, tout est correct !')).toBeDefined();
   });
 
@@ -121,8 +121,8 @@ describe('FillInTheBlank - verification', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'mauvaise' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
-    expect(screen.getByText('Certaines reponses sont incorrectes.')).toBeDefined();
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
+    expect(screen.getByText('Certaines réponses sont incorrectes.')).toBeDefined();
   });
 
   it('aucun data-blank-status avant la premiere verification', () => {
@@ -191,10 +191,10 @@ describe('FillInTheBlank - reinitialisation', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Verifier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     expect(input.getAttribute('data-blank-status')).toBe('correct');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Reinitialiser' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Réinitialiser' }));
     expect((input as HTMLInputElement).value).toBe('');
     expect(input.getAttribute('data-blank-status')).toBeNull();
   });
