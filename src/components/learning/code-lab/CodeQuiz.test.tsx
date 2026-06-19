@@ -60,7 +60,7 @@ const COPY: QuizCopy = {
 // ---------------------------------------------------------------------------
 
 describe('CodeQuiz - rendu de base', () => {
-  it('rend l extrait de code via CodeBlock', () => {
+  it('rend l\'extrait de code via CodeBlock', () => {
     render(<CodeQuiz content={CONTENT} language="csharp" copy={COPY} />);
     expect(screen.getByText(/var x = 42/)).toBeDefined();
   });
@@ -71,7 +71,7 @@ describe('CodeQuiz - rendu de base', () => {
     expect(screen.getByText('Quelles options sont vraies ?')).toBeDefined();
   });
 
-  it('rend le libelle de chaque option', () => {
+  it('rend le libellé de chaque option', () => {
     render(<CodeQuiz content={CONTENT} language="csharp" copy={COPY} />);
     expect(screen.getByLabelText('Option A')).toBeDefined();
     expect(screen.getByLabelText('Option B')).toBeDefined();
