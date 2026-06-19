@@ -40,12 +40,10 @@ describe('availableLanguages', () => {
           questions: [
             {
               id: 'q1',
-              prompt: 'What does this return?',
               options: [
-                { id: 'a', label: 'a + b' },
-                { id: 'b', label: 'a - b' },
+                { id: 'a', isCorrect: true },
+                { id: 'b', isCorrect: false },
               ],
-              correctOptionId: 'a',
             },
           ],
         },
@@ -54,12 +52,10 @@ describe('availableLanguages', () => {
           questions: [
             {
               id: 'q1',
-              prompt: 'What does this return?',
               options: [
-                { id: 'a', label: 'a + b' },
-                { id: 'b', label: 'a - b' },
+                { id: 'a', isCorrect: true },
+                { id: 'b', isCorrect: false },
               ],
-              correctOptionId: 'a',
             },
           ],
         },
