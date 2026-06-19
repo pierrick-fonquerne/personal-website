@@ -1,0 +1,334 @@
+---
+course: logic-sets-proofs
+order: 3
+title: Sets and operations
+subtitle: "How membership, inclusion and three operations turn the connectives of chapter 1 into objects you can manipulate."
+estimatedMinutes: 28
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import SetOperationsLab from '../../../components/learning/SetOperationsLab.tsx';
+
+export const setOperationsLabLabels = {
+  instructions:
+    'Click a token to move it between the four regions: A only, A and B, B only, outside both.',
+  regionAOnly: 'A only',
+  regionIntersection: 'A and B',
+  regionBOnly: 'B only',
+  regionOutside: 'Outside A and B',
+  operationLabel: 'Operation to display',
+  operationUnion: 'A ∪ B (union)',
+  operationIntersection: 'A ∩ B (intersection)',
+  operationComplementA: 'Aᶜ (complement of A)',
+  operationDifferenceAB: 'A ∖ B (difference)',
+  membershipLabel: 'Membership condition',
+  resultLabel: 'Selected elements',
+  emptyResult: '∅ (no element)',
+  deMorganToggle: 'Check De Morgan: (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ',
+  deMorganLeftLabel: '(A ∪ B)ᶜ',
+  deMorganRightLabel: 'Aᶜ ∩ Bᶜ',
+  deMorganMatch: 'Same elements on both sides: the identity holds.',
+  deMorganMismatch: 'The two sides differ.',
+  setALabel: 'A',
+  setBLabel: 'B',
+  reset: 'Reset',
+};
+
+In [chapter 2](/en/interactive-courses/logic-sets-proofs/02-predicates-quantifiers), we spent the whole chapter talking about the "domain of discourse", the set over which variables range, while settling for an intuitive idea: a collection of objects. The chapter even closed on a promise: "$A \subseteq B$" would be read "$\forall x,\ x \in A \Rightarrow x \in B$". It is time to keep it. But what is a set, exactly? How do we describe one, how do we test that an object belongs to it, how do we build new ones from old?
+
+The answer is lovelier than a mere catalogue of symbols. You are about to discover that set theory is not a new territory to memorise: it is the logic of chapter 1, poured into objects. The "or" becomes union, the "and" becomes intersection, the "not" becomes complement, and the De Morgan laws you already know will reappear, identical, on sets.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to follow** : chapter 1 (the connectives "not", "and", "or", implication, the De Morgan laws) and chapter 2 (predicates, the quantifiers "for all" and "there exists"). We lean on them directly, especially at the end.
+
+**What you do not need to know** : proof techniques (chapter 4) or the axiomatic construction of sets. We stay at the intuitive, constructive level, enough for all the rest of the course.
+
+**Level of rigour** : formal definitions, membership conditions written out explicitly, and an interactive manipulation to watch De Morgan operate on objects.
+</Callout>
+
+## Describing a set
+
+A <Term slug="ensemble">set</Term> is a collection of objects, its elements, regarded as a single whole.
+
+The basic gesture, the one everything else flows from, is to ask whether an object is in or out. This relation is called <Term slug="appartenance">membership</Term> and is written $\in$ :
+
+$$
+x \in A
+$$
+
+reads "$x$ belongs to $A$", that is "$x$ is one of the elements of $A$". Its negation is written $x \notin A$. Notice that "$x \in A$" is exactly a predicate in the sense of chapter 2: depending on what we put in place of $x$, it is true or false. The whole of set theory is built on this single predicate.
+
+There are two ways to describe which objects are in a set:
+
+- **By extension** : we list the elements in braces. $A = \{1, 2, 3\}$. Handy for small sets.
+- **By comprehension** : we give the property the elements satisfy. $A = \{x \mid x > 0 \text{ and } x < 4 \text{ and } x \text{ integer}\}$. Here the bar $\mid$ reads "such that".
+
+The comprehension description reveals the deep link with chapter 2: a set by comprehension, $\{x \mid P(x)\}$, is nothing but a predicate $P$ turned into an object. The set is the collection of all the witnesses that make $P$ true.
+
+<Callout kind="tip" title="The empty set">
+One limit case earns its own name: the set with no element, written $\varnothing$ or $\{\}$. It is not "nothing": it is a perfectly legitimate set, just empty. We can write it by comprehension with a property no object satisfies, for instance $\{x \mid x \neq x\}$. It will play a key role below.
+</Callout>
+
+One last principle, quiet but foundational: **a set is entirely determined by its elements**. Two sets with exactly the same elements are the same set, no matter how they were described. So $\{1, 2, 3\}$, $\{3, 2, 1\}$ and $\{1, 1, 2, 3\}$ are one and the same set: order and repetitions do not count. This principle is called extensionality, and it is what makes everything that follows possible.
+
+## Comparing: inclusion and equality
+
+Now that we can test membership, we can compare two sets. The promise of chapter 2 arrives here. <Term slug="inclusion">Inclusion</Term>, written $\subseteq$, says that every element of the first set is also in the second:
+
+$$
+A \subseteq B \quad\text{means}\quad \forall x,\ (x \in A \Rightarrow x \in B)
+$$
+
+This equation reads: "$A$ is included in $B$" exactly when "for all $x$, if $x$ belongs to $A$, then $x$ belongs to $B$". Inclusion is therefore not one more symbol to memorise: it is a universal implication, the "for all" of chapter 2 applied to the membership predicate. We say $A$ is a subset of $B$.
+
+<Callout kind="note" title="Why the empty set is included in everything">
+What is $\varnothing \subseteq B$ worth? We must check "for all $x$, if $x \in \varnothing$ then $x \in B$". But $x \in \varnothing$ is always false. And in chapter 1, an implication with a false premise is always true. So the implication holds for every $x$, and $\varnothing \subseteq B$ is true, whatever $B$ is. The "false implies true" that surprised everyone in chapter 1 has a concrete consequence here: the empty set is included everywhere.
+</Callout>
+
+How, then, do we say that two sets are **equal**? By extensionality, $A = B$ means they have the same elements, that is, each is included in the other:
+
+$$
+A = B \quad\text{means}\quad A \subseteq B \ \text{ and } \ B \subseteq A
+$$
+
+This split is called double inclusion. It looks harmless, but it is the most used proof tool whenever we want to show two sets are equal: we prove one inclusion, then the other. Keep it in mind, chapter 4 will make it its daily bread.
+
+We can also gather all the subsets of a set $E$ into a new set: the <Term slug="ensemble-des-parties">power set</Term>, written $\mathcal{P}(E)$. Its elements are themselves sets. For example:
+
+$$
+\mathcal{P}(\{a, b\}) = \{\, \varnothing,\ \{a\},\ \{b\},\ \{a, b\} \,\}
+$$
+
+We always find $\varnothing$ and $E$ itself in it. And a simple count: if $E$ has $n$ elements, $\mathcal{P}(E)$ has $2^n$, because to build a subset, each element of $E$ is either taken or left out, two independent choices repeated $n$ times.
+
+## Combining: the operations are the connectives
+
+Here is the heart of the chapter. From two sets, we build new ones with three operations. Each is defined by its membership condition, and that condition is a connective from chapter 1.
+
+<Term slug="union">Union</Term>, written $\cup$, gathers:
+
+$$
+x \in A \cup B \iff (x \in A) \ \lor \ (x \in B)
+$$
+
+An object is in $A \cup B$ if it is in $A$ **or** in $B$ (or in both). Union is the logical "or" turned into an object.
+
+<Term slug="intersection">Intersection</Term>, written $\cap$, keeps only the common part:
+
+$$
+x \in A \cap B \iff (x \in A) \ \land \ (x \in B)
+$$
+
+An object is in $A \cap B$ if it is in $A$ **and** in $B$. Intersection is the "and". When $A \cap B = \varnothing$, we say $A$ and $B$ are disjoint.
+
+The <Term slug="complementaire">complement</Term>, written $A^c$, returns what is not in $A$, relative to a reference universe $U$ :
+
+$$
+x \in A^c \iff \lnot (x \in A)
+$$
+
+This is the "not". Careful: the complement only makes sense if the universe is fixed. Without saying "not with respect to what", $A^c$ means nothing. It is the same role as the domain of discourse of chapter 2.
+
+The table fills itself in: to each logical connective corresponds a set operation, because the two are the same idea seen from two sides.
+
+<Formula caption="Each operation is a connective applied to membership">x ∈ A ∪ B ⟺ (x ∈ A) ∨ (x ∈ B) | x ∈ A ∩ B ⟺ (x ∈ A) ∧ (x ∈ B) | x ∈ Aᶜ ⟺ ¬(x ∈ A)</Formula>
+
+And since the operations are connectives, the laws that govern the connectives become laws on sets. The De Morgan laws of chapter 1, $\lnot(P \lor Q) \equiv \lnot P \land \lnot Q$, transpose word for word:
+
+$$
+(A \cup B)^c = A^c \cap B^c \qquad (A \cap B)^c = A^c \cup B^c
+$$
+
+Read the first one aloud: "the complement of a union is the intersection of the complements". To not be in $A$ or $B$, you must be neither in $A$ nor in $B$. This is exactly the "not (P or Q) amounts to (not P) and (not Q)" of chapter 1. You are not proving a new truth: you are recognising an old one in a new costume.
+
+## Manipulating De Morgan on objects
+
+The component below makes all this tangible. The universe is $U = \{1, 2, 3, 4, 5, 6\}$, starting with $A = \{1, 2, 3\}$ and $B = \{3, 4, 5\}$. You place each element in one of the four regions by clicking on it, and you choose the operation to display: the component shows the matching membership condition and highlights the selected elements.
+
+**Your mission** : turn on De Morgan mode. On the left, the component computes $(A \cup B)^c$ ; on the right, $A^c \cap B^c$. The two lists are identical, here $\{6\}$, the only element outside both circles. Now move elements from one region to another, as much as you like: the two sides always stay equal. You have not proved anything yet, but you have watched the law resist every attempt.
+
+<InteractivePrint
+  label="Figure: laboratory of set operations on an editable universe"
+  description="Universe U = {1,2,3,4,5,6} split into four regions (A only, A and B, B only, outside both), initialised with A = {1,2,3} and B = {3,4,5}. A selector displays the union, the intersection, the complement of A or the difference A minus B; the component shows the membership condition and highlights the selected elements. De Morgan mode shows side by side (A union B) complement, which equals {6}, and A complement inter B complement, which also equals {6}, and confirms the two coincide whatever positions are chosen."
+>
+  <SetOperationsLab
+    client:visible
+    universe={['1', '2', '3', '4', '5', '6']}
+    initialA={['1', '2', '3']}
+    initialB={['3', '4', '5']}
+    labels={setOperationsLabLabels}
+  />
+</InteractivePrint>
+
+Three questions to ask yourself while playing:
+
+- Put every element in the "outside A and B" region. What is $A \cup B$ ? And $(A \cup B)^c$ ? Does the De Morgan equality still hold on empty sets?
+- Choose the operation "difference $A \setminus B$". Guess its membership condition before reading it: which connective matches "in $A$ but not in $B$" ?
+- Place a single element in the intersection. How many regions does the complement of $A$ cover?
+
+## Building anew: the cartesian product
+
+The three previous operations stay inside the starting universe. One last construction truly steps outside, in the literal sense: the <Term slug="produit-cartesien">cartesian product</Term>, written $\times$. It builds pairs:
+
+$$
+A \times B = \{\, (a, b) \mid a \in A \ \text{ and } \ b \in B \,\}
+$$
+
+$A \times B$ is the set of all ordered pairs whose first coordinate comes from $A$ and second from $B$. Order matters: $(a, b)$ is not $(b, a)$. And the count is clear: if $A$ has $m$ elements and $B$ has $n$, then $A \times B$ has $m \times n$, hence the name. With $A = \{1, 2\}$ and $B = \{x, y\}$ :
+
+$$
+A \times B = \{\, (1, x),\ (1, y),\ (2, x),\ (2, y) \,\}
+$$
+
+We will not go further here, but remember where this brick leads: a pair is the seed of a relation, and a well-chosen relation is a function. The whole language of functions, which the following courses will unfold, is built on this simple $\times$.
+
+## In one sentence
+
+A set is determined by its elements through membership; inclusion is a universal implication, union an "or", intersection an "and", complement a "not", so the De Morgan laws of chapter 1 still govern sets, word for word.
+
+## Towards chapter 4
+
+You have seen, on the component and on examples, that $(A \cup B)^c = A^c \cap B^c$. You tested it, again and again, never catching it out. But to test is not to prove: checking an identity on a universe of six elements does not prove it holds for all sets, exactly as trying a hundred numbers does not prove a universal property (remember Fermat's counter-example in chapter 2). How do we pass from "it works every time" to "it is true, always, with no exception"?
+
+The key is already in this chapter: to prove $A = B$, we prove $A \subseteq B$ and $B \subseteq A$ ; and each inclusion is a "$\forall x,\ x \in A \Rightarrow x \in B$", hence a universal implication to prove. Chapter 4 gives precisely the techniques to prove such statements, with no example and no drawing: direct proof, contrapositive, proof by contradiction. The double inclusion of this chapter is the proof obligation the next one will teach you to honour.
+
+## Exercises
+
+Take a sheet of paper and a pencil. The solutions are right below, look at them only after trying.
+
+### Exercise 1: prove an inclusion through membership
+
+Show that $A \subseteq A \cup B$ for all sets $A$ and $B$. Hint: translate the inclusion into a quantified statement, then reason about an arbitrary element.
+
+### Exercise 2: check De Morgan on a finite universe
+
+The universe is $U = \{1, 2, 3, 4, 5, 6\}$, with $A = \{1, 2, 3\}$ and $B = \{3, 4, 5\}$. Compute $(A \cup B)^c$ on one side, then $A^c \cap B^c$ on the other, and compare.
+
+<Callout kind="tip" title="Solution to exercise 1: prove an inclusion through membership">
+We recall what must be established and translate it into logic.
+
+**Step 1.** By definition of inclusion, $A \subseteq A \cup B$ means:
+
+$$
+\forall x,\ \big( x \in A \Rightarrow x \in A \cup B \big)
+$$
+
+**Step 2.** To prove a "for all", we take an arbitrary $x$ and assume the premise. So let $x$ be such that $x \in A$.
+
+**Step 3.** By definition of union, membership in $A \cup B$ is a disjunction:
+
+$$
+x \in A \cup B \iff (x \in A) \lor (x \in B)
+$$
+
+**Step 4.** But we assumed $x \in A$, so the disjunction $(x \in A) \lor (x \in B)$ is true. Hence $x \in A \cup B$.
+
+**Result.** For all $x$, $x \in A$ entails $x \in A \cup B$ : the inclusion $A \subseteq A \cup B$ is proved. Notice we used no drawing, only the translation of union into "or".
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: check De Morgan on a finite universe">
+We work in $U = \{1, 2, 3, 4, 5, 6\}$, with $A = \{1, 2, 3\}$ and $B = \{3, 4, 5\}$.
+
+**Step 1.** We compute the union, then its complement in $U$.
+
+$$
+A \cup B = \{1, 2, 3, 4, 5\}
+$$
+
+$$
+(A \cup B)^c = \{6\}
+$$
+
+**Step 2.** We compute the two complements separately in $U$.
+
+$$
+A^c = \{4, 5, 6\} \qquad B^c = \{1, 2, 6\}
+$$
+
+**Step 3.** We take their intersection, that is the elements present in both.
+
+$$
+A^c \cap B^c = \{6\}
+$$
+
+**Result.** Both sides equal $\{6\}$ : the identity $(A \cup B)^c = A^c \cap B^c$ is verified on this universe. Careful, this checks it on this example, it does not prove it in general: that is the work of chapter 4.
+</Callout>
+
+<InteractivePrint
+  label="Quiz: recap of chapter 3 (interactive)"
+  description="Multiple-choice quiz that checks the chapter takeaways: what determines a set, the translation of inclusion into a quantified statement, the membership condition of intersection, the De Morgan law on sets, and the size of the power set. Five questions with an explanation of the correct answer on submission."
+>
+  <Quiz
+    client:visible
+    submitLabel="Check"
+    resetLabel="Restart"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: 'What entirely determines a set?',
+        options: [
+          'The order in which we write its elements',
+          'Its elements, and them alone',
+          'How many times each element is repeated',
+          'The way we describe it',
+        ],
+        answer: 1,
+        explain:
+          'This is the principle of extensionality: two sets with the same elements are equal. Neither order, nor repetitions, nor description matter. {1,2,3} and {3,2,1,1} are the same set.',
+      },
+      {
+        q: 'The inclusion "A ⊆ B" translates into which statement from chapter 2?',
+        options: [
+          '∃x, x ∈ A and x ∈ B',
+          '∀x, x ∈ A ⇒ x ∈ B',
+          '∀x, x ∈ A and x ∈ B',
+          '∃x, x ∈ A ⇒ x ∈ B',
+        ],
+        answer: 1,
+        explain:
+          'Inclusion is a universal implication: every element of A is an element of B. It is the kept promise of chapter 2, and it is what will make proofs of set equality possible in chapter 4.',
+      },
+      {
+        q: '"x ∈ A ∩ B" is equivalent to...',
+        options: [
+          'x ∈ A or x ∈ B',
+          'x ∈ A and x ∈ B',
+          'not (x ∈ A)',
+          'x ∈ A and x ∉ B',
+        ],
+        answer: 1,
+        explain:
+          'Intersection is the logical "and": an element is in A ∩ B when it is both in A and in B. Union would be the "or", complement the "not".',
+      },
+      {
+        q: 'By the De Morgan laws on sets, (A ∪ B)ᶜ equals...',
+        options: ['Aᶜ ∪ Bᶜ', 'Aᶜ ∩ Bᶜ', 'A ∩ B', '(A ∩ B)ᶜ'],
+        answer: 1,
+        explain:
+          'The complement of a union is the intersection of the complements: not being in A or B means being neither in A nor in B. This is exactly the ¬(P ∨ Q) ≡ ¬P ∧ ¬Q of chapter 1.',
+      },
+      {
+        q: 'If E has 3 elements, how many does P(E) (the power set) have?',
+        options: ['3', '6', '8', '9'],
+        answer: 2,
+        explain:
+          'P(E) has 2³ = 8 elements. To build a subset, each of the 3 elements is either taken or left out: two independent choices repeated three times, so 2 × 2 × 2 = 8 subsets, including ∅ and E itself.',
+      },
+    ]}
+  />
+</InteractivePrint>
+
+## Sources
+
+- Halmos, P. (1960). _Naive Set Theory_. Van Nostrand. The classic reference, short and luminous, on intuitive set theory.
+- Cantor, G. (1895). "Beiträge zur Begründung der transfiniten Mengenlehre." _Mathematische Annalen_ 46. The founding act of set theory.
+
+### Going further
+
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Chapter 1 on sets and their operations, in the exact spirit of this course.
+- Enderton, H. (1977). _Elements of Set Theory_. Academic Press. For the axiomatic version, once chapter 4 is digested.

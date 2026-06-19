@@ -1,0 +1,19 @@
+slug: union
+fr:
+  term: Union
+  definition: >
+    Opération qui réunit deux ensembles, notée ∪. A ∪ B est l'ensemble des objets qui
+    appartiennent à A ou à B (ou aux deux). Sa condition d'appartenance est une
+    disjonction : x ∈ A ∪ B équivaut à « x ∈ A ou x ∈ B ». L'union est au « ou »
+    logique ce que l'objet est au connecteur.
+en:
+  term: Union
+  definition: >
+    The operation that joins two sets, written ∪. A ∪ B is the set of objects that
+    belong to A or to B (or to both). Its membership condition is a disjunction:
+    x ∈ A ∪ B is equivalent to "x ∈ A or x ∈ B". Union is to the logical "or" what
+    the object is to the connective.
+seeAlso:
+  - intersection
+  - complementaire
+  - connecteur-logique

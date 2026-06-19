@@ -1,0 +1,19 @@
+slug: ensemble-des-parties
+fr:
+  term: Ensemble des parties
+  definition: >
+    Ensemble de tous les sous-ensembles d'un ensemble E, noté P(E). Ses éléments sont
+    eux-mêmes des ensembles : l'ensemble vide et E lui-même en font toujours partie.
+    Si E a n éléments, alors P(E) en a 2 puissance n, car chaque élément de E est soit
+    pris, soit laissé dans un sous-ensemble. Par exemple P({a, b}) = {∅, {a}, {b}, {a, b}}.
+en:
+  term: Power set
+  definition: >
+    The set of all subsets of a set E, written P(E). Its elements are themselves sets:
+    the empty set and E itself always belong to it. If E has n elements, then P(E) has
+    2 to the power n, because each element of E is either taken or left out of a subset.
+    For example P({a, b}) = {∅, {a}, {b}, {a, b}}.
+seeAlso:
+  - ensemble
+  - inclusion
+  - appartenance

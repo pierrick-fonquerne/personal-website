@@ -1,0 +1,19 @@
+slug: intersection
+fr:
+  term: Intersection
+  definition: >
+    Opération qui ne garde que ce que deux ensembles ont en commun, notée ∩. A ∩ B est
+    l'ensemble des objets qui appartiennent à la fois à A et à B. Sa condition
+    d'appartenance est une conjonction : x ∈ A ∩ B équivaut à « x ∈ A et x ∈ B ».
+    Quand A ∩ B est vide, on dit que A et B sont disjoints.
+en:
+  term: Intersection
+  definition: >
+    The operation that keeps only what two sets share, written ∩. A ∩ B is the set of
+    objects that belong to both A and B. Its membership condition is a conjunction:
+    x ∈ A ∩ B is equivalent to "x ∈ A and x ∈ B". When A ∩ B is empty, A and B are
+    said to be disjoint.
+seeAlso:
+  - union
+  - complementaire
+  - connecteur-logique

@@ -1,0 +1,334 @@
+---
+course: logic-sets-proofs
+order: 3
+title: Ensembles et opérations
+subtitle: "Comment l'appartenance, l'inclusion et trois opérations transforment les connecteurs du chapitre 1 en objets que l'on peut manipuler."
+estimatedMinutes: 28
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import Quiz from '../../../components/learning/Quiz.tsx';
+import InteractivePrint from '../../../components/learning/InteractivePrint.astro';
+import SetOperationsLab from '../../../components/learning/SetOperationsLab.tsx';
+
+export const setOperationsLabLabels = {
+  instructions:
+    'Clique une pastille pour la déplacer entre les quatre régions : A seul, A et B, B seul, hors des deux.',
+  regionAOnly: 'A seulement',
+  regionIntersection: 'A et B',
+  regionBOnly: 'B seulement',
+  regionOutside: 'Hors de A et B',
+  operationLabel: 'Opération à afficher',
+  operationUnion: 'A ∪ B (union)',
+  operationIntersection: 'A ∩ B (intersection)',
+  operationComplementA: 'Aᶜ (complémentaire de A)',
+  operationDifferenceAB: 'A ∖ B (différence)',
+  membershipLabel: "Condition d'appartenance",
+  resultLabel: 'Éléments sélectionnés',
+  emptyResult: '∅ (aucun élément)',
+  deMorganToggle: 'Vérifier De Morgan : (A ∪ B)ᶜ = Aᶜ ∩ Bᶜ',
+  deMorganLeftLabel: '(A ∪ B)ᶜ',
+  deMorganRightLabel: 'Aᶜ ∩ Bᶜ',
+  deMorganMatch: "Mêmes éléments des deux côtés : l'identité tient.",
+  deMorganMismatch: 'Les deux côtés diffèrent.',
+  setALabel: 'A',
+  setBLabel: 'B',
+  reset: 'Réinitialiser',
+};
+
+Au [chapitre 2](/interactive-courses/logic-sets-proofs/02-predicats-quantificateurs), on a passé tout le chapitre à parler du « domaine de discours », cet ensemble sur lequel varient les variables, en se contentant d'une idée intuitive : une collection d'objets. Le chapitre s'est même fermé sur une promesse : « $A \subseteq B$ » se dira « $\forall x,\ x \in A \Rightarrow x \in B$ ». Il est temps de la tenir. Mais qu'est-ce qu'un ensemble, au juste ? Comment le décrit-on, comment teste-t-on qu'un objet lui appartient, comment en fabrique-t-on de nouveaux à partir d'anciens ?
+
+La réponse est plus belle qu'un simple catalogue de symboles. Tu vas découvrir que la théorie des ensembles n'est pas un nouveau territoire à apprendre par coeur : c'est la logique du chapitre 1, mais coulée dans des objets. Le « ou » devient l'union, le « et » devient l'intersection, le « non » devient le complémentaire, et les lois de De Morgan que tu connais déjà vont réapparaître, identiques, sur des ensembles.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : le chapitre 1 (les connecteurs « non », « et », « ou », l'implication, les lois de De Morgan) et le chapitre 2 (prédicats, quantificateurs « pour tout » et « il existe »). On s'appuie directement dessus, surtout à la fin.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les techniques de démonstration (chapitre 4) ni la construction axiomatique des ensembles. On reste au niveau intuitif et constructif, suffisant pour tout le reste du cours.
+
+**Niveau de rigueur** : définitions formelles, conditions d'appartenance écrites noir sur blanc, et une manipulation interactive pour voir De Morgan opérer sur des objets.
+</Callout>
+
+## Décrire un ensemble
+
+Un <Term slug="ensemble">ensemble</Term> est une collection d'objets, ses éléments, considérée comme un tout.
+
+Le geste de base, celui dont tout le reste découle, est de demander si un objet est dedans ou dehors. Cette relation s'appelle l'<Term slug="appartenance">appartenance</Term> et se note $\in$ :
+
+$$
+x \in A
+$$
+
+se lit « $x$ appartient à $A$ », c'est-à-dire « $x$ est l'un des éléments de $A$ ». Sa négation se note $x \notin A$. Remarque que « $x \in A$ » est exactement un prédicat au sens du chapitre 2 : selon ce qu'on met à la place de $x$, c'est vrai ou faux. Toute la théorie des ensembles est bâtie sur ce seul prédicat.
+
+Il y a deux façons de décrire quels objets sont dans un ensemble :
+
+- **En extension** : on liste les éléments entre accolades. $A = \{1, 2, 3\}$. Pratique pour les petits ensembles.
+- **En compréhension** : on donne la propriété que les éléments vérifient. $A = \{x \mid x > 0 \text{ et } x < 4 \text{ et } x \text{ entier}\}$. Ici la barre $\mid$ se lit « tel que ».
+
+La description en compréhension dévoile le lien profond avec le chapitre 2 : un ensemble en compréhension, $\{x \mid P(x)\}$, n'est rien d'autre qu'un prédicat $P$ transformé en objet. L'ensemble, c'est la collection de tous les témoins qui rendent $P$ vrai.
+
+<Callout kind="tip" title="L'ensemble vide">
+Un cas limite mérite son nom : l'ensemble qui n'a aucun élément, noté $\varnothing$ ou $\{\}$. Il n'est pas « rien » : c'est un ensemble parfaitement légitime, juste vide. On peut l'écrire en compréhension avec une propriété qu'aucun objet ne vérifie, par exemple $\{x \mid x \neq x\}$. Il jouera un rôle clé plus bas.
+</Callout>
+
+Un dernier principe, discret mais fondateur : **un ensemble est entièrement déterminé par ses éléments**. Deux ensembles qui ont exactement les mêmes éléments sont le même ensemble, peu importe comment on les a décrits. Ainsi $\{1, 2, 3\}$, $\{3, 2, 1\}$ et $\{1, 1, 2, 3\}$ sont un seul et même ensemble : l'ordre et les répétitions ne comptent pas. Ce principe s'appelle l'extensionnalité, et c'est lui qui rend la suite possible.
+
+## Comparer : l'inclusion et l'égalité
+
+Maintenant qu'on sait tester l'appartenance, on peut comparer deux ensembles. La promesse du chapitre 2 arrive ici. L'<Term slug="inclusion">inclusion</Term>, notée $\subseteq$, dit que tout élément du premier ensemble est aussi dans le second :
+
+$$
+A \subseteq B \quad\text{signifie}\quad \forall x,\ (x \in A \Rightarrow x \in B)
+$$
+
+Cette équation se lit : « $A$ est inclus dans $B$ » exactement quand « pour tout $x$, si $x$ appartient à $A$, alors $x$ appartient à $B$ ». L'inclusion n'est donc pas un symbole de plus à mémoriser : c'est une implication universelle, le « pour tout » du chapitre 2 appliqué au prédicat d'appartenance. On dit que $A$ est un sous-ensemble de $B$.
+
+<Callout kind="note" title="Pourquoi l'ensemble vide est inclus dans tout">
+Combien vaut $\varnothing \subseteq B$ ? Il faut vérifier « pour tout $x$, si $x \in \varnothing$ alors $x \in B$ ». Mais $x \in \varnothing$ est toujours faux. Or au chapitre 1, une implication à prémisse fausse est toujours vraie. Donc l'implication tient pour tout $x$, et $\varnothing \subseteq B$ est vrai, quel que soit $B$. Le « faux implique vrai » qui surprenait tout le monde au chapitre 1 a ici une conséquence concrète : le vide est inclus partout.
+</Callout>
+
+Comment dit-on alors que deux ensembles sont **égaux** ? Par l'extensionnalité, $A = B$ veut dire qu'ils ont les mêmes éléments, c'est-à-dire que chacun est inclus dans l'autre :
+
+$$
+A = B \quad\text{signifie}\quad A \subseteq B \ \text{ et } \ B \subseteq A
+$$
+
+Ce découpage s'appelle la double inclusion. Il a l'air anodin, mais c'est l'outil de démonstration le plus utilisé dès qu'on veut prouver que deux ensembles sont égaux : on prouve une inclusion, puis l'autre. Garde-le en tête, le chapitre 4 en fera son pain quotidien.
+
+On peut aussi rassembler tous les sous-ensembles d'un ensemble $E$ dans un nouvel ensemble : l'<Term slug="ensemble-des-parties">ensemble des parties</Term>, noté $\mathcal{P}(E)$. Ses éléments sont eux-mêmes des ensembles. Par exemple :
+
+$$
+\mathcal{P}(\{a, b\}) = \{\, \varnothing,\ \{a\},\ \{b\},\ \{a, b\} \,\}
+$$
+
+On y retrouve toujours $\varnothing$ et $E$ lui-même. Et un comptage simple : si $E$ a $n$ éléments, $\mathcal{P}(E)$ en a $2^n$, car pour fabriquer un sous-ensemble, chaque élément de $E$ est soit pris, soit laissé, deux choix indépendants répétés $n$ fois.
+
+## Combiner : les opérations sont les connecteurs
+
+Voici le coeur du chapitre. À partir de deux ensembles, on en fabrique de nouveaux avec trois opérations. Chacune se définit par sa condition d'appartenance, et cette condition est un connecteur du chapitre 1.
+
+L'<Term slug="union">union</Term>, notée $\cup$, rassemble :
+
+$$
+x \in A \cup B \iff (x \in A) \ \lor \ (x \in B)
+$$
+
+Un objet est dans $A \cup B$ s'il est dans $A$ **ou** dans $B$ (ou dans les deux). L'union, c'est le « ou » logique devenu objet.
+
+L'<Term slug="intersection">intersection</Term>, notée $\cap$, ne garde que le commun :
+
+$$
+x \in A \cap B \iff (x \in A) \ \land \ (x \in B)
+$$
+
+Un objet est dans $A \cap B$ s'il est dans $A$ **et** dans $B$. L'intersection, c'est le « et ». Quand $A \cap B = \varnothing$, on dit que $A$ et $B$ sont disjoints.
+
+Le <Term slug="complementaire">complémentaire</Term>, noté $A^c$, retourne ce qui n'est pas dans $A$, par rapport à un univers de référence $U$ :
+
+$$
+x \in A^c \iff \lnot (x \in A)
+$$
+
+C'est le « non ». Attention : le complémentaire n'a de sens que si l'univers est fixé. Sans dire « non par rapport à quoi », $A^c$ ne veut rien dire. C'est le même rôle que le domaine de discours du chapitre 2.
+
+Le tableau se complète tout seul : à chaque connecteur logique correspond une opération ensembliste, parce que les deux sont la même idée vue de deux côtés.
+
+<Formula caption="Chaque opération est un connecteur appliqué à l'appartenance">x ∈ A ∪ B ⟺ (x ∈ A) ∨ (x ∈ B) | x ∈ A ∩ B ⟺ (x ∈ A) ∧ (x ∈ B) | x ∈ Aᶜ ⟺ ¬(x ∈ A)</Formula>
+
+Et puisque les opérations sont des connecteurs, les lois qui régissent les connecteurs deviennent des lois sur les ensembles. Les lois de De Morgan du chapitre 1, $\lnot(P \lor Q) \equiv \lnot P \land \lnot Q$, se transposent mot pour mot :
+
+$$
+(A \cup B)^c = A^c \cap B^c \qquad (A \cap B)^c = A^c \cup B^c
+$$
+
+Lis la première à voix haute : « le complémentaire d'une union est l'intersection des complémentaires ». Pour ne pas être dans $A$ ou $B$, il faut n'être ni dans $A$, ni dans $B$. C'est exactement le « non (P ou Q) revient à (non P) et (non Q) » du chapitre 1. Tu ne démontres pas une nouvelle vérité : tu reconnais une ancienne sous un nouveau costume.
+
+## Manipuler De Morgan sur des objets
+
+Le composant ci-dessous rend tout cela tangible. L'univers est $U = \{1, 2, 3, 4, 5, 6\}$, avec au départ $A = \{1, 2, 3\}$ et $B = \{3, 4, 5\}$. Tu places chaque élément dans l'une des quatre régions en cliquant dessus, et tu choisis l'opération à afficher : le composant te montre la condition d'appartenance correspondante et surligne les éléments retenus.
+
+**Ta mission** : active le mode De Morgan. À gauche, le composant calcule $(A \cup B)^c$ ; à droite, $A^c \cap B^c$. Les deux listes sont identiques, ici $\{6\}$, le seul élément hors des deux cercles. Maintenant déplace des éléments d'une région à l'autre, autant que tu veux : les deux côtés restent toujours égaux. Tu n'as rien démontré encore, mais tu as vu la loi résister à chaque essai.
+
+<InteractivePrint
+  label="Figure : laboratoire des opérations ensemblistes sur un univers à éditer"
+  description="Univers U = {1,2,3,4,5,6} réparti en quatre régions (A seulement, A et B, B seulement, hors des deux), initialisé avec A = {1,2,3} et B = {3,4,5}. Un sélecteur permet d'afficher l'union, l'intersection, le complémentaire de A ou la différence A privé de B ; le composant montre la condition d'appartenance et surligne les éléments sélectionnés. Le mode De Morgan affiche côte à côte (A union B) complément, qui vaut {6}, et A complément inter B complément, qui vaut aussi {6}, et confirme que les deux coïncident quelles que soient les positions choisies."
+>
+  <SetOperationsLab
+    client:visible
+    universe={['1', '2', '3', '4', '5', '6']}
+    initialA={['1', '2', '3']}
+    initialB={['3', '4', '5']}
+    labels={setOperationsLabLabels}
+  />
+</InteractivePrint>
+
+Trois questions à te poser en jouant :
+
+- Mets tous les éléments dans la région « hors de A et B ». Que vaut $A \cup B$ ? Et $(A \cup B)^c$ ? L'égalité De Morgan tient-elle encore sur des ensembles vides ?
+- Choisis l'opération « différence $A \setminus B$ ». Devine sa condition d'appartenance avant de la lire : à quel connecteur correspond « dans $A$ mais pas dans $B$ » ?
+- Place un seul élément dans l'intersection. Combien de régions le complémentaire de $A$ recouvre-t-il ?
+
+## Fabriquer du neuf : le produit cartésien
+
+Les trois opérations précédentes restent à l'intérieur de l'univers de départ. Une dernière construction sort vraiment du lot, au sens propre : le <Term slug="produit-cartesien">produit cartésien</Term>, noté $\times$. Il fabrique des couples :
+
+$$
+A \times B = \{\, (a, b) \mid a \in A \ \text{ et } \ b \in B \,\}
+$$
+
+$A \times B$ est l'ensemble de tous les couples ordonnés dont la première coordonnée vient de $A$ et la seconde de $B$. L'ordre compte : $(a, b)$ n'est pas $(b, a)$. Et le comptage est limpide : si $A$ a $m$ éléments et $B$ en a $n$, alors $A \times B$ en a $m \times n$, d'où le nom. Avec $A = \{1, 2\}$ et $B = \{x, y\}$ :
+
+$$
+A \times B = \{\, (1, x),\ (1, y),\ (2, x),\ (2, y) \,\}
+$$
+
+On n'ira pas plus loin ici, mais retiens où mène cette brique : un couple, c'est le germe d'une relation, et une relation bien choisie, c'est une fonction. Tout le langage des fonctions, que les cours suivants déploieront, se construit sur ce simple $\times$.
+
+## En une phrase
+
+Un ensemble est déterminé par ses éléments via l'appartenance ; l'inclusion est une implication universelle, l'union un « ou », l'intersection un « et », le complémentaire un « non », si bien que les lois de De Morgan du chapitre 1 régissent encore les ensembles, mot pour mot.
+
+## Vers le chapitre 4
+
+Tu as vu, sur le composant et sur des exemples, que $(A \cup B)^c = A^c \cap B^c$. Tu l'as testé, encore et encore, sans jamais le prendre en défaut. Mais teste n'est pas démontre : vérifier une identité sur un univers de six éléments ne prouve pas qu'elle vaut pour tous les ensembles, exactement comme essayer cent nombres ne prouve pas une propriété universelle (souviens-toi du contre-exemple de Fermat au chapitre 2). Comment passe-t-on de « ça marche à chaque essai » à « c'est vrai, toujours, sans exception » ?
+
+La clé est déjà dans ce chapitre : pour prouver $A = B$, on prouve $A \subseteq B$ et $B \subseteq A$ ; et chaque inclusion est un « $\forall x,\ x \in A \Rightarrow x \in B$ », donc une implication universelle à démontrer. Le chapitre 4 donne précisément les techniques pour démontrer de tels énoncés, sans exemple ni dessin : preuve directe, contraposée, raisonnement par l'absurde. La double inclusion de ce chapitre est l'obligation de preuve que le suivant t'apprendra à honorer.
+
+## Exercices
+
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, regarde-les seulement après avoir essayé.
+
+### Exercice 1 : prouver une inclusion par l'appartenance
+
+Montrer que $A \subseteq A \cup B$ pour tous ensembles $A$ et $B$. Indication : traduire l'inclusion en énoncé quantifié, puis raisonner sur un élément quelconque.
+
+### Exercice 2 : vérifier De Morgan sur un univers fini
+
+L'univers est $U = \{1, 2, 3, 4, 5, 6\}$, avec $A = \{1, 2, 3\}$ et $B = \{3, 4, 5\}$. Calculer $(A \cup B)^c$ d'un côté, puis $A^c \cap B^c$ de l'autre, et comparer.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : prouver une inclusion par l'appartenance">
+On rappelle ce qu'il faut établir et on le traduit en logique.
+
+**Étape 1.** Par définition de l'inclusion, $A \subseteq A \cup B$ signifie :
+
+$$
+\forall x,\ \big( x \in A \Rightarrow x \in A \cup B \big)
+$$
+
+**Étape 2.** Pour prouver un « pour tout », on prend un $x$ quelconque et on suppose la prémisse. Soit donc $x$ tel que $x \in A$.
+
+**Étape 3.** Par définition de l'union, l'appartenance à $A \cup B$ est une disjonction :
+
+$$
+x \in A \cup B \iff (x \in A) \lor (x \in B)
+$$
+
+**Étape 4.** Or on a supposé $x \in A$, donc la disjonction $(x \in A) \lor (x \in B)$ est vraie. Donc $x \in A \cup B$.
+
+**Résultat.** Pour tout $x$, $x \in A$ entraîne $x \in A \cup B$ : l'inclusion $A \subseteq A \cup B$ est démontrée. Remarque qu'on n'a utilisé aucun dessin, seulement la traduction de l'union en « ou ».
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : vérifier De Morgan sur un univers fini">
+On travaille dans $U = \{1, 2, 3, 4, 5, 6\}$, avec $A = \{1, 2, 3\}$ et $B = \{3, 4, 5\}$.
+
+**Étape 1.** On calcule l'union, puis son complémentaire dans $U$.
+
+$$
+A \cup B = \{1, 2, 3, 4, 5\}
+$$
+
+$$
+(A \cup B)^c = \{6\}
+$$
+
+**Étape 2.** On calcule séparément les deux complémentaires dans $U$.
+
+$$
+A^c = \{4, 5, 6\} \qquad B^c = \{1, 2, 6\}
+$$
+
+**Étape 3.** On prend leur intersection, c'est-à-dire les éléments présents dans les deux.
+
+$$
+A^c \cap B^c = \{6\}
+$$
+
+**Résultat.** Les deux côtés valent $\{6\}$ : l'identité $(A \cup B)^c = A^c \cap B^c$ est vérifiée sur cet univers. Attention, ceci la vérifie sur cet exemple, cela ne la démontre pas en général : c'est le travail du chapitre 4.
+</Callout>
+
+<InteractivePrint
+  label="Quiz : récapitulatif du chapitre 3 (interactif)"
+  description="Quiz à choix multiples qui vérifie les acquis du chapitre : ce qui détermine un ensemble, la traduction de l'inclusion en énoncé quantifié, la condition d'appartenance de l'intersection, la loi de De Morgan ensembliste, et le cardinal de l'ensemble des parties. Cinq questions avec explication de la bonne réponse à la validation."
+>
+  <Quiz
+    client:visible
+    submitLabel="Vérifier"
+    resetLabel="Recommencer"
+    scoreLabel="Score"
+    questions={[
+      {
+        q: "Qu'est-ce qui détermine entièrement un ensemble ?",
+        options: [
+          "L'ordre dans lequel on écrit ses éléments",
+          'Ses éléments, et eux seuls',
+          'Le nombre de fois où chaque élément est répété',
+          'La façon dont on le décrit',
+        ],
+        answer: 1,
+        explain:
+          "C'est le principe d'extensionnalité : deux ensembles ayant les mêmes éléments sont égaux. Ni l'ordre, ni les répétitions, ni la description ne comptent. {1,2,3} et {3,2,1,1} sont le même ensemble.",
+      },
+      {
+        q: "L'inclusion « A ⊆ B » se traduit par quel énoncé du chapitre 2 ?",
+        options: [
+          '∃x, x ∈ A et x ∈ B',
+          '∀x, x ∈ A ⇒ x ∈ B',
+          '∀x, x ∈ A et x ∈ B',
+          '∃x, x ∈ A ⇒ x ∈ B',
+        ],
+        answer: 1,
+        explain:
+          "L'inclusion est une implication universelle : tout élément de A est élément de B. C'est la promesse tenue du chapitre 2, et c'est ce qui rendra les démonstrations d'égalité d'ensembles possibles au chapitre 4.",
+      },
+      {
+        q: '« x ∈ A ∩ B » est équivalent à...',
+        options: [
+          'x ∈ A ou x ∈ B',
+          'x ∈ A et x ∈ B',
+          'non (x ∈ A)',
+          'x ∈ A et x ∉ B',
+        ],
+        answer: 1,
+        explain:
+          "L'intersection est le « et » logique : un élément est dans A ∩ B quand il est à la fois dans A et dans B. L'union serait le « ou », le complémentaire le « non ».",
+      },
+      {
+        q: 'D\'après les lois de De Morgan ensemblistes, (A ∪ B)ᶜ est égal à...',
+        options: ['Aᶜ ∪ Bᶜ', 'Aᶜ ∩ Bᶜ', 'A ∩ B', '(A ∩ B)ᶜ'],
+        answer: 1,
+        explain:
+          "Le complémentaire d'une union est l'intersection des complémentaires : ne pas être dans A ou B, c'est n'être ni dans A, ni dans B. C'est exactement le ¬(P ∨ Q) ≡ ¬P ∧ ¬Q du chapitre 1.",
+      },
+      {
+        q: 'Si E a 3 éléments, combien P(E) (l\'ensemble des parties) en a-t-il ?',
+        options: ['3', '6', '8', '9'],
+        answer: 2,
+        explain:
+          "P(E) a 2³ = 8 éléments. Pour fabriquer un sous-ensemble, chacun des 3 éléments est soit pris, soit laissé : deux choix indépendants répétés trois fois, donc 2 × 2 × 2 = 8 sous-ensembles, dont ∅ et E lui-même.",
+      },
+    ]}
+  />
+</InteractivePrint>
+
+## Sources
+
+- Halmos, P. (1960). _Naive Set Theory_. Van Nostrand. La référence classique, courte et lumineuse, sur la théorie intuitive des ensembles.
+- Cantor, G. (1895). « Beiträge zur Begründung der transfiniten Mengenlehre. » _Mathematische Annalen_ 46. L'acte fondateur de la théorie des ensembles.
+
+### Pour aller plus loin
+
+- Velleman, D. J. (2019). _How to Prove It_. Cambridge University Press. Chapitre 1 sur les ensembles et leurs opérations, dans l'esprit exact de ce cours.
+- Enderton, H. (1977). _Elements of Set Theory_. Academic Press. Pour la version axiomatique, une fois le chapitre 4 digéré.

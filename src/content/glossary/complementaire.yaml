@@ -1,0 +1,21 @@
+slug: complementaire
+fr:
+  term: Complémentaire
+  definition: >
+    Opération qui retourne ce qui n'est pas dans un ensemble, relativement à un univers
+    de référence. Le complémentaire de A, noté Aᶜ (ou A barre), est l'ensemble des
+    objets de l'univers qui n'appartiennent pas à A. Sa condition d'appartenance est une
+    négation : x ∈ Aᶜ équivaut à « non (x ∈ A) ». Le complémentaire dépend de l'univers
+    choisi : sans univers fixé, il n'a pas de sens.
+en:
+  term: Complement
+  definition: >
+    The operation that returns what is not in a set, relative to a reference universe.
+    The complement of A, written Aᶜ (or A bar), is the set of objects of the universe
+    that do not belong to A. Its membership condition is a negation: x ∈ Aᶜ is
+    equivalent to "not (x ∈ A)". The complement depends on the chosen universe: without
+    a fixed universe, it has no meaning.
+seeAlso:
+  - union
+  - intersection
+  - domaine-de-discours
