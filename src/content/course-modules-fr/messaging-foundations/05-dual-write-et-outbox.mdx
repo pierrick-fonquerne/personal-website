@@ -2,7 +2,7 @@
 course: messaging-foundations
 order: 5
 title: 'Dual-write et outbox transactionnel'
-subtitle: "On a blinde le consommateur au chapitre precedent. Mais tout reposait sur une promesse du producteur : publier le message quand l'etat metier change. Or publier, c'est toucher deux mondes a la fois, sa base et le broker, et rien ne les rend atomiques ensemble. Ce chapitre repare cette derniere faille."
+subtitle: "On a blindé le consommateur au chapitre précédent. Mais tout reposait sur une promesse du producteur : publier le message quand l'état métier change. Or publier, c'est toucher deux mondes à la fois, sa base et le broker, et rien ne les rend atomiques ensemble. Ce chapitre répare cette dernière faille."
 estimatedMinutes: 25
 published: true
 ---
@@ -13,242 +13,242 @@ import Term from '../../../components/learning/Term.astro';
 import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 import OutboxSimulator from '../../../components/learning/OutboxSimulator.tsx';
 
-Au chapitre quatre, on a rendu le consommateur incassable : il deduplique avec sa cle, il respecte l'ordre par partition, et l'atomicite de son inbox rend son idempotence vraie. Mais toute cette mecanique repose sur une supposition qu'on n'a jamais verifiee : que le producteur, lui, publie bien son message au bon moment. Or publier n'est pas un geste simple. Le service doit faire deux choses : enregistrer l'etat metier dans sa base (la commande est creee) et annoncer ce fait au broker (le message part). Deux systemes distincts, deux ecritures separees. Que se passe-t-il si la base dit oui et que le broker n'entend jamais le message ? Aucune redelivraison ne le sauvera : il n'a jamais existe. Ce chapitre construit le dernier verrou, celui qui scelle l'ecriture et la publication ensemble.
+Au chapitre quatre, on a rendu le consommateur incassable : il déduplique avec sa clé, il respecte l'ordre par partition, et l'atomicité de son inbox rend son idempotence vraie. Mais toute cette mécanique repose sur une supposition qu'on n'a jamais vérifiée : que le producteur, lui, publie bien son message au bon moment. Or publier n'est pas un geste simple. Le service doit faire deux choses : enregistrer l'état métier dans sa base (la commande est créée) et annoncer ce fait au broker (le message part). Deux systèmes distincts, deux écritures séparées. Que se passe-t-il si la base dit oui et que le broker n'entend jamais le message ? Aucune redélivraison ne le sauvera : il n'a jamais existé. Ce chapitre construit le dernier verrou, celui qui scelle l'écriture et la publication ensemble.
 
 <Callout kind="info" title="Avant de commencer">
-Ce chapitre est l'autre moitie du chapitre quatre : la, on protegeait le consommateur ; ici, le producteur. Il faut avoir retenu la livraison au moins une fois et le consommateur idempotent du chapitre quatre, car l'outbox s'appuie sur eux. Tu n'as pas besoin d'etre expert en bases de donnees : on utilisera le mot transaction au sens simple de « tout reussit ou rien ne reussit », et le SQL montre sera lu en francais.
+Ce chapitre est l'autre moitié du chapitre quatre : là, on protégeait le consommateur ; ici, le producteur. Il faut avoir retenu la livraison au moins une fois et le consommateur idempotent du chapitre quatre, car l'outbox s'appuie sur eux. Tu n'as pas besoin d'être expert en bases de données : on utilisera le mot transaction au sens simple de « tout réussit ou rien ne réussit », et le SQL montré sera lu en français.
 </Callout>
 
-## Le piege de la double ecriture
+## Le piège de la double écriture
 
-Reprends notre commande. Quand un client la passe, le service de commande doit faire deux choses : ecrire la commande dans sa base, et publier « commande creee » pour que le service de paiement et le service d'expedition reagissent. C'est une <Term slug="dual-write">double ecriture</Term> : deux systemes a modifier pour une seule action metier. Et il n'existe aucune transaction qui couvre a la fois ta base et le broker. Ce sont deux mondes separes.
+Reprends notre commande. Quand un client la passe, le service de commande doit faire deux choses : écrire la commande dans sa base, et publier « commande créée » pour que le service de paiement et le service d'expédition réagissent. C'est une <Term slug="dual-write">double écriture</Term> : deux systèmes à modifier pour une seule action métier. Et il n'existe aucune transaction qui couvre à la fois ta base et le broker. Ce sont deux mondes séparés.
 
-Regarde les deux facons de s'y prendre, et leur faille commune. Premiere facon, ecrire la base d'abord, publier ensuite. Si la machine tombe juste apres le commit de la base et avant la publication, la commande existe en base mais le message n'est jamais parti. Le paiement ne sera jamais declenche : le message est **perdu**, et personne ne le sait.
+Regarde les deux façons de s'y prendre, et leur faille commune. Première façon, écrire la base d'abord, publier ensuite. Si la machine tombe juste après le commit de la base et avant la publication, la commande existe en base mais le message n'est jamais parti. Le paiement ne sera jamais déclenché : le message est **perdu**, et personne ne le sait.
 
-Seconde facon, publier d'abord, ecrire la base ensuite. Si la machine tombe apres la publication et avant le commit, le broker a recu « commande creee » pour une commande qui, en base, n'existe pas. Le service de paiement va debiter un client dont la commande a disparu : c'est un message **fantome**.
+Seconde façon, publier d'abord, écrire la base ensuite. Si la machine tombe après la publication et avant le commit, le broker a reçu « commande créée » pour une commande qui, en base, n'existe pas. Le service de paiement va débiter un client dont la commande a disparu : c'est un message **fantôme**.
 
-Perdu ou fantome, peu importe l'ordre : le defaut est le meme. Entre les deux ecritures se glisse un instant ou une panne peut les desynchroniser, parce qu'aucune atomicite ne les lie. Retenir un message pour reessayer plus tard ne suffit pas non plus : ce buffer vit en memoire, et la memoire part avec la panne. Il faut une autre idee.
+Perdu ou fantôme, peu importe l'ordre : le défaut est le même. Entre les deux écritures se glisse un instant où une panne peut les désynchroniser, parce qu'aucune atomicité ne les lie. Retenir un message pour réessayer plus tard ne suffit pas non plus : ce buffer vit en mémoire, et la mémoire part avec la panne. Il faut une autre idée.
 
-## L'outbox : n'ecrire qu'un seul monde
+## L'outbox : n'écrire qu'un seul monde
 
-L'idee est d'un beau pragmatisme : puisqu'on ne peut pas rendre atomiques deux systemes, on n'en ecrit plus qu'un seul. On renonce a publier directement au broker. A la place, le service ecrit, dans sa **propre base**, l'etat metier ET une ligne qui decrit le message a envoyer, le tout dans la **meme transaction**. Cette table de messages en attente s'appelle l'<Term slug="outbox-transactionnel">outbox transactionnel</Term>.
+L'idée est d'un beau pragmatisme : puisqu'on ne peut pas rendre atomiques deux systèmes, on n'en écrit plus qu'un seul. On renonce à publier directement au broker. À la place, le service écrit, dans sa **propre base**, l'état métier ET une ligne qui décrit le message à envoyer, le tout dans la **même transaction**. Cette table de messages en attente s'appelle l'<Term slug="outbox-transactionnel">outbox transactionnel</Term>.
 
-Le gain est immediat. Comme la commande et la ligne outbox sont ecrites dans une seule transaction de la meme base, une panne ne peut plus les separer : soit les deux sont la, soit aucune. Le scenario « commande en base mais message perdu » devient impossible, parce que le message n'est plus une publication fragile vers un autre monde, c'est une simple ligne dans la transaction qui cree la commande.
+Le gain est immédiat. Comme la commande et la ligne outbox sont écrites dans une seule transaction de la même base, une panne ne peut plus les séparer : soit les deux sont là, soit aucune. Le scénario « commande en base mais message perdu » devient impossible, parce que le message n'est plus une publication fragile vers un autre monde, c'est une simple ligne dans la transaction qui crée la commande.
 
 <MermaidDiagram
   client:visible
   definition={`flowchart LR
     S[Service commande] -->|une transaction| DB
-    subgraph DB[Base de donnees]
+    subgraph DB[Base de données]
       O["commande"]
       X["ligne outbox<br/>(message en attente)"]
     end
     DB --> R[Relais]
-    R -->|publie puis marque envoyee| B[Broker]
+    R -->|publie puis marque envoyée| B[Broker]
     B --> C[Consommateur idempotent]
     style X fill:#34d399,color:#062
     style O fill:#34d399,color:#062`}
-  caption="L'etat metier et le message naissent dans la meme transaction. Un relais lit ensuite la table outbox et publie vers le broker."
+  caption="L'état métier et le message naissent dans la même transaction. Un relais lit ensuite la table outbox et publie vers le broker."
 />
 
-Mais une ligne dans une table ne s'envoie pas toute seule au broker. Il manque une piece : qui lit cette table et publie pour de vrai ?
+Mais une ligne dans une table ne s'envoie pas toute seule au broker. Il manque une pièce : qui lit cette table et publie pour de vrai ?
 
-## Le relais : du « publier » fragile au « republier jusqu'au succes »
+## Le relais : du « publier » fragile au « republier jusqu'au succès »
 
-Cette piece, c'est le <Term slug="relais-outbox">relais d'outbox</Term>. C'est un processus separe du service metier, dont la seule tache est une boucle : lire les lignes outbox encore en attente, les publier au broker, puis les marquer comme envoyees. Rien de plus.
+Cette pièce, c'est le <Term slug="relais-outbox">relais d'outbox</Term>. C'est un processus séparé du service métier, dont la seule tâche est une boucle : lire les lignes outbox encore en attente, les publier au broker, puis les marquer comme envoyées. Rien de plus.
 
-Ce qui est subtil, c'est ce que le relais fait du « publier » qui nous posait probleme. Il peut, lui aussi, publier un message puis tomber juste avant de le marquer envoye. Mais cette fois, ce n'est pas grave : la ligne est toujours marquee « en attente » dans la base, donc au redemarrage le relais la retrouve et la republie. Le prix a payer, c'est un possible doublon. On reconnait la livraison au moins une fois du chapitre trois, et c'est exactement la qu'on recolte ce qu'on a seme au chapitre quatre : ce doublon est absorbe en aval par le consommateur idempotent. L'outbox cote producteur et l'inbox cote consommateur sont les deux machoires d'une meme pince.
+Ce qui est subtil, c'est ce que le relais fait du « publier » qui nous posait problème. Il peut, lui aussi, publier un message puis tomber juste avant de le marquer envoyé. Mais cette fois, ce n'est pas grave : la ligne est toujours marquée « en attente » dans la base, donc au redémarrage le relais la retrouve et la republie. Le prix à payer, c'est un possible doublon. On reconnaît la livraison au moins une fois du chapitre trois, et c'est exactement là qu'on récolte ce qu'on a semé au chapitre quatre : ce doublon est absorbé en aval par le consommateur idempotent. L'outbox côté producteur et l'inbox côté consommateur sont les deux mâchoires d'une même pince.
 
-## Observe les deux methodes
+## Observe les deux méthodes
 
-Le composant ci-dessous fait passer la meme commande par les deux methodes : la double ecriture naive et l'outbox transactionnel. Tu choisis le moment de la panne, et tu compares ce que voient la base et le broker a la fin.
+Le composant ci-dessous fait passer la même commande par les deux méthodes : la double écriture naïve et l'outbox transactionnel. Tu choisis le moment de la panne, et tu compares ce que voient la base et le broker à la fin.
 
-Commence sans panne : les deux methodes marchent, base et broker sont d'accord. Mais place ensuite la panne entre les deux ecritures. En dual-write, la base garde la commande et le broker reste vide : incoherent, message perdu. En outbox, regarde la difference : les deux ecritures etaient dans une seule transaction (encadree en pointilles), la panne ne les a pas separees, le relais redemarre, retrouve la ligne en attente et publie. Coherent, livre apres reprise. C'est toute la lecon, en un interrupteur.
+Commence sans panne : les deux méthodes marchent, base et broker sont d'accord. Mais place ensuite la panne entre les deux écritures. En dual-write, la base garde la commande et le broker reste vide : incohérent, message perdu. En outbox, regarde la différence : les deux écritures étaient dans une seule transaction (encadrée en pointillés), la panne ne les a pas séparées, le relais redémarre, retrouve la ligne en attente et publie. Cohérent, livré après reprise. C'est toute la leçon, en un interrupteur.
 
 <OutboxSimulator
   client:load
   copy={{
     heading: 'Dual-write contre outbox',
-    instructions: "Une commande doit etre ecrite en base ET annoncee au broker. Choisis la methode et le moment de la panne, puis regarde si la base et le broker finissent d'accord.",
-    modeLabel: 'Methode',
-    modeDualWriteLabel: 'Dual-write (naif)',
+    instructions: "Une commande doit être écrite en base ET annoncée au broker. Choisis la méthode et le moment de la panne, puis regarde si la base et le broker finissent d'accord.",
+    modeLabel: 'Méthode',
+    modeDualWriteLabel: 'Dual-write (naïf)',
     modeOutboxLabel: 'Outbox transactionnel',
     crashLabel: 'Moment de la panne',
     crashNoneLabel: 'Aucune panne',
-    crashMidLabel: 'Entre les deux ecritures',
+    crashMidLabel: 'Entre les deux écritures',
     transactionLabel: 'une seule transaction',
-    dbLabel: 'Base de donnees',
+    dbLabel: 'Base de données',
     brokerLabel: 'Broker',
-    dbHasOrderLabel: 'Commande ecrite',
-    brokerHasMessageLabel: 'Message recu',
+    dbHasOrderLabel: 'Commande écrite',
+    brokerHasMessageLabel: 'Message reçu',
     brokerNoMessageLabel: 'Aucun message',
-    consistencyLabel: 'Coherence',
+    consistencyLabel: 'Cohérence',
     consistentStateLabel: "Base et broker d'accord",
-    inconsistentStateLabel: 'Incoherent',
-    stepCommitDbLabel: 'Ecrire la commande',
+    inconsistentStateLabel: 'Incohérent',
+    stepCommitDbLabel: 'Écrire la commande',
     stepInsertOutboxLabel: 'Inscrire la ligne outbox',
     stepPublishLabel: 'Publier au broker',
-    stepClaimLabel: 'Reclamer la ligne',
-    stepMarkSentLabel: 'Marquer envoyee',
+    stepClaimLabel: 'Réclamer la ligne',
+    stepMarkSentLabel: 'Marquer envoyée',
     stepCrashLabel: 'Panne',
-    stepRecoverRelayLabel: 'Le relais redemarre',
-    verdictByLuckLabel: 'Coherent, par chance',
-    verdictLostLabel: 'Incoherent : message perdu',
-    verdictConsistentLabel: 'Coherent',
-    verdictEventualLabel: 'Coherent apres reprise',
+    stepRecoverRelayLabel: 'Le relais redémarre',
+    verdictByLuckLabel: 'Cohérent, par chance',
+    verdictLostLabel: 'Incohérent : message perdu',
+    verdictConsistentLabel: 'Cohérent',
+    verdictEventualLabel: 'Cohérent après reprise',
     resetLabel: 'Recommencer',
   }}
 />
 
-Trois questions a te poser en jouant :
+Trois questions à te poser en jouant :
 
-- En dual-write avec panne, la base garde la commande mais le broker reste vide. Pourquoi le verdict parle-t-il de message perdu plutot que de message en retard ?
-- En outbox, qu'est-ce qui rend la panne entre les deux ecritures inoffensive, alors qu'elle etait fatale en dual-write ?
-- Le mode outbox affiche « coherent apres reprise » et non « coherent » tout court. Que signifie ce « apres reprise », et qui paie le prix de ce delai ?
+- En dual-write avec panne, la base garde la commande mais le broker reste vide. Pourquoi le verdict parle-t-il de message perdu plutôt que de message en retard ?
+- En outbox, qu'est-ce qui rend la panne entre les deux écritures inoffensive, alors qu'elle était fatale en dual-write ?
+- Le mode outbox affiche « cohérent après reprise » et non « cohérent » tout court. Que signifie ce « après reprise », et qui paie le prix de ce délai ?
 
-## Plusieurs relais : la reclamation de ligne
+## Plusieurs relais : la réclamation de ligne
 
-Un seul relais finit par devenir un goulot. On veut donc en faire tourner plusieurs en parallele. Mais surgit aussitot un danger : si deux relais lisent la meme table et tombent sur la meme ligne en attente, ils publient tous les deux le meme message. Le doublon est deja gere par le consommateur idempotent, mais on prefere ne pas le provoquer gratuitement a chaque tour.
+Un seul relais finit par devenir un goulot. On veut donc en faire tourner plusieurs en parallèle. Mais surgit aussitôt un danger : si deux relais lisent la même table et tombent sur la même ligne en attente, ils publient tous les deux le même message. Le doublon est déjà géré par le consommateur idempotent, mais on préfère ne pas le provoquer gratuitement à chaque tour.
 
-La parade est la <Term slug="reclamation-de-ligne">reclamation de ligne</Term>. Chaque relais reclame les lignes qu'il va traiter avec un verrou, en SQL la clause `FOR UPDATE SKIP LOCKED` : il prend les lignes encore libres et saute celles qu'un autre relais a deja verrouillees. Deux relais ne peuvent plus attraper la meme ligne. C'est un ordre partiel sur le travail, exactement dans l'esprit du chapitre quatre, mais applique aux lignes de l'outbox plutot qu'aux messages.
+La parade est la <Term slug="reclamation-de-ligne">réclamation de ligne</Term>. Chaque relais réclame les lignes qu'il va traiter avec un verrou, en SQL la clause `FOR UPDATE SKIP LOCKED` : il prend les lignes encore libres et saute celles qu'un autre relais a déjà verrouillées. Deux relais ne peuvent plus attraper la même ligne. C'est un ordre partiel sur le travail, exactement dans l'esprit du chapitre quatre, mais appliqué aux lignes de l'outbox plutôt qu'aux messages.
 
-<Callout kind="warn" title="Le piege que j'ai rencontre : une reclamation trop courte">
-En construisant l'outbox d'Hexeract, je suis tombe sur un vrai bug de double publication. Un relais ne reclame pas une ligne a la fois mais un lot, puis il les publie une par une. La reclamation pose un bail (une duree pendant laquelle la ligne est consideree comme prise). Mon erreur : j'avais dimensionne ce bail a la duree d'une seule publication. Resultat, pour un lot de dix lignes, le bail des dernieres lignes expirait avant que le relais ne les atteigne, un autre relais les croyait libres, et les republiait. La correction : dimensionner le bail au pire cas, le nombre de lignes du lot multiplie par la duree d'une publication. La lecon : un verrou ne protege que tant qu'il dure, et sa duree doit couvrir tout le travail qu'il couvre.
+<Callout kind="warn" title="Le piège que j'ai rencontré : une réclamation trop courte">
+En construisant l'outbox d'Hexeract, je suis tombé sur un vrai bug de double publication. Un relais ne réclame pas une ligne à la fois mais un lot, puis il les publie une par une. La réclamation pose un bail (une durée pendant laquelle la ligne est considérée comme prise). Mon erreur : j'avais dimensionné ce bail à la durée d'une seule publication. Résultat, pour un lot de dix lignes, le bail des dernières lignes expirait avant que le relais ne les atteigne, un autre relais les croyait libres, et les republiait. La correction : dimensionner le bail au pire cas, le nombre de lignes du lot multiplié par la durée d'une publication. La leçon : un verrou ne protège que tant qu'il dure, et sa durée doit couvrir tout le travail qu'il couvre.
 </Callout>
 
-## Cote code : deux frameworks, le meme pacte
+## Côté code : deux frameworks, le même pacte
 
-Voyons le pattern dans deux ecosystemes. Le pacte est identique : ecrire l'etat metier et le message dans la meme transaction, et ne laisser partir le message qu'apres le commit.
+Voyons le pattern dans deux écosystèmes. Le pacte est identique : écrire l'état métier et le message dans la même transaction, et ne laisser partir le message qu'après le commit.
 
-Hexeract, le framework Rust qui nous sert de fil rouge, expose une insertion idempotente dans l'outbox, indexee sur l'identifiant d'evenement, plus un relais (`OutboxWorker`) qui scrute les lignes en attente sous `FOR UPDATE SKIP LOCKED` et les marque envoyees apres succes.
+Hexeract, le framework Rust qui nous sert de fil rouge, expose une insertion idempotente dans l'outbox, indexée sur l'identifiant d'événement, plus un relais (`OutboxWorker`) qui scrute les lignes en attente sous `FOR UPDATE SKIP LOCKED` et les marque envoyées après succès.
 
 ```rust
-// Cote ecriture : l'evenement entre dans la table outbox de facon idempotente.
-// La cle est event_id : une insertion deja vue est ignoree.
+// Côté écriture : l'événement entre dans la table outbox de façon idempotente.
+// La clé est event_id : une insertion déjà vue est ignorée.
 // (insert_idempotent_sql : INSERT ... ON CONFLICT (event_id) DO NOTHING)
 outbox.enqueue_idempotent(event_id, "OrderCreated", &payload).await?;
 
-// Cote relais (OutboxWorker) : la selection des lignes en attente.
+// Côté relais (OutboxWorker) : la sélection des lignes en attente.
 // Une ligne est "en attente" tant que delivered_at IS NULL.
 //   SELECT ... FROM outbox
 //   WHERE delivered_at IS NULL AND attempts < max_attempts
 //     AND (next_retry_at IS NULL OR next_retry_at <= now)
 //   ORDER BY id LIMIT n FOR UPDATE SKIP LOCKED
-// Apres une publication reussie : mark_delivered (UPDATE SET delivered_at = now).
+// Après une publication réussie : mark_delivered (UPDATE SET delivered_at = now).
 ```
 
-Wolverine, en .NET, fournit le meme pacte cle en main avec sa boite d'envoi durable. Sur une transaction Marten, le message publie n'est pas envoye tout de suite : il est range avec l'ecriture metier, et il ne partira qu'apres le commit.
+Wolverine, en .NET, fournit le même pacte clé en main avec sa boîte d'envoi durable. Sur une transaction Marten, le message publié n'est pas envoyé tout de suite : il est rangé avec l'écriture métier, et il ne partira qu'après le commit.
 
 ```csharp
-// L'etat metier et le message dans la meme transaction Marten.
+// L'état métier et le message dans la même transaction Marten.
 session.Store(order);
 
-// Ce message ne part PAS avant le succes de la transaction :
-// il est persiste avec la commande, puis relaye apres le commit.
+// Ce message ne part PAS avant le succès de la transaction :
+// il est persisté avec la commande, puis relayé après le commit.
 await outbox.PublishAsync(new OrderCreated(order.Id));
 
 await session.SaveChangesAsync();
 ```
 
-Deux langages, une seule idee : on n'ecrit jamais le broker et la base dans deux gestes separes. On ecrit la base une fois, le message avec, et un relais se charge du reste. Le mot « outbox » porte la garantie ; le framework porte la plomberie.
+Deux langages, une seule idée : on n'écrit jamais le broker et la base dans deux gestes séparés. On écrit la base une fois, le message avec, et un relais se charge du reste. Le mot « outbox » porte la garantie ; le framework porte la plomberie.
 
 ## Exercices
 
-Prends une feuille et un crayon. Les corriges sont juste en dessous, a ne regarder qu'apres avoir essaye.
+Prends une feuille et un crayon. Les corrigés sont juste en dessous, à ne regarder qu'après avoir essayé.
 
-### Exercice 1 : les deux visages de la double ecriture
+### Exercice 1 : les deux visages de la double écriture
 
-Un service de commande fait deux choses pour chaque commande : ecrire en base et publier « commande creee ». On considere deux implementations naives. (a) Il ecrit la base, puis publie. (b) Il publie, puis ecrit la base. Pour chacune, une panne survient au pire moment, juste entre les deux gestes. Decris l'etat final (que voit la base, que voit le broker) et nomme le defaut. Puis explique en une phrase pourquoi l'outbox transactionnel elimine les deux d'un coup.
+Un service de commande fait deux choses pour chaque commande : écrire en base et publier « commande créée ». On considère deux implémentations naïves. (a) Il écrit la base, puis publie. (b) Il publie, puis écrit la base. Pour chacune, une panne survient au pire moment, juste entre les deux gestes. Décris l'état final (que voit la base, que voit le broker) et nomme le défaut. Puis explique en une phrase pourquoi l'outbox transactionnel élimine les deux d'un coup.
 
 ### Exercice 2 : le relais qui tombe au mauvais moment
 
-Un relais d'outbox lit une ligne en attente, la publie avec succes au broker, puis sa machine s'eteint juste avant qu'il ait pu la marquer envoyee. (i) Decris ce qui se passe au redemarrage du relais. (ii) Combien de fois le message est-il publie au total ? (iii) Qui, en aval, empeche ce comportement de causer un double paiement ? Relie ta reponse a un mecanisme vu au chapitre quatre.
+Un relais d'outbox lit une ligne en attente, la publie avec succès au broker, puis sa machine s'éteint juste avant qu'il ait pu la marquer envoyée. (i) Décris ce qui se passe au redémarrage du relais. (ii) Combien de fois le message est-il publié au total ? (iii) Qui, en aval, empêche ce comportement de causer un double paiement ? Relie ta réponse à un mécanisme vu au chapitre quatre.
 
-<Callout kind="tip" title="Corrige de l'exercice 1 : les deux visages de la double ecriture">
-On raisonne a chaque fois sur l'etat des deux mondes apres la panne.
+<Callout kind="tip" title="Corrigé de l'exercice 1 : les deux visages de la double écriture">
+On raisonne à chaque fois sur l'état des deux mondes après la panne.
 
-**Etape 1.** Implementation (a), ecrire la base puis publier.
+**Étape 1.** Implémentation (a), écrire la base puis publier.
 
-La base a commit la commande. La panne tombe avant la publication. Donc la base contient la commande, le broker n'a rien recu. Le message est **perdu** : le paiement ne sera jamais declenche, et aucune redelivraison ne peut rejouer un message qui n'est jamais parti.
+La base a commit la commande. La panne tombe avant la publication. Donc la base contient la commande, le broker n'a rien reçu. Le message est **perdu** : le paiement ne sera jamais déclenché, et aucune redélivraison ne peut rejouer un message qui n'est jamais parti.
 
-**Etape 2.** Implementation (b), publier puis ecrire la base.
+**Étape 2.** Implémentation (b), publier puis écrire la base.
 
-La publication a reussi. La panne tombe avant le commit de la base, qui est donc annule. Le broker a « commande creee », mais la base n'a aucune commande. Le message est **fantome** : le paiement va s'executer pour une commande qui n'existe pas.
+La publication a réussi. La panne tombe avant le commit de la base, qui est donc annulé. Le broker a « commande créée », mais la base n'a aucune commande. Le message est **fantôme** : le paiement va s'exécuter pour une commande qui n'existe pas.
 
-**Etape 3.** Pourquoi l'outbox elimine les deux.
+**Étape 3.** Pourquoi l'outbox élimine les deux.
 
-L'outbox n'ecrit plus jamais deux mondes. Il ecrit la commande et la ligne du message dans une seule transaction de la base : soit les deux sont la, soit aucune. Il n'existe plus d'instant entre deux ecritures ou une panne pourrait les desynchroniser.
+L'outbox n'écrit plus jamais deux mondes. Il écrit la commande et la ligne du message dans une seule transaction de la base : soit les deux sont là, soit aucune. Il n'existe plus d'instant entre deux écritures où une panne pourrait les désynchroniser.
 
-**Resultat.** (a) message perdu, (b) message fantome ; les deux disparaissent parce que l'outbox remplace deux ecritures non atomiques par une seule ecriture atomique, suivie d'un relais.
+**Résultat.** (a) message perdu, (b) message fantôme ; les deux disparaissent parce que l'outbox remplace deux écritures non atomiques par une seule écriture atomique, suivie d'un relais.
 </Callout>
 
-<Callout kind="tip" title="Corrige de l'exercice 2 : le relais qui tombe au mauvais moment">
-La panne tombe apres la publication reussie, avant le marquage. C'est le scenario qui revele la nature du relais.
+<Callout kind="tip" title="Corrigé de l'exercice 2 : le relais qui tombe au mauvais moment">
+La panne tombe après la publication réussie, avant le marquage. C'est le scénario qui révèle la nature du relais.
 
-**Etape 1.** Au redemarrage, la ligne est toujours en attente.
+**Étape 1.** Au redémarrage, la ligne est toujours en attente.
 
-Le relais n'a pas eu le temps de marquer la ligne envoyee. Dans la base, elle est donc toujours « en attente » (son horodatage de livraison est vide). Le relais, qui reprend sa boucle, la retrouve parmi les lignes a publier.
+Le relais n'a pas eu le temps de marquer la ligne envoyée. Dans la base, elle est donc toujours « en attente » (son horodatage de livraison est vide). Le relais, qui reprend sa boucle, la retrouve parmi les lignes à publier.
 
-**Etape 2.** Il la republie.
+**Étape 2.** Il la republie.
 
-Ne sachant pas qu'il l'avait deja publiee juste avant la panne, le relais publie le message une seconde fois. Au total, le message part **deux fois** : c'est une livraison au moins une fois.
+Ne sachant pas qu'il l'avait déjà publiée juste avant la panne, le relais publie le message une seconde fois. Au total, le message part **deux fois** : c'est une livraison au moins une fois.
 
-**Etape 3.** Le consommateur idempotent absorbe le doublon.
+**Étape 3.** Le consommateur idempotent absorbe le doublon.
 
-C'est exactement le mecanisme du chapitre quatre. Le consommateur reconnait, par sa cle de deduplication, un message deja traite, et n'execute pas le paiement une seconde fois. Le double envoi du relais reste donc sans consequence sur l'effet.
+C'est exactement le mécanisme du chapitre quatre. Le consommateur reconnaît, par sa clé de déduplication, un message déjà traité, et n'exécute pas le paiement une seconde fois. Le double envoi du relais reste donc sans conséquence sur l'effet.
 
-**Resultat.** (i) la ligne en attente est retrouvee et republiee ; (ii) le message est publie deux fois ; (iii) c'est le consommateur idempotent du chapitre quatre qui neutralise le doublon. L'outbox garantit qu'on ne perd jamais ; l'idempotence garantit qu'on ne double jamais l'effet.
+**Résultat.** (i) la ligne en attente est retrouvée et republiée ; (ii) le message est publié deux fois ; (iii) c'est le consommateur idempotent du chapitre quatre qui neutralise le doublon. L'outbox garantit qu'on ne perd jamais ; l'idempotence garantit qu'on ne double jamais l'effet.
 </Callout>
 
 ## En une phrase
 
-On ne peut pas rendre atomiques une base et un broker, alors on n'ecrit qu'un seul monde : l'etat metier et le message partent ensemble dans une transaction de la base (l'outbox transactionnel), puis un relais publie au moins une fois ce que la transaction a scelle, et le consommateur idempotent du chapitre quatre absorbe les doublons que ce relais peut produire.
+On ne peut pas rendre atomiques une base et un broker, alors on n'écrit qu'un seul monde : l'état métier et le message partent ensemble dans une transaction de la base (l'outbox transactionnel), puis un relais publie au moins une fois ce que la transaction a scellé, et le consommateur idempotent du chapitre quatre absorbe les doublons que ce relais peut produire.
 
 <Quiz
   client:visible
-  submitLabel="Verifier"
+  submitLabel="Vérifier"
   resetLabel="Recommencer"
   scoreLabel="Score"
   questions={[
     {
-      q: "Qu'est-ce que le probleme de la double ecriture ?",
+      q: "Qu'est-ce que le problème de la double écriture ?",
       options: [
-        "Devoir modifier deux systemes distincts (sa base et le broker) pour une seule action, sans transaction qui couvre les deux : une panne entre les deux les desynchronise.",
-        "Ecrire deux fois le meme message par erreur dans la base.",
-        "Avoir deux consommateurs qui lisent le meme message en parallele.",
+        "Devoir modifier deux systèmes distincts (sa base et le broker) pour une seule action, sans transaction qui couvre les deux : une panne entre les deux les désynchronise.",
+        "Écrire deux fois le même message par erreur dans la base.",
+        "Avoir deux consommateurs qui lisent le même message en parallèle.",
       ],
       answer: 0,
       explain:
-        "Aucune transaction ne couvre a la fois la base et le broker. Entre les deux ecritures, une panne laisse soit un message perdu (base ecrite, message non parti), soit un message fantome (message parti, base annulee).",
+        "Aucune transaction ne couvre à la fois la base et le broker. Entre les deux écritures, une panne laisse soit un message perdu (base écrite, message non parti), soit un message fantôme (message parti, base annulée).",
     },
     {
-      q: "Comment l'outbox transactionnel supprime ce probleme ?",
+      q: "Comment l'outbox transactionnel supprime ce problème ?",
       options: [
-        "En ecrivant l'etat metier ET une ligne decrivant le message dans la meme transaction de la base, puis en laissant un relais publier cette ligne au broker.",
-        "En publiant le message deux fois pour etre sur qu'il arrive.",
-        "En accelerant le broker pour qu'il ne tombe jamais en panne.",
+        "En écrivant l'état métier ET une ligne décrivant le message dans la même transaction de la base, puis en laissant un relais publier cette ligne au broker.",
+        "En publiant le message deux fois pour être sûr qu'il arrive.",
+        "En accélérant le broker pour qu'il ne tombe jamais en panne.",
       ],
       answer: 0,
       explain:
-        "On ne rend pas atomiques deux mondes ; on n'en ecrit qu'un seul. La commande et la ligne outbox partagent une transaction, donc une panne ne peut pas les separer. Le relais transforme le « publier » fragile en « republier jusqu'au succes ».",
+        "On ne rend pas atomiques deux mondes ; on n'en écrit qu'un seul. La commande et la ligne outbox partagent une transaction, donc une panne ne peut pas les séparer. Le relais transforme le « publier » fragile en « republier jusqu'au succès ».",
     },
     {
-      q: "Pourquoi plusieurs relais doivent-ils reclamer leurs lignes avec FOR UPDATE SKIP LOCKED ?",
+      q: "Pourquoi plusieurs relais doivent-ils réclamer leurs lignes avec FOR UPDATE SKIP LOCKED ?",
       options: [
-        "Pour qu'un relais saute les lignes qu'un autre a deja verrouillees, et que deux relais ne publient pas le meme message.",
-        "Pour trier les messages par ordre d'arrivee dans le broker.",
+        "Pour qu'un relais saute les lignes qu'un autre a déjà verrouillées, et que deux relais ne publient pas le même message.",
+        "Pour trier les messages par ordre d'arrivée dans le broker.",
         "Pour chiffrer les lignes de la table outbox.",
       ],
       answer: 0,
       explain:
-        "Sans verrou de reclamation, deux relais liraient la meme ligne en attente et la publieraient tous les deux. FOR UPDATE SKIP LOCKED donne a chaque ligne un seul preneur. Attention a la duree du bail : il doit couvrir tout le lot reclame.",
+        "Sans verrou de réclamation, deux relais liraient la même ligne en attente et la publieraient tous les deux. FOR UPDATE SKIP LOCKED donne à chaque ligne un seul preneur. Attention à la durée du bail : il doit couvrir tout le lot réclamé.",
     },
   ]}
 />
 
 ## Vers le chapitre suivant
 
-L'outbox plus le relais nous donnent une garantie solide : le message finit toujours par partir, et le consommateur idempotent absorbe les doublons. Mais cette garantie a un cote sombre. Le relais republie tant qu'un message n'est pas marque envoye, et le consommateur retente tant qu'un traitement n'a pas reussi. Que se passe-t-il si un message ne peut **jamais** etre traite, parce qu'il est malforme ou declenche un bug a tous les coups ? Le relais et le consommateur vont le rejouer indefiniment, et pire, ce message empoisonne peut bloquer toute la file derriere lui pendant qu'on s'acharne. La garantie « au moins une fois » devient alors « pour toujours, et au detriment des autres ». Le chapitre six, « Quand un message empoisonne », apprend a reconnaitre ces messages, a borner les tentatives avec un recul progressif, et a les ecarter proprement dans une file de rebut.
+L'outbox plus le relais nous donnent une garantie solide : le message finit toujours par partir, et le consommateur idempotent absorbe les doublons. Mais cette garantie a un côté sombre. Le relais republie tant qu'un message n'est pas marqué envoyé, et le consommateur retente tant qu'un traitement n'a pas réussi. Que se passe-t-il si un message ne peut **jamais** être traité, parce qu'il est malformé ou déclenche un bug à tous les coups ? Le relais et le consommateur vont le rejouer indéfiniment, et pire, ce message empoisonné peut bloquer toute la file derrière lui pendant qu'on s'acharne. La garantie « au moins une fois » devient alors « pour toujours, et au détriment des autres ». Le chapitre six, « Quand un message empoisonne », apprend à reconnaître ces messages, à borner les tentatives avec un recul progressif, et à les écarter proprement dans une file de rebut.
 
 ## Sources
 
