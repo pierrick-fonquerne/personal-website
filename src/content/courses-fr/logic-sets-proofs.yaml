@@ -14,4 +14,5 @@ estimatedMinutes: 150
 modules:
   - 01-propositions-connecteurs
   - 02-predicats-quantificateurs
+  - 03-ensembles-operations
 published: true
