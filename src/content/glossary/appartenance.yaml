@@ -1,0 +1,19 @@
+slug: appartenance
+fr:
+  term: Appartenance
+  definition: >
+    Relation fondamentale entre un objet et un ensemble, notée ∈. « x ∈ A » se lit
+    « x appartient à A » et signifie que x est l'un des éléments de A. Sa négation se
+    note ∉. L'appartenance est le prédicat de base de la théorie des ensembles : tout
+    le reste, inclusion et opérations, se définit à partir d'elle.
+en:
+  term: Membership
+  definition: >
+    The fundamental relation between an object and a set, written ∈. "x ∈ A" reads
+    "x belongs to A" and means that x is one of the elements of A. Its negation is
+    written ∉. Membership is the basic predicate of set theory: everything else,
+    inclusion and operations, is defined from it.
+seeAlso:
+  - ensemble
+  - inclusion
+  - predicat

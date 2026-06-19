@@ -1,0 +1,21 @@
+slug: inclusion
+fr:
+  term: Inclusion
+  definition: >
+    Relation entre deux ensembles, notée ⊆. « A ⊆ B » se lit « A est inclus dans B »
+    ou « A est un sous-ensemble de B », et signifie que tout élément de A est aussi
+    élément de B. Sa définition est un énoncé quantifié : A ⊆ B équivaut à
+    « pour tout x, x ∈ A implique x ∈ B ». Deux ensembles sont égaux exactement quand
+    chacun est inclus dans l'autre (double inclusion).
+en:
+  term: Inclusion
+  definition: >
+    A relation between two sets, written ⊆. "A ⊆ B" reads "A is included in B" or
+    "A is a subset of B", and means that every element of A is also an element of B.
+    Its definition is a quantified statement: A ⊆ B is equivalent to
+    "for all x, x ∈ A implies x ∈ B". Two sets are equal exactly when each is included
+    in the other (double inclusion).
+seeAlso:
+  - appartenance
+  - implication
+  - quantificateur-universel

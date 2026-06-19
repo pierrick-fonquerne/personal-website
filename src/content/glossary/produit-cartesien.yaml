@@ -1,0 +1,18 @@
+slug: produit-cartesien
+fr:
+  term: Produit cartésien
+  definition: >
+    Opération qui fabrique un ensemble de couples à partir de deux ensembles, notée ×.
+    A × B est l'ensemble de tous les couples ordonnés (a, b) où a ∈ A et b ∈ B. L'ordre
+    compte : (a, b) n'est pas (b, a). Si A a m éléments et B en a n, alors A × B en a
+    m × n. C'est la brique de départ des relations et des fonctions.
+en:
+  term: Cartesian product
+  definition: >
+    The operation that builds a set of pairs from two sets, written ×. A × B is the set
+    of all ordered pairs (a, b) where a ∈ A and b ∈ B. Order matters: (a, b) is not
+    (b, a). If A has m elements and B has n, then A × B has m × n. It is the starting
+    brick of relations and functions.
+seeAlso:
+  - ensemble
+  - appartenance

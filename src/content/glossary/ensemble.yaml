@@ -1,0 +1,20 @@
+slug: ensemble
+fr:
+  term: Ensemble
+  definition: >
+    Collection d'objets, appelés ses éléments, considérée comme un tout. Un ensemble
+    est entièrement déterminé par ses éléments : deux ensembles ayant exactement les
+    mêmes éléments sont égaux. On le décrit en extension, en listant ses éléments entre
+    accolades comme {1, 2, 3}, ou en compréhension, en donnant la propriété que ses
+    éléments vérifient, comme {x | x > 3}.
+en:
+  term: Set
+  definition: >
+    A collection of objects, called its elements, regarded as a single whole. A set is
+    entirely determined by its elements: two sets with exactly the same elements are
+    equal. It is described by extension, listing its elements in braces such as {1, 2, 3},
+    or by comprehension, giving the property its elements satisfy, such as {x | x > 3}.
+seeAlso:
+  - appartenance
+  - inclusion
+  - ensemble-des-parties
