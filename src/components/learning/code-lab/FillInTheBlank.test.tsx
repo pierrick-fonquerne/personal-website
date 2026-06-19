@@ -86,7 +86,7 @@ describe('FillInTheBlank - rendu de base', () => {
 // ---------------------------------------------------------------------------
 
 describe('FillInTheBlank - verification', () => {
-  it('une bonne reponse apres Verifier porte data-blank-status="correct"', () => {
+  it('une bonne réponse après Vérifier porte data-blank-status="correct"', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });
@@ -94,7 +94,7 @@ describe('FillInTheBlank - verification', () => {
     expect(input.getAttribute('data-blank-status')).toBe('correct');
   });
 
-  it('une mauvaise reponse apres Verifier porte data-blank-status="incorrect"', () => {
+  it('une mauvaise réponse après Vérifier porte data-blank-status="incorrect"', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'mauvaise reponse' } });
@@ -102,14 +102,14 @@ describe('FillInTheBlank - verification', () => {
     expect(input.getAttribute('data-blank-status')).toBe('incorrect');
   });
 
-  it('un champ vide apres Verifier porte data-blank-status="empty"', () => {
+  it('un champ vide après Vérifier porte data-blank-status="empty"', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     fireEvent.click(screen.getByRole('button', { name: 'Vérifier' }));
     const input = screen.getByRole('textbox');
     expect(input.getAttribute('data-blank-status')).toBe('empty');
   });
 
-  it('affiche statusComplete quand toutes les reponses sont correctes', () => {
+  it('affiche statusComplete quand toutes les réponses sont correctes', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });
@@ -117,7 +117,7 @@ describe('FillInTheBlank - verification', () => {
     expect(screen.getByText('Bravo, tout est correct !')).toBeDefined();
   });
 
-  it('affiche statusIncomplete quand au moins une reponse est fausse', () => {
+  it('affiche statusIncomplete quand au moins une réponse est fausse', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'mauvaise' } });
@@ -142,7 +142,7 @@ describe('FillInTheBlank - indices', () => {
     expect(screen.getByRole('button', { name: 'Indice' })).toBeDefined();
   });
 
-  it('le clic sur le bouton indice revele le texte d indice', () => {
+  it('le clic sur le bouton indice révèle le texte d indice', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const hintButton = screen.getByRole('button', { name: 'Indice' });
     fireEvent.click(hintButton);
@@ -168,7 +168,7 @@ describe('FillInTheBlank - revelation de la solution', () => {
     expect(screen.getByText(/new MessageBus\(\)/)).toBeDefined();
   });
 
-  it('le libelle du bouton bascule vers hideLabel apres revelation', () => {
+  it('le libellé du bouton bascule vers hideLabel après révélation', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     fireEvent.click(screen.getByRole('button', { name: 'Voir la solution' }));
     expect(screen.getByRole('button', { name: 'Masquer la solution' })).toBeDefined();
@@ -187,7 +187,7 @@ describe('FillInTheBlank - revelation de la solution', () => {
 // ---------------------------------------------------------------------------
 
 describe('FillInTheBlank - reinitialisation', () => {
-  it('le reset vide les reponses et supprime les statuts', () => {
+  it('le reset vide les réponses et supprime les statuts', () => {
     render(<FillInTheBlank content={CONTENT_SINGLE} language="csharp" copy={COPY} />);
     const input = screen.getByRole('textbox');
     fireEvent.change(input, { target: { value: 'new MessageBus()' } });

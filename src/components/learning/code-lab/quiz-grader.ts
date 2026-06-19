@@ -7,7 +7,7 @@
 // Types
 // ---------------------------------------------------------------------------
 
-/** Une option de reponse. Le libelle (prose, traduit) vit dans `copy`, keye par `id`. */
+/** Une option de réponse. Le libellé (prose, traduit) vit dans `copy`, keyé par `id`. */
 export interface QuizOption {
   readonly id: string;
   readonly isCorrect: boolean;
