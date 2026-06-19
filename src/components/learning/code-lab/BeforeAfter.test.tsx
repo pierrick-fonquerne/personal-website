@@ -46,14 +46,14 @@ const COPY = {
 // Default view (diff)
 // ---------------------------------------------------------------------------
 
-describe('BeforeAfter - vue par defaut', () => {
-  it('affiche la vue diff par defaut : des elements data-diff-type sont rendus', () => {
+describe('BeforeAfter - vue par défaut', () => {
+  it('affiche la vue diff par défaut : des éléments data-diff-type sont rendus', () => {
     render(<BeforeAfter content={CONTENT} language="csharp" copy={COPY} />);
     const diffLines = document.querySelectorAll('[data-diff-type]');
     expect(diffLines.length).toBeGreaterThan(0);
   });
 
-  it('le bouton Différences est actif par defaut (aria-pressed="true")', () => {
+  it('le bouton Différences est actif par défaut (aria-pressed="true")', () => {
     render(<BeforeAfter content={CONTENT} language="csharp" copy={COPY} />);
     const diffButton = screen.getByRole('button', { name: 'Différences' });
     expect(diffButton.getAttribute('aria-pressed')).toBe('true');
@@ -64,7 +64,7 @@ describe('BeforeAfter - vue par defaut', () => {
 // Diff view correctness
 // ---------------------------------------------------------------------------
 
-describe('BeforeAfter - vue diff : precision', () => {
+describe('BeforeAfter - vue diff : précision', () => {
   it('rend exactement une ligne removed et une ligne added pour un changement de ligne unique', () => {
     const content: BeforeAfterContent = { before: 'a\nb\nc', after: 'a\nB\nc' };
     render(
@@ -129,7 +129,7 @@ describe('BeforeAfter - vue diff : precision', () => {
     expect(removed?.textContent).toContain('-');
   });
 
-  it('des numeros de ligne sont affiches dans la vue diff', () => {
+  it('des numéros de ligne sont affichés dans la vue diff', () => {
     render(<BeforeAfter content={CONTENT} language="csharp" copy={COPY} />);
     // At least line "1" should appear as a line number
     const diffContainer = document.querySelector('[data-testid="diff-view"]');
@@ -141,8 +141,8 @@ describe('BeforeAfter - vue diff : precision', () => {
 // A11y : aria-label on diff lines
 // ---------------------------------------------------------------------------
 
-describe('BeforeAfter - accessibilite diff', () => {
-  it('la ligne ajoutee porte addedAriaLabel si fourni', () => {
+describe('BeforeAfter - accessibilité diff', () => {
+  it('la ligne ajoutée porte addedAriaLabel si fourni', () => {
     const content: BeforeAfterContent = { before: 'a', after: 'b' };
     render(
       <BeforeAfter
@@ -156,7 +156,7 @@ describe('BeforeAfter - accessibilite diff', () => {
     expect(added?.getAttribute('aria-label')).toBe('Ligne ajoutée');
   });
 
-  it('la ligne supprimee porte removedAriaLabel si fourni', () => {
+  it('la ligne supprimée porte removedAriaLabel si fourni', () => {
     const content: BeforeAfterContent = { before: 'a', after: 'b' };
     render(
       <BeforeAfter
@@ -170,7 +170,7 @@ describe('BeforeAfter - accessibilite diff', () => {
     expect(removed?.getAttribute('aria-label')).toBe('Ligne supprimée');
   });
 
-  it('les lignes inchangees ne portent pas de aria-label', () => {
+  it('les lignes inchangées ne portent pas de aria-label', () => {
     const content: BeforeAfterContent = { before: 'a\nb', after: 'a\nB' };
     render(
       <BeforeAfter
@@ -245,7 +245,7 @@ describe('BeforeAfter - bascule de vue', () => {
 // ---------------------------------------------------------------------------
 
 describe('BeforeAfter - diffLabel optionnel', () => {
-  it('utilise une etiquette par defaut si diffLabel est absent', () => {
+  it('utilise une étiquette par défaut si diffLabel est absent', () => {
     render(
       <BeforeAfter
         content={CONTENT}
@@ -265,7 +265,7 @@ describe('BeforeAfter - diffLabel optionnel', () => {
 // Buttons type="button"
 // ---------------------------------------------------------------------------
 
-describe('BeforeAfter - accessibilite boutons', () => {
+describe('BeforeAfter - accessibilité boutons', () => {
   it('tous les boutons de vue ont type="button"', () => {
     render(<BeforeAfter content={CONTENT} language="csharp" copy={COPY} />);
     screen.getAllByRole('button').forEach((btn) => {
