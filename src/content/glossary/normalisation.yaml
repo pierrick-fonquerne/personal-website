@@ -1,0 +1,11 @@
+slug: normalisation
+fr:
+  term: Normalisation
+  definition: "Opération qui ramène un vecteur à une longueur de 1 en le divisant par sa norme, sans changer sa direction. Sur des vecteurs ainsi normalisés, la similarité cosinus se réduit au produit scalaire, et le classement par cosinus coïncide avec le classement par distance euclidienne. C'est pourquoi beaucoup de bases vectorielles normalisent les embeddings à l'entrée."
+en:
+  term: Normalization
+  definition: "The operation that brings a vector to length 1 by dividing it by its norm, without changing its direction. On such normalized vectors, cosine similarity reduces to the dot product, and ranking by cosine coincides with ranking by Euclidean distance. This is why many vector databases normalize embeddings on ingestion."
+seeAlso:
+  - norme
+  - similarite-cosinus
+  - distance-euclidienne

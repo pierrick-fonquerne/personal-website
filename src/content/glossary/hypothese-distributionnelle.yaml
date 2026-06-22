@@ -1,0 +1,12 @@
+slug: hypothese-distributionnelle
+fr:
+  term: Hypothèse distributionnelle
+  definition: "Idée fondatrice de la sémantique vectorielle : un mot se caractérise par les contextes dans lesquels il apparaît, donc des mots qui partagent des contextes ont des sens voisins. Résumée par la formule de Firth, on connaît un mot par la compagnie qu'il tient. C'est ce principe qui justifie d'apprendre des embeddings où la proximité géométrique encode la proximité de sens."
+  source: 'Firth, 1957'
+en:
+  term: Distributional hypothesis
+  definition: "The founding idea of vector semantics: a word is characterized by the contexts in which it appears, so words that share contexts have close meanings. Summarized by Firth's phrase, you shall know a word by the company it keeps. This principle is what justifies learning embeddings where geometric proximity encodes proximity of meaning."
+  source: 'Firth, 1957'
+seeAlso:
+  - embedding
+  - espace-vectoriel

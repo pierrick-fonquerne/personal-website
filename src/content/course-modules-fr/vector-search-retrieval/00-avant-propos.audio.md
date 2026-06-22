@@ -1,0 +1,17 @@
+Avant-propos. Chercher par le sens, et non par les caractères.
+
+Tu tapes le mot voiture dans un moteur de recherche, et un document qui ne parle que d'automobile te file entre les doigts. Pourtant c'est le même sens. Le moteur, lui, ne cherchait pas un sens, il cherchait une suite de caractères, et ces deux mots n'ont rien en commun pour lui. Ce cours répare exactement ce défaut.
+
+On va apprendre à chercher par le sens. Pour cela, il faudra d'abord transformer un texte en un objet géométrique, un point dans un espace, de telle sorte que deux textes au sens proche deviennent deux points proches. Cet objet porte un nom, l'embedding, et c'est la première brique de tout le reste.
+
+Il existe deux grandes façons de chercher, et tout le cours vit dans leur tension. La première est la recherche lexicale, où l'on compare les mots et les caractères. Elle est rapide, exacte, imbattable pour retrouver un identifiant précis, mais elle est aveugle aux synonymes : voiture et automobile lui sont étrangers. La seconde est la recherche sémantique, où l'on compare les sens. Elle retrouve automobile à partir de voiture, et même une question reformulée à partir de ses mots familiers. Son prix, c'est qu'il faut représenter le sens par des nombres, et accepter de ne plus chercher une égalité exacte mais une proximité.
+
+Cette seconde façon a explosé pour une raison très concrète. Les modèles de langage ont besoin, pour répondre juste, qu'on leur retrouve les bons passages dans une masse de documents. Ce mariage entre une recherche par le sens et un modèle qui rédige porte un nom, le RAG, et c'est la destination de ce cours.
+
+Un mot sur les prérequis. Pour suivre, il faut savoir ce qu'est un vecteur, c'est-à-dire une liste ordonnée de nombres, et avoir l'idée qu'un réseau de neurones apprend à partir d'exemples. Ces deux notions viennent du cours sur les fondations des réseaux de neurones, qui est le prérequis naturel de celui-ci, car c'est un réseau qui fabrique les embeddings qu'on va utiliser. En revanche, nul besoin de connaître une base de données vectorielle particulière, ni l'algèbre linéaire avancée, qu'on introduira au fur et à mesure.
+
+Le cours suit un fil simple, en trois blocs. Le premier bloc apprend à représenter le sens et à mesurer la proximité entre deux vecteurs, puis affronte la recherche exacte et le mur sur lequel elle se fracasse quand les vecteurs se comptent en millions. Le deuxième bloc renonce à l'exactitude pour gagner en vitesse, avec le graphe HNSW, le paysage des familles d'index, et surtout l'outil qui dit si un index approximatif est bon ou s'il ment silencieusement. Le troisième bloc rend l'index durable sans le corrompre au moindre crash, le marie à la recherche lexicale, et le branche enfin sur un modèle de langage.
+
+En une phrase. Chercher par le sens, c'est représenter chaque texte par un point dans un espace, mesurer la proximité entre ces points, puis bâtir tout l'outillage qui permet de retrouver les plus proches à grande échelle, vite et sans se tromper.
+
+Vers le chapitre un. Tout part d'une question presque philosophique. Si le sens doit devenir une position dans l'espace, alors qu'est-ce qu'une position, et comment mesure-t-on que deux positions sont proches. Un mot perfectionniste mais lointain doit-il battre un mot approximatif mais tout proche. C'est là, dans la géométrie de la similarité, que commence le chapitre un.

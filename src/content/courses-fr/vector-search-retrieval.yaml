@@ -1,0 +1,25 @@
+slug: vector-search-retrieval
+title: 'Chercher par le sens : bases vectorielles et retrieval'
+summary: "Un cours universitaire accessible sur la recherche sémantique. On part de la limite de la recherche par mot-clé, qui ignore le sens, pour reconstruire une recherche par le sens : représenter un texte par un vecteur, mesurer la proximité, indexer des millions de vecteurs sans tout comparer, rendre l'index durable, le marier au lexical, et enfin nourrir un modèle de langage. De la géométrie des embeddings au RAG."
+tags:
+  - recherche-vectorielle
+  - embeddings
+  - plus-proches-voisins
+  - hnsw
+  - recherche-hybride
+  - rag
+theme: ai
+subtheme: vector-search
+level: intermediate
+estimatedMinutes: 200
+modules:
+  - 00-avant-propos
+  - 01-embeddings-et-geometrie
+personalNote: |
+  Ce cours est né d'un chantier bien réel. Je construis une base de données vectorielle souveraine, en Rust, dont le premier objectif est modeste : remplacer une brique existante dans mon intranet personnel. En la construisant, j'ai dû comprendre pour de vrai ce qui se cache derrière les mots à la mode : embedding, plus proche voisin, HNSW, recherche hybride, RAG. Pas la version marketing, la version qui compile.
+
+  J'ai vite réalisé que ces concepts forment une chaîne d'une élégance rare. On part d'une idée presque philosophique, le sens comme une position dans l'espace, et on descend, marche après marche, jusqu'à des structures de données concrètes et des compromis d'ingénieur très palpables. Chaque chapitre répond à une limite laissée par le précédent.
+
+  Je ne suis ni chercheur en recherche d'information ni spécialiste des bases de données de formation. J'écris ce cours comme je l'aurais voulu en démarrant mon propre moteur : rigoureux sur les définitions, honnête sur les compromis, et toujours accompagné de quelque chose à manipuler pour que l'intuition rentre. Le moteur que je construis sert de fil rouge, mais tout ce qu'on verra vaut pour n'importe quelle base vectorielle.
+published: false
+order: 3
