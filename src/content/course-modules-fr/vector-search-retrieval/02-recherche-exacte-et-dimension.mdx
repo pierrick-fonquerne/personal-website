@@ -1,0 +1,268 @@
+---
+course: vector-search-retrieval
+order: 2
+title: Recherche exacte et malediction de la dimension
+subtitle: 'Comparer tous les vecteurs donne la reponse parfaite. Voici son prix, et le piege que la grande dimension tend a notre intuition.'
+estimatedMinutes: 28
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DimensionCurseLab from '../../../components/learning/DimensionCurseLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre précédent, on a appris à représenter un sens par un vecteur et à mesurer la proximité entre deux vecteurs. Mais un vrai moteur n'en compare jamais deux : il en a des millions, et pour chaque requête il faudrait, en principe, tous les parcourir. Deux questions surgissent alors. Cette comparaison de tout le monde, est-ce vraiment un problème ? Et notre belle intuition du plan, faite de flèches qu'on dessine, tient-elle encore quand les vecteurs vivent en mille dimensions ?
+
+Ce chapitre regarde ces deux murs en face. Le premier est un mur de coût : la recherche parfaite existe, mais elle se paie. Le second est plus sournois, car il défie l'intuition : en grande dimension, l'espace se comporte d'une façon qui va te surprendre.
+
+## La recherche exacte : comparer tous les vecteurs
+
+Commençons par le plus simple, qui est aussi le plus sûr. On a une requête, sous la forme d'un vecteur, et une base de millions de vecteurs. On veut les plus proches. La méthode évidente : calculer la distance de la requête à chacun des vecteurs de la base, puis garder les meilleurs.
+
+Trouver les $k$ éléments les plus proches d'une requête porte un nom, c'est le problème des <Term slug="plus-proches-voisins">plus proches voisins</Term>. Et la méthode qu'on vient de décrire, comparer la requête à tout le monde, s'appelle la <Term slug="recherche-exhaustive">recherche exhaustive</Term>, ou balayage linéaire, ou encore index Flat dans le jargon des bases vectorielles.
+
+Elle a une qualité que rien d'autre ne possédera jamais aussi pleinement : elle est **exacte**. Puisqu'elle examine chaque vecteur, elle ne peut, par construction, rater aucun voisin. Le classement qu'elle renvoie est la vérité. Retiens ce mot, vérité, car il va devenir précieux : à partir du chapitre 3, on cherchera des méthodes plus rapides qui acceptent de se tromper un peu. Pour savoir si elles se trompent, il faudra une référence parfaite à laquelle les comparer. Cette référence, c'est exactement la recherche exhaustive. On dit qu'elle sert d'**oracle**.
+
+<Callout kind="note" title="Distance ou similarite, peu importe ici">
+La recherche exhaustive ne dépend pas de la mesure choisie au chapitre 1. Qu'on classe par distance euclidienne, par similarité cosinus ou par produit scalaire, le principe est le même : on évalue la mesure pour chaque vecteur, puis on trie. Tout ce qui suit vaut donc pour les trois mesures.
+</Callout>
+
+## Le mur du coût
+
+Si la recherche exhaustive est parfaite, pourquoi tout le reste du cours ? Parce qu'elle est lente, et qu'on peut dire exactement à quel point.
+
+Pour comparer la requête à un vecteur en dimension $d$, il faut parcourir les $d$ coordonnées : de l'ordre de $d$ opérations. Pour la comparer à $n$ vecteurs, on répète $n$ fois. Le coût total d'une requête est donc proportionnel à $n \times d$.
+
+$$
+\text{coût d'une requête} \propto n \times d
+$$
+
+Cette expression se lit : le coût grandit comme le produit du nombre de vecteurs par leur dimension. On note ce comportement $O(n \times d)$. Tant que la base est petite, personne ne s'en plaint. Mais mets-y des chiffres réalistes. Une base de dix millions de documents, des embeddings de dimension 1536 : une seule requête demande de l'ordre de quinze milliards de multiplications. Si ton service reçoit mille requêtes par seconde, tu fais le calcul, le mur arrive vite.
+
+<Callout kind="info" title="Le fil rouge : pourquoi garder quand meme le Flat">
+Le moteur vectoriel qui sert de fil rouge à ce cours implémente bel et bien la recherche exhaustive, alors qu'on vient de dire qu'elle est trop lente. Pourquoi ? Précisément parce qu'elle est exacte. Elle ne sert pas à répondre aux vraies requêtes en production, elle sert d'oracle de test : on lui demande la vérité, puis on vérifie que l'index rapide, lui, ne s'en écarte pas trop. On reviendra longuement sur cette idée d'oracle au chapitre 5. Pour l'instant, garde en tête qu'un index lent mais exact n'est jamais inutile : il est le juge des autres.
+</Callout>
+
+## La malediction de la dimension
+
+On pourrait croire que le seul problème est le coût, et qu'il suffirait d'être plus malin pour ne pas tout comparer. C'est l'idée des chapitres suivants. Mais avant de la poursuivre, il faut comprendre pourquoi être malin est si difficile. La raison ne tient pas à la vitesse des machines : elle tient à la géométrie elle-même.
+
+En basse dimension, dans le plan ou l'espace, notre intuition fonctionne. Il y a des points proches et des points lointains, des régions denses et des régions vides. Trouver le plus proche voisin a un sens clair. En grande dimension, cette intuition se brise. L'ensemble des phénomènes qui surgissent alors porte un nom, la <Term slug="malediction-de-la-dimension">malédiction de la dimension</Term>, et deux d'entre eux décident à eux seuls de la difficulté de toute recherche vectorielle.
+
+Le premier : la <Term slug="concentration-des-distances">concentration des distances</Term>. Si tu tires des points au hasard et que tu mesures leurs distances à un point de référence, ces distances, en grande dimension, se ressemblent toutes. Le plus proche n'est presque pas plus proche que le plus lointain. La notion même de plus proche voisin devient floue.
+
+Le second : la quasi-<Term slug="orthogonalite">orthogonalité</Term>. Deux vecteurs tirés au hasard en grande dimension sont presque toujours perpendiculaires, donc de similarité cosinus proche de zéro. L'espace est si vaste que deux directions prises au hasard n'ont quasiment jamais quelque chose en commun.
+
+Ces deux affirmations sont surprenantes. Ne les crois pas sur parole : va les voir.
+
+## Voir la malediction
+
+Le composant ci-dessous tire un nuage de points dont chaque coordonnée est aléatoire, dans la dimension que tu choisis. L'onglet de gauche montre la distribution des distances à une requête ; l'onglet de droite montre la distribution des cosinus entre paires de points. Fais glisser la dimension de 1 vers 1000 et regarde les deux histogrammes se métamorphoser.
+
+<DimensionCurseLab
+  client:visible
+  seed={2024}
+  initialDimension={2}
+  labels={{
+    concentrationTab: "Concentration des distances",
+    orthogonalityTab: "Quasi-orthogonalité",
+    dimensionLabel: "Dimension",
+    reshuffleLabel: "Rebrasser le nuage",
+    contrastLabel: "Contraste (max - min) / min",
+    spreadLabel: "Dispersion relative",
+    meanCosineLabel: "Cosinus moyen",
+    concentrationCaption: "Distance de chaque point à la requête. En montant la dimension, l'histogramme se resserre : le plus proche et le plus lointain se rapprochent l'un de l'autre, et le contraste s'effondre.",
+    orthogonalityCaption: "Cosinus entre paires de points. En montant la dimension, la cloche se serre autour de zéro : presque toutes les paires deviennent quasi perpendiculaires.",
+    distanceAxisLabel: "Distance à la requête",
+    cosineAxisLabel: "Cosinus entre paires",
+    countAxisLabel: "Nombre de points"
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. À mesure que la dimension grimpe, l'histogramme des distances se déplace-t-il vers la droite, et que devient sa largeur ? Que vaut le contraste à la dimension 2, puis à la dimension 500 ?
+2. Sur l'onglet des cosinus, autour de quelle valeur la cloche se centre-t-elle ? Que devient sa dispersion quand la dimension augmente ?
+3. À très grande dimension, si toutes les distances se valent et tous les angles sont droits, comment un algorithme pourrait-il encore deviner où chercher le plus proche voisin sans tout comparer ?
+
+## Sous le capot : pourquoi les distances se concentrent
+
+Le composant montre un fait, il ne l'explique pas. L'explication est belle, et elle tient en quelques lignes. Elle repose sur une idée que tu connais peut-être déjà : quand on additionne beaucoup de petites contributions indépendantes, le total devient remarquablement stable.
+
+Prenons deux points $\mathbf{x}$ et $\mathbf{y}$ dont chaque coordonnée est tirée au hasard, indépendamment, selon la même loi. Leur distance au carré, c'est-à-dire le carré de la <Term slug="norme">norme</Term> de leur différence, est, comme on l'a vu au chapitre 1, une somme sur les $d$ dimensions.
+
+$$
+d(\mathbf{x}, \mathbf{y})^2 = \sum_{i=1}^{d} (x_i - y_i)^2
+$$
+
+Cette équation se lit : la distance au carré est la somme, sur chacune des $d$ dimensions, du carré de l'écart entre les deux points dans cette dimension. Regarde bien ce qu'est chaque terme de la somme : $(x_i - y_i)^2$. Comme les coordonnées sont tirées indépendamment et selon la même loi, ces $d$ termes sont eux-mêmes indépendants et de même loi. Appelons $m$ la moyenne d'un seul terme et $v$ sa variance. Ce sont des nombres fixes, qui ne dépendent pas de la dimension.
+
+Une somme de $d$ termes indépendants de même loi a une espérance et une variance qui s'additionnent terme à terme.
+
+$$
+\mathbb{E}\big[d(\mathbf{x}, \mathbf{y})^2\big] = d \times m
+$$
+
+Cette ligne se lit : en moyenne, la distance au carré vaut $d$ fois la moyenne d'un terme. Elle grandit donc proportionnellement à la dimension. C'est pour cela que, dans le composant, l'histogramme se déplace vers la droite quand $d$ augmente : les points sont en moyenne plus loin.
+
+$$
+\mathrm{Var}\big[d(\mathbf{x}, \mathbf{y})^2\big] = d \times v
+$$
+
+La variance, elle aussi, grandit comme $d$. Mais la variance n'est pas la bonne grandeur pour juger l'étalement : il faut l'écart-type, qui est sa racine carrée.
+
+$$
+\sigma\big[d(\mathbf{x}, \mathbf{y})^2\big] = \sqrt{d \times v} = \sqrt{v}\,\sqrt{d}
+$$
+
+L'écart-type grandit donc comme $\sqrt{d}$, pas comme $d$. Voilà le point décisif. Comparons l'étalement à la valeur typique en formant leur rapport, ce qu'on appelle la dispersion relative.
+
+$$
+\frac{\sigma}{\text{moyenne}} = \frac{\sqrt{v}\,\sqrt{d}}{m \times d} = \frac{\sqrt{v}}{m} \times \frac{1}{\sqrt{d}}
+$$
+
+Cette dernière équation est tout le secret. Elle se lit : la dispersion relative des distances au carré est une constante fixe multipliée par un sur racine de $d$. Quand la dimension explose, ce facteur $1/\sqrt{d}$ écrase tout : la dispersion relative tend vers zéro.
+
+<Formula caption="À lire à voix haute">dispersion relative ∝ 1 / √d, qui tend vers 0 quand d grandit</Formula>
+
+Autrement dit, les distances grandissent toutes ensemble, mais leur écart les unes aux autres, rapporté à leur taille, disparaît. Le nuage de toutes les distances se réduit à une coquille fine autour d'une valeur commune. Le plus proche et le plus lointain deviennent presque indiscernables. Ce n'est pas un défaut des machines ni des données : c'est une propriété de la géométrie en grande dimension, démontrée ici en quelques lignes.
+
+<Callout kind="tip" title="Le meme raisonnement pour les angles">
+La quasi-orthogonalité se démontre dans le même esprit. Le produit scalaire de deux vecteurs aléatoires centrés est lui aussi une somme de $d$ termes indépendants de moyenne nulle. Sa moyenne est donc nulle, et une fois divisé par les normes (qui, elles, croissent comme $\sqrt{d}$), le cosinus se concentre autour de zéro avec une dispersion qui rétrécit comme $1/\sqrt{d}$. C'est exactement la cloche qui se resserre dans le second onglet du composant.
+</Callout>
+
+## Mesurer une recherche imparfaite : le rappel@k
+
+On a maintenant les deux raisons d'abandonner la recherche exhaustive en production : elle est trop lente, et la grande dimension rend le terrain hostile. Les chapitres suivants vont donc construire des méthodes plus rapides qui acceptent de rater, parfois, un voisin. Mais dès qu'on accepte de se tromper, une question devient incontournable : se tromper de combien ?
+
+Il faut une mesure de la qualité. La plus courante est le <Term slug="rappel">rappel@k</Term>. Son principe est direct, et il s'appuie exactement sur l'oracle dont on a parlé. On demande à la recherche exhaustive les $k$ vrais plus proches voisins : c'est la vérité. On demande ensuite à la méthode rapide ses $k$ meilleurs résultats. Le rappel@k est la fraction de la vérité que la méthode rapide a retrouvée.
+
+$$
+\text{rappel@}k = \frac{\text{nombre de vrais voisins retrouvés dans le top } k}{k}
+$$
+
+Cette formule se lit : le rappel@k est le nombre de vrais voisins que la méthode rapide a placés dans ses $k$ premiers, divisé par $k$. Un rappel@k de un veut dire qu'elle n'a rien manqué. Un rappel@k de 0,9 veut dire qu'un voisin exact sur dix lui a échappé. C'est l'unité de compte qui nous suivra jusqu'à la fin du cours : chaque fois qu'on gagnera en vitesse, on se demandera ce que ça coûte en rappel.
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : le coût d'un balayage">
+On a une base de $n = 2\,000\,000$ vecteurs, en dimension $d = 768$. On veut estimer le nombre de multiplications d'une seule requête en recherche exhaustive, puis pour 500 requêtes par seconde.
+
+**Étape 1.** Comparer la requête à un vecteur demande de parcourir les $d$ coordonnées, soit de l'ordre de $d$ multiplications.
+
+$$
+d = 768
+$$
+
+**Étape 2.** On répète pour les $n$ vecteurs de la base. Le coût d'une requête est donc le produit.
+
+$$
+n \times d = 2\,000\,000 \times 768
+$$
+
+**Étape 3.** On effectue le produit.
+
+$$
+2\,000\,000 \times 768 = 1\,536\,000\,000
+$$
+
+Soit environ 1,5 milliard de multiplications pour une seule requête.
+
+**Étape 4.** Pour 500 requêtes par seconde, on multiplie encore.
+
+$$
+1\,536\,000\,000 \times 500 = 768\,000\,000\,000
+$$
+
+**Résultat.** Il faudrait de l'ordre de 768 milliards de multiplications par seconde pour tenir la charge en recherche exhaustive. C'est ce mur que les index des chapitres suivants vont contourner.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : un rappel@k à la main">
+La recherche exhaustive (l'oracle) renvoie comme vrais 3 plus proches voisins, dans l'ordre, les documents $[A, B, C]$. Une méthode rapide renvoie, elle, $[A, D, C]$. On veut le rappel@3.
+
+**Étape 1.** On liste la vérité, les $k = 3$ vrais voisins.
+
+$$
+\{A, B, C\}
+$$
+
+**Étape 2.** On liste les 3 résultats de la méthode rapide.
+
+$$
+\{A, D, C\}
+$$
+
+**Étape 3.** On compte combien de vrais voisins figurent dans les résultats rapides. $A$ y est, $B$ n'y est pas, $C$ y est.
+
+$$
+\text{voisins retrouvés} = 2
+$$
+
+**Étape 4.** On divise par $k$.
+
+$$
+\text{rappel@}3 = \frac{2}{3} \approx 0{,}667
+$$
+
+**Résultat.** Le rappel@3 vaut environ 0,667 : la méthode rapide a retrouvé deux des trois vrais voisins, et en a manqué un ($B$), remplacé par un intrus ($D$). C'est typiquement le genre de compromis qu'on acceptera en échange d'une recherche beaucoup plus rapide.
+</Callout>
+
+## En une phrase
+
+La recherche exhaustive donne toujours la réponse exacte et sert d'oracle, mais son coût en $O(n \times d)$ et la malédiction de la dimension, qui concentre les distances et rend les vecteurs quasi perpendiculaires, imposent de bâtir des index plus rapides dont on mesurera l'erreur par le rappel@k.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi dit-on que la recherche exhaustive est exacte ?",
+      options: [
+        "Parce qu'elle est très rapide en grande dimension",
+        "Parce qu'elle compare la requête à tous les vecteurs et ne peut donc rater aucun voisin",
+        "Parce qu'elle ne fonctionne qu'avec la similarité cosinus",
+        "Parce qu'elle normalise toujours les vecteurs"
+      ],
+      answer: 1,
+      explain: "En examinant chaque vecteur de la base, la recherche exhaustive ne peut, par construction, manquer aucun plus proche voisin. Son classement est la vérité, ce qui en fait un oracle de référence."
+    },
+    {
+      q: "Comment grandit le coût d'une requête en recherche exhaustive ?",
+      options: [
+        "Comme le logarithme du nombre de vecteurs",
+        "Comme le carré de la dimension seulement",
+        "Comme le produit du nombre de vecteurs par leur dimension, en O(n x d)",
+        "Il ne dépend ni du nombre de vecteurs ni de la dimension"
+      ],
+      answer: 2,
+      explain: "Comparer la requête à un vecteur coûte de l'ordre de d opérations, et on répète pour les n vecteurs. Le coût total est donc proportionnel à n fois d."
+    },
+    {
+      q: "Quand la dimension grandit, que devient la dispersion relative des distances entre points aléatoires ?",
+      options: [
+        "Elle grandit comme la dimension",
+        "Elle reste constante",
+        "Elle tend vers zéro comme 1 sur racine de la dimension",
+        "Elle devient négative"
+      ],
+      answer: 2,
+      explain: "L'écart-type des distances au carré croît comme racine de d, tandis que leur moyenne croît comme d. Leur rapport vaut donc une constante fois 1 sur racine de d, qui tend vers zéro : c'est la concentration des distances."
+    }
+  ]}
+/>
+
+## Vers le chapitre 3
+
+On sait maintenant deux choses gênantes : comparer tous les vecteurs est exact mais trop lent, et la grande dimension brouille la notion même de proximité. Comment, dès lors, trouver les plus proches voisins sans tout parcourir ? L'idée du chapitre 3 est étonnamment simple à énoncer : et si les vecteurs étaient reliés entre eux par un réseau de raccourcis, de sorte qu'en partant d'un point quelconque et en se déplaçant toujours vers un voisin plus proche de la requête, on arrive en quelques sauts tout près du but ? Ce réseau navigable existe, il s'appelle HNSW, et il transforme une recherche en $O(n)$ en une promenade de quelques étapes. On y entre au chapitre 3.
+
+## Sources
+
+- Bellman, R. (1961). _Adaptive Control Processes: A Guided Tour_. Princeton University Press. (Origine de l'expression « curse of dimensionality ».)
+- Beyer, K., Goldstein, J., Ramakrishnan, R. & Shaft, U. (1999). « When Is "Nearest Neighbor" Meaningful? » _ICDT_. [DOI 10.1007/3-540-49257-7_15](https://doi.org/10.1007/3-540-49257-7_15)
+- Aggarwal, C. C., Hinneburg, A. & Keim, D. A. (2001). « On the Surprising Behavior of Distance Metrics in High Dimensional Space. » _ICDT_. [DOI 10.1007/3-540-44503-X_27](https://doi.org/10.1007/3-540-44503-X_27)
+
+### Pour aller plus loin
+
+- Indyk, P. & Motwani, R. (1998). « Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality. » _STOC_. [DOI 10.1145/276698.276876](https://doi.org/10.1145/276698.276876)
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 7. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)

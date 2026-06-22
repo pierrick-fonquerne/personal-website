@@ -1,0 +1,11 @@
+slug: plus-proches-voisins
+fr:
+  term: Plus proches voisins
+  definition: "Probleme consistant a trouver, parmi un ensemble de points, les k points les plus proches d'une requete selon une mesure de distance ou de similarite. En recherche vectorielle, k plus proches voisins (k-NN) designe les k documents dont l'embedding est le plus proche de celui de la requete."
+en:
+  term: Nearest neighbors
+  definition: "The problem of finding, among a set of points, the k points closest to a query under a distance or similarity measure. In vector search, k nearest neighbors (k-NN) means the k documents whose embedding is closest to the query's."
+seeAlso:
+  - distance-euclidienne
+  - similarite-cosinus
+  - recherche-exhaustive

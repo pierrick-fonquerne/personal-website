@@ -1,0 +1,10 @@
+slug: rappel
+fr:
+  term: Rappel@k
+  definition: "Mesure de la qualite d'une recherche approchee : la fraction des k vrais plus proches voisins (calcules par recherche exhaustive) que la methode approchee retrouve dans ses k premiers resultats. Un rappel@k de 1 signifie qu'aucun voisin exact n'a ete manque ; un rappel@k de 0,8 signifie qu'un voisin exact sur cinq a echappe a la recherche."
+en:
+  term: Recall@k
+  definition: "A measure of the quality of an approximate search: the fraction of the k true nearest neighbors (computed by exhaustive search) that the approximate method recovers in its top k results. A recall@k of 1 means no exact neighbor was missed; a recall@k of 0.8 means one exact neighbor in five escaped the search."
+seeAlso:
+  - plus-proches-voisins
+  - recherche-exhaustive

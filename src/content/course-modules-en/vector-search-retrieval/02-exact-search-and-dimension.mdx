@@ -1,0 +1,268 @@
+---
+course: vector-search-retrieval
+order: 2
+title: Exact search and the curse of dimensionality
+subtitle: 'Comparing every vector gives the perfect answer. Here is its price, and the trap that high dimension sets for our intuition.'
+estimatedMinutes: 28
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DimensionCurseLab from '../../../components/learning/DimensionCurseLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we learned to represent meaning as a vector and to measure proximity between two vectors. But a real engine never compares just two: it has millions, and for each query it would need, in principle, to scan them all. Two questions arise. Is comparing everyone really a problem? And does our lovely planar intuition, made of arrows we draw, still hold when vectors live in a thousand dimensions?
+
+This chapter looks both walls in the face. The first is a cost wall: the perfect search exists, but it comes at a price. The second is more insidious, because it defies intuition: in high dimension, space behaves in a way that will surprise you.
+
+## Exact search: comparing every vector
+
+Let us start with the simplest approach, which is also the safest. We have a query, in the form of a vector, and a database of millions of vectors. We want the closest ones. The obvious method: compute the distance from the query to each vector in the database, then keep the best ones.
+
+Finding the $k$ closest elements to a query has a name: it is the problem of <Term slug="plus-proches-voisins">nearest neighbors</Term>. And the method we just described, comparing the query to everyone, is called <Term slug="recherche-exhaustive">exhaustive search</Term>, or linear scan, or flat index in the jargon of vector databases.
+
+It has one quality that nothing else will ever possess as fully: it is **exact**. Since it examines every vector, it cannot, by construction, miss any neighbor. The ranking it returns is the truth. Hold on to that word, truth, because it will become precious: from chapter 3 onwards, we will look for faster methods that accept being slightly wrong. To know whether they are wrong, we will need a perfect reference to compare them against. That reference is exactly exhaustive search. We say it serves as an **oracle**.
+
+<Callout kind="note" title="Distance or similarity, it does not matter here">
+Exhaustive search does not depend on the measure chosen in chapter 1. Whether we rank by Euclidean distance, cosine similarity, or dot product, the principle is the same: we evaluate the measure for each vector, then sort. Everything that follows therefore applies to all three measures.
+</Callout>
+
+## The cost wall
+
+If exhaustive search is perfect, why does the rest of this course exist? Because it is slow, and we can say exactly how slow.
+
+To compare the query to one vector in dimension $d$, we must traverse all $d$ coordinates: on the order of $d$ operations. To compare it to $n$ vectors, we repeat $n$ times. The total cost of one query is therefore proportional to $n \times d$.
+
+$$
+\text{cost of one query} \propto n \times d
+$$
+
+This expression reads: the cost grows as the product of the number of vectors by their dimension. We denote this behavior $O(n \times d)$. When the database is small, nobody complains. But put in realistic numbers. A database of ten million documents, embeddings of dimension 1536: a single query requires on the order of fifteen billion multiplications. If your service receives one thousand queries per second, do the math, the wall arrives fast.
+
+<Callout kind="info" title="The thread: why keep the flat index at all">
+The vector engine that runs as the thread through this course does implement exhaustive search, even though we just said it is too slow. Why? Precisely because it is exact. It is not used to answer real queries in production, it serves as a test oracle: we ask it for the truth, then verify that the fast index does not stray from it too much. We will return at length to this oracle idea in chapter 5. For now, keep in mind that a slow but exact index is never useless: it is the judge of all the others.
+</Callout>
+
+## The curse of dimensionality
+
+One might think the only problem is cost, and that being smarter would be enough to avoid comparing everything. That is the idea behind the following chapters. But before pursuing it, we need to understand why being smart is so difficult. The reason has nothing to do with the speed of machines: it lies in the geometry itself.
+
+In low dimension, in the plane or in space, our intuition works. There are close points and distant points, dense regions and sparse regions. Finding the nearest neighbor has a clear meaning. In high dimension, this intuition breaks down. The set of phenomena that arise then has a name: the <Term slug="malediction-de-la-dimension">curse of dimensionality</Term>. Two of them alone decide the difficulty of all vector search.
+
+The first: <Term slug="concentration-des-distances">distance concentration</Term>. If you draw random points and measure their distances to a reference point, those distances, in high dimension, all look alike. The nearest is barely closer than the farthest. The very notion of nearest neighbor becomes blurry.
+
+The second: quasi-<Term slug="orthogonalite">orthogonality</Term>. Two vectors drawn at random in high dimension are almost always perpendicular, hence with a cosine similarity close to zero. Space is so vast that two directions taken at random almost never have anything in common.
+
+Both claims are surprising. Do not take them on faith: go and see.
+
+## Seeing the curse
+
+The component below draws a cloud of points whose every coordinate is random, in the dimension you choose. The left tab shows the distribution of distances to a query; the right tab shows the distribution of cosines between pairs of points. Slide the dimension from 1 up to 1000 and watch the two histograms transform.
+
+<DimensionCurseLab
+  client:visible
+  seed={2024}
+  initialDimension={2}
+  labels={{
+    concentrationTab: "Distance concentration",
+    orthogonalityTab: "Quasi-orthogonality",
+    dimensionLabel: "Dimension",
+    reshuffleLabel: "Reshuffle the cloud",
+    contrastLabel: "Contrast (max - min) / min",
+    spreadLabel: "Relative spread",
+    meanCosineLabel: "Mean cosine",
+    concentrationCaption: "Distance from each point to the query. As dimension rises, the histogram narrows: the nearest and the farthest draw closer to each other, and the contrast collapses.",
+    orthogonalityCaption: "Cosine between pairs of points. As dimension rises, the bell tightens around zero: almost every pair becomes quasi-perpendicular.",
+    distanceAxisLabel: "Distance to query",
+    cosineAxisLabel: "Cosine between pairs",
+    countAxisLabel: "Number of points"
+  }}
+/>
+
+Three questions to ask yourself while exploring:
+
+1. As dimension climbs, does the distance histogram shift to the right, and what happens to its width? What is the contrast at dimension 2, and then at dimension 500?
+2. On the cosine tab, around what value does the bell center? What happens to its spread as dimension increases?
+3. At very high dimension, if all distances are roughly equal and all angles are right angles, how could an algorithm still guess where to look for the nearest neighbor without comparing everything?
+
+## Under the hood: why distances concentrate
+
+The component shows a fact, it does not explain it. The explanation is elegant, and it fits in a few lines. It rests on an idea you may already know: when you add many small independent contributions together, the total becomes remarkably stable.
+
+Take two points $\mathbf{x}$ and $\mathbf{y}$ whose every coordinate is drawn at random, independently, from the same distribution. Their squared distance, that is the square of the <Term slug="norme">norm</Term> of their difference, is, as we saw in chapter 1, a sum over the $d$ dimensions.
+
+$$
+d(\mathbf{x}, \mathbf{y})^2 = \sum_{i=1}^{d} (x_i - y_i)^2
+$$
+
+This equation reads: the squared distance is the sum, over each of the $d$ dimensions, of the square of the gap between the two points in that dimension. Look carefully at each term in the sum: $(x_i - y_i)^2$. Since the coordinates are drawn independently from the same distribution, these $d$ terms are themselves independent and identically distributed. Call $m$ the mean of a single term and $v$ its variance. These are fixed numbers, independent of the dimension.
+
+A sum of $d$ independent identically distributed terms has an expectation and a variance that add up term by term.
+
+$$
+\mathbb{E}\big[d(\mathbf{x}, \mathbf{y})^2\big] = d \times m
+$$
+
+This line reads: on average, the squared distance equals $d$ times the mean of one term. It therefore grows proportionally to the dimension. That is why, in the component, the histogram shifts to the right as $d$ increases: points are on average farther apart.
+
+$$
+\mathrm{Var}\big[d(\mathbf{x}, \mathbf{y})^2\big] = d \times v
+$$
+
+The variance also grows like $d$. But variance is not the right quantity to judge spread: we need the standard deviation, which is its square root.
+
+$$
+\sigma\big[d(\mathbf{x}, \mathbf{y})^2\big] = \sqrt{d \times v} = \sqrt{v}\,\sqrt{d}
+$$
+
+The standard deviation therefore grows like $\sqrt{d}$, not like $d$. That is the decisive point. Let us compare the spread to the typical value by forming their ratio, which is called the relative spread.
+
+$$
+\frac{\sigma}{\text{mean}} = \frac{\sqrt{v}\,\sqrt{d}}{m \times d} = \frac{\sqrt{v}}{m} \times \frac{1}{\sqrt{d}}
+$$
+
+This last equation holds the entire secret. It reads: the relative spread of squared distances is a fixed constant times one over the square root of $d$. As dimension explodes, this factor $1/\sqrt{d}$ crushes everything: the relative spread tends to zero.
+
+<Formula caption="Read it aloud">relative spread proportional to 1 / sqrt(d), which tends to 0 as d grows</Formula>
+
+In other words, all distances grow together, but their gap relative to their size disappears. The cloud of all distances shrinks to a thin shell around a common value. The nearest and the farthest become almost indistinguishable. This is not a flaw in the machines or the data: it is a property of the geometry in high dimension, demonstrated here in a few lines.
+
+<Callout kind="tip" title="The same reasoning for angles">
+Quasi-orthogonality is proved in the same spirit. The dot product of two random centered vectors is also a sum of $d$ independent terms with zero mean. Its mean is therefore zero, and once divided by the norms (which grow like $\sqrt{d}$), the cosine concentrates around zero with a spread that shrinks like $1/\sqrt{d}$. That is exactly the bell tightening in the second tab of the component.
+</Callout>
+
+## Measuring an imperfect search: recall at k
+
+We now have the two reasons to abandon exhaustive search in production: it is too slow, and high dimension makes the terrain hostile. The following chapters will therefore build faster methods that accept occasionally missing a neighbor. But as soon as we accept being wrong, one question becomes unavoidable: wrong by how much?
+
+We need a quality measure. The most common is <Term slug="rappel">recall at k</Term>. Its principle is direct, and it relies exactly on the oracle we talked about. We ask exhaustive search for the $k$ true nearest neighbors: that is the truth. We then ask the fast method for its $k$ best results. Recall at k is the fraction of the truth that the fast method recovered.
+
+$$
+\text{recall@}k = \frac{\text{number of true neighbors found in the top } k}{k}
+$$
+
+This formula reads: recall at k is the number of true neighbors that the fast method placed in its top $k$, divided by $k$. A recall at k of one means it missed nothing. A recall at k of 0.9 means one exact neighbor in ten slipped through. That is the unit of account that will follow us to the end of the course: every time we gain in speed, we will ask what it costs in recall.
+
+## Exercises
+
+<Callout kind="tip" title="Exercise 1 solution: the cost of a linear scan">
+We have a database of $n = 2{,}000{,}000$ vectors in dimension $d = 768$. We want to estimate the number of multiplications for a single query under exhaustive search, then for 500 queries per second.
+
+**Step 1.** Comparing the query to one vector requires traversing all $d$ coordinates, on the order of $d$ multiplications.
+
+$$
+d = 768
+$$
+
+**Step 2.** We repeat for all $n$ vectors in the database. The cost of one query is therefore the product.
+
+$$
+n \times d = 2{,}000{,}000 \times 768
+$$
+
+**Step 3.** We compute the product.
+
+$$
+2{,}000{,}000 \times 768 = 1{,}536{,}000{,}000
+$$
+
+That is approximately 1.5 billion multiplications for a single query.
+
+**Step 4.** For 500 queries per second, we multiply again.
+
+$$
+1{,}536{,}000{,}000 \times 500 = 768{,}000{,}000{,}000
+$$
+
+**Result.** About 768 billion multiplications per second would be needed to sustain that load under exhaustive search. That is the wall the indexes in the following chapters will work around.
+</Callout>
+
+<Callout kind="tip" title="Exercise 2 solution: recall at k by hand">
+Exhaustive search (the oracle) returns as the true 3 nearest neighbors, in order, documents $[A, B, C]$. A fast method returns $[A, D, C]$. We want recall at 3.
+
+**Step 1.** List the ground truth: the $k = 3$ true neighbors.
+
+$$
+\{A, B, C\}
+$$
+
+**Step 2.** List the 3 results from the fast method.
+
+$$
+\{A, D, C\}
+$$
+
+**Step 3.** Count how many true neighbors appear in the fast results. $A$ is there, $B$ is not, $C$ is there.
+
+$$
+\text{neighbors found} = 2
+$$
+
+**Step 4.** Divide by $k$.
+
+$$
+\text{recall@}3 = \frac{2}{3} \approx 0.667
+$$
+
+**Result.** Recall at 3 is approximately 0.667: the fast method recovered two of the three true neighbors and missed one ($B$), replaced by an intruder ($D$). That is typically the kind of trade-off we accept in exchange for a much faster search.
+</Callout>
+
+## In one sentence
+
+Exhaustive search always returns the exact answer and serves as an oracle, but its $O(n \times d)$ cost and the curse of dimensionality, which concentrates distances and makes vectors quasi-perpendicular, force us to build faster indexes whose error we will measure by recall at k.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why do we say that exhaustive search is exact?",
+      options: [
+        "Because it is very fast in high dimension",
+        "Because it compares the query to every vector and therefore cannot miss any neighbor",
+        "Because it only works with cosine similarity",
+        "Because it always normalizes vectors"
+      ],
+      answer: 1,
+      explain: "By examining every vector in the database, exhaustive search cannot, by construction, miss any nearest neighbor. Its ranking is the ground truth, which makes it a reference oracle."
+    },
+    {
+      q: "How does the cost of one query grow under exhaustive search?",
+      options: [
+        "As the logarithm of the number of vectors",
+        "As the square of the dimension only",
+        "As the product of the number of vectors by their dimension, in O(n x d)",
+        "It depends on neither the number of vectors nor the dimension"
+      ],
+      answer: 2,
+      explain: "Comparing the query to one vector costs on the order of d operations, and we repeat for all n vectors. The total cost is therefore proportional to n times d."
+    },
+    {
+      q: "As dimension grows, what happens to the relative spread of distances between random points?",
+      options: [
+        "It grows like the dimension",
+        "It stays constant",
+        "It tends toward zero like 1 over the square root of the dimension",
+        "It becomes negative"
+      ],
+      answer: 2,
+      explain: "The standard deviation of squared distances grows like the square root of d, while their mean grows like d. Their ratio is therefore a constant times 1 over the square root of d, which tends to zero: that is distance concentration."
+    }
+  ]}
+/>
+
+## Towards chapter 3
+
+We now know two uncomfortable things: comparing all vectors is exact but too slow, and high dimension blurs the very notion of proximity. How, then, can we find nearest neighbors without scanning everything? The idea of chapter 3 is surprisingly simple to state: what if vectors were linked to each other by a network of shortcuts, so that starting from any point and always moving towards a neighbor closer to the query, you arrive in a few hops near the goal? That navigable network exists, it is called HNSW, and it turns an $O(n)$ search into a stroll of a few steps. We enter it in chapter 3.
+
+## Sources
+
+- Bellman, R. (1961). _Adaptive Control Processes: A Guided Tour_. Princeton University Press. (Origin of the expression "curse of dimensionality".)
+- Beyer, K., Goldstein, J., Ramakrishnan, R. & Shaft, U. (1999). "When Is 'Nearest Neighbor' Meaningful?" _ICDT_. [DOI 10.1007/3-540-49257-7_15](https://doi.org/10.1007/3-540-49257-7_15)
+- Aggarwal, C. C., Hinneburg, A. & Keim, D. A. (2001). "On the Surprising Behavior of Distance Metrics in High Dimensional Space." _ICDT_. [DOI 10.1007/3-540-44503-X_27](https://doi.org/10.1007/3-540-44503-X_27)
+
+### Further reading
+
+- Indyk, P. & Motwani, R. (1998). "Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality." _STOC_. [DOI 10.1145/276698.276876](https://doi.org/10.1145/276698.276876)
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 7. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)
