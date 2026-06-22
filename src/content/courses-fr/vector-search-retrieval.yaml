@@ -11,7 +11,7 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 200
+estimatedMinutes: 34
 modules:
   - 00-avant-propos
   - 01-embeddings-et-geometrie
@@ -21,5 +21,6 @@ personalNote: |
   J'ai vite réalisé que ces concepts forment une chaîne d'une élégance rare. On part d'une idée presque philosophique, le sens comme une position dans l'espace, et on descend, marche après marche, jusqu'à des structures de données concrètes et des compromis d'ingénieur très palpables. Chaque chapitre répond à une limite laissée par le précédent.
 
   Je ne suis ni chercheur en recherche d'information ni spécialiste des bases de données de formation. J'écris ce cours comme je l'aurais voulu en démarrant mon propre moteur : rigoureux sur les définitions, honnête sur les compromis, et toujours accompagné de quelque chose à manipuler pour que l'intuition rentre. Le moteur que je construis sert de fil rouge, mais tout ce qu'on verra vaut pour n'importe quelle base vectorielle.
-published: false
+published: true
+publishedAt: 2026-06-22
 order: 3
