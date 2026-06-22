@@ -50,7 +50,7 @@ export const SUBTHEMES_BY_THEME = {
     'numerical-methods',
     'graph-theory',
   ],
-  ai: ['neural-nets', 'autonomous-agents', 'llm-mcp'],
+  ai: ['neural-nets', 'autonomous-agents', 'llm-mcp', 'vector-search'],
   systems: ['async-perf', 'embedded-rust', 'kernel-no-std'],
   data: ['storage-engines', 'event-stores', 'rebac', 'ledgers'],
   security: ['applied-crypto', 'auth', 'audit'],

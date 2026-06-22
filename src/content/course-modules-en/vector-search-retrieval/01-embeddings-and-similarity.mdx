@@ -1,0 +1,265 @@
+---
+course: vector-search-retrieval
+order: 1
+title: Embeddings and the geometry of similarity
+subtitle: "Meaning as a position in space, and three ways to measure how close two meanings are."
+estimatedMinutes: 26
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DotProductViewer from '../../../components/learning/DotProductViewer.tsx';
+import SimilarityExplorer from '../../../components/learning/SimilarityExplorer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+The foreword made a promise: to search by meaning, not by characters. But a promise is not a method. If meaning must become a position in space, then two very concrete questions arise. What exactly is a position here? And how do we measure that two positions are close, given that a perfectly aligned but distant word might well lose to an approximate but very nearby one?
+
+This chapter answers both. It lays the building block on which the entire course rests: representing a text as a vector, and choosing the right rule to measure their proximity.
+
+## Meaning as a position
+
+Here is the founding idea, and it is older than modern computing. The linguist John Firth summed it up in 1957 with a phrase that has remained famous: you shall know a word by the company it keeps (Firth, 1957). "Cat" and "feline" appear in the same contexts, surrounded by the same neighbors ("purrs", "paws", "whiskers"), so they have a similar meaning. This idea has a name, the <Term slug="hypothese-distributionnelle">distributional hypothesis</Term>, and it is what makes semantic search possible.
+
+How do we turn it into numbers? We hand that work to a neural network, exactly the building block from the course "Neural Networks: Foundations and Mathematics". By processing large amounts of text, the network learns to assign to each word, each sentence, an <Term slug="embedding">embedding</Term>: an ordered list of numbers, that is, a <Term slug="vecteur">vector</Term>, chosen so that similar meanings receive similar vectors. We do not redo that learning here, which belongs to the foundations course. We start from the result: text goes in, a vector comes out.
+
+<Callout kind="note" title="An assumed simplification">
+In this chapter, vectors live in the plane, in two dimensions, so that we can draw and manipulate them. Real embeddings have hundreds or even thousands of dimensions (often 768 or 1536). Everything we will see, both the formulas and the intuitions, generalizes word for word to those high dimensions. The only thing that truly changes in high dimension, we will see it in chapter 2, and it is quite surprising.
+</Callout>
+
+## Three ways to measure proximity
+
+We have two vectors. We want a number that says how close they are. There are three classic measures, and the choice between them is not a detail: it changes who wins.
+
+### The dot product
+
+The first building block is the <Term slug="produit-scalaire">dot product</Term>. We multiply the two vectors coordinate by coordinate, then add everything up.
+
+$$
+\mathbf{x} \cdot \mathbf{y} = \sum_{i=1}^{n} x_i \, y_i
+$$
+
+This equation reads: the dot product of x and y is the sum, for each dimension i, of the product of the i-th coordinate of x by the i-th coordinate of y. It is a single number. It is large when the two vectors are both long and pointing in the same direction, and it equals zero when they are perpendicular.
+
+### The norm and the Euclidean distance
+
+The length of a vector, its norm, follows from the dot product of the vector with itself.
+
+$$
+\lVert \mathbf{x} \rVert = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{\sum_{i=1}^{n} x_i^2}
+$$
+
+This is the Pythagorean theorem in n dimensions: the length is the square root of the sum of the squared coordinates. From this comes the most intuitive measure of proximity, the <Term slug="distance-euclidienne">Euclidean distance</Term>: the length of the segment separating the two points.
+
+$$
+d(\mathbf{x}, \mathbf{y}) = \lVert \mathbf{x} - \mathbf{y} \rVert = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
+$$
+
+This reads: the distance between x and y is the square root of the sum of squared coordinate-by-coordinate differences. The smaller it is, the closer the points are. Watch the direction: here, small means close, the opposite of the dot product.
+
+### Cosine similarity
+
+Euclidean distance has a flaw for comparing meanings: it mixes two pieces of information, direction and length. Yet for a text, it is often the direction that carries the meaning, not the length of the vector. We therefore want a pure angle measure. That is <Term slug="similarite-cosinus">cosine similarity</Term>: the cosine of the angle between the two vectors.
+
+$$
+\cos\theta = \frac{\mathbf{x} \cdot \mathbf{y}}{\lVert \mathbf{x} \rVert \, \lVert \mathbf{y} \rVert}
+$$
+
+This reads: the cosine of the angle is the dot product divided by the product of the two lengths. You recognize the dot product, but stripped of the length effect by the division. The result lives in the interval from minus one to one: it equals one when the vectors point in the same direction, zero when they are perpendicular, and minus one when they are opposite.
+
+<Formula caption="Read it aloud">cos(θ) = (x · y) / (‖x‖ × ‖y‖), between -1 and 1</Formula>
+
+Play with the two arrows below. Watch the dot product, the norms, and the angle change together. Notice that stretching one arrow without rotating it makes the dot product climb but leaves the angle unchanged: that is exactly the difference cosine erases.
+
+<DotProductViewer client:visible initialX={[1.2, 0.6]} initialW={[0.6, 1.2]} labels={{ dotLabel: "Dot product", normLabel: "Norm", angleLabel: "Angle", helpText: "Play with the coordinates. When the arrows point the same way, the dot product is maximal. When they are perpendicular, it is zero." }} />
+
+## When the measure changes the winner
+
+Here is the moment that matters. As long as you compare two vectors, the choice of measure seems academic. But as soon as you rank several candidates against a query, the measure decides the ranking, and two measures can point to two different winners.
+
+In the component below, a query (in color) faces several candidates. You can move the query, choose the measure, and toggle normalization on or off. The ranking recalculates live.
+
+<SimilarityExplorer
+  client:load
+  initialQuery={[1, 0.12]}
+  candidates={[
+    { id: "automobile", label: "automobile", vector: [1.8, 0.3] },
+    { id: "bagnole", label: "jalopy", vector: [0.5, 0.1] },
+    { id: "moteur", label: "engine", vector: [0.7, 0.7] },
+    { id: "banane", label: "banana", vector: [-0.4, 1.0] }
+  ]}
+  labels={{
+    queryLabel: "car (query)",
+    metricTitle: "Proximity measure",
+    cosineLabel: "Cosine (angle)",
+    euclideanLabel: "Euclidean distance",
+    dotLabel: "Dot product",
+    normalizeLabel: "Normalize vectors",
+    rankingTitle: "Candidate ranking",
+    scoreLabel: "score",
+    helpText: "Switch between cosine and Euclidean distance without normalization: \"automobile\" (aligned but long) and \"jalopy\" (close but short) swap positions. Then enable normalization and watch the two measures converge."
+  }}
+/>
+
+Three questions to ask yourself while exploring:
+
+1. Without normalization, who wins with cosine, "automobile" or "jalopy"? And with Euclidean distance? Why the disagreement?
+2. What happens to that disagreement when you enable normalization?
+3. Does "banana" ever rise in the ranking, regardless of the measure? What does its position tell you about the meaning assigned to it?
+
+## Under the hood: why normalizing reconciles everything
+
+The component reveals a striking fact: once vectors are normalized, the cosine ranking and the Euclidean distance ranking become identical. This is not a coincidence, and the reason fits in two lines of calculation.
+
+<Term slug="normalisation">Normalizing</Term> a vector means bringing it to a length of one by dividing by its norm, without changing its direction. Let us therefore place ourselves on the unit sphere, where all vectors have length one. The squared distance between two such vectors expands as follows:
+
+$$
+d(\mathbf{x}, \mathbf{y})^2 = \lVert \mathbf{x} \rVert^2 + \lVert \mathbf{y} \rVert^2 - 2\,(\mathbf{x} \cdot \mathbf{y}) = 2 - 2\cos\theta
+$$
+
+Since both norms equal one, only two minus two times the cosine remains. In other words:
+
+$$
+\cos\theta = 1 - \frac{d^2}{2}
+$$
+
+This relation says it all: on the unit sphere, the smaller the angle (cosine close to one), the smaller the distance. The two measures vary in opposite directions but in a strictly monotone way, so they produce exactly the same ranking. This is the deep reason why many vector databases normalize embeddings on ingestion: they can then use Euclidean distance, often simpler to index, while reasoning in effect on angles.
+
+<Callout kind="info" title="The running thread: a metric-neutral port">
+In the vector engine that serves as the running thread for this course, the proximity measure is not hardwired: it is a parameter. The core of the index does not know whether it is ranking by cosine or by distance, it receives a measure function. This neutrality is not vanity: it follows directly from what we just saw. Since, after normalization, cosine and distance give the same order, we may as well leave the choice to the caller and keep the core independent of that detail.
+</Callout>
+
+## A surprise waiting in high dimension
+
+All our intuition comes from the plane, where we draw arrows. It will betray us in the next chapter. In high dimension, a counter-intuitive phenomenon takes hold: if you draw two vectors at random in a thousand-dimensional space, they are almost always nearly perpendicular, so their cosine is close to zero. Distances, meanwhile, all look alike. The space becomes strangely empty and uniform. This phenomenon has a name, the curse of dimensionality, and it alone decides the difficulty of all vector search. We will face it head-on in chapter 2.
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: a cosine by hand">
+We want the cosine similarity between vectors $\mathbf{x} = (2, 1)$ and $\mathbf{y} = (1, 3)$.
+
+**Step 1.** We compute the dot product, coordinate by coordinate.
+
+$$
+2 \times 1 = 2
+$$
+
+$$
+1 \times 3 = 3
+$$
+
+$$
+\mathbf{x} \cdot \mathbf{y} = 2 + 3 = 5
+$$
+
+**Step 2.** We compute the norm of each vector.
+
+$$
+\lVert \mathbf{x} \rVert = \sqrt{2^2 + 1^2} = \sqrt{5}
+$$
+
+$$
+\lVert \mathbf{y} \rVert = \sqrt{1^2 + 3^2} = \sqrt{10}
+$$
+
+**Step 3.** We apply the cosine formula.
+
+$$
+\cos\theta = \frac{5}{\sqrt{5} \times \sqrt{10}} = \frac{5}{\sqrt{50}}
+$$
+
+**Step 4.** We simplify. Since $\sqrt{50} = 5\sqrt{2}$, the five cancels.
+
+$$
+\cos\theta = \frac{5}{5\sqrt{2}} = \frac{1}{\sqrt{2}} \approx 0.707
+$$
+
+**Result.** The cosine similarity is approximately 0.707, which corresponds to a 45-degree angle between the two vectors.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: when two measures disagree">
+We have a query $\mathbf{q} = (1, 0)$ and two candidates: $\mathbf{a} = (5, 0)$, perfectly aligned but far away, and $\mathbf{b} = (1, 0.5)$, very close but tilted. We want the ranking by cosine, then by distance.
+
+**Step 1.** Cosine of candidate a. It is on the same axis as the query, so the angle is zero.
+
+$$
+\cos\theta_a = \frac{1 \times 5 + 0 \times 0}{1 \times 5} = 1
+$$
+
+**Step 2.** Cosine of candidate b.
+
+$$
+\cos\theta_b = \frac{1 \times 1 + 0 \times 0.5}{1 \times \sqrt{1^2 + 0.5^2}} = \frac{1}{\sqrt{1.25}} \approx 0.894
+$$
+
+By cosine, a (1) beats b (0.894).
+
+**Step 3.** Euclidean distance of candidate a.
+
+$$
+d(\mathbf{q}, \mathbf{a}) = \sqrt{(1 - 5)^2 + 0^2} = \sqrt{16} = 4
+$$
+
+**Step 4.** Euclidean distance of candidate b.
+
+$$
+d(\mathbf{q}, \mathbf{b}) = \sqrt{(1 - 1)^2 + (0 - 0.5)^2} = \sqrt{0.25} = 0.5
+$$
+
+By distance, b (0.5) beats a (4).
+
+**Result.** The two measures contradict each other: cosine crowns a, distance crowns b. Cosine only looks at the angle and ignores that a is five times too long; distance sees that a is far away. Normalizing both candidates removes the length effect and reconciles the rankings, as shown by the relation in the previous section.
+</Callout>
+
+## In one sentence
+
+An embedding places meaning in a geometric space, and the measure we choose to compare those positions, dot product, distance, or cosine, decides the ranking: for the meaning of a text, it is the angle that matters, which normalization makes explicit.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why do we often prefer cosine similarity over Euclidean distance for comparing text embeddings?",
+      options: [
+        "Because it is faster to compute",
+        "Because it only looks at direction and ignores the length of vectors",
+        "Because it always gives a whole number",
+        "Because it only works in high dimension"
+      ],
+      answer: 1,
+      explain: "Cosine measures the angle between two vectors and ignores their length. For a text, meaning is mostly carried by the direction of the vector, not by its norm, which is why this choice is so common."
+    },
+    {
+      q: "What is the cosine similarity of two perpendicular vectors?",
+      options: ["1", "0", "-1", "It depends on their length"],
+      answer: 1,
+      explain: "Two perpendicular vectors form a 90-degree angle, whose cosine is zero. Their dot product is zero, so the cosine is zero too."
+    },
+    {
+      q: "After normalizing all vectors, what can be said about the cosine ranking and the Euclidean distance ranking?",
+      options: [
+        "They are always opposite",
+        "They are identical",
+        "They have no relationship",
+        "Cosine becomes unusable"
+      ],
+      answer: 1,
+      explain: "On the unit sphere, the relation cos(θ) = 1 - d²/2 links the two measures in a strictly monotone way: a larger cosine corresponds to a smaller distance. Both therefore produce exactly the same order."
+    }
+  ]}
+/>
+
+## Toward chapter 2
+
+We now know how to represent meaning as a vector and measure proximity between two vectors. But a real engine does not compare two vectors: it has millions of them, and for each query it would theoretically need to scan them all. This exhaustive search is exact, but its cost grows with the number of vectors. Worse, the geometric intuition of the plane breaks down in high dimension, where real embeddings live. Chapter 2 faces both walls head-on: the cost of exact search, and the curse of dimensionality that makes the problem so peculiar.
+
+## Sources
+
+- Firth, J. R. (1957). "A synopsis of linguistic theory 1930-1955." In _Studies in Linguistic Analysis_, 1-32. Blackwell.
+- Mikolov, T., Chen, K., Corrado, G. & Dean, J. (2013). "Efficient Estimation of Word Representations in Vector Space." [arXiv:1301.3781](https://arxiv.org/abs/1301.3781)
+- Reimers, N. & Gurevych, I. (2019). "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks." _EMNLP_. [arXiv:1908.10084](https://arxiv.org/abs/1908.10084)
+
+### Further reading
+
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 6 (Scoring, term weighting and the vector space model). [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)

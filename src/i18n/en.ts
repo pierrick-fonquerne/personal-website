@@ -482,6 +482,7 @@ const en: Translations = {
     'neural-nets': 'Neural networks',
     'autonomous-agents': 'Autonomous agents',
     'llm-mcp': 'LLM and MCP',
+    'vector-search': 'Vector search',
     'async-perf': 'Async and performance',
     'embedded-rust': 'Embedded Rust',
     'kernel-no-std': 'Kernel and no_std',

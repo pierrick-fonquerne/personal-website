@@ -1,0 +1,13 @@
+slug: embedding
+fr:
+  term: Embedding (plongement)
+  definition: "Représentation d'un objet (mot, phrase, image) par un vecteur de nombres réels, apprise par un réseau de neurones de sorte que la proximité géométrique reflète la proximité de sens. Deux textes au sens voisin reçoivent des vecteurs voisins. Les dimensions usuelles vont de quelques centaines à quelques milliers (par exemple 768 ou 1536)."
+  source: 'Mikolov et al., 2013'
+en:
+  term: Embedding
+  definition: "A representation of an object (word, sentence, image) as a vector of real numbers, learned by a neural network so that geometric proximity reflects proximity of meaning. Two texts with close meanings get close vectors. Typical dimensions range from a few hundred to a few thousand (for example 768 or 1536)."
+  source: 'Mikolov et al., 2013'
+seeAlso:
+  - vecteur
+  - espace-vectoriel
+  - similarite-cosinus

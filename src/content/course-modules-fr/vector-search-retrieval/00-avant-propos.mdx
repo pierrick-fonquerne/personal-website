@@ -1,0 +1,98 @@
+---
+course: vector-search-retrieval
+order: 0
+title: Avant-propos
+subtitle: 'Pourquoi chercher par le sens, ce que ce cours couvre, et comment le lire.'
+estimatedMinutes: 8
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+
+Tu tapes « voiture » dans un moteur de recherche, et un document qui ne parle que d'« automobile » te file entre les doigts. Pourtant c'est le même sens. Le moteur, lui, ne cherchait pas un sens : il cherchait une suite de caractères. Ces deux mots n'ont aucune lettre commune au bon endroit, donc pour lui ils n'ont rien à voir. Ce cours répare exactement ce défaut.
+
+On va apprendre à chercher par le sens. Pour ça, il faudra d'abord transformer un texte en un objet géométrique, un point dans un espace, de telle sorte que deux textes au sens proche deviennent deux points proches. Cet objet porte un nom, l'embedding, et c'est la première brique de tout le reste. Le chapitre 1 le définit en détail.
+
+## Deux façons de chercher
+
+Il existe deux grandes familles de recherche, et tout le cours vit dans leur tension.
+
+La première est la recherche **lexicale** : on compare les mots, les caractères. C'est rapide, c'est exact, et c'est imbattable pour retrouver un identifiant précis ou un mot rare. Mais elle est aveugle aux synonymes : « voiture » et « automobile » lui sont étrangers, « chat » et « félin » aussi.
+
+La seconde est la recherche **sémantique** : on compare les sens. Elle retrouve « automobile » à partir de « voiture », et même « comment réparer un moteur qui cale » à partir de « ma bagnole broute au démarrage ». Son prix : il faut représenter le sens par des nombres, et accepter de ne plus chercher une égalité exacte mais une proximité.
+
+Cette seconde famille a explosé pour une raison très concrète. Les modèles de langage ont besoin, pour répondre juste, qu'on leur retrouve les bons passages dans une masse de documents. Ce mariage entre une recherche par le sens et un modèle qui rédige porte un nom, le RAG, et c'est la destination de ce cours.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir pour suivre** : ce qu'est un vecteur (une liste ordonnée de nombres) et l'idée qu'un réseau de neurones apprend à partir d'exemples. Ces deux notions sont au cœur du cours « Réseaux de neurones : fondations et mathématiques », qui est le prérequis naturel de celui-ci, car c'est un réseau qui fabrique les embeddings dont on va se servir. Un peu d'aisance avec la géométrie du plan et la notation grand-O aide pour les chapitres centraux.
+
+**Ce qu'il n'est pas nécessaire de connaître** : une base de données vectorielle particulière, l'algèbre linéaire avancée (on introduit ce qu'il faut, quand il le faut), et un langage de programmation précis.
+
+**Niveau de rigueur** : ce cours vise le standard d'un cours de licence tout en restant lisible par un lecteur motivé venu des fondations. La plupart des chapitres restent intermédiaires ; certaines sections « sous le capot », signalées, poussent plus loin pour qui veut creuser.
+</Callout>
+
+## Le parcours
+
+Le cours suit un fil simple : représenter le sens, le retrouver vite, le rendre robuste, puis le mettre au service d'un modèle. Chaque chapitre répond à une limite laissée ouverte par le précédent.
+
+### Bloc 1 : représenter et mesurer le sens
+
+Comment un texte devient un vecteur, et comment on mesure que deux vecteurs sont proches. Puis la recherche exacte, sa garantie parfaite, et le mur sur lequel elle se fracasse quand les vecteurs se comptent en millions et vivent en grande dimension.
+
+### Bloc 2 : retrouver vite, sans tout comparer
+
+On renonce à l'exactitude pour gagner en vitesse. Le graphe HNSW et sa navigation de proche en proche, le paysage des familles d'index et leurs compromis, et surtout l'outil qui dit si un index approximatif est bon ou s'il ment silencieusement.
+
+### Bloc 3 : durcir, marier, servir
+
+Rendre l'index durable sans le corrompre au moindre crash, le marier à la recherche lexicale pour le meilleur des deux mondes, et enfin brancher tout ça sur un modèle de langage.
+
+<MermaidDiagram
+  client:visible
+  caption="Les trois blocs du cours et leur progression"
+  definition={`flowchart TB
+    subgraph B1["Bloc 1 : représenter et mesurer"]
+      direction LR
+      c1[1. Embeddings et géométrie] --> c2[2. Recherche exacte et dimension]
+    end
+    subgraph B2["Bloc 2 : retrouver vite"]
+      direction LR
+      c3[3. Le graphe HNSW] --> c4[4. Paysage des index] --> c5[5. L'oracle différentiel]
+    end
+    subgraph B3["Bloc 3 : durcir, marier, servir"]
+      direction LR
+      c6[6. Index durable] --> c7[7. BM25 et hybride] --> c8[8. Du retrieval au RAG]
+    end
+    B1 --> B2 --> B3`}
+/>
+
+<Callout kind="note" title="Un cours en construction">
+Ce cours s'écrit chapitre par chapitre. Le bloc 1 démarre maintenant avec le chapitre 1. Les blocs suivants arriveront au fil de la rédaction. La carte ci-dessus est la destination, pas l'état actuel.
+</Callout>
+
+## Pour qui ce cours
+
+- **Tu utilises déjà une base vectorielle** (pgvector, Qdrant, FAISS...) sans bien savoir ce qui tourne dessous. Tu vas enfin voir l'intérieur de la boîte.
+- **Tu construis un système de RAG** et tu veux comprendre pourquoi tes résultats sont parfois à côté de la plaque. La réponse est presque toujours dans la chaîne qu'on déplie ici.
+- **Tu aimes voir les ponts** entre une idée abstraite (le sens comme géométrie) et des structures de données concrètes. C'est précisément le voyage de ce cours.
+
+Ce cours **n'est pas** un tutoriel d'une bibliothèque particulière, ni un état de l'art de la recherche la plus récente, qui bouge trop vite pour un cours.
+
+## En une phrase
+
+Chercher par le sens, c'est représenter chaque texte par un point dans un espace, mesurer la proximité entre ces points, puis bâtir tout l'outillage qui permet de retrouver les plus proches à grande échelle, vite et sans se tromper.
+
+## Place au chapitre 1
+
+Tout part d'une question presque philosophique. Si le sens doit devenir une position dans l'espace, alors qu'est-ce qu'une position, et comment mesure-t-on que deux positions sont proches ? Un mot perfectionniste mais lointain doit-il battre un mot approximatif mais tout proche ? C'est là, dans la géométrie de la similarité, que commence le chapitre 1.
+
+## Sources
+
+- Firth, J. R. (1957). « A synopsis of linguistic theory 1930-1955. » In _Studies in Linguistic Analysis_, 1-32. Blackwell. (Source de l'hypothèse distributionnelle.)
+- Mikolov, T., Chen, K., Corrado, G. & Dean, J. (2013). « Efficient Estimation of Word Representations in Vector Space. » [arXiv:1301.3781](https://arxiv.org/abs/1301.3781)
+- Lewis, P. et al. (2020). « Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. » _NeurIPS_. [arXiv:2005.11401](https://arxiv.org/abs/2005.11401)
+
+### Pour aller plus loin avant d'attaquer le chap 1
+
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_. Cambridge University Press. Référence du domaine, gratuite en ligne. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)

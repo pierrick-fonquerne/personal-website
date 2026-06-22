@@ -1,0 +1,10 @@
+slug: espace-vectoriel
+fr:
+  term: Espace vectoriel
+  definition: "Ensemble dont les éléments, les vecteurs, peuvent s'additionner entre eux et se multiplier par un nombre, en respectant des règles de cohérence. Concrètement pour ce cours : l'ensemble des listes de n nombres réels, où chaque embedding est un point. La dimension n est le nombre de coordonnées."
+en:
+  term: Vector space
+  definition: "A set whose elements, the vectors, can be added together and multiplied by a number, following consistency rules. Concretely for this course: the set of lists of n real numbers, where each embedding is a point. The dimension n is the number of coordinates."
+seeAlso:
+  - vecteur
+  - embedding

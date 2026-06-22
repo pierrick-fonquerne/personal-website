@@ -186,6 +186,7 @@ const fr: Translations = {
     'neural-nets': 'Réseaux de neurones',
     'autonomous-agents': 'Agents autonomes',
     'llm-mcp': 'LLM et MCP',
+    'vector-search': 'Recherche vectorielle',
     'async-perf': 'Async et performance',
     'embedded-rust': 'Rust embarqué',
     'kernel-no-std': 'Kernel et no_std',

@@ -1,0 +1,265 @@
+---
+course: vector-search-retrieval
+order: 1
+title: Embeddings et géométrie de la similarité
+subtitle: 'Le sens comme position dans l''espace, et trois façons de mesurer que deux sens sont proches.'
+estimatedMinutes: 26
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DotProductViewer from '../../../components/learning/DotProductViewer.tsx';
+import SimilarityExplorer from '../../../components/learning/SimilarityExplorer.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+L'avant-propos a fait une promesse : chercher par le sens, et non par les caractères. Mais une promesse n'est pas une méthode. Si le sens doit devenir une position dans l'espace, alors deux questions très concrètes se posent. Qu'est-ce qu'une position, ici, exactement ? Et comment mesure-t-on que deux positions sont proches, sachant qu'un mot parfaitement aligné mais lointain pourrait bien perdre face à un mot approximatif mais tout proche ?
+
+Ce chapitre répond aux deux. Il pose la brique sur laquelle tout le cours repose : représenter un texte par un vecteur, et choisir la bonne règle pour mesurer leur proximité.
+
+## Le sens comme une position
+
+Voici l'idée fondatrice, et elle est plus ancienne que l'informatique moderne. Le linguiste John Firth la résume en 1957 par une formule restée célèbre : on connaît un mot par la compagnie qu'il tient (Firth, 1957). « Chat » et « félin » apparaissent dans les mêmes contextes, entourés des mêmes voisins (« ronronne », « pattes », « moustaches »), donc ils ont un sens proche. Cette idée porte un nom, l'<Term slug="hypothese-distributionnelle">hypothèse distributionnelle</Term>, et c'est elle qui rend la recherche sémantique possible.
+
+Comment la transformer en nombres ? On confie ce travail à un réseau de neurones, exactement la brique du cours « Réseaux de neurones : fondations et mathématiques ». À force de voir des textes, le réseau apprend à attribuer à chaque mot, chaque phrase, un <Term slug="embedding">embedding</Term> : une liste ordonnée de nombres, c'est-à-dire un <Term slug="vecteur">vecteur</Term>, choisi de sorte que les sens proches reçoivent des vecteurs proches. On ne refait pas ici cet apprentissage, qui appartient au cours fondations. On part du résultat : un texte entre, un vecteur sort.
+
+<Callout kind="note" title="Une simplification assumée">
+Dans ce chapitre, les vecteurs vivent dans le plan, en deux dimensions, pour qu'on puisse les dessiner et les manipuler. Les vrais embeddings ont des centaines, voire des milliers de dimensions (souvent 768 ou 1536). Tout ce qu'on va voir, les formules comme les intuitions, se généralise mot pour mot à ces grandes dimensions. La seule chose qui change vraiment en grande dimension, on la verra au chapitre 2, et elle a de quoi surprendre.
+</Callout>
+
+## Trois façons de mesurer la proximité
+
+On a deux vecteurs. On veut un nombre qui dit à quel point ils sont proches. Il existe trois mesures classiques, et le choix entre elles n'est pas un détail : il change qui gagne.
+
+### Le produit scalaire
+
+La première brique est le <Term slug="produit-scalaire">produit scalaire</Term>. On multiplie les deux vecteurs coordonnée par coordonnée, puis on additionne tout.
+
+$$
+\mathbf{x} \cdot \mathbf{y} = \sum_{i=1}^{n} x_i \, y_i
+$$
+
+Cette équation se lit : le produit scalaire de x et y est la somme, pour chaque dimension i, du produit de la i-ème coordonnée de x par la i-ème coordonnée de y. C'est un seul nombre. Il est grand quand les deux vecteurs sont à la fois longs et orientés dans la même direction, et il vaut zéro quand ils sont perpendiculaires.
+
+### La norme et la distance euclidienne
+
+La longueur d'un vecteur, sa norme, se déduit du produit scalaire du vecteur avec lui-même.
+
+$$
+\lVert \mathbf{x} \rVert = \sqrt{\mathbf{x} \cdot \mathbf{x}} = \sqrt{\sum_{i=1}^{n} x_i^2}
+$$
+
+C'est le théorème de Pythagore en n dimensions : la longueur est la racine de la somme des carrés des coordonnées. De là vient la mesure la plus intuitive de proximité, la <Term slug="distance-euclidienne">distance euclidienne</Term> : la longueur du segment qui sépare les deux points.
+
+$$
+d(\mathbf{x}, \mathbf{y}) = \lVert \mathbf{x} - \mathbf{y} \rVert = \sqrt{\sum_{i=1}^{n} (x_i - y_i)^2}
+$$
+
+Elle se lit : la distance entre x et y est la racine de la somme des carrés des écarts coordonnée par coordonnée. Plus elle est petite, plus les points sont proches. Attention au sens : ici, petit veut dire proche, l'inverse du produit scalaire.
+
+### La similarité cosinus
+
+La distance euclidienne a un défaut pour comparer des sens : elle mêle deux informations, la direction et la longueur. Or pour un texte, c'est souvent la direction qui porte le sens, pas la longueur du vecteur. On veut donc une mesure d'angle pur. C'est la <Term slug="similarite-cosinus">similarité cosinus</Term> : le cosinus de l'angle entre les deux vecteurs.
+
+$$
+\cos\theta = \frac{\mathbf{x} \cdot \mathbf{y}}{\lVert \mathbf{x} \rVert \, \lVert \mathbf{y} \rVert}
+$$
+
+Elle se lit : le cosinus de l'angle est le produit scalaire divisé par le produit des deux longueurs. On reconnaît le produit scalaire, mais débarrassé de l'effet des longueurs par la division. Le résultat vit dans l'intervalle de moins un à un : il vaut un quand les vecteurs pointent dans la même direction, zéro quand ils sont perpendiculaires, moins un quand ils sont opposés.
+
+<Formula caption="À lire à voix haute">cos(θ) = (x · y) / (‖x‖ × ‖y‖), entre -1 et 1</Formula>
+
+Joue avec les deux flèches ci-dessous. Observe le produit scalaire, les normes et l'angle changer ensemble. Remarque qu'en allongeant une flèche sans tourner, le produit scalaire grimpe mais l'angle ne bouge pas : c'est exactement la différence que le cosinus efface.
+
+<DotProductViewer client:visible initialX={[1.2, 0.6]} initialW={[0.6, 1.2]} />
+
+## Quand la mesure change le gagnant
+
+Voici le moment qui compte. Tant qu'on compare deux vecteurs, le choix de la mesure semble académique. Mais dès qu'on classe plusieurs candidats face à une requête, la mesure décide du classement, et deux mesures peuvent désigner deux gagnants différents.
+
+Dans le composant ci-dessous, une requête (en couleur) fait face à plusieurs candidats. Tu peux déplacer la requête, choisir la mesure, et activer ou non la normalisation. Le classement se recalcule en direct.
+
+<SimilarityExplorer
+  client:load
+  initialQuery={[1, 0.12]}
+  candidates={[
+    { id: "automobile", label: "automobile", vector: [1.8, 0.3] },
+    { id: "bagnole", label: "bagnole", vector: [0.5, 0.1] },
+    { id: "moteur", label: "moteur", vector: [0.7, 0.7] },
+    { id: "banane", label: "banane", vector: [-0.4, 1.0] }
+  ]}
+  labels={{
+    queryLabel: "voiture (requête)",
+    metricTitle: "Mesure de proximité",
+    cosineLabel: "Cosinus (angle)",
+    euclideanLabel: "Distance euclidienne",
+    dotLabel: "Produit scalaire",
+    normalizeLabel: "Normaliser les vecteurs",
+    rankingTitle: "Classement des candidats",
+    scoreLabel: "score",
+    helpText: "Bascule entre cosinus et distance euclidienne sans normalisation : « automobile » (alignée mais longue) et « bagnole » (proche mais courte) échangent leur place. Active ensuite la normalisation et regarde les deux mesures se réconcilier."
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. Sans normalisation, qui gagne au cosinus, « automobile » ou « bagnole » ? Et en distance euclidienne ? Pourquoi le désaccord ?
+2. Que devient ce désaccord quand tu actives la normalisation ?
+3. Le candidat « banane » remonte-t-il jamais dans le classement, quelle que soit la mesure ? Que t'apprend sa position sur le sens qu'on lui a donné ?
+
+## Sous le capot : pourquoi normaliser réconcilie tout
+
+Le composant montre un fait troublant : une fois les vecteurs normalisés, le classement par cosinus et le classement par distance euclidienne deviennent identiques. Ce n'est pas un hasard, et la raison tient en deux lignes de calcul.
+
+<Term slug="normalisation">Normaliser</Term> un vecteur, c'est le ramener à une longueur de un en le divisant par sa norme, sans changer sa direction. Plaçons-nous donc sur la sphère unité, où tous les vecteurs ont une longueur de un. La distance au carré entre deux tels vecteurs se développe ainsi :
+
+$$
+d(\mathbf{x}, \mathbf{y})^2 = \lVert \mathbf{x} \rVert^2 + \lVert \mathbf{y} \rVert^2 - 2\,(\mathbf{x} \cdot \mathbf{y}) = 2 - 2\cos\theta
+$$
+
+Comme les deux normes valent un, il ne reste que deux moins deux fois le cosinus. Autrement dit :
+
+$$
+\cos\theta = 1 - \frac{d^2}{2}
+$$
+
+Cette relation dit tout : sur la sphère unité, plus l'angle est petit (cosinus proche de un), plus la distance est petite. Les deux mesures varient dans des sens opposés mais de façon strictement monotone, donc elles produisent exactement le même classement. C'est la raison profonde pour laquelle beaucoup de bases vectorielles normalisent les embeddings à l'entrée : elles peuvent alors utiliser la distance euclidienne, souvent plus simple à indexer, tout en raisonnant en réalité sur des angles.
+
+<Callout kind="info" title="Le fil rouge : un port neutre en métrique">
+Dans le moteur vectoriel qui sert de fil rouge à ce cours, la mesure de proximité n'est pas câblée en dur : c'est un paramètre. Le cœur de l'index ne sait pas s'il classe par cosinus ou par distance, il reçoit une fonction de mesure. Cette neutralité n'est pas de la coquetterie : elle découle directement de ce qu'on vient de voir. Puisque, après normalisation, cosinus et distance donnent le même ordre, autant laisser le choix à l'appelant et garder le cœur indépendant de ce détail.
+</Callout>
+
+## Une surprise qui attend en grande dimension
+
+Toute notre intuition vient du plan, où l'on dessine des flèches. Elle nous trahira au chapitre suivant. En grande dimension, un phénomène contre-intuitif s'installe : si l'on tire deux vecteurs au hasard dans un espace à mille dimensions, ils sont presque toujours quasi perpendiculaires, donc de cosinus proche de zéro. Les distances, elles, se ressemblent toutes. L'espace devient étrangement vide et uniforme. Ce phénomène a un nom, la malédiction de la dimension, et il décide à lui seul de la difficulté de toute recherche vectorielle. On le regardera en face au chapitre 2.
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : un cosinus à la main">
+On veut la similarité cosinus entre les vecteurs $\mathbf{x} = (2, 1)$ et $\mathbf{y} = (1, 3)$.
+
+**Étape 1.** On calcule le produit scalaire, coordonnée par coordonnée.
+
+$$
+2 \times 1 = 2
+$$
+
+$$
+1 \times 3 = 3
+$$
+
+$$
+\mathbf{x} \cdot \mathbf{y} = 2 + 3 = 5
+$$
+
+**Étape 2.** On calcule la norme de chaque vecteur.
+
+$$
+\lVert \mathbf{x} \rVert = \sqrt{2^2 + 1^2} = \sqrt{5}
+$$
+
+$$
+\lVert \mathbf{y} \rVert = \sqrt{1^2 + 3^2} = \sqrt{10}
+$$
+
+**Étape 3.** On applique la formule du cosinus.
+
+$$
+\cos\theta = \frac{5}{\sqrt{5} \times \sqrt{10}} = \frac{5}{\sqrt{50}}
+$$
+
+**Étape 4.** On simplifie. Comme $\sqrt{50} = 5\sqrt{2}$, le cinq se simplifie.
+
+$$
+\cos\theta = \frac{5}{5\sqrt{2}} = \frac{1}{\sqrt{2}} \approx 0{,}707
+$$
+
+**Résultat.** La similarité cosinus vaut environ 0,707, ce qui correspond à un angle de 45 degrés entre les deux vecteurs.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : quand deux mesures se disputent">
+On a une requête $\mathbf{q} = (1, 0)$ et deux candidats : $\mathbf{a} = (5, 0)$, parfaitement aligné mais loin, et $\mathbf{b} = (1, 0{,}5)$, tout proche mais incliné. On veut le classement par cosinus, puis par distance.
+
+**Étape 1.** Cosinus du candidat a. Il est sur le même axe que la requête, donc l'angle est nul.
+
+$$
+\cos\theta_a = \frac{1 \times 5 + 0 \times 0}{1 \times 5} = 1
+$$
+
+**Étape 2.** Cosinus du candidat b.
+
+$$
+\cos\theta_b = \frac{1 \times 1 + 0 \times 0{,}5}{1 \times \sqrt{1^2 + 0{,}5^2}} = \frac{1}{\sqrt{1{,}25}} \approx 0{,}894
+$$
+
+Au cosinus, a (1) devance b (0,894).
+
+**Étape 3.** Distance euclidienne du candidat a.
+
+$$
+d(\mathbf{q}, \mathbf{a}) = \sqrt{(1 - 5)^2 + 0^2} = \sqrt{16} = 4
+$$
+
+**Étape 4.** Distance euclidienne du candidat b.
+
+$$
+d(\mathbf{q}, \mathbf{b}) = \sqrt{(1 - 1)^2 + (0 - 0{,}5)^2} = \sqrt{0{,}25} = 0{,}5
+$$
+
+En distance, b (0,5) devance a (4).
+
+**Résultat.** Les deux mesures se contredisent : le cosinus couronne a, la distance couronne b. Le cosinus ne regarde que l'angle et ignore que a est cinq fois trop long ; la distance, elle, voit que a est loin. Normaliser les deux candidats supprime l'effet de longueur et réconcilie les classements, comme l'a montré la relation de la section précédente.
+</Callout>
+
+## En une phrase
+
+Un embedding place le sens dans un espace géométrique, et la mesure qu'on choisit pour comparer ces positions, produit scalaire, distance ou cosinus, décide du classement : pour le sens d'un texte, c'est l'angle qui compte, ce que la normalisation rend explicite.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi préfère-t-on souvent la similarité cosinus à la distance euclidienne pour comparer des embeddings de texte ?",
+      options: [
+        "Parce qu'elle est plus rapide à calculer",
+        "Parce qu'elle ne regarde que la direction et ignore la longueur des vecteurs",
+        "Parce qu'elle donne toujours un nombre entier",
+        "Parce qu'elle fonctionne uniquement en grande dimension"
+      ],
+      answer: 1,
+      explain: "Le cosinus mesure l'angle entre deux vecteurs et ignore leur longueur. Pour un texte, le sens est surtout porté par la direction du vecteur, pas par sa norme, d'où ce choix fréquent."
+    },
+    {
+      q: "Que vaut la similarité cosinus de deux vecteurs perpendiculaires ?",
+      options: ["1", "0", "-1", "Cela dépend de leur longueur"],
+      answer: 1,
+      explain: "Deux vecteurs perpendiculaires forment un angle de 90 degrés, dont le cosinus vaut zéro. Leur produit scalaire est nul, donc le cosinus aussi."
+    },
+    {
+      q: "Après avoir normalisé tous les vecteurs, que peut-on dire du classement par cosinus et du classement par distance euclidienne ?",
+      options: [
+        "Ils sont toujours opposés",
+        "Ils sont identiques",
+        "Ils n'ont aucun lien",
+        "Le cosinus devient inutilisable"
+      ],
+      answer: 1,
+      explain: "Sur la sphère unité, la relation cos(θ) = 1 - d²/2 lie les deux mesures de façon strictement monotone : un cosinus plus grand correspond à une distance plus petite. Les deux produisent donc exactement le même ordre."
+    }
+  ]}
+/>
+
+## Vers le chapitre 2
+
+On sait maintenant représenter un sens par un vecteur et mesurer la proximité entre deux vecteurs. Mais un vrai moteur ne compare pas deux vecteurs : il en a des millions, et pour chaque requête il faudrait, en théorie, les parcourir tous. Cette recherche exhaustive est exacte, mais son coût grandit avec le nombre de vecteurs. Pire, l'intuition géométrique du plan se brise en grande dimension, là où vivent les vrais embeddings. Le chapitre 2 regarde ces deux murs en face : le coût de la recherche exacte, et la malédiction de la dimension qui rend le problème si particulier.
+
+## Sources
+
+- Firth, J. R. (1957). « A synopsis of linguistic theory 1930-1955. » In _Studies in Linguistic Analysis_, 1-32. Blackwell.
+- Mikolov, T., Chen, K., Corrado, G. & Dean, J. (2013). « Efficient Estimation of Word Representations in Vector Space. » [arXiv:1301.3781](https://arxiv.org/abs/1301.3781)
+- Reimers, N. & Gurevych, I. (2019). « Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks. » _EMNLP_. [arXiv:1908.10084](https://arxiv.org/abs/1908.10084)
+
+### Pour aller plus loin
+
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 6 (Scoring, term weighting and the vector space model). [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)

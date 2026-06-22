@@ -1,0 +1,98 @@
+---
+course: vector-search-retrieval
+order: 0
+title: Foreword
+subtitle: "Why search by meaning, what this course covers, and how to read it."
+estimatedMinutes: 8
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+
+You type "car" into a search engine, and a document that only talks about "automobile" slips right through your fingers. Yet they mean the same thing. The engine was not looking for meaning: it was looking for a sequence of characters. Those two words share no letters in common at the right positions, so to the engine they have nothing to do with each other. This course fixes exactly that flaw.
+
+We are going to learn how to search by meaning. To do that, we first need to turn text into a geometric object, a point in a space, in such a way that two texts with similar meaning become two nearby points. This object has a name, the embedding, and it is the first building block of everything else. Chapter 1 defines it in detail.
+
+## Two ways to search
+
+There are two broad families of search, and the entire course lives in the tension between them.
+
+The first is **lexical** search: you compare words, characters. It is fast, it is exact, and it is unbeatable for finding a precise identifier or a rare word. But it is blind to synonyms: "car" and "automobile" are strangers to it, "cat" and "feline" too.
+
+The second is **semantic** search: you compare meanings. It finds "automobile" starting from "car", and even "how to fix an engine that stalls" starting from "my ride sputters at startup". Its price: you have to represent meaning as numbers, and accept that you are no longer looking for an exact match but for proximity.
+
+This second family has exploded for a very concrete reason. Language models need, in order to answer correctly, to retrieve the right passages from a large body of documents. This marriage between meaning-based search and a model that writes has a name, RAG, and it is the destination of this course.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know to follow along**: what a vector is (an ordered list of numbers) and the idea that a neural network learns from examples. Both notions are at the heart of the course "Neural Networks: Foundations and Mathematics", which is the natural prerequisite for this one, since it is a network that produces the embeddings we will use. A little comfort with plane geometry and big-O notation helps for the central chapters.
+
+**What you do not need to know**: any particular vector database, advanced linear algebra (we introduce what is needed, when it is needed), or a specific programming language.
+
+**Level of rigor**: this course aims for the standard of an undergraduate course while remaining readable by a motivated reader coming from the foundations. Most chapters stay at an intermediate level; certain "under the hood" sections, clearly marked, go further for those who want to dig deeper.
+</Callout>
+
+## The journey
+
+The course follows a simple thread: represent meaning, retrieve it quickly, make it robust, then put it at the service of a model. Each chapter answers a limitation left open by the previous one.
+
+### Block 1: representing and measuring meaning
+
+How a text becomes a vector, and how we measure that two vectors are close. Then exact search, its perfect guarantee, and the wall it crashes into when vectors number in the millions and live in high dimension.
+
+### Block 2: retrieving fast, without comparing everything
+
+We give up exactness to gain speed. The HNSW graph and its neighbor-by-neighbor navigation, the landscape of index families and their trade-offs, and above all the tool that tells you whether an approximate index is good or silently lying.
+
+### Block 3: hardening, combining, serving
+
+Making the index durable without corrupting it on the first crash, marrying it to lexical search for the best of both worlds, and finally connecting everything to a language model.
+
+<MermaidDiagram
+  client:visible
+  caption="The three blocks of the course and their progression"
+  definition={`flowchart TB
+    subgraph B1["Block 1: represent and measure"]
+      direction LR
+      c1[1. Embeddings and geometry] --> c2[2. Exact search and dimension]
+    end
+    subgraph B2["Block 2: retrieve fast"]
+      direction LR
+      c3[3. The HNSW graph] --> c4[4. Index landscape] --> c5[5. The differential oracle]
+    end
+    subgraph B3["Block 3: harden, combine, serve"]
+      direction LR
+      c6[6. Durable index] --> c7[7. BM25 and hybrid] --> c8[8. From retrieval to RAG]
+    end
+    B1 --> B2 --> B3`}
+/>
+
+<Callout kind="note" title="A course in progress">
+This course is written chapter by chapter. Block 1 starts now with chapter 1. The following blocks will arrive as writing progresses. The map above is the destination, not the current state.
+</Callout>
+
+## Who this course is for
+
+- **You already use a vector database** (pgvector, Qdrant, FAISS...) without really knowing what runs underneath. You will finally see inside the box.
+- **You are building a RAG system** and you want to understand why your results are sometimes off target. The answer is almost always in the chain we unpack here.
+- **You love seeing bridges** between an abstract idea (meaning as geometry) and concrete data structures. That is precisely the journey of this course.
+
+This course **is not** a tutorial for any particular library, nor a survey of the most recent research, which moves too fast for a course.
+
+## In one sentence
+
+Searching by meaning means representing each text as a point in a space, measuring proximity between those points, then building all the tooling that allows finding the closest ones at scale, quickly and without mistakes.
+
+## On to chapter 1
+
+Everything starts from an almost philosophical question. If meaning must become a position in space, then what exactly is a position here, and how do we measure that two positions are close? Should a perfectly aligned but distant word beat an approximate but very close word? That is where, in the geometry of similarity, chapter 1 begins.
+
+## Sources
+
+- Firth, J. R. (1957). "A synopsis of linguistic theory 1930-1955." In _Studies in Linguistic Analysis_, 1-32. Blackwell. (Source of the distributional hypothesis.)
+- Mikolov, T., Chen, K., Corrado, G. & Dean, J. (2013). "Efficient Estimation of Word Representations in Vector Space." [arXiv:1301.3781](https://arxiv.org/abs/1301.3781)
+- Lewis, P. et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." _NeurIPS_. [arXiv:2005.11401](https://arxiv.org/abs/2005.11401)
+
+### Further reading before chapter 1
+
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_. Cambridge University Press. The reference in the field, free online. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)
