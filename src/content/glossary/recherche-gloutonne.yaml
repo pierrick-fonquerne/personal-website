@@ -1,0 +1,11 @@
+slug: recherche-gloutonne
+fr:
+  term: Recherche gloutonne
+  definition: "Strategie de deplacement dans un graphe de proximite : a chaque pas, on saute vers le voisin le plus proche de la requete, et on s'arrete des qu'aucun voisin n'est plus proche que le noeud courant. Rapide et myope, elle prend le meilleur coup local sans planifier, ce qui ne garantit pas d'atteindre le vrai plus proche voisin : elle peut rester coincee dans un minimum local."
+en:
+  term: Greedy search
+  definition: "A movement strategy in a proximity graph: at each step you hop to the neighbor closest to the query, and you stop as soon as no neighbor is closer than the current node. Fast and short-sighted, it takes the best local move without planning, which does not guarantee reaching the true nearest neighbor: it can get stuck in a local minimum."
+seeAlso:
+  - graphe-de-proximite
+  - minimum-local
+  - plus-proches-voisins

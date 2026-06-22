@@ -1,0 +1,13 @@
+slug: hnsw
+fr:
+  term: HNSW
+  definition: "Hierarchical Navigable Small World : graphe hierarchique navigable a petit monde. Index de recherche approchee qui empile des graphes de proximite en couches, rares et grossieres en haut, denses et fines en bas. Une navigation gloutonne descend de couche en couche pour trouver les plus proches voisins en de l'ordre de log n sauts. Deux reglages : M (voisins par noeud, paye en memoire) et ef (largeur de faisceau, payee en temps)."
+en:
+  term: HNSW
+  definition: "Hierarchical Navigable Small World. An approximate search index that stacks proximity graphs in layers, sparse and coarse at the top, dense and fine at the bottom. A greedy walk descends layer by layer to find the nearest neighbors in about log n hops. Two knobs: M (neighbors per node, paid in memory) and ef (beam width, paid in time)."
+source: Malkov & Yashunin, 2018
+seeAlso:
+  - graphe-de-proximite
+  - petit-monde
+  - recherche-gloutonne
+  - rappel

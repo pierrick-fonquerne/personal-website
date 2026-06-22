@@ -1,0 +1,254 @@
+---
+course: vector-search-retrieval
+order: 3
+title: 'HNSW: navigating a proximity graph'
+subtitle: "What if finding the nearest neighbor became a short stroll of a few hops, instead of a scan across millions of vectors?"
+estimatedMinutes: 30
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import HnswNavigator from '../../../components/learning/HnswNavigator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we ran into two walls. Comparing the query to every vector gives the exact answer, but that scan costs $O(n \times d)$: impractical on millions of vectors. And high dimension blurs the very notion of proximity. The chapter ended with a promise: what if vectors were connected by a network of shortcuts, so that starting from any point and always moving toward a neighbor closer to the query, you arrive in a few hops near the goal?
+
+That idea has a name, HNSW, and it is today the most widely used index in vector databases. This chapter builds it piece by piece. Two questions will guide us: why can a rule as naive as "always jump to the closest neighbor" work, and what do we need to add to the network for it to truly work?
+
+## What if vectors held hands
+
+Shift your perspective for a moment. Until now, the database was a bag of vectors with no relationships: to answer a query, we were forced to touch them all. Let us give them links. Each vector knows a handful of close neighbors, and only them. The result is a <Term slug="graphe-de-proximite">proximity graph</Term>: points are nodes, and an edge connects two points judged to be close.
+
+The analogy is that of a social network. You do not know all eight billion people on earth, just a few dozen close contacts. Yet to pass a message to a stranger on the other side of the world, you do not need to speak to everyone: you hand it to whichever of your contacts seems closest to the recipient, who passes it on in turn, and from hand to hand the message arrives. That is exactly what we will do with a query, moving from neighbor to neighbor.
+
+## Greedy navigation
+
+The movement rule is disarmingly simple. We stand on a starting node. We look at the distance from the query to each of its neighbors. We jump to the neighbor closest to the query. We repeat. We stop when no neighbor is closer to the query than the node we are already on. This is <Term slug="recherche-gloutonne">greedy search</Term>: at each step, the best local move, without ever looking back or planning ahead.
+
+<Formula caption="The rule, in one line">while a neighbor is closer to the query than I am: jump there. Otherwise: stop.</Formula>
+
+At each hop, we strictly close in on the query. Since there are finitely many nodes and we never go back, the walk is guaranteed to terminate. The interesting question is not whether it ends, but where.
+
+And there, an unpleasant surprise. The walk stops as soon as it reaches a node whose every neighbor is farther from the query than itself. Nothing guarantees that this node is the true nearest neighbor in the whole database. It may be a simple <Term slug="minimum-local">local minimum</Term>: a hollow from which we can no longer descend with the available links, while a much better point exists elsewhere, just out of reach. Greedy search is fast, but it can be wrong.
+
+<Callout kind="warn" title="Greedy does not mean optimal">
+A greedy algorithm takes at each step the decision that looks best at that moment. That is often excellent and always fast, but it is not guaranteed to be optimal: a sequence of good local choices can lead into a dead end. The local minimum is the perfect example. The entire art of HNSW consists in making these traps rare enough that they almost never matter.
+</Callout>
+
+## Keeping multiple tracks: the beam width
+
+How do we escape a hollow? By not putting all our eggs in one basket. Rather than keeping only the single best current node, we maintain a list of the $\mathit{ef}$ best candidates encountered so far, and keep exploring their neighbors as long as one of them can still improve the list. That number $\mathit{ef}$ is called the beam width (or candidate list size in some texts).
+
+With $\mathit{ef} = 1$, we recover exactly greedy navigation, with all its traps. With $\mathit{ef} = 2$, we always keep a fallback track: if the best path hits a local minimum, the second candidate can go around the obstacle and reach a region the first would never have seen. The larger $\mathit{ef}$ is, the more we explore, the fewer mistakes we make, but the more we compute. The tension from the previous chapter reappears, intact: we will need to measure what we gain and what we lose.
+
+<Callout kind="note" title="HNSW is an approximate method, by design">
+Unlike the <Term slug="recherche-exhaustive">exhaustive search</Term> from chapter 2, which is exact by construction, HNSW may miss the true nearest neighbor. That is a deliberate choice: we trade a little accuracy for a great deal of speed. That is precisely why <Term slug="rappel">recall@k</Term> exists. We will measure the quality of an HNSW index by comparing its results to those of the exhaustive oracle, and $\mathit{ef}$ will be the dial that moves the cursor between speed and recall.
+</Callout>
+
+## Under the hood: small worlds and construction
+
+We have the search mechanics. The fundamental question remains: why do a few hops suffice? If the graph only connected each point to its immediate nearest neighbors, the answer would be disappointing. To travel from one end of the cloud to the other, you would have to cross the whole space step by step, one small move at a time: a path as long as the cloud is wide. We would have gained nothing.
+
+### The secret: long-range shortcuts
+
+The solution comes from a famous observation about social networks. In the "six degrees of separation" experiment, two strangers picked at random anywhere on Earth are connected by a chain of only about six relationships. How, with only close friends? Because there exist a few long-range links: a childhood friend who moved to the other side of the world, a colleague from a different industry. These rare bridges dramatically shorten all distances. A network that combines many local links with a few long-range links is called a <Term slug="petit-monde">small-world</Term> network.
+
+The effect on path lengths is spectacular. On a purely local graph, the number of hops to cross it grows with the size of the network. Add a few well-placed shortcuts, and that number collapses.
+
+<Formula caption="The small-world effect">purely local graph: path proportional to n. With long-range shortcuts: path proportional to log n.</Formula>
+
+This line reads: without shortcuts, the number of hops grows like the number of points; with well-distributed long-range shortcuts, it grows only like the logarithm of the number of points. Going from $n$ to $\log n$ means going from a million hops to about twenty. That is the entire gain of HNSW: a search that cost $O(n)$ becomes a stroll of on the order of $\log n$ steps. The component a little further below stacks these very shortcuts into layers: you will follow, layer by layer, the descent that the upper layers make possible.
+
+### Building the structure, one point at a time
+
+We still need to build such a graph, and in particular its hierarchy of layers. HNSW builds it incrementally: points are inserted one by one, and each one decides for itself how high up the hierarchy it will climb.
+
+When a new point arrives, it draws a level at random, according to a heavily skewed distribution. The vast majority of points stay at level zero, the base layer. Fewer and fewer reach level one, even fewer level two, and so on. Concretely, a number $u$ is drawn at random between zero and one, and the level is:
+
+$$
+\text{level} = \big\lfloor -\ln(u) \times m_L \big\rfloor
+$$
+
+This formula reads: the level is the integer part of minus the logarithm of $u$, multiplied by a constant $m_L$. Since $-\ln(u)$ is almost always small, the level is almost always zero; it is large only for the rare draws where $u$ is tiny. Those rare points, promoted to high levels, become the relay nodes of the upper layers.
+
+Once its level is known, the point is inserted into every layer up to that level. In each one, it is connected to its $M$ nearest neighbors already present, $M$ being the number of connections per node, fixed in advance. And to wire it into the right place without comparing everything, we use the search we just learned: we descend the hierarchy greedily to find where it lands. HNSW thus uses its own navigation to build itself.
+
+## The hierarchy: a skip-list in vector space
+
+Now let us stack these layers. At the very top, a handful of points connected by large hops. Lower down, more points and shorter hops. At the very bottom, the base layer, which contains all points with their finest-grained neighbors.
+
+<MermaidDiagram
+  client:visible
+  caption="The HNSW hierarchy: sparse and coarse at the top, dense and fine at the bottom. The search descends layer by layer."
+  definition={`flowchart TB
+    subgraph L2["Layer 2: sparse, long hops"]
+      direction LR
+      a2((entry)) --- b2((•))
+    end
+    subgraph L1["Layer 1: intermediate"]
+      direction LR
+      a1((•)) --- b1((•)) --- c1((•)) --- d1((•))
+    end
+    subgraph L0["Layer 0: base, dense and fine"]
+      direction LR
+      a0((•)) --- b0((•)) --- c0((•)) --- d0((•)) --- e0((•)) --- f0((•)) --- g0((•))
+    end
+    a2 -.descend.-> b1
+    b1 -.descend.-> d0
+`}
+/>
+
+The search exploits this hierarchy like a parachute descent. We enter through the single point at the summit. In that very sparse layer, a few greedy long hops quickly bring us to the right region of the space. We then drop one level: the best point found becomes the entry point for the layer below, denser, where shorter hops refine the position. We repeat down to the base layer, where we widen the beam to $\mathit{ef}$ to precisely harvest the nearest neighbors.
+
+This is exactly the idea of a skip-list, that structure that accelerates search in a sorted list by adding increasingly spaced index levels, transposed not to a sorted line but to a vector space. Hence the full name: Hierarchical Navigable Small World, or <Term slug="hnsw">HNSW</Term>, the hierarchical navigable small-world graph.
+
+## Navigate the hierarchy yourself
+
+The component below builds an HNSW index on a small cloud of points in two dimensions, with its stacked layers. Place the query, then step through the descent layer by layer and watch the path draw itself. Always compare the neighbor found to the true nearest neighbor, which the exhaustive oracle marks for you: that is your recall in real time.
+
+<HnswNavigator
+  client:visible
+  seed={2024}
+  pointCount={48}
+  initialM={6}
+  initialEf={4}
+  labels={{
+    mLabel: "Neighbors per node (M)",
+    efLabel: "Beam width (ef)",
+    reshuffleLabel: "Reshuffle the cloud",
+    stepLabel: "Next step",
+    playLabel: "Run the descent",
+    resetLabel: "Start over",
+    queryHint: "Click inside the frame to move the query.",
+    entryLabel: "Entry point",
+    queryLabel: "Query",
+    resultLabel: "Neighbor found",
+    oracleLabel: "True neighbor (oracle)",
+    visitedLabel: "Visited points",
+    layerLabel: "Layer",
+    baseLayerLabel: "Base layer",
+    hitLabel: "Hit: the descent found the true nearest neighbor (recall 1).",
+    missLabel: "Miss: the descent stopped on a suboptimal neighbor (recall 0). Try widening the beam ef, or increasing M.",
+    statusIdleLabel: "Place the query and start the descent."
+  }}
+/>
+
+Three questions to ask yourself while exploring:
+
+1. At $\mathit{ef} = 1$, how often does the descent miss the true neighbor when you move the query? What happens when you raise $\mathit{ef}$?
+2. Mentally disable the upper layers by imagining a single level: would the path be longer? Count the hops from the base layer alone, then those of the full descent.
+3. Lower $M$ down to very few neighbors per node. Does the graph fragment? Can the descent still reach all regions?
+
+## The two dials: M and ef
+
+HNSW is essentially tuned with two numbers, and it is important to understand their distinct roles, because one acts at construction time and the other at search time.
+
+$M$ is the number of neighbors per node, fixed when building the index. The larger $M$ is, the more richly connected the graph is, so navigation is safer and recall is higher, but the index uses more memory, because all those edges must be stored. $M$ is paid in RAM, once and for all.
+
+$\mathit{ef}$ is the beam width at search time. It can be changed for each query, without rebuilding anything. The larger $\mathit{ef}$ is, the more candidates are explored, the higher recall climbs, but the slower each query becomes. $\mathit{ef}$ is paid in time, for every query.
+
+<Callout kind="tip" title="The right way to tune HNSW">
+Start by choosing $M$ according to the memory you can give to the index (often between 8 and 48). Then, once the index is built, raise $\mathit{ef}$ until the target recall@k is reached, for example 0.95, while checking that latency stays acceptable. That is the beauty of the separation: the quality of the graph is baked in once, but the speed-recall trade-off remains adjustable query by query.
+</Callout>
+
+<Callout kind="info" title="The thread: the first real index in the engine">
+The vector engine that runs as the thread through this course first implemented exhaustive search, kept as a test oracle. HNSW is the first fast index grafted on top: we build the graph once, then each query becomes a descent of a few hops instead of a full scan. One real difficulty remains, and we will encounter it later in the course: filtering results (by date, by author, by access rights) without breaking the connectivity of the graph, because removing nodes can isolate whole regions and send recall plummeting. That is one of the open challenges in modern vector databases.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Exercise 1 solution: tracing a greedy walk">
+We have five points on a line, at positions $0, 1, 2, 3, 4$. The graph is a chain: each point is connected only to its immediate left and right neighbors. The query is at position $3.4$. We start from the point at position $0$, in greedy navigation ($\mathit{ef} = 1$). We want the path and the stopping point.
+
+**Step 1.** We note the distance from each point to the query, which is simply the positional gap.
+
+$$
+|0 - 3.4| = 3.4 \quad |1 - 3.4| = 2.4 \quad |2 - 3.4| = 1.4
+$$
+
+$$
+|3 - 3.4| = 0.4 \quad |4 - 3.4| = 0.6
+$$
+
+**Step 2.** We start at point $0$ (distance $3.4$). Its only neighbor toward the query is point $1$ (distance $2.4$), which is closer. We jump there.
+
+**Step 3.** At point $1$, neighbor $2$ (distance $1.4$) is closer. We jump.
+
+**Step 4.** At point $2$, neighbor $3$ (distance $0.4$) is closer. We jump.
+
+**Step 5.** At point $3$ (distance $0.4$), the two neighbors are point $2$ (distance $1.4$) and point $4$ (distance $0.6$). Both are farther than $0.4$. No neighbor improves on the current position.
+
+**Result.** The walk stops at point $3$, which is indeed the true nearest neighbor of $3.4$. The path is $0 \rightarrow 1 \rightarrow 2 \rightarrow 3$, three hops. On this chain without shortcuts, the number of hops is on the order of the cloud size: that is exactly what long-range shortcuts come to fix.
+</Callout>
+
+<Callout kind="tip" title="Exercise 2 solution: choosing M and ef">
+A service runs an HNSW index with $M = 16$ and $\mathit{ef} = 10$, and measures a recall@10 of $0.90$, judged too low. RAM is nearly saturated. We want to decide which dial to turn.
+
+**Step 1.** We recall who pays what. Increasing $M$ enriches the graph and raises recall, but costs memory, because more edges must be stored. Increasing $\mathit{ef}$ explores more candidates and raises recall, but costs compute time for each query, without touching memory.
+
+**Step 2.** We look at the constraint. RAM is nearly saturated: increasing $M$ would require rebuilding a larger index that cannot fit.
+
+**Step 3.** We act on the memory-free dial. We raise $\mathit{ef}$, for example from $10$ to $40$, without rebuilding the index, and we re-measure recall@10 and latency.
+
+**Result.** We increase $\mathit{ef}$, not $M$. That is the right reflex when memory is the limiting factor: $\mathit{ef}$ buys recall with time, a resource here more available than RAM. If even a large $\mathit{ef}$ were not enough, only then would we need to rebuild with a larger $M$, finding the necessary memory.
+</Callout>
+
+## In one sentence
+
+HNSW connects vectors in a hierarchical small-world graph, where simple greedy navigation, widened by an adjustable beam width $\mathit{ef}$, finds the nearest neighbor in on the order of $\log n$ hops instead of $n$, at the cost of a recall we choose to tune between memory ($M$) and time ($\mathit{ef}$).
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "What does greedy navigation do in a proximity graph?",
+      options: [
+        "It compares the query to every node then sorts",
+        "At each step, it jumps to the neighbor closest to the query, and stops when no neighbor improves",
+        "It picks a random node at each step",
+        "It always climbs back toward the entry point"
+      ],
+      answer: 1,
+      explain: "Greedy navigation takes at each step the best local neighbor and stops at the first node whose no neighbor is closer to the query. Fast, but it may stop at a local minimum."
+    },
+    {
+      q: "Why add long-range shortcuts to the graph?",
+      options: [
+        "To save memory",
+        "To make the index exact",
+        "To bring path lengths from on the order of n down to on the order of log n",
+        "To eliminate the need for an entry point"
+      ],
+      answer: 2,
+      explain: "A purely local graph forces paths as long as the cloud is wide. Long-range shortcuts, characteristic of small-world networks, collapse path lengths from n toward log n."
+    },
+    {
+      q: "What is the difference between parameters M and ef?",
+      options: [
+        "Both M and ef control memory",
+        "M is the number of neighbors per node, fixed at construction and paid in RAM; ef is the beam width at search time, adjustable per query and paid in time",
+        "ef is fixed at construction, M changes per query",
+        "Neither influences recall"
+      ],
+      answer: 1,
+      explain: "M is chosen when building the index and is paid in memory (more stored edges). ef is chosen per query, without rebuilding, and is paid in compute time. Both raise recall, but on different resources."
+    }
+  ]}
+/>
+
+## Towards chapter 4
+
+HNSW is elegant, but it is not the only way to avoid a full scan, and it is not a free solution. Its graph hierarchy is expensive in memory, and updating it or filtering results within it is far from straightforward. Other families of indexes make very different trade-offs: partitioning space into cells and visiting only a few of them, or compressing vectors to store far more in memory at the cost of some precision. How do we make sense of all this? Chapter 4 maps the landscape of approximate nearest neighbor indexes, places HNSW among its cousins, and provides a framework for choosing based on what you have, memory, speed, or recall, because you can never maximize all three at once.
+
+## Sources
+
+- Malkov, Y. A. & Yashunin, D. A. (2018). "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs." _IEEE Transactions on Pattern Analysis and Machine Intelligence_. [arXiv:1603.09320](https://arxiv.org/abs/1603.09320)
+- Malkov, Y., Ponomarenko, A., Logvinov, A. & Krylov, V. (2014). "Approximate Nearest Neighbor Algorithm Based on Navigable Small World Graphs." _Information Systems_ 45, 61-68. [DOI 10.1016/j.is.2013.10.006](https://doi.org/10.1016/j.is.2013.10.006)
+
+### Further reading
+
+- Watts, D. J. & Strogatz, S. H. (1998). "Collective Dynamics of 'Small-World' Networks." _Nature_ 393, 440-442. [DOI 10.1038/30918](https://doi.org/10.1038/30918)
+- Kleinberg, J. (2000). "The Small-World Phenomenon: An Algorithmic Perspective." _STOC_. [DOI 10.1145/335305.335325](https://doi.org/10.1145/335305.335325)
