@@ -11,7 +11,7 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 200
+estimatedMinutes: 34
 modules:
   - 00-foreword
   - 01-embeddings-and-similarity
@@ -21,5 +21,6 @@ personalNote: |
   I quickly realized that these concepts form a chain of rare elegance. You start from an almost philosophical idea, meaning as a position in space, and you descend, step after step, down to concrete data structures and very tangible engineering trade-offs. Each chapter answers a limit left open by the previous one.
 
   I am neither an information-retrieval researcher nor a formally trained database specialist. I write this course the way I would have wanted it when I started my own engine: rigorous about definitions, honest about trade-offs, and always paired with something to manipulate so the intuition sinks in. The engine I am building is the running thread, but everything we cover holds for any vector database.
-published: false
+published: true
+publishedAt: 2026-06-22
 order: 3
