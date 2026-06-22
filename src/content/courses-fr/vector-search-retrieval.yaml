@@ -11,10 +11,11 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 34
+estimatedMinutes: 62
 modules:
   - 00-avant-propos
   - 01-embeddings-et-geometrie
+  - 02-recherche-exacte-et-dimension
 personalNote: |
   Ce cours est né d'un chantier bien réel. Je construis une base de données vectorielle souveraine, en Rust, dont le premier objectif est modeste : remplacer une brique existante dans mon intranet personnel. En la construisant, j'ai dû comprendre pour de vrai ce qui se cache derrière les mots à la mode : embedding, plus proche voisin, HNSW, recherche hybride, RAG. Pas la version marketing, la version qui compile.
 
