@@ -1,7 +1,7 @@
 slug: petit-monde
 fr:
-  term: Reseau petit monde
-  definition: "Reseau qui combine beaucoup de liens locaux (vers des voisins proches) et quelques rares liens longue portee (vers des regions eloignees). Ces raccourcis effondrent la longueur des chemins : pour traverser le reseau, le nombre de sauts croit comme le logarithme du nombre de noeuds plutot que comme leur nombre. C'est le principe des six degres de separation, et le coeur de l'efficacite de HNSW."
+  term: Réseau petit monde
+  definition: "Réseau qui combine beaucoup de liens locaux (vers des voisins proches) et quelques rares liens longue portée (vers des régions éloignées). Ces raccourcis effondrent la longueur des chemins : pour traverser le réseau, le nombre de sauts croît comme le logarithme du nombre de noeuds plutôt que comme leur nombre. C'est le principe des six degrés de séparation, et le coeur de l'efficacité de HNSW."
 en:
   term: Small-world network
   definition: "A network that combines many local links (to nearby neighbors) with a few rare long-range links (to distant regions). Those shortcuts collapse path lengths: to cross the network, the number of hops grows like the logarithm of the number of nodes rather than like their count. It is the principle behind six degrees of separation, and the core of HNSW's efficiency."

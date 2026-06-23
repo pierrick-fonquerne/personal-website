@@ -130,6 +130,10 @@ Cette relation dit tout : sur la sphère unité, plus l'angle est petit (cosinus
 Dans le moteur vectoriel qui sert de fil rouge à ce cours, la mesure de proximité n'est pas câblée en dur : c'est un paramètre. Le cœur de l'index ne sait pas s'il classe par cosinus ou par distance, il reçoit une fonction de mesure. Cette neutralité n'est pas de la coquetterie : elle découle directement de ce qu'on vient de voir. Puisque, après normalisation, cosinus et distance donnent le même ordre, autant laisser le choix à l'appelant et garder le cœur indépendant de ce détail.
 </Callout>
 
+<Callout kind="tip" title="En pratique : produit scalaire ou cosinus ?">
+Si tous tes vecteurs sont normalisés (longueur un), le produit scalaire et le cosinus deviennent identiques, car le dénominateur du cosinus vaut alors un. Or beaucoup de modèles d'embeddings renvoient déjà des vecteurs normalisés. On peut donc, dans ce cas, utiliser directement le produit scalaire : il évite la division par les normes, donc il est plus rapide à calculer, tout en raisonnant en réalité sur des angles. On garde le cosinus explicite ou la distance euclidienne quand les vecteurs ne sont pas normalisés, ou quand la longueur porte une information qu'on veut conserver. Retiens la règle : normalise une bonne fois, puis le produit scalaire suffit.
+</Callout>
+
 ## Une surprise qui attend en grande dimension
 
 Toute notre intuition vient du plan, où l'on dessine des flèches. Elle nous trahira au chapitre suivant. En grande dimension, un phénomène contre-intuitif s'installe : si l'on tire deux vecteurs au hasard dans un espace à mille dimensions, ils sont presque toujours quasi perpendiculaires, donc de cosinus proche de zéro. Les distances, elles, se ressemblent toutes. L'espace devient étrangement vide et uniforme. Ce phénomène a un nom, la malédiction de la dimension, et il décide à lui seul de la difficulté de toute recherche vectorielle. On le regardera en face au chapitre 2.
@@ -262,4 +266,5 @@ On sait maintenant représenter un sens par un vecteur et mesurer la proximité 
 
 ### Pour aller plus loin
 
+- Jurafsky, D. & Martin, J. H. (2024). _Speech and Language Processing_ (3e édition, brouillon), chap. 6 « Vector Semantics and Embeddings ». Manuel de référence, accessible et gratuit en ligne. [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
 - Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 6 (Scoring, term weighting and the vector space model). [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)

@@ -1,8 +1,8 @@
 ---
 course: vector-search-retrieval
 order: 2
-title: Recherche exacte et malediction de la dimension
-subtitle: 'Comparer tous les vecteurs donne la reponse parfaite. Voici son prix, et le piege que la grande dimension tend a notre intuition.'
+title: Recherche exacte et malédiction de la dimension
+subtitle: 'Comparer tous les vecteurs donne la réponse parfaite. Voici son prix, et le piège que la grande dimension tend à notre intuition.'
 estimatedMinutes: 28
 published: true
 ---
@@ -25,7 +25,7 @@ Trouver les $k$ éléments les plus proches d'une requête porte un nom, c'est l
 
 Elle a une qualité que rien d'autre ne possédera jamais aussi pleinement : elle est **exacte**. Puisqu'elle examine chaque vecteur, elle ne peut, par construction, rater aucun voisin. Le classement qu'elle renvoie est la vérité. Retiens ce mot, vérité, car il va devenir précieux : à partir du chapitre 3, on cherchera des méthodes plus rapides qui acceptent de se tromper un peu. Pour savoir si elles se trompent, il faudra une référence parfaite à laquelle les comparer. Cette référence, c'est exactement la recherche exhaustive. On dit qu'elle sert d'**oracle**.
 
-<Callout kind="note" title="Distance ou similarite, peu importe ici">
+<Callout kind="note" title="Distance ou similarité, peu importe ici">
 La recherche exhaustive ne dépend pas de la mesure choisie au chapitre 1. Qu'on classe par distance euclidienne, par similarité cosinus ou par produit scalaire, le principe est le même : on évalue la mesure pour chaque vecteur, puis on trie. Tout ce qui suit vaut donc pour les trois mesures.
 </Callout>
 
@@ -41,11 +41,11 @@ $$
 
 Cette expression se lit : le coût grandit comme le produit du nombre de vecteurs par leur dimension. On note ce comportement $O(n \times d)$. Tant que la base est petite, personne ne s'en plaint. Mais mets-y des chiffres réalistes. Une base de dix millions de documents, des embeddings de dimension 1536 : une seule requête demande de l'ordre de quinze milliards de multiplications. Si ton service reçoit mille requêtes par seconde, tu fais le calcul, le mur arrive vite.
 
-<Callout kind="info" title="Le fil rouge : pourquoi garder quand meme le Flat">
+<Callout kind="info" title="Le fil rouge : pourquoi garder quand même le Flat">
 Le moteur vectoriel qui sert de fil rouge à ce cours implémente bel et bien la recherche exhaustive, alors qu'on vient de dire qu'elle est trop lente. Pourquoi ? Précisément parce qu'elle est exacte. Elle ne sert pas à répondre aux vraies requêtes en production, elle sert d'oracle de test : on lui demande la vérité, puis on vérifie que l'index rapide, lui, ne s'en écarte pas trop. On reviendra longuement sur cette idée d'oracle au chapitre 5. Pour l'instant, garde en tête qu'un index lent mais exact n'est jamais inutile : il est le juge des autres.
 </Callout>
 
-## La malediction de la dimension
+## La malédiction de la dimension
 
 On pourrait croire que le seul problème est le coût, et qu'il suffirait d'être plus malin pour ne pas tout comparer. C'est l'idée des chapitres suivants. Mais avant de la poursuivre, il faut comprendre pourquoi être malin est si difficile. La raison ne tient pas à la vitesse des machines : elle tient à la géométrie elle-même.
 
@@ -57,7 +57,7 @@ Le second : la quasi-<Term slug="orthogonalite">orthogonalité</Term>. Deux vect
 
 Ces deux affirmations sont surprenantes. Ne les crois pas sur parole : va les voir.
 
-## Voir la malediction
+## Voir la malédiction
 
 Le composant ci-dessous tire un nuage de points dont chaque coordonnée est aléatoire, dans la dimension que tu choisis. L'onglet de gauche montre la distribution des distances à une requête ; l'onglet de droite montre la distribution des cosinus entre paires de points. Fais glisser la dimension de 1 vers 1000 et regarde les deux histogrammes se métamorphoser.
 
@@ -129,8 +129,10 @@ Cette dernière équation est tout le secret. Elle se lit : la dispersion relati
 
 Autrement dit, les distances grandissent toutes ensemble, mais leur écart les unes aux autres, rapporté à leur taille, disparaît. Le nuage de toutes les distances se réduit à une coquille fine autour d'une valeur commune. Le plus proche et le plus lointain deviennent presque indiscernables. Ce n'est pas un défaut des machines ni des données : c'est une propriété de la géométrie en grande dimension, démontrée ici en quelques lignes.
 
-<Callout kind="tip" title="Le meme raisonnement pour les angles">
+<Callout kind="tip" title="Le même raisonnement pour les angles">
 La quasi-orthogonalité se démontre dans le même esprit. Le produit scalaire de deux vecteurs aléatoires centrés est lui aussi une somme de $d$ termes indépendants de moyenne nulle. Sa moyenne est donc nulle, et une fois divisé par les normes (qui, elles, croissent comme $\sqrt{d}$), le cosinus se concentre autour de zéro avec une dispersion qui rétrécit comme $1/\sqrt{d}$. C'est exactement la cloche qui se resserre dans le second onglet du composant.
+
+Mets-y un chiffre pour sentir l'effet : l'écart-type du cosinus vaut de l'ordre de $1/\sqrt{d}$, soit environ $0{,}03$ en dimension 1000 et environ $0{,}01$ en dimension 10000. Un cosinus de $0{,}03$, c'est un angle d'à peine deux degrés sous l'angle droit. Autrement dit, dans l'espace où vivent les vrais embeddings, deux directions tirées au hasard sont presque toujours perpendiculaires à un ou deux degrés près.
 </Callout>
 
 ## Mesurer une recherche imparfaite : le rappel@k
@@ -266,3 +268,4 @@ On sait maintenant deux choses gênantes : comparer tous les vecteurs est exact 
 
 - Indyk, P. & Motwani, R. (1998). « Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality. » _STOC_. [DOI 10.1145/276698.276876](https://doi.org/10.1145/276698.276876)
 - Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 7. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)
+- Bruch, S. (2024). _Foundations of Vector Retrieval_. Springer. Synthèse moderne et rigoureuse de la recherche vectorielle, du balayage exact aux index approchés. [arXiv:2401.09350](https://arxiv.org/abs/2401.09350)

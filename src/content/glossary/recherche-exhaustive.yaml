@@ -1,7 +1,7 @@
 slug: recherche-exhaustive
 fr:
   term: Recherche exhaustive
-  definition: "Strategie qui compare la requete a tous les vecteurs de la base, un par un, pour en extraire les plus proches. Aussi appelee balayage lineaire ou index Flat. Elle est exacte par construction (elle ne peut rien manquer) mais son cout croit lineairement avec le nombre de vecteurs et leur dimension, en O(n x d). Elle sert d'oracle de reference pour juger les methodes approchees."
+  definition: "Stratégie qui compare la requête à tous les vecteurs de la base, un par un, pour en extraire les plus proches. Aussi appelée balayage linéaire ou index Flat. Elle est exacte par construction (elle ne peut rien manquer) mais son coût croît linéairement avec le nombre de vecteurs et leur dimension, en O(n x d). Elle sert d'oracle de référence pour juger les méthodes approchées."
 en:
   term: Exhaustive search
   definition: "A strategy that compares the query against every vector in the database, one by one, to extract the closest ones. Also called linear scan or Flat index. It is exact by construction (it cannot miss anything) but its cost grows linearly with the number of vectors and their dimension, in O(n x d). It serves as the reference oracle for judging approximate methods."
