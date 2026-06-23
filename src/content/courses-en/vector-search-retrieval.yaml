@@ -11,12 +11,13 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 92
+estimatedMinutes: 120
 modules:
   - 00-foreword
   - 01-embeddings-and-similarity
   - 02-exact-search-and-dimension
   - 03-hnsw-proximity-graph
+  - 04-the-ann-index-landscape
 personalNote: |
   This course grew out of a very real build. I am writing a sovereign vector database, in Rust, whose first goal is modest: to replace an existing brick in my personal intranet. Building it forced me to truly understand what hides behind the buzzwords: embedding, nearest neighbor, HNSW, hybrid search, RAG. Not the marketing version, the version that compiles.
 
