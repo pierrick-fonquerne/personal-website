@@ -1,0 +1,10 @@
+slug: test-metamorphique
+fr:
+  term: Test métamorphique
+  definition: "Technique de test qui vérifie une RELATION attendue entre plusieurs exécutions plutôt qu'une valeur de sortie exacte, utile quand la bonne réponse est inconnue ou trop coûteuse à calculer (le problème de l'oracle). Exemple : permuter l'ordre des entrées ne doit pas changer le résultat, ou doubler une entrée doit doubler la sortie. L'oracle différentiel en est un cas particulier, où la relation vérifiée est l'égalité à une référence exacte."
+en:
+  term: Metamorphic testing
+  definition: "A testing technique that checks an expected RELATION between several runs rather than one exact output value, useful when the right answer is unknown or too costly to compute (the oracle problem). For example: permuting the order of inputs must not change the result, or doubling an input must double the output. The differential oracle is a special case, where the checked relation is equality to an exact reference."
+seeAlso:
+  - oracle-differentiel
+  - recherche-approchee

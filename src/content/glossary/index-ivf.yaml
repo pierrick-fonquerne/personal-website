@@ -1,7 +1,7 @@
 slug: index-ivf
 fr:
-  term: IVF (fichier inverse)
-  definition: "Inverted File. Index qui partitionne l'espace en cellules, calculees par un k-means, et range chaque vecteur dans la cellule de son centroide le plus proche. A la recherche, on ne scanne que les nprobe cellules les plus proches de la requete, pas toute la base. IVF gagne de la latence sans reduire la memoire, car les vecteurs restent stockes en clair. Le nombre nprobe regle le compromis entre vitesse et rappel."
+  term: IVF (fichier inversé)
+  definition: "Inverted File. Index qui partitionne l'espace en cellules, calculées par un k-means, et range chaque vecteur dans la cellule de son centroïde le plus proche. À la recherche, on ne scanne que les nprobe cellules les plus proches de la requête, pas toute la base. IVF gagne de la latence sans réduire la mémoire, car les vecteurs restent stockés en clair. Le nombre nprobe règle le compromis entre vitesse et rappel."
 en:
   term: IVF (inverted file)
   definition: "Inverted File. An index that partitions the space into cells, computed by k-means, and files each vector into the cell of its nearest centroid. At search time, only the nprobe cells closest to the query are scanned, not the whole database. IVF wins latency without reducing memory, since the vectors are still stored in full. The nprobe number tunes the trade-off between speed and recall."

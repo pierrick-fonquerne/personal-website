@@ -1,0 +1,201 @@
+---
+course: vector-search-retrieval
+order: 5
+title: "Tester l'approximatif : l'oracle différentiel"
+subtitle: "Un index peut passer tous ses tests, deux revues, et rendre quand même de mauvais résultats. Comment attrape-t-on un algorithme qui ment ?"
+estimatedMinutes: 26
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import RecallOracleLab from '../../../components/learning/RecallOracleLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre précédent, on a rangé HNSW tout près du coin idéal du triangle, et un mot est revenu à chaque mesure : on évalue le rappel d'un index approché en le comparant à l'oracle exact. Mais arrêtons-nous sur ce mot. Quand ton moteur t'annonce un rappel de 0,95, qui te garantit que ce n'est pas 0,62 ? Un index de recherche approchée ne lève pas d'exception quand il se trompe : il rend toujours k résultats, bien triés, d'apparence parfaite. Il peut passer chaque test unitaire et deux revues de code, et rater silencieusement un tiers des vrais voisins.
+
+Ce chapitre est le juge de paix du cours. Une question le porte, et elle dérange : comment teste-t-on un algorithme dont on ne connaît pas la bonne réponse à l'avance, et qui peut être structurellement irréprochable tout en étant globalement faux ?
+
+## L'algorithme qui passe les tests et ment quand même
+
+Voici une histoire vraie, arrivée en construisant le moteur qui sert de fil rouge à ce cours. Un index HNSW fraîchement écrit passait la totalité de ses tests unitaires. Il renvoyait bien k résultats. Ils étaient bien triés du plus proche au plus lointain. Le voisin évident d'une requête facile était bien trouvé. Deux revues, une humaine et une assistée, l'avaient relu sans rien signaler. Tout était vert.
+
+Son rappel réel était de 0,62, là où on visait 0,90 et plus. Il jetait à la poubelle, en silence, près de quatre vrais voisins sur dix. Aucun test ne hurlait, parce qu'aucun test ne regardait la seule chose qui comptait : la qualité globale du résultat, mesurée contre la vérité.
+
+Deux bugs minuscules se cachaient là, invisibles à la lecture. Un tas binaire monté à l'envers, qui à chaque saturation jetait le meilleur candidat au lieu du pire, si bien que la recherche gardait les mauvais et s'appauvrissait à mesure qu'elle avançait. Et une borne de connectivité divisée par deux par un `.min()` de trop, qui fragmentait le graphe. Deux lignes. Quarante pour cent de voisins perdus.
+
+## Propriété locale contre qualité globale
+
+Pourquoi les tests unitaires n'ont-ils rien vu ? Parce qu'ils vérifient des propriétés locales, et qu'un algorithme approché peut toutes les satisfaire tout en s'effondrant globalement.
+
+Une propriété locale, c'est une affirmation sur la FORME du résultat. Le résultat contient bien k éléments. Ils sont bien triés. Ils sont bien distincts. Toutes vraies, ici, dans les deux versions buggées comme dans la bonne : le résultat reste structurellement impeccable. Ces tests ne mentent pas, ils sont juste aveugles à la question qui compte.
+
+La qualité globale, elle, demande : parmi les k vrais plus proches voisins, combien en a-t-on retrouvés ? C'est le rappel, défini au chapitre 2. Aucun test par l'exemple ne révèle « on rate 38 % des vrais voisins », parce que cette vérité n'est pas locale : elle n'apparaît qu'en agrégeant des dizaines de requêtes et en les confrontant à la bonne réponse.
+
+<Callout kind="note" title="Le problème de l'oracle">
+En théorie des tests, un oracle est ce qui sait dire si une sortie est correcte. Pour beaucoup de fonctions, l'oracle est facile : la somme de 2 et 2 doit faire 4. Mais pour un algorithme approché, l'oracle est précisément ce qui manque : on ne connaît pas d'avance les vrais plus proches voisins d'une requête sur un million de vecteurs. C'est le « problème de l'oracle » (Barr et al., 2015). Tout ce chapitre est une façon de le résoudre.
+</Callout>
+
+## L'oracle différentiel
+
+L'idée est aussi simple que puissante. On dispose de deux implémentations du même problème. L'une est rapide mais approchée, c'est celle qu'on veut livrer. L'autre est lente mais exacte, et sert uniquement de référence. On lance les deux sur le même jeu, et on mesure l'écart sur la métrique qui compte vraiment. C'est l'<Term slug="oracle-differentiel">oracle différentiel</Term>.
+
+<Formula caption="Le principe">qualité = écart(sortie rapide-approchée, sortie lente-exacte) sur la métrique qui compte</Formula>
+
+Pour la recherche vectorielle, l'implémentation exacte existe déjà, et on la connaît bien : c'est la recherche exhaustive du chapitre 2, l'index plat qui compare la requête à tous les vecteurs. Lente, donc inutilisable en production, mais exacte par construction. Elle est la vérité-terrain. La métrique qui compte est le rappel@k. L'oracle différentiel d'un index vectoriel, c'est donc : pour un échantillon de requêtes, comparer les k voisins rendus par l'index rapide aux k vrais voisins rendus par le balayage exhaustif, et moyenner le rappel.
+
+Ce n'est pas un test unitaire de plus. C'est un test d'une nature différente, qui mesure une qualité continue plutôt qu'une correction binaire, et qui a besoin d'une seconde implémentation pour exister.
+
+## Voir les tests rester verts pendant que le rappel ment
+
+Le composant ci-dessous te met dans la peau de qui débogue. Un petit index par recherche en faisceau tourne sur un nuage de points, face à l'oracle exhaustif. À gauche, le panneau des tests unitaires locaux. À droite, le rappel mesuré par l'oracle différentiel, avec son seuil contractuel. Active l'un ou l'autre des deux vrais bugs, le tas inversé ou la connectivité divisée par deux, et observe : les tests locaux restent obstinément verts pendant que le rappel s'effondre sous le seuil. C'est exactement ce qu'on ne voit pas en lisant le code.
+
+<RecallOracleLab
+  client:visible
+  seed={7}
+  pointCount={320}
+  clusterCount={6}
+  spread={0.1}
+  degree={10}
+  initialEf={14}
+  topK={8}
+  recallThreshold={0.9}
+  labels={{
+    invertedHeapLabel: "Bug 1 : tas inversé (on jette le meilleur)",
+    halvedConnectivityLabel: "Bug 2 : connectivité divisée par deux",
+    efLabel: "Largeur de faisceau (ef)",
+    queryHint: "Clique dans le cadre pour déplacer la requête.",
+    reshuffleLabel: "Rebrasser le nuage",
+    legendQuery: "Requête",
+    legendRetrieved: "Voisins rendus",
+    legendOracle: "Vrais voisins (oracle)",
+    legendVisited: "Points visités",
+    localChecksTitle: "Tests unitaires (propriétés locales)",
+    checkReturnsK: "Renvoie k résultats",
+    checkSorted: "Triés par distance",
+    checkDistinct: "Tous distincts",
+    oracleTitle: "Oracle différentiel (qualité globale)",
+    recallAllLabel: "Rappel@k moyen",
+    recallQueryLabel: "Rappel de cette requête",
+    thresholdLabel: "Seuil contractuel",
+    verdictGreenLabel: "Tests verts",
+    verdictHonestLabel: "Contrat tenu",
+    verdictBrokenLabel: "Contrat rompu : l'index ment",
+    blindHint: "Les tests locaux restent verts. Seul l'oracle différentiel voit la chute."
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. Active le tas inversé. Quel test unitaire vire au rouge ? Aucun. De combien chute le rappel moyen ?
+2. Coupe les bugs et déplace la requête dans une zone dense, puis dans un coin isolé du nuage. Le rappel d'UNE requête facile suffirait-il à te rassurer ? Pourquoi l'oracle moyenne-t-il sur beaucoup de requêtes ?
+3. Avec la connectivité divisée par deux, regarde le nombre de points visités. Le graphe fragmenté fait-il visiter plus ou moins de noeuds, et qu'arrive-t-il au rappel ?
+
+## Le réflexe se généralise très loin
+
+L'oracle différentiel n'a rien de propre aux bases vectorielles. Dès qu'on a une version rapide et une version lente-mais-sûre du même calcul, on tient un oracle. Un cache contre sa source de vérité. Un code optimisé contre son implémentation naïve. Une heuristique contre la solution exacte sur de petits cas. À chaque fois, la référence lente est l'arbitre de la rapide.
+
+Quand même la référence exacte est trop coûteuse, il reste une parade : le <Term slug="test-metamorphique">test métamorphique</Term>. Plutôt que de connaître la bonne réponse, on vérifie une RELATION qui doit tenir entre plusieurs exécutions. Trier une liste puis la trier à nouveau ne doit rien changer. Permuter l'ordre des entrées ne doit pas changer l'ensemble des voisins trouvés. Doubler toutes les coordonnées doit laisser le classement intact. Ces relations attrapent des bugs sans jamais exiger l'oracle complet. L'oracle différentiel en est le cas le plus simple, où la relation vérifiée est l'égalité à une référence exacte.
+
+<Callout kind="warn" title="Le piège à ne jamais commettre : baisser le seuil">
+Quand l'oracle différentiel vire au rouge, la tentation est de baisser le seuil de rappel jusqu'à ce que le test repasse au vert. C'est maquiller le bug, pas le corriger. Le seuil EST le contrat : il dit la qualité qu'on promet aux utilisateurs. Le déplacer pour faire taire l'alarme, c'est mentir à la place de l'index. La bonne réaction est toujours de chercher les deux lignes fautives, jamais de redescendre la barre.
+</Callout>
+
+<Callout kind="info" title="Le fil rouge : deux lignes, quarante pour cent de rappel">
+Sur le moteur vectoriel du cours, c'est exactement cet oracle différentiel qui a sauvé la mise. Les tests unitaires et deux revues avaient laissé passer un rappel de 0,62. La comparaison systématique à l'index plat, sur un échantillon de requêtes, a fait apparaître l'écart d'un coup. De là, on a remonté les deux bugs : le tas binaire dans le mauvais sens, qui évinçait le meilleur candidat, et la borne de connectivité divisée par deux. Une fois corrigés, le rappel est remonté à 0,95. Sans l'oracle, l'index serait parti en production en mentant à chaque requête.
+</Callout>
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : calculer un rappel et constater l'angle mort">
+Sur une requête, l'index exact (l'oracle) donne comme vrais 5 plus proches voisins les identifiants $\{3, 7, 1, 9, 2\}$. L'index rapide, lui, renvoie $\{3, 7, 4, 9, 8\}$, triés du plus proche au plus lointain. On veut le rappel@5, puis vérifier les propriétés locales.
+
+**Étape 1.** Le rappel@k est la fraction des vrais voisins effectivement retrouvés. On compte combien d'éléments de l'oracle sont présents dans la réponse rapide.
+
+$$
+\{3, 7, 1, 9, 2\} \cap \{3, 7, 4, 9, 8\} = \{3, 7, 9\}
+$$
+
+**Étape 2.** Il y a 3 éléments communs sur 5 vrais voisins.
+
+$$
+\text{rappel@5} = \frac{3}{5} = 0{,}6
+$$
+
+**Étape 3.** On vérifie maintenant les propriétés locales de la réponse rapide. Elle contient bien 5 identifiants : « renvoie k résultats » est vert. Ils sont annoncés triés par distance : « triés » est vert. Ils sont tous différents : « distincts » est vert.
+
+**Résultat.** Le rappel n'est que de $0{,}6$, mais les trois tests locaux passent. Un test par l'exemple qui se contenterait de vérifier la forme du résultat ne verrait jamais que deux vrais voisins sur cinq manquent. Seul l'oracle différentiel, qui connaît $\{3, 7, 1, 9, 2\}$, attrape la chute.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : concevoir l'oracle d'un cache">
+On a écrit un cache qui mémorise le résultat d'une fonction coûteuse `f(x)`. On veut un oracle différentiel pour s'assurer qu'il ne renvoie jamais une valeur périmée. On dispose de `f` elle-même, lente mais juste.
+
+**Étape 1.** On identifie les deux implémentations. La rapide est le cache (`cache.get(x)`). La lente-mais-exacte est la fonction d'origine (`f(x)`), qui est ici notre vérité-terrain.
+
+**Étape 2.** On choisit la métrique qui compte. Pour un cache, c'est l'égalité stricte : pour tout `x` tiré, la valeur du cache doit être exactement celle de `f`.
+
+$$
+\text{pour chaque } x : \quad \text{cache.get}(x) = f(x)
+$$
+
+**Étape 3.** On évite le piège de l'auto-référence. L'oracle ne doit JAMAIS comparer le cache à lui-même, ni remplir l'attendu avec la sortie du cache : ce serait une tautologie qui figerait le bug. La référence est `f`, calculée indépendamment.
+
+**Résultat.** L'oracle différentiel du cache tire des `x` variés, calcule `f(x)` à part, et exige l'égalité. Une entrée périmée (le cache renvoie l'ancienne valeur après un changement de `f`) fait diverger les deux et vire au rouge. Le principe est le même que pour l'index vectoriel : une référence lente indépendante arbitre la version rapide.
+</Callout>
+
+## En une phrase
+
+Un algorithme approché peut satisfaire toutes ses propriétés locales et passer ses revues tout en s'effondrant en qualité globale : seul un oracle différentiel, qui confronte la version rapide à une référence lente-mais-exacte sur la métrique qui compte, attrape ce mensonge silencieux, et le seuil de cette métrique est un contrat qu'on ne baisse jamais pour faire taire l'alarme.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi un index de recherche approchée peut-il passer tous ses tests unitaires tout en étant faux ?",
+      options: [
+        "Parce que les tests unitaires sont toujours mal écrits",
+        "Parce que les propriétés locales (k résultats, triés, distincts) restent vraies même quand la qualité globale (le rappel) s'effondre",
+        "Parce que le compilateur ne vérifie pas les types",
+        "Parce que l'index n'a pas assez de mémoire"
+      ],
+      answer: 1,
+      explain: "Les tests unitaires vérifient la forme du résultat, une propriété locale. Un algorithme approché peut renvoyer un résultat parfaitement bien formé tout en ratant une grande part des vrais voisins. Seule une mesure globale contre la vérité le révèle."
+    },
+    {
+      q: "Qu'est-ce qu'un oracle différentiel pour un index vectoriel ?",
+      options: [
+        "Un second index approché qu'on compare au premier",
+        "La comparaison des résultats de l'index rapide à ceux de la recherche exhaustive exacte, mesurée par le rappel@k",
+        "Un test qui vérifie que l'index renvoie k résultats triés",
+        "Un cache qui accélère les requêtes"
+      ],
+      answer: 1,
+      explain: "L'oracle différentiel confronte la version rapide-approchée à une référence lente-mais-exacte (ici l'index plat exhaustif), sur la métrique qui compte (le rappel@k). La référence est la vérité-terrain, jamais un second approché."
+    },
+    {
+      q: "L'oracle différentiel vire au rouge sous le seuil de rappel promis. Que fait-on ?",
+      options: [
+        "On baisse le seuil jusqu'à ce que le test repasse au vert",
+        "On supprime le test, il est trop strict",
+        "On cherche le bug, car le seuil est le contrat de qualité qu'on ne déplace pas",
+        "On accepte, un index approché a le droit de se tromper"
+      ],
+      answer: 2,
+      explain: "Baisser le seuil maquille le bug au lieu de le corriger. Le seuil dit la qualité promise aux utilisateurs : c'est un contrat. La bonne réaction est de remonter les lignes fautives, comme le tas inversé ou la connectivité divisée par deux."
+    }
+  ]}
+/>
+
+## Vers le chapitre 6
+
+On sait maintenant faire confiance à un index en mémoire : l'oracle différentiel certifie qu'il retrouve vraiment ce qu'il prétend. Mais cet index vit dans la RAM, et la RAM s'efface au moindre redémarrage. Le chapitre 6 attaque la durabilité : comment écrire un graphe HNSW sur disque sans jamais le corrompre, même si la machine tombe en pleine insertion ? On y retrouvera, transposé à la persistance, exactement le réflexe de ce chapitre : un oracle différentiel de round-trip, qui relit l'index depuis le disque et exige qu'il soit identique, octet pour octet, à celui qu'on avait en mémoire. La même idée, du monde géométrique au monde du stockage.
+
+## Sources
+
+- Barr, E. T., Harman, M., McMinn, P., Shahbaz, M. & Yoo, S. (2015). « The Oracle Problem in Software Testing: A Survey. » _IEEE Transactions on Software Engineering_ 41(5), 507-525. [DOI 10.1109/TSE.2014.2372785](https://doi.org/10.1109/TSE.2014.2372785)
+- Chen, T. Y., Cheung, S. C. & Yiu, S. M. (2018). « Metamorphic Testing: A Review of Challenges and Opportunities. » _ACM Computing Surveys_ 51(1). [DOI 10.1145/3143561](https://doi.org/10.1145/3143561)
+
+### Pour aller plus loin
+
+- Claessen, K. & Hughes, J. (2000). « QuickCheck: A Lightweight Tool for Random Testing of Haskell Programs. » _ICFP_. [DOI 10.1145/351240.351266](https://doi.org/10.1145/351240.351266)

@@ -1,7 +1,7 @@
 slug: quantification-produit
 fr:
   term: Quantification produit
-  definition: "Product Quantization (PQ). Technique de compression des vecteurs : on decoupe chaque vecteur en plusieurs tranches, et dans chaque tranche on remplace le sous-vecteur par l'indice du centroide le plus proche d'un petit dictionnaire appris (un codebook). Un vecteur devient ainsi une poignee de codes, souvent un octet chacun, au lieu de centaines de reels. La quantification produit gagne enormement de memoire, au prix d'un rappel reduit, car les distances ne sont plus qu'estimees."
+  definition: "Product Quantization (PQ). Technique de compression des vecteurs : on découpe chaque vecteur en plusieurs tranches, et dans chaque tranche on remplace le sous-vecteur par l'indice du centroïde le plus proche d'un petit dictionnaire appris (un codebook). Un vecteur devient ainsi une poignée de codes, souvent un octet chacun, au lieu de centaines de réels. La quantification produit gagne énormément de mémoire, au prix d'un rappel réduit, car les distances ne sont plus qu'estimées."
 en:
   term: Product quantization
   definition: "Product Quantization (PQ). A vector compression technique: each vector is split into several slices, and within each slice the sub-vector is replaced by the index of the nearest centroid in a small learned dictionary (a codebook). A vector thus becomes a handful of codes, often one byte each, instead of hundreds of reals. Product quantization saves a great deal of memory, at the cost of reduced recall, since distances are only estimated."

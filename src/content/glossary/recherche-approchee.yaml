@@ -1,7 +1,7 @@
 slug: recherche-approchee
 fr:
-  term: Recherche approchee
-  definition: "Famille de methodes (ANN, pour Approximate Nearest Neighbor) qui acceptent de manquer parfois le vrai plus proche voisin pour repondre beaucoup plus vite, ou avec beaucoup moins de memoire. On echange un peu d'exactitude, mesuree par le rappel, contre de la vitesse ou de l'espace. Elle s'oppose a la recherche exhaustive, exacte mais couteuse. HNSW, IVF et la quantification produit en sont les grandes familles."
+  term: Recherche approchée
+  definition: "Famille de méthodes (ANN, pour Approximate Nearest Neighbor) qui acceptent de manquer parfois le vrai plus proche voisin pour répondre beaucoup plus vite, ou avec beaucoup moins de mémoire. On échange un peu d'exactitude, mesurée par le rappel, contre de la vitesse ou de l'espace. Elle s'oppose à la recherche exhaustive, exacte mais coûteuse. HNSW, IVF et la quantification produit en sont les grandes familles."
 en:
   term: Approximate search
   definition: "A family of methods (ANN, for Approximate Nearest Neighbor) that accept occasionally missing the true nearest neighbor in order to answer far faster, or with far less memory. You trade a little accuracy, measured by recall, against speed or space. It stands opposed to exhaustive search, exact but costly. HNSW, IVF and product quantization are its main families."
