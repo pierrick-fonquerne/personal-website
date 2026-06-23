@@ -1,0 +1,11 @@
+slug: graphe-de-proximite
+fr:
+  term: Graphe de proximite
+  definition: "Structure ou chaque vecteur (un noeud) est relie par des aretes a une poignee de ses voisins les plus proches. Au lieu d'un sac de vecteurs sans relations, qui force a tout comparer, on obtient un reseau dans lequel on peut se deplacer de proche en proche pour approcher une requete sans visiter tous les points. C'est la fondation des index a base de graphe comme HNSW."
+en:
+  term: Proximity graph
+  definition: "A structure where each vector (a node) is connected by edges to a handful of its nearest neighbors. Instead of a relationless bag of vectors that forces a full scan, you get a network you can walk through, hop by hop, to approach a query without visiting every point. It is the foundation of graph-based indexes such as HNSW."
+seeAlso:
+  - plus-proches-voisins
+  - hnsw
+  - petit-monde

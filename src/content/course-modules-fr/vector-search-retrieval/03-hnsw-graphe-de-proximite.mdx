@@ -1,0 +1,254 @@
+---
+course: vector-search-retrieval
+order: 3
+title: 'HNSW : naviguer dans un graphe de proximite'
+subtitle: "Et si trouver le plus proche voisin devenait une promenade de quelques sauts, au lieu d'un balayage de millions de vecteurs ?"
+estimatedMinutes: 30
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import HnswNavigator from '../../../components/learning/HnswNavigator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre précédent, on s'est retrouvés devant deux murs. Comparer la requête à tous les vecteurs donne la réponse exacte, mais ce balayage coûte $O(n \times d)$ : impraticable sur des millions de vecteurs. Et la grande dimension brouille la notion même de proximité. Le chapitre s'est terminé sur une promesse : et si les vecteurs étaient reliés par un réseau de raccourcis, de sorte qu'en partant d'un point quelconque et en avançant toujours vers un voisin plus proche de la requête, on arrive en quelques sauts tout près du but ?
+
+Cette idée a un nom, HNSW, et c'est aujourd'hui l'index le plus utilisé dans les bases vectorielles. Ce chapitre la construit pièce par pièce. Deux questions vont nous guider : pourquoi une règle aussi naïve que « va toujours vers le voisin le plus proche » peut-elle marcher, et que faut-il ajouter au réseau pour qu'elle marche vraiment ?
+
+## Et si les vecteurs se tenaient par la main
+
+Change un instant de point de vue. Jusqu'ici, la base était un sac de vecteurs sans relations : pour répondre, on était condamnés à tous les toucher. Donnons-leur des liens. Chaque vecteur connaît une poignée de voisins proches, et seulement eux. On obtient un <Term slug="graphe-de-proximite">graphe de proximité</Term> : les points sont les noeuds, et une arête relie deux points jugés proches.
+
+L'analogie est celle d'un réseau social. Tu ne connais pas les huit milliards d'humains, juste quelques dizaines de proches. Pourtant, pour faire passer un message à un inconnu à l'autre bout du monde, tu n'as pas besoin de parler à tout le monde : tu le confies à celui de tes contacts qui semble le plus proche du destinataire, qui le transmet à son tour, et de proche en proche le message arrive. C'est exactement ce qu'on va faire avec une requête, en se déplaçant de voisin en voisin.
+
+## La navigation gloutonne
+
+La règle de déplacement est d'une simplicité désarmante. On se tient sur un noeud de départ. On regarde la distance de la requête à chacun de ses voisins. On saute sur le voisin le plus proche de la requête. On recommence. On s'arrête quand aucun voisin n'est plus proche de la requête que le noeud où l'on est déjà. C'est la <Term slug="recherche-gloutonne">recherche gloutonne</Term> : à chaque pas, le meilleur coup local, sans jamais regarder en arrière ni planifier.
+
+<Formula caption="La regle, en une ligne">tant qu'un voisin est plus proche de la requête que moi : j'y saute. Sinon : je m'arrête.</Formula>
+
+À chaque saut, on se rapproche strictement de la requête. Comme il y a un nombre fini de noeuds et qu'on ne revient jamais en arrière, la marche se termine forcément. La question intéressante n'est pas si elle se termine, mais où.
+
+Et là, surprise désagréable. La marche s'arrête dès qu'on atteint un noeud dont tous les voisins sont plus loin de la requête que lui. Rien ne garantit que ce noeud soit le vrai plus proche voisin de toute la base. Ce peut être un simple <Term slug="minimum-local">minimum local</Term> : un creux dont on ne peut plus descendre avec les liens disponibles, alors qu'un point bien meilleur existe ailleurs, hors de portée immédiate. La recherche gloutonne est rapide, mais elle peut se tromper.
+
+<Callout kind="warn" title="Glouton ne veut pas dire optimal">
+Un algorithme glouton prend à chaque étape la décision qui paraît la meilleure sur le moment. C'est souvent excellent et toujours rapide, mais ce n'est pas garanti optimal : une suite de bons choix locaux peut mener dans un cul-de-sac. Le minimum local en est l'exemple parfait. Tout l'art de HNSW consiste à rendre ces pièges suffisamment rares pour qu'ils ne comptent presque jamais.
+</Callout>
+
+## Garder plusieurs pistes : la largeur de faisceau
+
+Comment échapper à un creux ? En ne mettant pas tous ses oeufs dans le même panier. Plutôt que de ne retenir que le meilleur noeud courant, on garde une liste des $\mathit{ef}$ meilleurs candidats rencontrés jusqu'ici, et on continue d'explorer leurs voisins tant que l'un d'eux peut encore améliorer la liste. Ce nombre $\mathit{ef}$ s'appelle la largeur de faisceau (en anglais, la taille de la liste de candidats).
+
+Avec $\mathit{ef} = 1$, on retrouve exactement la navigation gloutonne, et ses pièges. Avec $\mathit{ef} = 2$, on garde toujours une piste de secours : si le meilleur chemin bute sur un minimum local, le second candidat peut contourner l'obstacle et atteindre une région que le premier n'aurait jamais vue. Plus $\mathit{ef}$ est grand, plus on explore, moins on se trompe, mais plus on calcule. On retrouve, intacte, la tension du chapitre précédent : il va falloir mesurer ce qu'on gagne et ce qu'on perd.
+
+<Callout kind="note" title="HNSW est une methode approchee, assume">
+À la différence de la <Term slug="recherche-exhaustive">recherche exhaustive</Term> du chapitre 2, qui est exacte par construction, HNSW peut manquer le vrai plus proche voisin. C'est un choix : on échange un peu d'exactitude contre énormément de vitesse. C'est précisément pour ça que le <Term slug="rappel">rappel@k</Term> existe. On mesurera la qualité d'un index HNSW en comparant ses résultats à ceux de l'oracle exhaustif, et $\mathit{ef}$ sera la molette qui déplace le curseur entre vitesse et rappel.
+</Callout>
+
+## Sous le capot : petits mondes et construction
+
+On tient la mécanique de recherche. Reste la question de fond : pourquoi quelques sauts suffisent-ils ? Si le graphe ne reliait chaque point qu'à ses plus proches voisins immédiats, la réponse serait décevante. Pour aller d'un bout à l'autre du nuage, il faudrait traverser tout l'espace de proche en proche, un petit pas à la fois : un chemin aussi long que le nuage est large. On n'aurait rien gagné.
+
+### Le secret : les raccourcis longue portée
+
+La solution vient d'une observation célèbre sur les réseaux sociaux. Dans l'expérience des « six degrés de séparation », deux inconnus pris au hasard sur Terre sont reliés par une chaîne d'à peine six relations. Comment, avec seulement des amis proches ? Parce qu'il existe quelques liens longue portée : un ami d'enfance parti vivre à l'autre bout du monde, un collègue d'un autre secteur. Ces rares ponts raccourcissent énormément les distances. Un réseau qui combine beaucoup de liens locaux et quelques liens longue portée s'appelle un réseau <Term slug="petit-monde">petit monde</Term>.
+
+L'effet sur la longueur des chemins est spectaculaire. Sur un graphe purement local, le nombre de sauts pour traverser croît comme la taille du réseau. Ajoute des raccourcis bien placés, et ce nombre s'effondre.
+
+<Formula caption="L'effet petit monde">graphe purement local : chemin ∝ n. Avec des raccourcis longue portée : chemin ∝ log n.</Formula>
+
+Cette ligne se lit : sans raccourcis, le nombre de sauts grandit comme le nombre de points ; avec des raccourcis longue portée bien répartis, il grandit seulement comme le logarithme du nombre de points. Passer de $n$ à $\log n$, c'est passer d'un million de sauts à une vingtaine. C'est tout le gain de HNSW : une recherche qui coûtait $O(n)$ devient une promenade de l'ordre de $\log n$ étapes. Le composant un peu plus bas empile justement ces raccourcis en couches : tu y suivras, couche après couche, la descente que les couches hautes rendent possible.
+
+### Comment on bâtit la structure, un point à la fois
+
+Reste à fabriquer un tel graphe, et surtout sa hiérarchie de couches. HNSW le construit de façon incrémentale : les points sont insérés un par un, et chacun choisit lui-même jusqu'à quelle couche il monte.
+
+Quand un nouveau point arrive, on lui tire un niveau au hasard, selon une loi très déséquilibrée. La quasi-totalité des points restent au niveau zéro, la couche de base. De plus en plus rares sont ceux qui montent au niveau un, plus rares encore au niveau deux, et ainsi de suite. Concrètement, on tire un nombre $u$ au hasard entre zéro et un, et le niveau vaut :
+
+$$
+\text{niveau} = \big\lfloor -\ln(u) \times m_L \big\rfloor
+$$
+
+Cette formule se lit : le niveau est la partie entière de moins le logarithme de $u$, multiplié par une constante $m_L$. Comme $-\ln(u)$ est presque toujours petit, le niveau est presque toujours zéro ; il n'est grand que pour les très rares tirages où $u$ est minuscule. Ce sont ces points rares, montés haut, qui deviendront les relais des couches supérieures.
+
+Une fois son niveau connu, le point est inséré dans chaque couche jusqu'à ce niveau. Dans chacune, on le relie à ses $M$ plus proches voisins déjà présents, $M$ étant le nombre de connexions par noeud, fixé d'avance. Et pour le brancher au bon endroit sans tout comparer, on utilise la recherche qu'on vient d'apprendre : on descend la hiérarchie en glouton pour trouver où il atterrit. HNSW se sert donc de sa propre navigation pour se construire.
+
+## La hierarchie : une skip-list dans l'espace
+
+Empilons maintenant ces couches. Tout en haut, une poignée de points reliés par de grands sauts. Plus bas, davantage de points et des sauts plus courts. Tout en bas, la couche de base, qui contient tous les points avec leurs voisins les plus fins.
+
+<MermaidDiagram
+  client:visible
+  caption="La hierarchie HNSW : rare et grossiere en haut, dense et fine en bas. La recherche descend couche par couche."
+  definition={`flowchart TB
+    subgraph L2["Couche 2 : rare, grands sauts"]
+      direction LR
+      a2((entrée)) --- b2((•))
+    end
+    subgraph L1["Couche 1 : intermédiaire"]
+      direction LR
+      a1((•)) --- b1((•)) --- c1((•)) --- d1((•))
+    end
+    subgraph L0["Couche 0 : base, dense et fine"]
+      direction LR
+      a0((•)) --- b0((•)) --- c0((•)) --- d0((•)) --- e0((•)) --- f0((•)) --- g0((•))
+    end
+    a2 -.descend.-> b1
+    b1 -.descend.-> d0
+`}
+/>
+
+La recherche exploite cette hiérarchie comme une descente en parachute. On entre par l'unique point du sommet. Dans cette couche très clairsemée, quelques grands sauts gloutons amènent vite dans la bonne région du monde. On descend alors d'un cran : le meilleur point trouvé devient le point d'entrée de la couche du dessous, plus dense, où des sauts plus courts affinent la position. On répète jusqu'à la couche de base, où l'on élargit le faisceau à $\mathit{ef}$ pour cueillir précisément les plus proches voisins.
+
+C'est exactement l'idée d'une skip-list, cette structure qui accélère la recherche dans une liste triée en ajoutant des étages d'index de plus en plus espacés, transposée non plus à une ligne triée mais à un espace de vecteurs. D'où le nom complet : Hierarchical Navigable Small World, ou <Term slug="hnsw">HNSW</Term>, le graphe hiérarchique navigable à petit monde.
+
+## Naviguer toi-meme dans la hierarchie
+
+Le composant ci-dessous construit un HNSW sur un petit nuage de points en deux dimensions, avec ses couches empilées. Place la requête, puis fais descendre la recherche couche par couche et regarde le chemin se tracer. Compare toujours le voisin trouvé au vrai plus proche voisin, que l'oracle exhaustif marque pour toi : c'est ton rappel en direct.
+
+<HnswNavigator
+  client:visible
+  seed={2024}
+  pointCount={48}
+  initialM={6}
+  initialEf={4}
+  labels={{
+    mLabel: "Voisins par noeud (M)",
+    efLabel: "Largeur de faisceau (ef)",
+    reshuffleLabel: "Rebrasser le nuage",
+    stepLabel: "Pas suivant",
+    playLabel: "Dérouler la descente",
+    resetLabel: "Recommencer",
+    queryHint: "Clique dans le cadre pour déplacer la requête.",
+    entryLabel: "Point d'entrée",
+    queryLabel: "Requête",
+    resultLabel: "Voisin trouvé",
+    oracleLabel: "Vrai voisin (oracle)",
+    visitedLabel: "Points visités",
+    layerLabel: "Couche",
+    baseLayerLabel: "Couche de base",
+    hitLabel: "Touché : la descente a retrouvé le vrai plus proche voisin (rappel 1).",
+    missLabel: "Manqué : la descente s'est arrêtée sur un voisin sous-optimal (rappel 0). Élargis le faisceau ef, ou augmente M.",
+    statusIdleLabel: "Place la requête et lance la descente."
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. À $\mathit{ef} = 1$, combien de fois la descente manque-t-elle le vrai voisin quand tu déplaces la requête ? Que se passe-t-il quand tu montes $\mathit{ef}$ ?
+2. Désactive les couches hautes par la pensée en imaginant un seul niveau : le chemin serait-il plus long ? Compte les sauts de la couche de base seule, puis ceux de la descente complète.
+3. Baisse $M$ jusqu'à très peu de voisins par noeud. Le graphe se fragmente-t-il ? La descente reste-t-elle capable d'atteindre toutes les régions ?
+
+## Les deux molettes : M et ef
+
+HNSW se règle essentiellement avec deux nombres, et il faut bien distinguer leurs rôles, car l'un agit à la construction et l'autre à la recherche.
+
+$M$ est le nombre de voisins par noeud, fixé quand on bâtit l'index. Plus $M$ est grand, plus le graphe est richement connecté, donc plus la navigation est sûre et le rappel élevé, mais plus l'index consomme de mémoire, car il faut stocker toutes ces arêtes. $M$ se paie en RAM, une fois pour toutes.
+
+$\mathit{ef}$ est la largeur de faisceau à la recherche. On peut le changer à chaque requête, sans reconstruire quoi que ce soit. Plus $\mathit{ef}$ est grand, plus on explore de candidats, plus le rappel monte, mais plus chaque requête est lente. $\mathit{ef}$ se paie en temps, à chaque requête.
+
+<Callout kind="tip" title="La bonne facon de regler HNSW">
+On choisit d'abord $M$ selon la mémoire qu'on peut offrir à l'index (souvent entre 8 et 48). Puis, l'index une fois construit, on monte $\mathit{ef}$ jusqu'à atteindre le rappel@k visé, par exemple 0,95, en surveillant que la latence reste acceptable. C'est la beauté de la séparation : la qualité du graphe est gravée une fois, mais le compromis vitesse-rappel reste réglable requête par requête.
+</Callout>
+
+<Callout kind="info" title="Le fil rouge : le premier vrai index du moteur">
+Le moteur vectoriel qui sert de fil rouge à ce cours a d'abord implémenté la recherche exhaustive, gardée comme oracle de test. HNSW est le premier index rapide qu'on lui greffe par-dessus : on construit le graphe une fois, puis chaque requête devient une descente de quelques sauts au lieu d'un balayage complet. Reste une difficulté bien réelle, qu'on retrouvera plus loin dans le cours : filtrer les résultats (par date, par auteur, par droits d'accès) sans casser la connexité du graphe, car retirer des noeuds peut isoler des régions entières et faire chuter le rappel. C'est un des chantiers ouverts des bases vectorielles modernes.
+</Callout>
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : tracer une navigation gloutonne">
+On a cinq points sur une ligne, à des positions $0, 1, 2, 3, 4$. Le graphe est une chaîne : chacun n'est relié qu'à ses voisins immédiats de gauche et de droite. La requête est à la position $3{,}4$. On part du point en position $0$, en navigation gloutonne ($\mathit{ef} = 1$). On veut le chemin et le point d'arrivée.
+
+**Étape 1.** On note la distance de chaque point à la requête, qui est simplement l'écart de position.
+
+$$
+|0 - 3{,}4| = 3{,}4 \quad |1 - 3{,}4| = 2{,}4 \quad |2 - 3{,}4| = 1{,}4
+$$
+
+$$
+|3 - 3{,}4| = 0{,}4 \quad |4 - 3{,}4| = 0{,}6
+$$
+
+**Étape 2.** On démarre au point $0$ (distance $3{,}4$). Son seul voisin vers la requête est le point $1$ (distance $2{,}4$), plus proche. On y saute.
+
+**Étape 3.** Au point $1$, le voisin $2$ (distance $1{,}4$) est plus proche. On saute.
+
+**Étape 4.** Au point $2$, le voisin $3$ (distance $0{,}4$) est plus proche. On saute.
+
+**Étape 5.** Au point $3$ (distance $0{,}4$), les deux voisins sont le point $2$ (distance $1{,}4$) et le point $4$ (distance $0{,}6$). Les deux sont plus loin que $0{,}4$. Aucun voisin n'améliore.
+
+**Résultat.** La marche s'arrête au point $3$, qui est bien le vrai plus proche voisin de $3{,}4$. Le chemin est $0 \rightarrow 1 \rightarrow 2 \rightarrow 3$, soit trois sauts. Sur cette chaîne sans raccourci, le nombre de sauts est de l'ordre de la taille du nuage : c'est exactement ce que les raccourcis longue portée viennent corriger.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : choisir M et ef">
+Un service tient un index HNSW avec $M = 16$ et $\mathit{ef} = 10$, et mesure un rappel@10 de $0{,}90$, jugé trop faible. La RAM est presque saturée. On veut décider quelle molette tourner.
+
+**Étape 1.** On rappelle qui paie quoi. Augmenter $M$ enrichit le graphe et le rappel, mais coûte de la mémoire, car on stocke plus d'arêtes. Augmenter $\mathit{ef}$ explore plus de candidats et monte le rappel, mais coûte du temps de calcul à chaque requête, sans toucher à la mémoire.
+
+**Étape 2.** On regarde la contrainte. La RAM est presque saturée : augmenter $M$ obligerait à reconstruire un index plus gros, qu'on ne peut pas loger.
+
+**Étape 3.** On agit sur la molette gratuite en mémoire. On monte $\mathit{ef}$, par exemple de $10$ à $40$, sans reconstruire l'index, et on remesure le rappel@10 et la latence.
+
+**Résultat.** On augmente $\mathit{ef}$, pas $M$. C'est le bon réflexe quand la mémoire est le facteur limitant : $\mathit{ef}$ achète du rappel avec du temps, une ressource ici plus disponible que la RAM. Si même un grand $\mathit{ef}$ ne suffisait pas, alors seulement il faudrait reconstruire avec un $M$ plus grand, en trouvant la mémoire nécessaire.
+</Callout>
+
+## En une phrase
+
+HNSW relie les vecteurs en un graphe hiérarchique à petit monde, où une simple navigation gloutonne, élargie par une largeur de faisceau $\mathit{ef}$ réglable, retrouve le plus proche voisin en de l'ordre de $\log n$ sauts au lieu de $n$, au prix d'un rappel qu'on choisit de régler entre mémoire ($M$) et temps ($\mathit{ef}$).
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Que fait la navigation gloutonne dans un graphe de proximité ?",
+      options: [
+        "Elle compare la requête à tous les noeuds puis trie",
+        "À chaque pas, elle saute vers le voisin le plus proche de la requête, et s'arrête quand aucun voisin n'améliore",
+        "Elle choisit un noeud au hasard à chaque étape",
+        "Elle remonte toujours vers le point d'entrée"
+      ],
+      answer: 1,
+      explain: "La navigation gloutonne prend à chaque pas le meilleur voisin local et s'arrête au premier noeud dont aucun voisin n'est plus proche de la requête. Rapide, mais elle peut s'arrêter dans un minimum local."
+    },
+    {
+      q: "Pourquoi ajouter des raccourcis longue portée au graphe ?",
+      options: [
+        "Pour économiser de la mémoire",
+        "Pour rendre l'index exact",
+        "Pour faire passer la longueur des chemins de l'ordre de n à l'ordre de log n",
+        "Pour supprimer le besoin d'un point d'entrée"
+      ],
+      answer: 2,
+      explain: "Un graphe purement local impose des chemins aussi longs que le nuage est large. Les raccourcis longue portée, propres aux réseaux petit monde, effondrent la longueur des chemins de n vers log n."
+    },
+    {
+      q: "Quelle différence entre les paramètres M et ef ?",
+      options: [
+        "M et ef règlent tous deux la mémoire",
+        "M est le nombre de voisins par noeud, fixé à la construction et payé en RAM ; ef est la largeur de faisceau à la recherche, réglable par requête et payée en temps",
+        "ef est fixé à la construction, M change à chaque requête",
+        "Aucun des deux n'influence le rappel"
+      ],
+      answer: 1,
+      explain: "M se choisit en bâtissant l'index et se paie en mémoire (plus d'arêtes stockées). ef se choisit à chaque requête, sans reconstruire, et se paie en temps de calcul. Les deux montent le rappel, mais sur des ressources différentes."
+    }
+  ]}
+/>
+
+## Vers le chapitre 4
+
+HNSW est superbe, mais ce n'est pas la seule façon d'éviter le balayage complet, et ce n'est pas une solution gratuite. Sa hiérarchie de graphes coûte cher en mémoire, et la mettre à jour ou y filtrer des résultats n'a rien d'évident. D'autres familles d'index font des compromis tout différents : partitionner l'espace en cellules pour n'en visiter que quelques-unes, ou compresser les vecteurs pour en stocker bien plus en mémoire quitte à perdre en précision. Comment s'y retrouver ? Le chapitre 4 dresse le paysage des index de plus proches voisins approchés, range HNSW parmi ses cousins, et donne une grille de lecture pour choisir selon ce qu'on a, mémoire, vitesse ou rappel, car on ne peut jamais maximiser les trois à la fois.
+
+## Sources
+
+- Malkov, Y. A. & Yashunin, D. A. (2018). « Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. » _IEEE Transactions on Pattern Analysis and Machine Intelligence_. [arXiv:1603.09320](https://arxiv.org/abs/1603.09320)
+- Malkov, Y., Ponomarenko, A., Logvinov, A. & Krylov, V. (2014). « Approximate Nearest Neighbor Algorithm Based on Navigable Small World Graphs. » _Information Systems_ 45, 61-68. [DOI 10.1016/j.is.2013.10.006](https://doi.org/10.1016/j.is.2013.10.006)
+
+### Pour aller plus loin
+
+- Watts, D. J. & Strogatz, S. H. (1998). « Collective Dynamics of "Small-World" Networks. » _Nature_ 393, 440-442. [DOI 10.1038/30918](https://doi.org/10.1038/30918)
+- Kleinberg, J. (2000). « The Small-World Phenomenon: An Algorithmic Perspective. » _STOC_. [DOI 10.1145/335305.335325](https://doi.org/10.1145/335305.335325)
