@@ -76,6 +76,16 @@ This formula reads: the level is the integer part of minus the logarithm of $u$,
 
 Once its level is known, the point is inserted into every layer up to that level. In each one, it is connected to its $M$ nearest neighbors already present, $M$ being the number of connections per node, fixed in advance. And to wire it into the right place without comparing everything, we use the search we just learned: we descend the hierarchy greedily to find where it lands. HNSW thus uses its own navigation to build itself.
 
+<Callout kind="note" title="Going further: three refinements that keep the graph alive">
+The skeleton we just described, drawing a random level and connecting to the $M$ nearest neighbors, gives the right intuition. But the actual algorithm by Malkov and Yashunin adds three refinements that make all the difference between a graph that navigates well and one that collapses. This section goes one step further, for those who want to dig deeper.
+
+**1. Heuristic neighbor selection.** Connecting a new point to its $M$ nearest neighbors seems obvious, but it often leads to a poor graph. If those $M$ neighbors are all clustered on the same side, the point becomes a dead end: no link points toward other regions. HNSW therefore selects neighbors for their diversity of directions, not just for their proximity. It prefers neighbors spread around the point over neighbors piled up in the same spot. This is precisely what keeps the graph connected and navigable, and what prevents greedy search from getting trapped.
+
+**2. Twice as many neighbors at the bottom.** The base layer holds all the points and carries the fine-grained search. It allows up to $2M$ neighbors per node (a threshold often written $M_{max0}$), while the upper layers are limited to $M$. More memory is invested where precision matters most.
+
+**3. A beam width at construction time too.** We have seen $\mathit{ef}$ at search time. There is a second parameter, $\mathit{efConstruction}$, which is the beam width used during insertion, when the new point searches for its neighbors. A higher $\mathit{efConstruction}$ builds a better graph, at the cost of a longer construction. This is a third dial, paid once at build time, not to be confused with the $\mathit{ef}$ that can be tuned per query.
+</Callout>
+
 ## The hierarchy: a skip-list in vector space
 
 Now let us stack these layers. At the very top, a handful of points connected by large hops. Lower down, more points and shorter hops. At the very bottom, the base layer, which contains all points with their finest-grained neighbors.
@@ -252,3 +262,4 @@ HNSW is elegant, but it is not the only way to avoid a full scan, and it is not 
 
 - Watts, D. J. & Strogatz, S. H. (1998). "Collective Dynamics of 'Small-World' Networks." _Nature_ 393, 440-442. [DOI 10.1038/30918](https://doi.org/10.1038/30918)
 - Kleinberg, J. (2000). "The Small-World Phenomenon: An Algorithmic Perspective." _STOC_. [DOI 10.1145/335305.335325](https://doi.org/10.1145/335305.335325)
+- Bruch, S. (2024). _Foundations of Vector Retrieval_. Springer. A modern textbook covering graph-based indexes, including HNSW, and their trade-offs. [arXiv:2401.09350](https://arxiv.org/abs/2401.09350)

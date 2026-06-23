@@ -26,6 +26,8 @@ In words: all distances grow together, but their gap relative to their size disa
 
 The same argument applies to angles. The dot product of two random zero-mean vectors is also a sum of d terms with zero mean. Divide by the norms, which grow like the square root of d, and the cosine concentrates around zero with a spread that shrinks like one over the square root of d. That is the bell tightening in the cosine tab.
 
+To put a number on it: that spread is about three hundredths in dimension one thousand, which corresponds to an angle barely two degrees away from a right angle. In other words, in the space where real embeddings live, two directions drawn at random are almost always perpendicular.
+
 So what do we do when we cannot trust distances to guide us? We need a quality measure for imperfect search. The most common is recall at k. The principle is direct. Ask exhaustive search for the k true nearest neighbors: that is the ground truth. Ask the fast method for its k best results. Recall at k is the fraction of the ground truth the fast method recovered. A recall at k of one means nothing was missed. A recall at k of zero point nine means one neighbor in ten slipped through. That number will follow us to the end of the course: every time we gain speed, we will ask what it costs in recall.
 
 The two exercises in the chapter are worth doing with a pencil. One asks you to compute the total number of multiplications for a database of two million vectors in dimension seven hundred sixty-eight, at five hundred queries per second. The other walks you through computing a recall at three by hand, given a ground truth and a fast result list.

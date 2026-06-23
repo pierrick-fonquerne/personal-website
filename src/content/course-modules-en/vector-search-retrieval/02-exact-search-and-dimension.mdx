@@ -131,6 +131,8 @@ In other words, all distances grow together, but their gap relative to their siz
 
 <Callout kind="tip" title="The same reasoning for angles">
 Quasi-orthogonality is proved in the same spirit. The dot product of two random centered vectors is also a sum of $d$ independent terms with zero mean. Its mean is therefore zero, and once divided by the norms (which grow like $\sqrt{d}$), the cosine concentrates around zero with a spread that shrinks like $1/\sqrt{d}$. That is exactly the bell tightening in the second tab of the component.
+
+To get a sense of the scale: the standard deviation of the cosine is on the order of $1/\sqrt{d}$, which is roughly $0.03$ in dimension $1000$ and roughly $0.01$ in dimension $10000$. A cosine of $0.03$ corresponds to an angle barely two degrees away from a right angle. In other words, in the space where real embeddings live, two directions drawn at random are almost always perpendicular to within one or two degrees.
 </Callout>
 
 ## Measuring an imperfect search: recall at k
@@ -266,3 +268,4 @@ We now know two uncomfortable things: comparing all vectors is exact but too slo
 
 - Indyk, P. & Motwani, R. (1998). "Approximate Nearest Neighbors: Towards Removing the Curse of Dimensionality." _STOC_. [DOI 10.1145/276698.276876](https://doi.org/10.1145/276698.276876)
 - Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 7. [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)
+- Bruch, S. (2024). _Foundations of Vector Retrieval_. Springer. A modern, rigorous synthesis of vector retrieval, from exact scan to approximate indexes. [arXiv:2401.09350](https://arxiv.org/abs/2401.09350)

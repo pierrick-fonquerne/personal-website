@@ -130,6 +130,10 @@ This relation says it all: on the unit sphere, the smaller the angle (cosine clo
 In the vector engine that serves as the running thread for this course, the proximity measure is not hardwired: it is a parameter. The core of the index does not know whether it is ranking by cosine or by distance, it receives a measure function. This neutrality is not vanity: it follows directly from what we just saw. Since, after normalization, cosine and distance give the same order, we may as well leave the choice to the caller and keep the core independent of that detail.
 </Callout>
 
+<Callout kind="tip" title="In practice: dot product or cosine?">
+If all your vectors are normalized (length one), the dot product and the cosine become identical, because the denominator of the cosine formula equals one. Many embedding models already return normalized vectors. In that case, you can use the dot product directly: it skips the division by the norms, so it is faster to compute, while you are in effect reasoning about angles. Keep the explicit cosine or Euclidean distance when vectors are not normalized, or when the length carries information you want to preserve. The rule to remember: normalize once, then the dot product is enough.
+</Callout>
+
 ## A surprise waiting in high dimension
 
 All our intuition comes from the plane, where we draw arrows. It will betray us in the next chapter. In high dimension, a counter-intuitive phenomenon takes hold: if you draw two vectors at random in a thousand-dimensional space, they are almost always nearly perpendicular, so their cosine is close to zero. Distances, meanwhile, all look alike. The space becomes strangely empty and uniform. This phenomenon has a name, the curse of dimensionality, and it alone decides the difficulty of all vector search. We will face it head-on in chapter 2.
@@ -262,4 +266,5 @@ We now know how to represent meaning as a vector and measure proximity between t
 
 ### Further reading
 
+- Jurafsky, D. & Martin, J. H. (2024). _Speech and Language Processing_ (3rd edition draft), ch. 6 "Vector Semantics and Embeddings". A reference textbook, accessible and free online. [web.stanford.edu/~jurafsky/slp3](https://web.stanford.edu/~jurafsky/slp3/)
 - Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_, chap. 6 (Scoring, term weighting and the vector space model). [nlp.stanford.edu/IR-book](https://nlp.stanford.edu/IR-book/)
