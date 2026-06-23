@@ -1,0 +1,201 @@
+---
+course: vector-search-retrieval
+order: 5
+title: 'Testing the approximate: the differential oracle'
+subtitle: "An index can pass every test, two reviews, and still return bad results. How do you catch an algorithm that lies?"
+estimatedMinutes: 26
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import RecallOracleLab from '../../../components/learning/RecallOracleLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we placed HNSW right next to the ideal corner of the triangle, and one word came back with every measurement: we evaluate the recall of an approximate index by comparing it to the exact oracle. But let us pause on that word. When your engine reports a recall of 0.95, who guarantees it is not 0.62? An approximate search index does not throw an exception when it is wrong: it always returns k results, neatly sorted, looking perfect. It can pass every unit test and two code reviews, and silently miss a third of the true neighbors.
+
+This chapter is the course's judge. One question carries it, and it is unsettling: how do you test an algorithm whose right answer you do not know in advance, and which can be structurally flawless yet globally wrong?
+
+## The algorithm that passes the tests and lies anyway
+
+Here is a true story, which happened while building the engine that runs as the thread of this course. A freshly written HNSW index passed the entirety of its unit tests. It did return k results. They were sorted from closest to farthest. The obvious neighbor of an easy query was found. Two reviews, one human and one assisted, had read it without flagging anything. Everything was green.
+
+Its real recall was 0.62, where we were aiming for 0.90 and above. It silently threw away nearly four out of ten true neighbors. No test screamed, because no test looked at the only thing that mattered: the global quality of the result, measured against the truth.
+
+Two tiny bugs hid there, invisible on reading. A binary heap built backwards, which on every saturation discarded the best candidate instead of the worst, so the search kept the bad ones and grew poorer as it advanced. And a connectivity bound halved by an extra `.min()`, which fragmented the graph. Two lines. Forty percent of neighbors lost.
+
+## Local property versus global quality
+
+Why did the unit tests see nothing? Because they check local properties, and an approximate algorithm can satisfy all of them while collapsing globally.
+
+A local property is a statement about the SHAPE of the result. The result holds k elements. They are sorted. They are distinct. All true here, in both buggy versions as in the correct one: the result stays structurally impeccable. These tests do not lie, they are simply blind to the question that matters.
+
+Global quality, on the other hand, asks: among the k true nearest neighbors, how many did we retrieve? That is recall, defined in chapter 2. No example-based test reveals "we miss 38 % of the true neighbors", because that truth is not local: it appears only by aggregating dozens of queries and confronting them with the right answer.
+
+<Callout kind="note" title="The oracle problem">
+In testing theory, an oracle is whatever can say whether an output is correct. For many functions, the oracle is easy: the sum of 2 and 2 must be 4. But for an approximate algorithm, the oracle is precisely what is missing: we do not know in advance the true nearest neighbors of a query among a million vectors. This is the "oracle problem" (Barr et al., 2015). This whole chapter is one way to solve it.
+</Callout>
+
+## The differential oracle
+
+The idea is as simple as it is powerful. We have two implementations of the same problem. One is fast but approximate, the one we want to ship. The other is slow but exact, and serves only as a reference. We run both on the same dataset, and measure the gap on the metric that truly matters. That is the <Term slug="oracle-differentiel">differential oracle</Term>.
+
+<Formula caption="The principle">quality = gap(fast-approximate output , slow-exact output) on the metric that matters</Formula>
+
+For vector search, the exact implementation already exists, and we know it well: it is the exhaustive search of chapter 2, the flat index that compares the query against every vector. Slow, hence unusable in production, but exact by construction. It is the ground truth. The metric that matters is recall@k. The differential oracle of a vector index is therefore: for a sample of queries, compare the k neighbors returned by the fast index to the k true neighbors returned by the exhaustive scan, and average the recall.
+
+This is not one more unit test. It is a test of a different nature, one that measures a continuous quality rather than a binary correctness, and that needs a second implementation to exist.
+
+## Watching the tests stay green while recall lies
+
+The component below puts you in the shoes of someone debugging. A small beam-search index runs over a cloud of points, against the exhaustive oracle. On the left, the panel of local unit tests. On the right, the recall measured by the differential oracle, with its contractual threshold. Toggle either of the two real bugs, the inverted heap or the halved connectivity, and observe: the local tests stay stubbornly green while recall collapses under the threshold. This is exactly what you do not see when reading the code.
+
+<RecallOracleLab
+  client:visible
+  seed={7}
+  pointCount={320}
+  clusterCount={6}
+  spread={0.1}
+  degree={10}
+  initialEf={14}
+  topK={8}
+  recallThreshold={0.9}
+  labels={{
+    invertedHeapLabel: "Bug 1: inverted heap (we drop the best)",
+    halvedConnectivityLabel: "Bug 2: halved connectivity",
+    efLabel: "Beam width (ef)",
+    queryHint: "Click in the frame to move the query.",
+    reshuffleLabel: "Reshuffle the cloud",
+    legendQuery: "Query",
+    legendRetrieved: "Returned neighbors",
+    legendOracle: "True neighbors (oracle)",
+    legendVisited: "Visited points",
+    localChecksTitle: "Unit tests (local properties)",
+    checkReturnsK: "Returns k results",
+    checkSorted: "Sorted by distance",
+    checkDistinct: "All distinct",
+    oracleTitle: "Differential oracle (global quality)",
+    recallAllLabel: "Mean recall@k",
+    recallQueryLabel: "Recall of this query",
+    thresholdLabel: "Contractual threshold",
+    verdictGreenLabel: "Tests green",
+    verdictHonestLabel: "Contract kept",
+    verdictBrokenLabel: "Contract broken: the index lies",
+    blindHint: "The local tests stay green. Only the differential oracle sees the drop."
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+1. Turn on the inverted heap. Which unit test turns red? None. By how much does the mean recall drop?
+2. Switch off the bugs and move the query into a dense area, then into an isolated corner of the cloud. Would the recall of ONE easy query be enough to reassure you? Why does the oracle average over many queries?
+3. With connectivity halved, look at the number of visited points. Does the fragmented graph visit more or fewer nodes, and what happens to recall?
+
+## The reflex generalizes very far
+
+The differential oracle has nothing specific to vector databases. As soon as you have a fast version and a slow-but-safe version of the same computation, you hold an oracle. A cache against its source of truth. Optimized code against its naive implementation. A heuristic against the exact solution on small cases. Each time, the slow reference is the arbiter of the fast one.
+
+When even the exact reference is too costly, there is still a way out: <Term slug="test-metamorphique">metamorphic testing</Term>. Rather than knowing the right answer, you check a RELATION that must hold between several runs. Sorting a list then sorting it again must change nothing. Permuting the order of inputs must not change the set of neighbors found. Doubling every coordinate must leave the ranking intact. These relations catch bugs without ever requiring the full oracle. The differential oracle is its simplest case, where the checked relation is equality to an exact reference.
+
+<Callout kind="warn" title="The trap never to fall into: lowering the threshold">
+When the differential oracle turns red, the temptation is to lower the recall threshold until the test goes green again. That is masking the bug, not fixing it. The threshold IS the contract: it states the quality you promise to users. Moving it to silence the alarm is lying on behalf of the index. The right reaction is always to hunt for the two faulty lines, never to drop the bar.
+</Callout>
+
+<Callout kind="info" title="The running thread: two lines, forty percent of recall">
+On the course's vector engine, it is exactly this differential oracle that saved the day. The unit tests and two reviews had let a recall of 0.62 slip through. The systematic comparison to the flat index, on a sample of queries, made the gap appear at once. From there, we traced the two bugs: the binary heap in the wrong direction, which evicted the best candidate, and the connectivity bound halved. Once fixed, recall climbed back to 0.95. Without the oracle, the index would have gone to production lying on every query.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: computing a recall and seeing the blind spot">
+On a query, the exact index (the oracle) gives as true 5 nearest neighbors the identifiers $\{3, 7, 1, 9, 2\}$. The fast index returns $\{3, 7, 4, 9, 8\}$, sorted from closest to farthest. We want recall@5, then to check the local properties.
+
+**Step 1.** Recall@k is the fraction of true neighbors actually retrieved. We count how many elements of the oracle are present in the fast answer.
+
+$$
+\{3, 7, 1, 9, 2\} \cap \{3, 7, 4, 9, 8\} = \{3, 7, 9\}
+$$
+
+**Step 2.** There are 3 common elements out of 5 true neighbors.
+
+$$
+\text{recall@5} = \frac{3}{5} = 0.6
+$$
+
+**Step 3.** Now we check the local properties of the fast answer. It does hold 5 identifiers: "returns k results" is green. They are announced sorted by distance: "sorted" is green. They are all different: "distinct" is green.
+
+**Result.** Recall is only $0.6$, yet the three local tests pass. An example-based test that merely checked the shape of the result would never see that two true neighbors out of five are missing. Only the differential oracle, which knows $\{3, 7, 1, 9, 2\}$, catches the drop.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: designing the oracle of a cache">
+We wrote a cache that memoizes the result of a costly function `f(x)`. We want a differential oracle to make sure it never returns a stale value. We have `f` itself, slow but correct.
+
+**Step 1.** We identify the two implementations. The fast one is the cache (`cache.get(x)`). The slow-but-exact one is the original function (`f(x)`), which here is our ground truth.
+
+**Step 2.** We choose the metric that matters. For a cache, it is strict equality: for every drawn `x`, the cache value must be exactly that of `f`.
+
+$$
+\text{for each } x : \quad \text{cache.get}(x) = f(x)
+$$
+
+**Step 3.** We avoid the self-reference trap. The oracle must NEVER compare the cache to itself, nor fill the expected value with the cache's output: that would be a tautology freezing the bug. The reference is `f`, computed independently.
+
+**Result.** The cache's differential oracle draws varied `x`, computes `f(x)` separately, and demands equality. A stale entry (the cache returns the old value after `f` changes) makes the two diverge and turns red. The principle is the same as for the vector index: a slow, independent reference arbitrates the fast version.
+</Callout>
+
+## In one sentence
+
+An approximate algorithm can satisfy all its local properties and pass its reviews while collapsing in global quality: only a differential oracle, which confronts the fast version with a slow-but-exact reference on the metric that matters, catches this silent lie, and the threshold of that metric is a contract you never lower to silence the alarm.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why can an approximate search index pass all its unit tests yet be wrong?",
+      options: [
+        "Because unit tests are always badly written",
+        "Because local properties (k results, sorted, distinct) stay true even when global quality (recall) collapses",
+        "Because the compiler does not check types",
+        "Because the index does not have enough memory"
+      ],
+      answer: 1,
+      explain: "Unit tests check the shape of the result, a local property. An approximate algorithm can return a perfectly well-formed result while missing a large share of the true neighbors. Only a global measure against the truth reveals it."
+    },
+    {
+      q: "What is a differential oracle for a vector index?",
+      options: [
+        "A second approximate index compared to the first",
+        "Comparing the fast index's results to those of the exact exhaustive search, measured by recall@k",
+        "A test checking that the index returns k sorted results",
+        "A cache that speeds up queries"
+      ],
+      answer: 1,
+      explain: "The differential oracle confronts the fast-approximate version with a slow-but-exact reference (here the exhaustive flat index), on the metric that matters (recall@k). The reference is the ground truth, never a second approximate."
+    },
+    {
+      q: "The differential oracle turns red below the promised recall threshold. What do you do?",
+      options: [
+        "Lower the threshold until the test goes green again",
+        "Delete the test, it is too strict",
+        "Hunt for the bug, because the threshold is the quality contract you do not move",
+        "Accept it, an approximate index is allowed to be wrong"
+      ],
+      answer: 2,
+      explain: "Lowering the threshold masks the bug instead of fixing it. The threshold states the quality promised to users: it is a contract. The right reaction is to trace the faulty lines, like the inverted heap or the halved connectivity."
+    }
+  ]}
+/>
+
+## Towards chapter 6
+
+We now know how to trust an in-memory index: the differential oracle certifies that it really retrieves what it claims. But this index lives in RAM, and RAM is wiped on the slightest restart. Chapter 6 tackles durability: how do you write an HNSW graph to disk without ever corrupting it, even if the machine crashes mid-insertion? We will find there, transposed to persistence, exactly the reflex of this chapter: a round-trip differential oracle, which reloads the index from disk and demands that it be identical, byte for byte, to the one we had in memory. The same idea, from the geometric world to the world of storage.
+
+## Sources
+
+- Barr, E. T., Harman, M., McMinn, P., Shahbaz, M. & Yoo, S. (2015). "The Oracle Problem in Software Testing: A Survey." _IEEE Transactions on Software Engineering_ 41(5), 507-525. [DOI 10.1109/TSE.2014.2372785](https://doi.org/10.1109/TSE.2014.2372785)
+- Chen, T. Y., Cheung, S. C. & Yiu, S. M. (2018). "Metamorphic Testing: A Review of Challenges and Opportunities." _ACM Computing Surveys_ 51(1). [DOI 10.1145/3143561](https://doi.org/10.1145/3143561)
+
+### Going further
+
+- Claessen, K. & Hughes, J. (2000). "QuickCheck: A Lightweight Tool for Random Testing of Haskell Programs." _ICFP_. [DOI 10.1145/351240.351266](https://doi.org/10.1145/351240.351266)

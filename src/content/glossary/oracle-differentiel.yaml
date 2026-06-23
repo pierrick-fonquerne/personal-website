@@ -1,0 +1,11 @@
+slug: oracle-differentiel
+fr:
+  term: Oracle différentiel
+  definition: "Méthode de test qui valide un code rapide-mais-approché (ou optimisé) en comparant sa sortie à celle d'une référence lente-mais-exacte, sur la métrique qui compte vraiment. Au lieu de vérifier des propriétés locales (le résultat est bien formé), on mesure l'écart de qualité à la vérité-terrain produite par l'implémentation naïve. Indispensable quand un algorithme peut être structurellement correct mais globalement faux : recherche approchée, cache, heuristique."
+en:
+  term: Differential oracle
+  definition: "A testing method that validates fast-but-approximate (or optimized) code by comparing its output against a slow-but-exact reference, on the metric that truly matters. Instead of checking local properties (the result is well-formed), it measures the quality gap against the ground truth produced by the naive implementation. Essential when an algorithm can be structurally correct yet globally wrong: approximate search, caches, heuristics."
+seeAlso:
+  - recherche-approchee
+  - rappel
+  - recherche-exhaustive
