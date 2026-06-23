@@ -1,0 +1,256 @@
+---
+course: vector-search-retrieval
+order: 4
+title: 'Le paysage des index ANN'
+subtitle: "Quatre familles d'index, trois richesses qu'on ne peut jamais toutes garder : comment choisir entre rappel, vitesse et memoire ?"
+estimatedMinutes: 28
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import AnnLandscapeComparator from '../../../components/learning/AnnLandscapeComparator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre précédent, HNSW nous a offert un petit miracle : retrouver un plus proche voisin en de l'ordre de $\log n$ sauts, au lieu de balayer les $n$ vecteurs un par un. On a même refermé le chapitre sur un aveu : c'est superbe, mais ce n'est ni gratuit ni unique. La hiérarchie de graphes dévore la mémoire, la mettre à jour ou y filtrer des résultats est délicat, et surtout, d'autres façons d'éviter le balayage complet existent, qui font des compromis tout différents.
+
+Ce chapitre prend de la hauteur. Plutôt que de plonger dans un nouvel algorithme, on va dresser la carte de tous ses cousins, ranger HNSW à sa place, et se donner une grille de lecture pour choisir. Une seule question nous guide, et elle est inconfortable : si aucun index ne peut être à la fois exact, rapide et léger, lequel sacrifie quoi, et comment décider ?
+
+## Trois richesses, et la loi qui interdit de les cumuler
+
+Quand on indexe des millions de vecteurs, on convoite trois choses à la fois.
+
+Le **rappel** : retrouver vraiment les bons voisins, sans en manquer. C'est la qualité de la réponse, exactement la mesure qu'on a posée au chapitre 2 en comparant un index à l'oracle exhaustif.
+
+La **latence** : répondre vite, en touchant le moins de vecteurs possible. Une recherche qui compare la requête à toute la base est lente ; une recherche qui n'en touche qu'une poignée est rapide.
+
+La **mémoire** : loger l'index dans la RAM disponible. Un vecteur d'embedding de dimension 1536 en simple précision pèse déjà 6 kilo-octets ; multiplié par cent millions de documents, on parle de centaines de giga-octets.
+
+Voici la loi cruelle de ce domaine : on ne maximise jamais ces trois richesses ensemble. C'est un triangle dont on ne peut occuper qu'un côté à la fois. Gagner de la vitesse, c'est renoncer à toucher tous les vecteurs, donc risquer d'en manquer, ou bien payer plus de mémoire pour des raccourcis. Économiser la mémoire, c'est compresser, donc perdre en précision. Chaque famille d'index est, au fond, un choix assumé sur quel sommet du triangle on accepte de perdre.
+
+<Callout kind="info" title="Le mot ANN, et ce qu'il promet">
+ANN veut dire Approximate Nearest Neighbor, plus proche voisin approché. Toute la famille qu'on étudie ici accepte de se tromper parfois pour gagner énormément ailleurs. C'est un renoncement volontaire à l'exactitude, qu'on mesure et qu'on contrôle. La <Term slug="recherche-approchee">recherche approchée</Term> n'est pas une recherche ratée : c'est une recherche qui a choisi sa bataille.
+</Callout>
+
+## Deux questions, deux axes orthogonaux
+
+Pour ne pas se perdre dans la zoologie des index, une grille toute simple suffit. Tout index ANN répond, à sa manière, à deux questions indépendantes.
+
+**Première question : comment éviter de tout scanner ?** Trois réponses possibles. Ne rien faire de spécial et tout parcourir (l'index plat). Découper l'espace en cellules et ne visiter que les plus prometteuses (le partitionnement). Relier les vecteurs par un graphe et y naviguer de proche en proche (l'approche de HNSW, vue au chapitre précédent).
+
+**Deuxième question : comment stocker et comparer les vecteurs ?** Deux réponses. Les garder en pleine précision, exacts mais lourds. Ou les compresser en codes minuscules, légers mais approximatifs.
+
+Ces deux axes sont orthogonaux : on peut combiner n'importe quelle réponse de la première avec n'importe quelle réponse de la seconde. C'est précisément ce qui explique la prolifération des index réels, qui ne sont souvent que des assemblages de ces deux briques.
+
+<MermaidDiagram
+  client:visible
+  caption="La grille de lecture : comment eviter le scan (lignes) croise comment stocker les vecteurs (colonnes). Les index reels naissent du croisement des deux axes."
+  definition={`flowchart LR
+    subgraph Stockage
+      direction TB
+      P[Pleine precision]
+      C[Compresse]
+    end
+    subgraph Routage
+      direction TB
+      R0[Tout scanner]
+      R1[Partitionner]
+      R2[Graphe]
+    end
+    R0 --> P
+    R1 --> P
+    R2 --> P
+    R0 --> C
+    R1 --> C
+    R2 --> C
+`}
+/>
+
+Faisons maintenant le tour des quatre familles repères, une par case marquante de cette grille.
+
+## Flat : l'exact, le lent, l'oracle
+
+L'index plat ne fait rien pour éviter le scan : il compare la requête à tous les vecteurs, en pleine précision. C'est la recherche exhaustive du chapitre 2. Son rappel est parfait, par construction : il ne peut rien manquer. Mais il touche les $n$ vecteurs à chaque requête, et les stocke tous en clair.
+
+$$
+\text{cout} = O(n \times d) \qquad \text{rappel} = 1
+$$
+
+Cette ligne se lit : le coût grandit comme le produit du nombre de vecteurs par leur dimension, et le rappel vaut exactement un. C'est le pire des mondes pour la vitesse et la mémoire, le meilleur pour la qualité. D'où son vrai rôle : on le garde comme oracle, la référence de vérité contre laquelle on mesure le rappel de tous les autres.
+
+## IVF : partitionner l'espace en quartiers
+
+La première vraie idée pour aller plus vite : ne pas chercher partout. On découpe l'espace en cellules, comme une ville en quartiers, et on range chaque vecteur dans le quartier de son centre le plus proche. Ce découpage se calcule une fois, par un algorithme de regroupement (le k-means) qui place les centres là où les points s'agglutinent.
+
+À la recherche, on ne compare d'abord la requête qu'aux centres des quartiers, peu nombreux. On choisit les quelques quartiers les plus proches, et on ne scanne que leurs habitants. Ce nombre de quartiers visités s'appelle $\mathit{nprobe}$. C'est l'<Term slug="index-ivf">IVF</Term>, pour Inverted File, le fichier inversé.
+
+Le compromis saute aux yeux. Avec un petit $\mathit{nprobe}$, on touche peu de vecteurs, donc on répond vite, mais on risque de rater un voisin tapi dans un quartier qu'on n'a pas visité : le rappel baisse. En montant $\mathit{nprobe}$, on visite plus de quartiers, le rappel remonte, jusqu'à tout visiter et redevenir exact. IVF achète donc de la vitesse avec un peu de rappel. Mais remarque ce qu'il ne touche pas : la mémoire. Les vecteurs restent stockés en clair, exactement comme dans l'index plat. IVF gagne la latence, pas la RAM.
+
+## PQ : compresser pour faire tenir l'éléphant
+
+L'autre grande idée attaque l'axe orthogonal : la mémoire. Et si, au lieu de stocker chaque vecteur en entier, on le résumait par quelques octets ?
+
+La <Term slug="quantification-produit">quantification produit</Term> procède ainsi. On découpe chaque vecteur en plusieurs tranches. Pour chaque tranche, on apprend d'avance un petit dictionnaire de morceaux types (un codebook), encore par k-means. Un vecteur n'est alors plus qu'une suite d'indices : pour chaque tranche, le numéro du morceau type le plus ressemblant. Là où un vecteur de dimension 1536 pesait 6 kilo-octets, ses huit à seize codes tiennent dans une poignée d'octets. On divise la mémoire par cent ou plus.
+
+Le prix se lit dans le mot quantification : on a remplacé chaque tranche par une approximation, donc les distances calculées ne sont plus qu'estimées. Le rappel baisse. Et surtout, attention au piège : la quantification produit, seule, ne fait pas gagner de vitesse. On scanne toujours les $n$ codes, un par un. Chaque comparaison est juste devenue très bon marché. PQ gagne la mémoire, pas la latence.
+
+<Callout kind="note" title="Chaque famille gagne un seul cote du triangle">
+Range-les en tête : l'index plat est exact mais lent et lourd. IVF gagne la vitesse en sondant peu de quartiers. HNSW, vu au chapitre 3, gagne fortement la vitesse en naviguant un graphe, mais paie des arêtes en mémoire. La quantification produit gagne la mémoire en compressant, mais scanne toujours tout. Aucune ne rafle les trois richesses. C'est tout l'objet du composant ci-dessous : voir ces quatre points se placer dans le triangle, et bouger quand on tourne leurs molettes.
+</Callout>
+
+## Voir le triangle des compromis en direct
+
+Le composant ci-dessous construit un vrai jeu de vecteurs groupés, puis y mesure pour de bon les quatre familles : leur rappel face à l'oracle exact, le nombre de vecteurs qu'elles comparent (le proxy honnête de la latence) et la mémoire de leur index. Chaque famille est un point dans le plan rappel-latence, et la taille de sa bulle dit sa mémoire. Tourne les molettes et regarde les points glisser le long de leurs compromis, sans jamais qu'aucun n'atteigne le coin idéal en haut à droite avec une toute petite bulle.
+
+<AnnLandscapeComparator
+  client:visible
+  seed={2024}
+  pointCount={600}
+  dimension={32}
+  clusterCount={12}
+  spread={0.06}
+  topK={10}
+  cellCount={24}
+  hnswM={12}
+  initialNprobe={3}
+  initialEf={12}
+  initialSubquantizers={8}
+  labels={{
+    recallAxisLabel: "Rappel@10 (vers la droite, c'est mieux)",
+    latencyAxisLabel: "Vecteurs comparés (vers le haut, c'est plus rapide)",
+    memoryLegendLabel: "Taille de la bulle : mémoire de l'index",
+    nprobeLabel: "IVF : quartiers visités (nprobe)",
+    efLabel: "HNSW : largeur de faisceau (ef)",
+    subquantizersLabel: "PQ : tranches par vecteur",
+    flatLabel: "Flat (exact)",
+    ivfLabel: "IVF (partition)",
+    hnswLabel: "HNSW (graphe)",
+    pqLabel: "PQ (compressé)",
+    recallReadout: "rappel",
+    latencyReadout: "comparaisons",
+    memoryReadout: "mémoire",
+    bytesUnit: "o",
+    cornerHint: "Personne n'atteint le coin parfait : rappel haut, peu de comparaisons, petite bulle.",
+    summaryFlat: "Flat : rappel parfait, mais touche tout et stocke tout.",
+    summaryIvf: "IVF : moins de comparaisons, mémoire pleine.",
+    summaryHnsw: "HNSW : très peu de comparaisons, grosse bulle mémoire.",
+    summaryPq: "PQ : petite bulle, mais comparaisons toujours de l'ordre de n."
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. Pousse $\mathit{nprobe}$ d'IVF à son maximum. Son point rejoint-il le rappel de Flat ? Que devient alors le nombre de comparaisons ?
+2. Compare les bulles de HNSW et de Flat. Laquelle est la plus grosse, et pourquoi un graphe coûte-t-il plus de mémoire qu'un simple tableau de vecteurs ?
+3. Réduis le nombre de tranches de PQ. Sa bulle rétrécit-elle ou grossit-elle, et qu'arrive-t-il à son rappel ? La position horizontale de PQ bouge-t-elle vraiment sur l'axe des comparaisons ?
+
+## Les familles se marient
+
+Le plus beau, c'est que ces briques se combinent, justement parce que les deux axes sont indépendants. L'index le plus répandu à très grande échelle, l'IVFPQ, partitionne l'espace (pour la vitesse) et compresse les vecteurs (pour la mémoire) : il gagne deux côtés du triangle d'un coup, en sacrifiant davantage de rappel. On peut de même greffer la quantification sous un graphe. La grille de lecture n'est donc pas une étagère de produits rivaux, mais une boîte de Lego : on assemble une stratégie de routage et une stratégie de stockage selon la richesse qu'on est prêt à sacrifier.
+
+<Callout kind="warn" title="Et quand l'index ne tient même plus en RAM ?">
+Les quatre familles vues ici supposent que l'index loge en mémoire vive. À l'échelle du milliard de vecteurs, même compressé, il déborde. Une famille à part, dont DiskANN est le représentant connu, garde l'essentiel du graphe sur disque SSD et n'amène en RAM que le strict nécessaire, en organisant les accès pour limiter les lectures lentes du disque. C'est le coin sur disque du paysage : on échange de la latence (le disque est mille fois plus lent que la RAM) contre la capacité de loger un index gigantesque. On ne l'implémente pas ici, mais il complète la carte.
+</Callout>
+
+<Callout kind="info" title="Le fil rouge : choisir le premier index du moteur">
+Le moteur vectoriel qui sert de fil rouge à ce cours a commencé par l'index plat, gardé comme oracle. La question du chapitre est devenue très concrète au moment de lui greffer un vrai index : pour remplacer une brique d'un intranet personnel, avec quelques dizaines de milliers de vecteurs et de la RAM confortable, c'est HNSW qui gagne, car la latence prime et la mémoire ne manque pas. À l'échelle d'un milliard de documents sur une machine modeste, le choix basculerait vers IVFPQ, voire vers un index sur disque. Le bon index n'existe pas dans l'absolu : il dépend du sommet du triangle qu'on peut se permettre de perdre.
+</Callout>
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : placer trois index sur le triangle">
+On dispose de trois fiches techniques. Index A : rappel 1, scanne 1 000 000 de vecteurs par requête, stocke 6 Go. Index B : rappel 0,97, scanne 40 000 vecteurs, stocke 9 Go. Index C : rappel 0,82, scanne 1 000 000 de vecteurs, stocke 0,1 Go. On veut nommer la famille de chacun.
+
+**Étape 1.** On lit l'index A. Rappel parfait et scan complet : c'est la signature de l'index plat, l'oracle exact.
+
+$$
+\text{rappel} = 1 \quad \text{et} \quad \text{scan} = n
+$$
+
+**Étape 2.** On lit l'index B. Il scanne très peu de vecteurs (40 000 sur un million) tout en gardant un rappel élevé, mais il stocke plus que l'index plat (9 Go contre 6).
+
+**Étape 3.** Ce surcoût mémoire pour très peu de comparaisons est la marque du graphe : des arêtes en plus, une navigation en quelques sauts. C'est HNSW.
+
+**Étape 4.** On lit l'index C. Il scanne tout comme l'index plat, mais sa mémoire s'est effondrée (0,1 Go) et son rappel a baissé.
+
+**Étape 5.** Scanner tout avec une mémoire minuscule et un rappel dégradé, c'est exactement la compression : la quantification produit.
+
+**Résultat.** A est l'index plat, B est HNSW, C est la quantification produit. Chacun occupe un côté distinct du triangle : A perd vitesse et mémoire, B perd de la mémoire, C perd de la vitesse relative et du rappel.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : choisir une famille sous contrainte">
+Un service doit indexer 800 millions de vecteurs de dimension 1024 sur une seule machine dotée de 64 Go de RAM. Il vise un rappel d'au moins 0,9 et tolère une latence modérée. On veut décider de la famille.
+
+**Étape 1.** On estime la mémoire des vecteurs bruts, en simple précision (4 octets par réel).
+
+$$
+800\,000\,000 \times 1024 \times 4 \text{ octets} \approx 3\,277 \text{ Go}
+$$
+
+**Étape 2.** On compare à la RAM disponible. Il faut loger 3 277 Go dans 64 Go : impossible de garder les vecteurs en clair. Toute famille qui stocke les vecteurs entiers (plat, IVF, HNSW) est éliminée d'office.
+
+**Étape 3.** On en déduit qu'il faut compresser : la quantification produit devient obligatoire, pas optionnelle. Avec, par exemple, 16 codes d'un octet par vecteur, la base tombe à $800\,000\,000 \times 16 \approx 12{,}8$ Go, qui tient.
+
+**Étape 4.** Reste la latence : scanner 800 millions de codes à chaque requête, même bon marché, est trop lent. On ajoute donc un partitionnement pour ne scanner qu'une fraction des codes.
+
+**Résultat.** On choisit un IVFPQ : le partitionnement IVF pour la vitesse, la quantification produit pour tenir en mémoire. C'est le réflexe à très grande échelle, quand la mémoire est le mur que l'on heurte en premier et qu'aucune famille pure ne suffit.
+</Callout>
+
+## En une phrase
+
+Aucun index ne maximise à la fois rappel, latence et mémoire : Flat est exact mais lourd et lent, IVF achète la vitesse en partitionnant, HNSW l'achète encore mieux mais paie la mémoire, la quantification produit achète la mémoire mais scanne toujours tout, et les vrais index combinent ces briques selon le côté du triangle qu'ils acceptent de sacrifier.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi parle-t-on d'un triangle des compromis pour les index ANN ?",
+      options: [
+        "Parce qu'il existe exactement trois familles d'index",
+        "Parce qu'on ne peut pas maximiser à la fois le rappel, la latence et la mémoire",
+        "Parce que chaque index a trois paramètres de réglage",
+        "Parce que les vecteurs ont toujours trois dimensions"
+      ],
+      answer: 1,
+      explain: "Le triangle nomme les trois richesses convoitées (rappel, latence, mémoire) qu'aucun index ne peut maximiser ensemble. Chaque famille choisit le côté qu'elle accepte de sacrifier."
+    },
+    {
+      q: "Que gagne, et que ne gagne pas, la quantification produit (PQ) employée seule ?",
+      options: [
+        "Elle gagne la vitesse mais pas la mémoire",
+        "Elle gagne le rappel mais pas la vitesse",
+        "Elle gagne la mémoire mais pas la vitesse, car elle scanne toujours tous les codes",
+        "Elle gagne à la fois la mémoire, la vitesse et le rappel"
+      ],
+      answer: 2,
+      explain: "PQ compresse les vecteurs en quelques octets, donc gagne énormément de mémoire, au prix du rappel. Mais elle parcourt toujours les n codes : la latence reste de l'ordre de n. C'est pourquoi on la combine souvent avec IVF."
+    },
+    {
+      q: "Sur quels deux axes orthogonaux se range tout index ANN ?",
+      options: [
+        "La dimension des vecteurs et leur nombre",
+        "Comment éviter le scan (rien, partition, graphe) et comment stocker (plein, compressé)",
+        "Le rappel visé et le budget financier",
+        "La vitesse d'écriture et la vitesse de lecture"
+      ],
+      answer: 1,
+      explain: "La grille de lecture croise une stratégie de routage (tout scanner, partitionner, ou naviguer un graphe) avec une stratégie de stockage (pleine précision ou compressé). Les index réels, comme IVFPQ, naissent du croisement des deux."
+    }
+  ]}
+/>
+
+## Vers le chapitre 5
+
+Tout au long de ce chapitre, un mot est revenu sans qu'on ose le regarder en face : on mesure le rappel d'un index approché en le comparant à l'oracle exact. Mais cet oracle, justement, qui le fournit, et à quel prix ? Mesurer honnêtement la qualité d'un index suppose de connaître la vraie réponse, donc de lancer une recherche exhaustive de référence, et de la confronter méthodiquement aux résultats approchés. Le chapitre 5 construit ce juge : l'oracle différentiel, le banc d'essai qui met l'index rapide face à la vérité lente, mesure rappel et latence côte à côte, et transforme le choix d'un index, jusqu'ici intuitif, en une décision chiffrée. C'est le climax du cours, là où l'on cesse de croire un index sur parole.
+
+## Sources
+
+- Jégou, H., Douze, M. & Schmid, C. (2011). « Product Quantization for Nearest Neighbor Search. » _IEEE Transactions on Pattern Analysis and Machine Intelligence_ 33(1), 117-128. [DOI 10.1109/TPAMI.2010.57](https://doi.org/10.1109/TPAMI.2010.57)
+- Johnson, J., Douze, M. & Jégou, H. (2021). « Billion-scale Similarity Search with GPUs. » _IEEE Transactions on Big Data_ 7(3), 535-547. [arXiv:1702.08734](https://arxiv.org/abs/1702.08734)
+
+### Pour aller plus loin
+
+- Subramanya, S. J. et al. (2019). « DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node. » _NeurIPS_. [Lien éditeur](https://proceedings.neurips.cc/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html)
+- Malkov, Y. A. & Yashunin, D. A. (2018). « Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs. » _IEEE TPAMI_. [arXiv:1603.09320](https://arxiv.org/abs/1603.09320)
