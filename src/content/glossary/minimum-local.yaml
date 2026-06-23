@@ -1,7 +1,7 @@
 slug: minimum-local
 fr:
   term: Minimum local
-  definition: "Noeud d'un graphe dont tous les voisins immediats sont plus loin de la requete que lui, alors qu'un point bien meilleur existe ailleurs dans le graphe, hors de portee directe. Une recherche gloutonne s'y arrete a tort, croyant avoir trouve le plus proche voisin. Elargir la largeur de faisceau (garder plusieurs candidats) permet de s'en extraire."
+  definition: "Noeud d'un graphe dont tous les voisins immédiats sont plus loin de la requête que lui, alors qu'un point bien meilleur existe ailleurs dans le graphe, hors de portée directe. Une recherche gloutonne s'y arrête à tort, croyant avoir trouvé le plus proche voisin. Élargir la largeur de faisceau (garder plusieurs candidats) permet de s'en extraire."
 en:
   term: Local minimum
   definition: "A graph node whose immediate neighbors are all farther from the query than itself, even though a much better point exists elsewhere in the graph, out of direct reach. A greedy search wrongly stops there, believing it has found the nearest neighbor. Widening the beam (keeping several candidates) lets it escape."

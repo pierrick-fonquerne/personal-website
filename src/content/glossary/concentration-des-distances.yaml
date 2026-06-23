@@ -1,7 +1,7 @@
 slug: concentration-des-distances
 fr:
   term: Concentration des distances
-  definition: "Phenomene par lequel, en grande dimension, les distances entre points tires au hasard se resserrent autour d'une valeur commune. Le contraste relatif (distance maximale moins minimale, rapporte a la minimale) tend vers zero comme l'inverse de la racine de la dimension. Consequence : la notion de plus proche voisin perd de son sens quand toutes les distances se ressemblent."
+  definition: "Phénomène par lequel, en grande dimension, les distances entre points tirés au hasard se resserrent autour d'une valeur commune. Le contraste relatif (distance maximale moins minimale, rapporté à la minimale) tend vers zéro comme l'inverse de la racine de la dimension. Conséquence : la notion de plus proche voisin perd de son sens quand toutes les distances se ressemblent."
 en:
   term: Distance concentration
   definition: "The phenomenon by which, in high dimension, distances between randomly drawn points tighten around a common value. The relative contrast (maximum minus minimum distance, divided by the minimum) tends to zero like the inverse of the square root of the dimension. As a result, the notion of a nearest neighbor loses meaning when all distances look alike."

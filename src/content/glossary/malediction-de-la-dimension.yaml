@@ -1,7 +1,7 @@
 slug: malediction-de-la-dimension
 fr:
-  term: Malediction de la dimension
-  definition: "Ensemble de phenomenes contre-intuitifs qui surgissent quand le nombre de dimensions devient grand. En recherche vectorielle, deux effets dominent : les distances entre points tires au hasard se concentrent (le plus proche et le plus lointain deviennent presque indiscernables), et deux vecteurs aleatoires sont presque toujours quasi perpendiculaires. C'est ce qui rend la recherche du plus proche voisin difficile en grande dimension."
+  term: Malédiction de la dimension
+  definition: "Ensemble de phénomènes contre-intuitifs qui surgissent quand le nombre de dimensions devient grand. En recherche vectorielle, deux effets dominent : les distances entre points tirés au hasard se concentrent (le plus proche et le plus lointain deviennent presque indiscernables), et deux vecteurs aléatoires sont presque toujours quasi perpendiculaires. C'est ce qui rend la recherche du plus proche voisin difficile en grande dimension."
 en:
   term: Curse of dimensionality
   definition: "A set of counterintuitive phenomena that appear when the number of dimensions grows large. In vector search, two effects dominate: distances between randomly drawn points concentrate (nearest and farthest become almost indistinguishable), and two random vectors are almost always nearly perpendicular. This is what makes nearest-neighbor search hard in high dimension."
