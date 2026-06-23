@@ -1,0 +1,256 @@
+---
+course: vector-search-retrieval
+order: 4
+title: 'The landscape of ANN indexes'
+subtitle: "Four index families, three riches you can never keep all at once: how to choose between recall, speed and memory?"
+estimatedMinutes: 28
+published: true
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
+import AnnLandscapeComparator from '../../../components/learning/AnnLandscapeComparator.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, HNSW handed us a small miracle: finding a nearest neighbor in about $\log n$ hops, instead of scanning the $n$ vectors one by one. We even closed the chapter on a confession: it is superb, but it is neither free nor unique. The hierarchy of graphs devours memory, updating it or filtering its results is delicate, and above all, other ways to avoid the full scan exist, making entirely different trade-offs.
+
+This chapter takes a step back. Rather than diving into yet another algorithm, we will draw the map of all its cousins, place HNSW where it belongs, and give ourselves a reading grid to choose. A single question guides us, and it is uncomfortable: if no index can be exact, fast and light all at once, which one sacrifices what, and how do we decide?
+
+## Three riches, and the law that forbids cumulating them
+
+When you index millions of vectors, you covet three things at once.
+
+**Recall**: actually retrieving the right neighbors, without missing any. It is the quality of the answer, exactly the measure we laid down in chapter 2 by comparing an index to the exhaustive oracle.
+
+**Latency**: answering fast, by touching as few vectors as possible. A search that compares the query against the whole database is slow; a search that touches only a handful is fast.
+
+**Memory**: fitting the index into available RAM. An embedding vector of dimension 1536 in single precision already weighs 6 kilobytes; multiplied by a hundred million documents, you are talking hundreds of gigabytes.
+
+Here is the cruel law of this field: you never maximize these three riches together. It is a triangle whose only one side you can occupy at a time. Gaining speed means giving up touching every vector, hence risking missing some, or else paying more memory for shortcuts. Saving memory means compressing, hence losing precision. Each index family is, at heart, a deliberate choice about which corner of the triangle you accept to lose.
+
+<Callout kind="info" title="The word ANN, and what it promises">
+ANN means Approximate Nearest Neighbor. The whole family we study here accepts being wrong sometimes in order to gain enormously elsewhere. It is a voluntary surrender of exactness, one we measure and control. <Term slug="recherche-approchee">Approximate search</Term> is not a failed search: it is a search that has chosen its battle.
+</Callout>
+
+## Two questions, two orthogonal axes
+
+To avoid getting lost in the zoology of indexes, a very simple grid suffices. Every ANN index answers, in its own way, two independent questions.
+
+**First question: how do you avoid scanning everything?** Three possible answers. Do nothing special and go through it all (the flat index). Carve the space into cells and visit only the most promising ones (partitioning). Link the vectors with a graph and navigate it step by step (HNSW's approach, seen in the previous chapter).
+
+**Second question: how do you store and compare the vectors?** Two answers. Keep them in full precision, exact but heavy. Or compress them into tiny codes, light but approximate.
+
+These two axes are orthogonal: you can combine any answer to the first with any answer to the second. This is precisely what explains the proliferation of real indexes, which are often just assemblies of these two bricks.
+
+<MermaidDiagram
+  client:visible
+  caption="The reading grid: how to avoid the scan (rows) crossed with how to store the vectors (columns). Real indexes are born from the crossing of the two axes."
+  definition={`flowchart LR
+    subgraph Storage
+      direction TB
+      P[Full precision]
+      C[Compressed]
+    end
+    subgraph Routing
+      direction TB
+      R0[Scan everything]
+      R1[Partition]
+      R2[Graph]
+    end
+    R0 --> P
+    R1 --> P
+    R2 --> P
+    R0 --> C
+    R1 --> C
+    R2 --> C
+`}
+/>
+
+Let us now tour the four landmark families, one per striking cell of this grid.
+
+## Flat: the exact, the slow, the oracle
+
+The flat index does nothing to avoid the scan: it compares the query against all vectors, in full precision. It is the exhaustive search of chapter 2. Its recall is perfect, by construction: it cannot miss anything. But it touches the $n$ vectors on every query, and stores them all in the clear.
+
+$$
+\text{cost} = O(n \times d) \qquad \text{recall} = 1
+$$
+
+This line reads: the cost grows like the product of the number of vectors by their dimension, and the recall equals exactly one. It is the worst of worlds for speed and memory, the best for quality. Hence its true role: we keep it as the oracle, the ground truth against which we measure the recall of all the others.
+
+## IVF: partitioning space into districts
+
+The first real idea for going faster: do not search everywhere. We carve the space into cells, like a city into districts, and file each vector into the district of its nearest center. This carving is computed once, by a clustering algorithm (k-means) that places the centers where the points pile up.
+
+At search time, we first compare the query only to the district centers, few in number. We pick the few nearest districts, and scan only their residents. This count of visited districts is called $\mathit{nprobe}$. It is <Term slug="index-ivf">IVF</Term>, for Inverted File.
+
+The trade-off is plain. With a small $\mathit{nprobe}$, we touch few vectors, so we answer fast, but we risk missing a neighbor lurking in a district we did not visit: recall drops. By raising $\mathit{nprobe}$, we visit more districts, recall climbs back, until we visit everything and become exact again. IVF thus buys speed with a little recall. But notice what it does not touch: memory. The vectors stay stored in the clear, exactly as in the flat index. IVF wins latency, not RAM.
+
+## PQ: compressing to fit the elephant
+
+The other great idea attacks the orthogonal axis: memory. What if, instead of storing each vector in full, we summarized it with a few bytes?
+
+<Term slug="quantification-produit">Product quantization</Term> proceeds like this. We split each vector into several slices. For each slice, we learn ahead of time a small dictionary of typical pieces (a codebook), again by k-means. A vector then becomes just a sequence of indices: for each slice, the number of the most similar typical piece. Where a vector of dimension 1536 weighed 6 kilobytes, its eight to sixteen codes fit in a handful of bytes. We divide memory by a hundred or more.
+
+The price reads in the word quantization: we have replaced each slice with an approximation, so the computed distances are now only estimated. Recall drops. And above all, beware the trap: product quantization, alone, does not gain any speed. We still scan the $n$ codes, one by one. Each comparison has merely become very cheap. PQ wins memory, not latency.
+
+<Callout kind="note" title="Each family wins a single side of the triangle">
+Line them up: the flat index is exact but slow and heavy. IVF wins speed by probing few districts. HNSW, seen in chapter 3, wins speed even more strongly by navigating a graph, but pays edges in memory. Product quantization wins memory by compressing, but still scans everything. None grabs all three riches. That is exactly what the component below is for: to see these four points settle into the triangle, and move when you turn their knobs.
+</Callout>
+
+## Seeing the trade-off triangle live
+
+The component below builds a real set of clustered vectors, then genuinely measures the four families on it: their recall against the exact oracle, the number of vectors they compare (the honest proxy for latency) and the memory of their index. Each family is a point in the recall-latency plane, and the size of its bubble tells its memory. Turn the knobs and watch the points slide along their trade-offs, without any of them ever reaching the ideal top-right corner with a tiny bubble.
+
+<AnnLandscapeComparator
+  client:visible
+  seed={2024}
+  pointCount={600}
+  dimension={32}
+  clusterCount={12}
+  spread={0.06}
+  topK={10}
+  cellCount={24}
+  hnswM={12}
+  initialNprobe={3}
+  initialEf={12}
+  initialSubquantizers={8}
+  labels={{
+    recallAxisLabel: "Recall@10 (rightward is better)",
+    latencyAxisLabel: "Vectors compared (upward is faster)",
+    memoryLegendLabel: "Bubble size: index memory",
+    nprobeLabel: "IVF: districts visited (nprobe)",
+    efLabel: "HNSW: beam width (ef)",
+    subquantizersLabel: "PQ: slices per vector",
+    flatLabel: "Flat (exact)",
+    ivfLabel: "IVF (partition)",
+    hnswLabel: "HNSW (graph)",
+    pqLabel: "PQ (compressed)",
+    recallReadout: "recall",
+    latencyReadout: "comparisons",
+    memoryReadout: "memory",
+    bytesUnit: "B",
+    cornerHint: "Nobody reaches the perfect corner: high recall, few comparisons, small bubble.",
+    summaryFlat: "Flat: perfect recall, but touches everything and stores everything.",
+    summaryIvf: "IVF: fewer comparisons, full memory.",
+    summaryHnsw: "HNSW: very few comparisons, big memory bubble.",
+    summaryPq: "PQ: small bubble, but comparisons still of order n."
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+1. Push IVF's $\mathit{nprobe}$ to its maximum. Does its point reach Flat's recall? What happens then to the number of comparisons?
+2. Compare the bubbles of HNSW and Flat. Which is the bigger, and why does a graph cost more memory than a plain array of vectors?
+3. Reduce PQ's number of slices. Does its bubble shrink or grow, and what happens to its recall? Does PQ's horizontal position really move on the comparisons axis?
+
+## The families marry
+
+The most beautiful part is that these bricks combine, precisely because the two axes are independent. The most widespread index at very large scale, IVFPQ, partitions the space (for speed) and compresses the vectors (for memory): it wins two sides of the triangle at once, sacrificing more recall. You can likewise graft quantization under a graph. The reading grid is therefore not a shelf of rival products, but a box of Lego: you assemble a routing strategy and a storage strategy according to the rich you are willing to sacrifice.
+
+<Callout kind="warn" title="And when the index no longer even fits in RAM?">
+The four families seen here assume the index fits in main memory. At the scale of a billion vectors, even compressed, it overflows. A family apart, of which DiskANN is the well-known representative, keeps most of the graph on an SSD disk and brings into RAM only the strict minimum, organizing accesses to limit the slow disk reads. It is the on-disk corner of the landscape: you trade latency (the disk is a thousand times slower than RAM) for the ability to host a gigantic index. We do not implement it here, but it completes the map.
+</Callout>
+
+<Callout kind="info" title="The running thread: choosing the engine's first index">
+The vector engine that runs as the thread of this course started with the flat index, kept as the oracle. The chapter's question became very concrete at the moment of grafting a real index onto it: to replace a brick of a personal intranet, with a few tens of thousands of vectors and comfortable RAM, HNSW wins, because latency comes first and memory is not scarce. At the scale of a billion documents on a modest machine, the choice would tip toward IVFPQ, or even toward an on-disk index. The best index does not exist in the absolute: it depends on the corner of the triangle you can afford to lose.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: placing three indexes on the triangle">
+We have three spec sheets. Index A: recall 1, scans 1,000,000 vectors per query, stores 6 GB. Index B: recall 0.97, scans 40,000 vectors, stores 9 GB. Index C: recall 0.82, scans 1,000,000 vectors, stores 0.1 GB. We want to name the family of each.
+
+**Step 1.** We read index A. Perfect recall and full scan: that is the signature of the flat index, the exact oracle.
+
+$$
+\text{recall} = 1 \quad \text{and} \quad \text{scan} = n
+$$
+
+**Step 2.** We read index B. It scans very few vectors (40,000 out of a million) while keeping high recall, but it stores more than the flat index (9 GB against 6).
+
+**Step 3.** This memory overhead for very few comparisons is the mark of the graph: extra edges, navigation in a few hops. It is HNSW.
+
+**Step 4.** We read index C. It scans everything like the flat index, but its memory has collapsed (0.1 GB) and its recall has dropped.
+
+**Step 5.** Scanning everything with tiny memory and degraded recall is exactly compression: product quantization.
+
+**Result.** A is the flat index, B is HNSW, C is product quantization. Each occupies a distinct side of the triangle: A loses speed and memory, B loses memory, C loses relative speed and recall.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: choosing a family under constraint">
+A service must index 800 million vectors of dimension 1024 on a single machine with 64 GB of RAM. It targets a recall of at least 0.9 and tolerates moderate latency. We want to decide the family.
+
+**Step 1.** We estimate the memory of the raw vectors, in single precision (4 bytes per real).
+
+$$
+800{,}000{,}000 \times 1024 \times 4 \text{ bytes} \approx 3{,}277 \text{ GB}
+$$
+
+**Step 2.** We compare to the available RAM. We must fit 3,277 GB into 64 GB: it is impossible to keep the vectors in the clear. Any family that stores the whole vectors (flat, IVF, HNSW) is ruled out outright.
+
+**Step 3.** We deduce that we must compress: product quantization becomes mandatory, not optional. With, for example, 16 codes of one byte per vector, the database falls to $800{,}000{,}000 \times 16 \approx 12.8$ GB, which fits.
+
+**Step 4.** Latency remains: scanning 800 million codes on every query, even cheap ones, is too slow. So we add partitioning to scan only a fraction of the codes.
+
+**Result.** We choose an IVFPQ: IVF partitioning for speed, product quantization to fit in memory. It is the reflex at very large scale, when memory is the wall you hit first and no pure family suffices.
+</Callout>
+
+## In one sentence
+
+No index maximizes recall, latency and memory all at once: Flat is exact but heavy and slow, IVF buys speed by partitioning, HNSW buys it even better but pays in memory, product quantization buys memory but still scans everything, and real indexes combine these bricks according to the side of the triangle they accept to sacrifice.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why do we speak of a trade-off triangle for ANN indexes?",
+      options: [
+        "Because there are exactly three index families",
+        "Because you cannot maximize recall, latency and memory all at once",
+        "Because each index has three tuning parameters",
+        "Because vectors always have three dimensions"
+      ],
+      answer: 1,
+      explain: "The triangle names the three coveted riches (recall, latency, memory) that no index can maximize together. Each family chooses the side it accepts to sacrifice."
+    },
+    {
+      q: "What does product quantization (PQ) gain, and not gain, when used alone?",
+      options: [
+        "It gains speed but not memory",
+        "It gains recall but not speed",
+        "It gains memory but not speed, since it still scans all the codes",
+        "It gains memory, speed and recall all at once"
+      ],
+      answer: 2,
+      explain: "PQ compresses vectors into a few bytes, so it gains a great deal of memory, at the cost of recall. But it still goes through the n codes: latency stays of order n. That is why it is often combined with IVF."
+    },
+    {
+      q: "On which two orthogonal axes does every ANN index fall?",
+      options: [
+        "The dimension of the vectors and their number",
+        "How to avoid the scan (nothing, partition, graph) and how to store (full, compressed)",
+        "The target recall and the financial budget",
+        "Write speed and read speed"
+      ],
+      answer: 1,
+      explain: "The reading grid crosses a routing strategy (scan everything, partition, or navigate a graph) with a storage strategy (full precision or compressed). Real indexes, like IVFPQ, are born from the crossing of the two."
+    }
+  ]}
+/>
+
+## Towards chapter 5
+
+All along this chapter, one word kept coming back without our daring to look it in the eye: we measure the recall of an approximate index by comparing it to the exact oracle. But that oracle, precisely, who provides it, and at what cost? Honestly measuring the quality of an index supposes knowing the true answer, hence running a reference exhaustive search, and confronting it methodically with the approximate results. Chapter 5 builds this judge: the differential oracle, the test bench that pits the fast index against the slow truth, measures recall and latency side by side, and turns the choice of an index, until now intuitive, into a quantified decision. It is the climax of the course, where we stop taking an index at its word.
+
+## Sources
+
+- Jégou, H., Douze, M. & Schmid, C. (2011). "Product Quantization for Nearest Neighbor Search." _IEEE Transactions on Pattern Analysis and Machine Intelligence_ 33(1), 117-128. [DOI 10.1109/TPAMI.2010.57](https://doi.org/10.1109/TPAMI.2010.57)
+- Johnson, J., Douze, M. & Jégou, H. (2021). "Billion-scale Similarity Search with GPUs." _IEEE Transactions on Big Data_ 7(3), 535-547. [arXiv:1702.08734](https://arxiv.org/abs/1702.08734)
+
+### Going further
+
+- Subramanya, S. J. et al. (2019). "DiskANN: Fast Accurate Billion-point Nearest Neighbor Search on a Single Node." _NeurIPS_. [Publisher link](https://proceedings.neurips.cc/paper/2019/hash/09853c7fb1d3f8ee67a61b6bf4a7f8e6-Abstract.html)
+- Malkov, Y. A. & Yashunin, D. A. (2018). "Efficient and Robust Approximate Nearest Neighbor Search Using Hierarchical Navigable Small World Graphs." _IEEE TPAMI_. [arXiv:1603.09320](https://arxiv.org/abs/1603.09320)
