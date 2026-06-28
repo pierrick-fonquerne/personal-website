@@ -1,0 +1,241 @@
+---
+course: vector-search-retrieval
+order: 6
+title: "Rendre l'index durable"
+subtitle: "Un index qui vit dans la RAM disparaît au redémarrage. Comment l'écrire sur disque une fois pour toutes, sans jamais le corrompre, même si le courant saute en pleine insertion ?"
+estimatedMinutes: 30
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DurableIndexLab from '../../../components/learning/DurableIndexLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre précédent, on a gagné le droit de faire confiance à un index : l'oracle différentiel certifie qu'il retrouve vraiment les voisins qu'il prétend rendre. Mais cet index, soigneusement construit et vérifié, vit dans la RAM. Et la RAM s'efface au moindre redémarrage. Rebâtir un index de plusieurs millions de vecteurs prend des heures de calcul. La question de ce chapitre est donc terre à terre, et pourtant elle décide de la survie du moteur : comment écris-tu cet index sur disque une fois pour toutes, le relis intact, et survis à une coupure de courant survenue en pleine écriture ?
+
+C'est un changement de monde. Jusqu'ici on raisonnait en géométrie, en distances, en rappel. Maintenant on raisonne en octets, en pannes, en garanties. Et on va découvrir une menace sournoise, cousine directe de celle du chapitre 5 : un index sauvegardé peut se relire sans la moindre erreur apparente, et mentir quand même sur son contenu.
+
+## Un index qui ne survit pas au redémarrage
+
+Un index en mémoire est volatil par nature. Coupe l'alimentation, tue le processus, redémarre la machine : tout est perdu. Pour qu'un état survive, il faut le rendre <Term slug="durabilite">durable</Term>, c'est-à-dire l'écrire sur un support qui garde sa valeur sans courant (un disque, un SSD) et s'assurer que l'écriture a vraiment atteint ce support.
+
+On pourrait croire que c'est trivial : il suffit d'ouvrir un fichier et d'y déverser l'index. C'est exactement là que se cache le piège. Écrire des données prend du temps, et pendant ce temps, n'importe quoi peut arriver. La machine peut tomber au milieu de l'opération. Et une écriture interrompue ne laisse pas un fichier vide bien propre : elle laisse un fichier à moitié écrit.
+
+## Le vrai danger : l'écriture partielle
+
+Imagine que ton index occupe dix blocs sur le disque. Tu lances la sauvegarde, qui réécrit ces dix blocs un par un. La machine s'éteint après le sixième. Sur le disque, tu as maintenant six blocs neufs et quatre blocs anciens, soudés dans le même fichier. C'est une <Term slug="ecriture-partielle">écriture partielle</Term>, et c'est le cauchemar de toute persistance.
+
+Le piège n'est pas la perte de données. La perte, on sait la gérer : il suffit de tout reconstruire. Le piège, c'est la corruption silencieuse. Ce fichier hybride s'ouvre sans erreur. Son en-tête est cohérent, ses premiers enregistrements se lisent parfaitement. Il a l'air valide. Mais ses pointeurs internes traversent la frontière entre l'ancien et le neuf, et l'index qu'on relit est un monstre incohérent qui renverra des voisins absurdes sans jamais lever d'exception.
+
+Tu reconnais le motif. Au chapitre 5, un index pouvait passer tous ses tests locaux tout en s'effondrant en qualité. Ici, un fichier peut passer tous ses contrôles d'ouverture tout en étant structurellement pourri. La même leçon, transposée : ce qui a l'air correct en surface peut être faux en profondeur.
+
+<Callout kind="note" title="Pourquoi un seul fsync ne suffit pas toujours">
+On pourrait penser : « j'écris tout, puis j'appelle <Term slug="fsync">fsync</Term> une fois à la fin, et c'est durable. » fsync force bien les données des caches volatils vers le disque physique. Mais il ne dit rien sur l'ORDRE dans lequel les blocs ont été écrits avant lui, ni sur ce qui survit si la panne arrive AVANT cet fsync. Tant que l'écriture vise directement le fichier final, une panne prématurée laisse un mélange. La durabilité ne s'obtient pas en forçant plus fort : elle s'obtient en écrivant autrement.
+</Callout>
+
+## Quatre stratégies pour écrire sans se déchirer
+
+Face à l'écriture partielle, l'ingénierie a inventé plusieurs parades. En voici quatre, plus la naïve qui sert de contre-exemple. Chacune fait un compromis différent entre sûreté, coût d'écriture, vitesse de relecture et fraîcheur des données.
+
+| Stratégie | Sûre au crash ? | Coût d'écriture | Relecture | Fraîcheur |
+| --- | --- | --- | --- | --- |
+| Écrasement en place | Non : se déchire | Faible | Immédiate | Maximale |
+| <Term slug="echange-de-nom-atomique">Échange de nom</Term> | Oui : tout ou rien | Copie complète | Immédiate | Maximale |
+| <Term slug="instantane">Instantané</Term> | Oui : tout ou rien | Copie complète | Immédiate | En retard entre deux photos |
+| <Term slug="journal-append-only">Journal append-only</Term> | Oui : préfixe consistant | Faible, incrémental | À reconstruire | Maximale |
+| <Term slug="fichier-mappe-en-memoire">Fichier mappé</Term> | À la merci du système | Très faible | Immédiate | Maximale |
+
+L'écrasement en place est la stratégie naïve : on réécrit le fichier final directement. Rapide et simple, mais c'est précisément celle qui se déchire. Les quatre autres la corrigent, chacune à sa façon.
+
+L'<Term slug="ecriture-atomique">écriture atomique</Term> par échange de nom écrit le nouvel index dans un fichier temporaire, à côté, sans toucher à l'original ; une fois le temporaire complet et forcé sur disque, un renommage le publie d'un coup. L'instantané fait pareil avec une photo complète et périodique de l'état. Le journal append-only ne réécrit jamais rien : il ajoute chaque changement à la fin d'un fichier, si bien qu'une panne ne peut abîmer que le dernier enregistrement, qu'on tronque à la relecture. Le fichier mappé en mémoire laisse le système d'exploitation gérer le va-et-vient entre mémoire et disque, élégant mais dont la durabilité dépend du moment où le système décide d'écrire ses pages.
+
+## La clé : l'atomicité par échange de nom
+
+De ces quatre parades, une mérite qu'on s'y arrête, car c'est la plus universelle et la plus enseignante : l'échange de nom atomique. Son idée tient en trois temps.
+
+D'abord, on écrit la totalité du nouvel index dans un fichier temporaire, distinct du fichier officiel. Pendant tout ce temps, le fichier officiel reste l'ancien index, complet et intact : si la machine tombe ici, on perd juste le temporaire à moitié écrit, sans conséquence. Ensuite, on appelle fsync sur le temporaire pour garantir qu'il est vraiment sur le disque, et pas seulement dans un cache que la panne effacerait. Enfin, on renomme le temporaire par-dessus l'officiel.
+
+Ce dernier geste est le secret. Au niveau du système de fichiers, le renommage est atomique : il n'existe aucun instant où le nom de l'index pointe sur un fichier à moitié remplacé. À tout moment, il désigne soit l'ancien fichier entier, soit le nouveau entier. Le « à moitié » est rendu impossible par construction.
+
+<Formula caption="Le motif write-temp-then-rename">écrire(temp) puis fsync(temp) puis renommer(temp vers officiel)</Formula>
+
+C'est ce que font, sous le capot, les éditeurs de texte qui ne corrompent jamais ton fichier, les bases de données embarquées, et la plupart des outils sérieux. La même technique transforme une écriture dangereuse en une transition tout-ou-rien.
+
+## Relire et exiger l'identique : l'oracle de round-trip
+
+Supposons l'index correctement écrit, sans aucun crash. Es-tu tranquille ? Pas encore. Il reste une seconde façon de mentir, et elle n'a rien à voir avec les pannes : la sérialisation elle-même peut trahir.
+
+Sérialiser, c'est transformer une structure en mémoire en une suite d'octets pour le disque. Désérialiser, c'est l'inverse. On aimerait que ces deux opérations soient exactement réciproques : relire ce qu'on vient d'écrire doit redonner l'état de départ, à l'octet près. Mais c'est facile à casser. Un vecteur de flottants écrit avec trop peu de précision revient arrondi, donc différent. Un ensemble de voisins écrit dans un ordre instable revient dans un ordre changé, donc des octets différents d'une écriture à l'autre.
+
+D'où le <Term slug="test-de-round-trip">test de round-trip</Term> : on sérialise l'état, on le relit, et on exige que le résultat soit identique à l'original. C'est, mot pour mot, l'oracle différentiel du chapitre 5, transposé à la persistance. La référence n'est plus l'index exact lent, c'est l'état en mémoire. La version testée n'est plus l'index approché, c'est ce qu'on relit du disque.
+
+Et le piège du chapitre 5 revient lui aussi. Un contrôle logique, qui vérifie qu'on a bien les mêmes nœuds et les mêmes ensembles de voisins, reste vert même quand l'ordre des voisins a changé : logiquement, c'est pareil. Seule une comparaison octet pour octet contre une référence canonique attrape cette instabilité. Le contrôle logique est aveugle là où l'oracle strict voit. Propriété locale contre vérité globale, encore une fois.
+
+## À toi de planter la machine
+
+Le composant ci-dessous réunit les deux dangers du chapitre. En haut, choisis une stratégie de persistance et glisse l'instant du crash le long du plan d'écriture : observe ce que la relecture récupère selon où tombe la machine. En bas, l'oracle de round-trip : active les bugs de sérialisation et regarde le contrôle logique rester vert pendant que la comparaison octet pour octet vire au rouge.
+
+<DurableIndexLab
+  client:visible
+  oldCount={4}
+  newCount={7}
+  initialStrategy="inPlaceOverwrite"
+  labels={{
+    strategyTitle: "Stratégie de persistance",
+    strategyInPlace: "Écrasement en place",
+    strategyAtomic: "Échange de nom atomique",
+    strategySnapshot: "Instantané",
+    strategyAppend: "Journal append-only",
+    crashTitle: "Planter la machine",
+    crashSliderLabel: "Instant du crash",
+    crashHint: "Glisse pour couper le courant après N opérations exécutées.",
+    stepsTitle: "Plan d'écriture",
+    stepExecutedLabel: "exécutée",
+    stepPendingLabel: "non atteinte",
+    stepWriteBlockMain: "écrire le bloc {n} dans l'index",
+    stepWriteBlockTemp: "écrire le bloc {n} dans le fichier temporaire",
+    stepWriteBlockSnapshot: "écrire le bloc {n} dans la nouvelle photo",
+    stepAppendRecord: "ajouter l'enregistrement {n} au journal",
+    stepFsyncMain: "fsync : forcer l'index sur le disque",
+    stepFsyncTemp: "fsync : forcer le temporaire sur le disque",
+    stepFsyncSnapshot: "fsync : forcer la photo sur le disque",
+    stepFsyncLog: "fsync : forcer le journal sur le disque",
+    stepRename: "renommer atomiquement par-dessus l'index",
+    verdictTitle: "Après redémarrage",
+    statusNewIntact: "Index neuf intact : durable",
+    statusOldIntact: "Ancien index intact : écriture perdue, mais cohérent",
+    statusStale: "En retard mais cohérent : préfixe consistant",
+    statusCorrupted: "Corrompu : écriture partielle, fichier déchiré",
+    recoveredLabel: "Index relu",
+    recoveredNodes: "nœuds",
+    recoveredNoneLabel: "illisible",
+    oracleTitle: "Oracle de round-trip",
+    oracleHint: "Sérialiser, relire, comparer à l'état en mémoire.",
+    bugLossyFloat: "Bug : arrondir les coordonnées",
+    bugNonDeterministic: "Bug : ordre de voisins instable",
+    logicalCheckLabel: "Contrôle logique (mêmes ensembles)",
+    byteOracleLabel: "Oracle octet pour octet",
+    passLabel: "vert",
+    failLabel: "rouge",
+    oracleBlindHint: "Le contrôle logique reste vert là où l'oracle octet pour octet voit la corruption."
+  }}
+/>
+
+Trois questions à te poser en jouant :
+
+1. Choisis l'écrasement en place et place le crash au milieu. Quel verdict ? Recommence avec l'échange de nom atomique au même endroit. Pourquoi l'un se déchire-t-il et pas l'autre ?
+2. Avec le journal append-only, déplace le crash enregistrement par enregistrement. Vois-tu jamais « corrompu » apparaître ? Que récupère-t-on à la place ?
+3. Dans l'oracle, active l'ordre de voisins instable seul. Le contrôle logique vire-t-il au rouge ? Et l'oracle octet pour octet ? Lequel des deux aurait laissé passer le bug en production ?
+
+<Callout kind="info" title="Le fil rouge : le choix de persistance du moteur">
+Sur le moteur vectoriel souverain qui sert de fil rouge à ce cours, je n'ai pas réinventé la durabilité à la main. Le graphe et les vecteurs sont confiés à un magasin clé-valeur transactionnel embarqué, en pur Rust, qui implémente déjà l'atomicité (tout ou rien) et la durabilité par fsync au bon endroit. Écrire son propre format de fichier crash-safe est un piège classique : on croit l'avoir fait juste, et une écriture partielle nous attend au premier coup de courant. S'appuyer sur une couche transactionnelle éprouvée, puis la valider avec un test de round-trip, coûte infiniment moins cher que de déboguer un index corrompu en production. La règle du chapitre 5 tient toujours : on ne baisse pas le seuil, et ici, on ne bricole pas sa propre atomicité.
+</Callout>
+
+## Exercices
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : dérouler un crash, stratégie par stratégie">
+Un index passe d'un état ancien de 3 blocs à un état neuf de 5 blocs. La machine tombe juste après que 2 blocs ont été écrits. Que récupère-t-on selon la stratégie ?
+
+**Étape 1. Écrasement en place.** Les 2 blocs neufs ont été écrits directement par-dessus l'index officiel. Le fichier contient maintenant 2 blocs neufs suivis d'anciens blocs : un mélange.
+
+$$
+\text{disque} = [\,\text{neuf}_0,\ \text{neuf}_1,\ \text{ancien}_2,\ \dots\,]
+$$
+
+**Résultat partiel.** Mélange incohérent : **corrompu**. C'est la seule stratégie qui se déchire.
+
+**Étape 2. Échange de nom atomique.** Les 2 blocs ont été écrits dans le fichier TEMPORAIRE. Le renommage n'a pas eu lieu (il est en dernière étape). L'index officiel n'a pas bougé.
+
+$$
+\text{officiel} = [\,\text{ancien}_0,\ \text{ancien}_1,\ \text{ancien}_2\,]
+$$
+
+**Résultat partiel.** Ancien index complet : **intact**, écriture simplement perdue.
+
+**Étape 3. Journal append-only.** On a ajouté 2 enregistrements neufs à la fin du journal. La relecture rejoue l'ancien plus ces 2 ajouts, un préfixe parfaitement cohérent.
+
+$$
+\text{relu} = \text{ancien} + [\,\text{ajout}_0,\ \text{ajout}_1\,]
+$$
+
+**Résultat.** **En retard mais cohérent**, jamais corrompu. Trois stratégies, trois issues : seul l'écrasement en place produit un fichier déchiré.
+</Callout>
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : pourquoi le contrôle logique laisse passer le bug d'ordre">
+On sérialise un nœud dont les voisins en mémoire sont la liste $[1, 2]$. Un bug écrit les voisins dans l'ordre inverse, $[2, 1]$. On veut savoir lequel des deux contrôles attrape le bug.
+
+**Étape 1. Le contrôle logique.** Il compare les ENSEMBLES de voisins, sans tenir compte de l'ordre.
+
+$$
+\{1, 2\} = \{2, 1\}
+$$
+
+**Résultat partiel.** Les ensembles sont égaux : le contrôle logique reste **vert**. Il ne voit rien.
+
+**Étape 2. L'oracle octet pour octet.** Il compare la chaîne réellement écrite à la référence canonique, qui trie les voisins par ordre croissant.
+
+$$
+\text{écrit} = \texttt{"2,1"} \neq \texttt{"1,2"} = \text{référence}
+$$
+
+**Résultat.** Les octets diffèrent : l'oracle vire au **rouge**. C'est lui, et lui seul, qui aurait empêché le bug de partir en production. Exactement comme au chapitre 5, la propriété locale (mêmes voisins) est satisfaite tandis que la vérité stricte (mêmes octets) est violée.
+</Callout>
+
+## En une phrase
+
+Un index en mémoire ne devient durable qu'écrit sur disque, et l'écrire naïvement par-dessus l'ancien fichier l'expose à l'écriture partielle, une corruption silencieuse qu'on neutralise par l'atomicité (écrire à côté puis renommer d'un coup, ou n'ajouter qu'en fin de journal) ; et comme au chapitre 5, seul un oracle de round-trip octet pour octet, et non un simple contrôle logique, garantit que ce qu'on relit est exactement ce qu'on avait en mémoire.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi une écriture partielle est-elle plus dangereuse qu'une simple perte de données ?",
+      options: [
+        "Parce qu'elle remplit le disque",
+        "Parce que le fichier mélangé s'ouvre souvent sans erreur et ment sur son contenu : la corruption est silencieuse",
+        "Parce qu'elle est plus lente à réparer",
+        "Parce qu'elle déclenche toujours une exception au démarrage"
+      ],
+      answer: 1,
+      explain: "Une perte franche se détecte et se reconstruit. Une écriture partielle laisse un fichier à moitié ancien à moitié neuf qui se relit sans erreur apparente, comme l'index du chapitre 5 qui passait ses tests en mentant."
+    },
+    {
+      q: "En quoi l'échange de nom atomique évite-t-il l'écriture partielle ?",
+      options: [
+        "Il écrit plus vite, donc la panne a moins de chances d'arriver",
+        "Il écrit dans un fichier temporaire puis le renomme d'un coup : le fichier officiel reste l'ancien complet jusqu'au renommage atomique",
+        "Il compresse les données pour qu'elles tiennent en un seul bloc",
+        "Il garde une copie en mémoire en permanence"
+      ],
+      answer: 1,
+      explain: "Le renommage est atomique au niveau du système de fichiers : à tout instant le nom pointe soit sur l'ancien fichier entier, soit sur le nouveau. L'état « à moitié écrit » devient impossible par construction."
+    },
+    {
+      q: "Un bug écrit les voisins dans un ordre instable. Quel contrôle l'attrape ?",
+      options: [
+        "Le contrôle logique, car les ensembles diffèrent",
+        "Aucun des deux, l'ordre n'a pas d'importance",
+        "L'oracle octet pour octet, car les octets écrits ne correspondent plus à la référence canonique",
+        "Le fsync, qui vérifie l'intégrité"
+      ],
+      answer: 2,
+      explain: "Le contrôle logique compare des ensembles et reste vert (mêmes voisins). Seule la comparaison octet pour octet contre une référence canonique voit la différence d'ordre, comme l'oracle différentiel voyait la chute de rappel là où les tests locaux restaient verts."
+    }
+  ]}
+/>
+
+## Vers le chapitre 7
+
+L'index est maintenant durable et vérifié : il survit aux redémarrages et on sait prouver qu'on le relit fidèlement. Mais il lui manque encore quelque chose. Toute la recherche qu'on a bâtie repose sur le SENS, capté par les vecteurs. Or il y a des requêtes où le sens ne suffit pas : un numéro de référence exact, un nom propre rare, un mot-clé qui doit apparaître tel quel. La recherche vectorielle, brillante sur les paraphrases, peut passer à côté d'une correspondance littérale évidente. Le chapitre 7 marie donc nos vecteurs au monde lexical, celui des mots exacts à la BM25, pour bâtir une recherche hybride qui cherche à la fois par le sens et par la lettre.
+
+## Sources
+
+- Haerder, T. & Reuter, A. (1983). « Principles of Transaction-Oriented Database Recovery. » _ACM Computing Surveys_ 15(4), 287-317. [DOI 10.1145/289.291](https://doi.org/10.1145/289.291)
+- Pillai, T. S., Chidambaram, V., Alagappan, R., Al-Kiswany, S., Arpaci-Dusseau, A. C. & Arpaci-Dusseau, R. H. (2014). « All File Systems Are Not Created Equal: On the Complexity of Crafting Crash-Consistent Applications. » _OSDI_. [USENIX](https://www.usenix.org/conference/osdi14/technical-sessions/presentation/pillai)
+- O'Neil, P., Cheng, E., Gawlick, D. & O'Neil, E. (1996). « The Log-Structured Merge-Tree (LSM-Tree). » _Acta Informatica_ 33(4), 351-385. [DOI 10.1007/s002360050048](https://doi.org/10.1007/s002360050048)
+
+### Pour aller plus loin
+
+- Documentation de redb, magasin clé-valeur transactionnel embarqué en Rust : [redb.org](https://www.redb.org/)

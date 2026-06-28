@@ -1,0 +1,11 @@
+slug: ecriture-atomique
+fr:
+  term: Écriture atomique
+  definition: "Écriture qui se produit entièrement ou pas du tout : aucun état intermédiaire n'est jamais observable, même en cas de panne au pire moment. C'est le A de ACID (atomicité). Une écriture atomique transforme la question « le fichier est-il à moitié écrit ? » en une impossibilité : à la relecture, on retrouve soit l'ancien état complet, soit le nouveau complet, jamais un mélange."
+en:
+  term: Atomic write
+  definition: "A write that happens entirely or not at all: no intermediate state is ever observable, even on a crash at the worst possible moment. It is the A in ACID (atomicity). An atomic write turns the question 'is the file half-written?' into an impossibility: on re-read you find either the complete old state or the complete new one, never a mix."
+seeAlso:
+  - echange-de-nom-atomique
+  - ecriture-partielle
+  - durabilite

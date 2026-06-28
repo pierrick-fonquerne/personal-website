@@ -1,0 +1,11 @@
+slug: durabilite
+fr:
+  term: Durabilité
+  definition: "Garantie qu'une donnée, une fois confirmée comme écrite, survit aux redémarrages et aux pannes. C'est le D de l'acronyme ACID. Pour un index en mémoire, la durabilité n'est pas acquise : il faut explicitement écrire l'état sur un support persistant et forcer son passage sur le disque physique. Une écriture qui n'a pas été rendue durable peut disparaître au prochain incident, comme si elle n'avait jamais eu lieu."
+en:
+  term: Durability
+  definition: "The guarantee that data, once acknowledged as written, survives restarts and crashes. It is the D in ACID. For an in-memory index, durability is not free: the state must be explicitly written to persistent storage and forced down to the physical disk. A write that was never made durable can vanish at the next incident, as if it had never happened."
+seeAlso:
+  - fsync
+  - ecriture-atomique
+  - ecriture-partielle

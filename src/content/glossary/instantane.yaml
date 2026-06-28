@@ -1,0 +1,11 @@
+slug: instantane
+fr:
+  term: Instantané
+  definition: "Copie complète et cohérente de l'état d'un index à un moment donné, écrite sur disque puis publiée atomiquement (souvent par échange de nom). Simple à relire et à raisonner, mais coûteux : chaque instantané réécrit tout, et entre deux instantanés les changements récents ne sont pas protégés. Stratégie de durabilité par photographies périodiques. En anglais : snapshot."
+en:
+  term: Snapshot
+  definition: "A complete, consistent copy of an index's state at a given moment, written to disk then published atomically (often via rename). Simple to re-read and reason about, but costly: each snapshot rewrites everything, and between two snapshots recent changes are unprotected. A durability strategy based on periodic photographs."
+seeAlso:
+  - echange-de-nom-atomique
+  - journal-append-only
+  - durabilite

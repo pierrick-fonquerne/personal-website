@@ -1,0 +1,11 @@
+slug: test-de-round-trip
+fr:
+  term: Test de round-trip
+  definition: "Test qui sérialise une structure, la relit depuis sa forme persistée, et exige que le résultat soit identique à l'original. C'est l'oracle différentiel du chapitre 5 transposé à la persistance : la référence est l'état en mémoire, la version testée est ce qu'on relit du disque. Un contrôle logique (mêmes éléments) peut rester vert pendant qu'une comparaison octet pour octet attrape une corruption silencieuse, comme un arrondi de flottants ou un ordre d'écriture instable."
+en:
+  term: Round-trip test
+  definition: "A test that serializes a structure, reads it back from its persisted form, and demands that the result be identical to the original. It is the differential oracle of chapter 5 transposed to persistence: the reference is the in-memory state, the version under test is what is read back from disk. A logical check (same elements) can stay green while a byte-for-byte comparison catches silent corruption, such as float rounding or an unstable write order."
+seeAlso:
+  - oracle-differentiel
+  - test-metamorphique
+  - ecriture-partielle
