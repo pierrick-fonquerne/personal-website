@@ -32,7 +32,7 @@ The trap is not data loss. Loss, we know how to handle: just rebuild everything.
 You recognize the pattern. In chapter 5, an index could pass every local test while collapsing in quality. Here, a file can pass every open-time check while being structurally rotten. The same lesson, transposed: what looks correct on the surface can be wrong underneath.
 
 <Callout kind="note" title="Why a single fsync is not always enough">
-One might think: "I write everything, then call <Term slug="fsync">fsync</Term> once at the end, and it is durable." fsync does force data from volatile caches to the physical disk. But it says nothing about the ORDER in which blocks were written before it, nor about what survives if the crash arrives BEFORE that fsync. As long as the write targets the final file directly, a premature crash leaves a mixture. Durability is not obtained by pushing harder: it is obtained by writing differently.
+One might think: "I write everything, then call fsync once at the end, and it is durable." fsync does force data from volatile caches to the physical disk. But it says nothing about the ORDER in which blocks were written before it, nor about what survives if the crash arrives BEFORE that fsync. As long as the write targets the final file directly, a premature crash leaves a mixture. Durability is not obtained by pushing harder: it is obtained by writing differently.
 </Callout>
 
 ## Four strategies for writing without tearing
@@ -55,7 +55,7 @@ The <Term slug="ecriture-atomique">atomic write</Term> via rename writes the new
 
 Of these four defenses, one deserves a closer look, because it is the most universal and the most instructive: the atomic rename. Its idea unfolds in three steps.
 
-First, the entirety of the new index is written to a temporary file, separate from the official file. During all that time, the official file remains the old index, complete and intact: if the machine goes down here, we only lose the half-written temporary, with no consequence. Next, we call fsync on the temporary to guarantee it is truly on disk, not merely in a cache that a crash would erase. Finally, we rename the temporary over the official file.
+First, the entirety of the new index is written to a temporary file, separate from the official file. During all that time, the official file remains the old index, complete and intact: if the machine goes down here, we only lose the half-written temporary, with no consequence. Next, we call <Term slug="fsync">fsync</Term> on the temporary to guarantee it is truly on disk, not merely in a cache that a crash would erase. Finally, we rename the temporary over the official file.
 
 That last gesture is the secret. At the filesystem level, the rename is atomic: there is no instant where the index name points to a half-replaced file. At every moment, it designates either the complete old file or the complete new one. The "halfway" is made impossible by construction.
 

@@ -32,7 +32,7 @@ Le piège n'est pas la perte de données. La perte, on sait la gérer : il suffi
 Tu reconnais le motif. Au chapitre 5, un index pouvait passer tous ses tests locaux tout en s'effondrant en qualité. Ici, un fichier peut passer tous ses contrôles d'ouverture tout en étant structurellement pourri. La même leçon, transposée : ce qui a l'air correct en surface peut être faux en profondeur.
 
 <Callout kind="note" title="Pourquoi un seul fsync ne suffit pas toujours">
-On pourrait penser : « j'écris tout, puis j'appelle <Term slug="fsync">fsync</Term> une fois à la fin, et c'est durable. » fsync force bien les données des caches volatils vers le disque physique. Mais il ne dit rien sur l'ORDRE dans lequel les blocs ont été écrits avant lui, ni sur ce qui survit si la panne arrive AVANT cet fsync. Tant que l'écriture vise directement le fichier final, une panne prématurée laisse un mélange. La durabilité ne s'obtient pas en forçant plus fort : elle s'obtient en écrivant autrement.
+On pourrait penser : « j'écris tout, puis j'appelle fsync une fois à la fin, et c'est durable. » fsync force bien les données des caches volatils vers le disque physique. Mais il ne dit rien sur l'ORDRE dans lequel les blocs ont été écrits avant lui, ni sur ce qui survit si la panne arrive AVANT cet fsync. Tant que l'écriture vise directement le fichier final, une panne prématurée laisse un mélange. La durabilité ne s'obtient pas en forçant plus fort : elle s'obtient en écrivant autrement.
 </Callout>
 
 ## Quatre stratégies pour écrire sans se déchirer
@@ -55,7 +55,7 @@ L'<Term slug="ecriture-atomique">écriture atomique</Term> par échange de nom �
 
 De ces quatre parades, une mérite qu'on s'y arrête, car c'est la plus universelle et la plus enseignante : l'échange de nom atomique. Son idée tient en trois temps.
 
-D'abord, on écrit la totalité du nouvel index dans un fichier temporaire, distinct du fichier officiel. Pendant tout ce temps, le fichier officiel reste l'ancien index, complet et intact : si la machine tombe ici, on perd juste le temporaire à moitié écrit, sans conséquence. Ensuite, on appelle fsync sur le temporaire pour garantir qu'il est vraiment sur le disque, et pas seulement dans un cache que la panne effacerait. Enfin, on renomme le temporaire par-dessus l'officiel.
+D'abord, on écrit la totalité du nouvel index dans un fichier temporaire, distinct du fichier officiel. Pendant tout ce temps, le fichier officiel reste l'ancien index, complet et intact : si la machine tombe ici, on perd juste le temporaire à moitié écrit, sans conséquence. Ensuite, on appelle <Term slug="fsync">fsync</Term> sur le temporaire pour garantir qu'il est vraiment sur le disque, et pas seulement dans un cache que la panne effacerait. Enfin, on renomme le temporaire par-dessus l'officiel.
 
 Ce dernier geste est le secret. Au niveau du système de fichiers, le renommage est atomique : il n'existe aucun instant où le nom de l'index pointe sur un fichier à moitié remplacé. À tout moment, il désigne soit l'ancien fichier entier, soit le nouveau entier. Le « à moitié » est rendu impossible par construction.
 
