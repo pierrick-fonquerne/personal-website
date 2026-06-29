@@ -1,0 +1,11 @@
+slug: echange-de-nom-atomique
+fr:
+  term: Échange de nom atomique
+  definition: "Technique reine pour obtenir une écriture atomique sur un système de fichiers : on écrit toutes les données dans un fichier temporaire, on force sa durabilité (fsync), puis on le renomme par-dessus le fichier cible. Le renommage est atomique au niveau du système de fichiers : à tout instant, le nom pointe soit sur l'ancien fichier complet, soit sur le nouveau. Une panne avant le renommage laisse l'ancien intact ; après, le neuf intact. En anglais : atomic rename, ou le motif write-temp-then-rename."
+en:
+  term: Atomic rename
+  definition: "The go-to technique for an atomic write on a filesystem: write all the data to a temporary file, force its durability (fsync), then rename it over the target. The rename is atomic at the filesystem level: at every instant the name points either to the complete old file or to the new one. A crash before the rename leaves the old intact; after it, the new intact. Also called the write-temp-then-rename pattern."
+seeAlso:
+  - ecriture-atomique
+  - fsync
+  - instantane

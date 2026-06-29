@@ -1,0 +1,11 @@
+slug: fsync
+fr:
+  term: fsync
+  definition: "Appel système qui force le passage des données d'un fichier depuis les caches volatils (mémoire de l'application, cache du système d'exploitation) jusqu'au support physique durable. Tant que fsync n'a pas rendu la main, une écriture peut n'exister que dans un cache que la panne effacera. C'est la barrière qui transforme une écriture apparente en écriture durable, et l'étape qu'on oublie le plus souvent dans le motif d'échange de nom atomique."
+en:
+  term: fsync
+  definition: "A system call that forces a file's data from volatile caches (the application's memory, the operating system's cache) down to durable physical storage. Until fsync returns, a write may exist only in a cache that a crash will wipe. It is the barrier that turns an apparent write into a durable one, and the step most often forgotten in the atomic-rename pattern."
+seeAlso:
+  - durabilite
+  - echange-de-nom-atomique
+  - ecriture-partielle

@@ -1,0 +1,11 @@
+slug: ecriture-partielle
+fr:
+  term: Écriture partielle
+  definition: "Écriture interrompue en plein vol (coupure de courant, plantage, processus tué) qui laisse un fichier à moitié ancien, à moitié neuf. Le danger n'est pas la perte : c'est la corruption silencieuse, car le fichier mélangé s'ouvre souvent sans erreur et se parse en partie, mentant sur son contenu. En anglais : torn write. C'est la menace centrale que toute stratégie de persistance sérieuse doit neutraliser."
+en:
+  term: Torn write
+  definition: "A write interrupted in mid-flight (power loss, crash, killed process) that leaves a file half old, half new. The danger is not loss: it is silent corruption, because the mixed file often opens without error and partially parses, lying about its contents. The central threat that any serious persistence strategy must neutralize."
+seeAlso:
+  - ecriture-atomique
+  - echange-de-nom-atomique
+  - durabilite

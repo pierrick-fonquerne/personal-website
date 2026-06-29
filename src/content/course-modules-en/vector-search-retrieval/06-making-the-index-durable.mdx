@@ -1,0 +1,241 @@
+---
+course: vector-search-retrieval
+order: 6
+title: "Making the index durable"
+subtitle: "An index living in RAM vanishes on restart. How do you write it to disk once and for all, without ever corrupting it, even if power cuts out mid-insertion?"
+estimatedMinutes: 30
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import DurableIndexLab from '../../../components/learning/DurableIndexLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we earned the right to trust an index: the differential oracle certifies that it really retrieves the neighbors it claims to return. But that index, carefully built and verified, lives in RAM. And RAM is wiped on the slightest restart. Rebuilding an index of several million vectors takes hours of computation. The question of this chapter is therefore down-to-earth, and yet it decides the survival of the engine: how do you write that index to disk once and for all, read it back intact, and survive a power cut that strikes mid-write?
+
+This is a change of world. Until now we reasoned in geometry, distances, recall. Now we reason in bytes, faults, guarantees. And we will discover a sneaky threat, a direct cousin of the one in chapter 5: a saved index can be read back without the slightest apparent error, and still lie about its content.
+
+## An index that does not survive a restart
+
+An in-memory index is volatile by nature. Cut the power, kill the process, restart the machine: everything is lost. For a state to survive, it must be made <Term slug="durabilite">durable</Term>, meaning written to a medium that retains its value without power (a disk, an SSD), and with assurance that the write truly reached that medium.
+
+One might think this is trivial: just open a file and dump the index into it. That is exactly where the trap hides. Writing data takes time, and during that time, anything can happen. The machine can go down in the middle of the operation. And an interrupted write does not leave a clean empty file: it leaves a half-written file.
+
+## The real danger: the torn write
+
+Imagine your index occupies ten blocks on disk. You launch the save, which rewrites those ten blocks one by one. The machine shuts off after the sixth. On disk, you now have six new blocks and four old blocks, welded into the same file. That is a <Term slug="ecriture-partielle">torn write</Term>, and it is the nightmare of any persistence layer.
+
+The trap is not data loss. Loss, we know how to handle: just rebuild everything. The trap is silent corruption. That hybrid file opens without error. Its header is consistent, its first records read perfectly. It looks valid. But its internal pointers cross the boundary between old and new, and the index we reload is an incoherent monster that will return nonsensical neighbors without ever raising an exception.
+
+You recognize the pattern. In chapter 5, an index could pass every local test while collapsing in quality. Here, a file can pass every open-time check while being structurally rotten. The same lesson, transposed: what looks correct on the surface can be wrong underneath.
+
+<Callout kind="note" title="Why a single fsync is not always enough">
+One might think: "I write everything, then call fsync once at the end, and it is durable." fsync does force data from volatile caches to the physical disk. But it says nothing about the ORDER in which blocks were written before it, nor about what survives if the crash arrives BEFORE that fsync. As long as the write targets the final file directly, a premature crash leaves a mixture. Durability is not obtained by pushing harder: it is obtained by writing differently.
+</Callout>
+
+## Four strategies for writing without tearing
+
+Faced with the torn write, engineering has invented several defenses. Here are four, plus the naive approach that serves as the counter-example. Each makes a different trade-off between safety, write cost, read-back speed, and data freshness.
+
+| Strategy | Crash-safe? | Write cost | Read-back | Freshness |
+| --- | --- | --- | --- | --- |
+| In-place overwrite | No: torn write | Low | Immediate | Maximum |
+| <Term slug="echange-de-nom-atomique">Atomic rename</Term> | Yes: all or nothing | Full copy | Immediate | Maximum |
+| <Term slug="instantane">Snapshot</Term> | Yes: all or nothing | Full copy | Immediate | Behind between two snapshots |
+| <Term slug="journal-append-only">Append-only log</Term> | Yes: consistent prefix | Low, incremental | Needs replay | Maximum |
+| <Term slug="fichier-mappe-en-memoire">Memory-mapped file</Term> | At the OS's mercy | Very low | Immediate | Maximum |
+
+In-place overwrite is the naive strategy: the final file is rewritten directly. Fast and simple, but it is precisely the one that tears. The four others each correct it in their own way.
+
+The <Term slug="ecriture-atomique">atomic write</Term> via rename writes the new index into a temporary file alongside the original, without touching it; once the temporary is complete and flushed to disk, a rename publishes it in one move. The snapshot does the same with a full, periodic copy of the state. The append-only log never rewrites anything: it appends each change to the end of a file, so a crash can only damage the last record, which is truncated on read-back. The memory-mapped file lets the operating system manage the flow between memory and disk, elegant but with durability that depends on when the system decides to flush its pages.
+
+## The key: atomicity through rename
+
+Of these four defenses, one deserves a closer look, because it is the most universal and the most instructive: the atomic rename. Its idea unfolds in three steps.
+
+First, the entirety of the new index is written to a temporary file, separate from the official file. During all that time, the official file remains the old index, complete and intact: if the machine goes down here, we only lose the half-written temporary, with no consequence. Next, we call <Term slug="fsync">fsync</Term> on the temporary to guarantee it is truly on disk, not merely in a cache that a crash would erase. Finally, we rename the temporary over the official file.
+
+That last gesture is the secret. At the filesystem level, the rename is atomic: there is no instant where the index name points to a half-replaced file. At every moment, it designates either the complete old file or the complete new one. The "halfway" is made impossible by construction.
+
+<Formula caption="The write-temp-then-rename pattern">write(temp) then fsync(temp) then rename(temp to official)</Formula>
+
+This is what text editors that never corrupt your file, embedded databases, and most serious tools do under the hood. The same technique turns a dangerous write into an all-or-nothing transition.
+
+## Reading back and demanding identical: the round-trip oracle
+
+Suppose the index was correctly written, with no crash. Are you safe? Not yet. There remains a second way to lie, and it has nothing to do with crashes: serialization itself can betray you.
+
+Serializing is transforming an in-memory structure into a sequence of bytes for disk. Deserializing is the reverse. We would like these two operations to be exactly reciprocal: reading back what we just wrote must return the starting state, byte for byte. But it is easy to break. A vector of floats written with too little precision comes back rounded, hence different. A set of neighbors written in an unstable order comes back in a changed order, hence different bytes from one write to the next.
+
+Hence the <Term slug="test-de-round-trip">round-trip test</Term>: we serialize the state, reload it, and demand that the result be identical to the original. That is, word for word, the differential oracle of chapter 5, transposed to persistence. The reference is no longer the slow exact index: it is the in-memory state. The tested version is no longer the approximate index: it is what we reload from disk.
+
+And the trap of chapter 5 returns too. A logical check, which verifies that we have the same nodes and the same neighbor sets, stays green even when the neighbor order has changed: logically, it is the same. Only a byte-for-byte comparison against a canonical reference catches this instability. The logical check is blind where the strict oracle sees. Local property versus global truth, once again.
+
+## Your turn: crash the machine
+
+The component below brings together the two dangers of this chapter. At the top, choose a persistence strategy and slide the crash instant along the write plan: observe what the read-back recovers depending on where the machine goes down. At the bottom, the round-trip oracle: activate the serialization bugs and watch the logical check stay green while the byte-for-byte comparison turns red.
+
+<DurableIndexLab
+  client:visible
+  oldCount={4}
+  newCount={7}
+  initialStrategy="inPlaceOverwrite"
+  labels={{
+    strategyTitle: "Persistence strategy",
+    strategyInPlace: "In-place overwrite",
+    strategyAtomic: "Atomic rename",
+    strategySnapshot: "Snapshot",
+    strategyAppend: "Append-only log",
+    crashTitle: "Crash the machine",
+    crashSliderLabel: "Crash moment",
+    crashHint: "Slide to cut power after N operations have executed.",
+    stepsTitle: "Write plan",
+    stepExecutedLabel: "executed",
+    stepPendingLabel: "not reached",
+    stepWriteBlockMain: "write block {n} to the index",
+    stepWriteBlockTemp: "write block {n} to the temporary file",
+    stepWriteBlockSnapshot: "write block {n} to the new snapshot",
+    stepAppendRecord: "append record {n} to the log",
+    stepFsyncMain: "fsync: flush the index to disk",
+    stepFsyncTemp: "fsync: flush the temporary file to disk",
+    stepFsyncSnapshot: "fsync: flush the snapshot to disk",
+    stepFsyncLog: "fsync: flush the log to disk",
+    stepRename: "atomically rename over the index",
+    verdictTitle: "After restart",
+    statusNewIntact: "New index intact: durable",
+    statusOldIntact: "Old index intact: write lost, but consistent",
+    statusStale: "Behind but consistent: consistent prefix",
+    statusCorrupted: "Corrupted: torn write, file shredded",
+    recoveredLabel: "Reloaded index",
+    recoveredNodes: "nodes",
+    recoveredNoneLabel: "unreadable",
+    oracleTitle: "Round-trip oracle",
+    oracleHint: "Serialize, reload, compare to the in-memory state.",
+    bugLossyFloat: "Bug: round off coordinates",
+    bugNonDeterministic: "Bug: unstable neighbor order",
+    logicalCheckLabel: "Logical check (same sets)",
+    byteOracleLabel: "Byte-for-byte oracle",
+    passLabel: "green",
+    failLabel: "red",
+    oracleBlindHint: "The logical check stays green where the byte-for-byte oracle sees the corruption."
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+1. Choose in-place overwrite and place the crash in the middle. What verdict? Try again with atomic rename at the same point. Why does one tear and not the other?
+2. With the append-only log, move the crash record by record. Do you ever see "corrupted" appear? What do we recover instead?
+3. In the oracle section, activate the unstable neighbor order alone. Does the logical check turn red? And the byte-for-byte oracle? Which of the two would have let the bug reach production?
+
+<Callout kind="info" title="The running thread: the persistence choice of the engine">
+On the sovereign vector engine that runs as the thread of this course, I did not reinvent durability by hand. The graph and the vectors are entrusted to an embedded transactional key-value store, in pure Rust, which already implements atomicity (all or nothing) and durability through fsync at the right point. Writing your own crash-safe file format is a classic trap: you think you got it right, and a torn write awaits you on the first power failure. Relying on a proven transactional layer, then validating it with a round-trip test, costs infinitely less than debugging a corrupted index in production. The rule from chapter 5 still holds: we do not lower the bar, and here, we do not hand-roll our own atomicity.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: tracing a crash, strategy by strategy">
+An index moves from an old state of 3 blocks to a new state of 5 blocks. The machine goes down just after 2 blocks have been written. What do we recover depending on the strategy?
+
+**Step 1. In-place overwrite.** The 2 new blocks were written directly over the official index. The file now contains 2 new blocks followed by old blocks: a mixture.
+
+$$
+\text{disk} = [\,\text{new}_0,\ \text{new}_1,\ \text{old}_2,\ \dots\,]
+$$
+
+**Partial result.** Incoherent mixture: **corrupted**. This is the only strategy that tears.
+
+**Step 2. Atomic rename.** The 2 blocks were written into the TEMPORARY file. The rename has not taken place (it is the final step). The official index has not moved.
+
+$$
+\text{official} = [\,\text{old}_0,\ \text{old}_1,\ \text{old}_2\,]
+$$
+
+**Partial result.** Complete old index: **intact**, write simply lost.
+
+**Step 3. Append-only log.** We appended 2 new records to the end of the log. Read-back replays the old state plus these 2 additions, a perfectly consistent prefix.
+
+$$
+\text{reloaded} = \text{old} + [\,\text{append}_0,\ \text{append}_1\,]
+$$
+
+**Result.** **Behind but consistent**, never corrupted. Three strategies, three outcomes: only in-place overwrite produces a torn file.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: why the logical check misses the ordering bug">
+We serialize a node whose neighbors in memory are the list $[1, 2]$. A bug writes the neighbors in reverse order, $[2, 1]$. We want to know which of the two checks catches the bug.
+
+**Step 1. The logical check.** It compares the SETS of neighbors, without taking order into account.
+
+$$
+\{1, 2\} = \{2, 1\}
+$$
+
+**Partial result.** The sets are equal: the logical check stays **green**. It sees nothing.
+
+**Step 2. The byte-for-byte oracle.** It compares the string actually written to the canonical reference, which sorts neighbors in ascending order.
+
+$$
+\text{written} = \texttt{"2,1"} \neq \texttt{"1,2"} = \text{reference}
+$$
+
+**Result.** The bytes differ: the oracle turns **red**. It is the oracle, and it alone, that would have prevented the bug from reaching production. Exactly as in chapter 5, the local property (same neighbors) is satisfied while the strict truth (same bytes) is violated.
+</Callout>
+
+## In one sentence
+
+An in-memory index only becomes durable once written to disk, and writing it naively over the old file exposes it to a torn write, a silent corruption neutralized by atomicity (write alongside then rename in one move, or append only at the end of a log); and as in chapter 5, only a byte-for-byte round-trip oracle, not a simple logical check, guarantees that what we reload is exactly what we had in memory.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why is a torn write more dangerous than a simple data loss?",
+      options: [
+        "Because it fills the disk",
+        "Because the mixed file often opens without error and lies about its content: the corruption is silent",
+        "Because it is slower to repair",
+        "Because it always triggers an exception on startup"
+      ],
+      answer: 1,
+      explain: "A clean loss is detectable and rebuildable. A torn write leaves a half-old half-new file that reads back without apparent error, like the chapter 5 index that passed its tests while lying."
+    },
+    {
+      q: "How does atomic rename prevent a torn write?",
+      options: [
+        "It writes faster, so the crash has less chance of happening",
+        "It writes to a temporary file then renames it in one move: the official file stays the complete old version until the atomic rename",
+        "It compresses the data so it fits in a single block",
+        "It keeps a copy in memory at all times"
+      ],
+      answer: 1,
+      explain: "The rename is atomic at the filesystem level: at any instant the name points to either the complete old file or the complete new one. The half-written state becomes impossible by construction."
+    },
+    {
+      q: "A bug writes neighbors in an unstable order. Which check catches it?",
+      options: [
+        "The logical check, because the sets differ",
+        "Neither of them, order does not matter",
+        "The byte-for-byte oracle, because the written bytes no longer match the canonical reference",
+        "The fsync, which checks integrity"
+      ],
+      answer: 2,
+      explain: "The logical check compares sets and stays green (same neighbors). Only the byte-for-byte comparison against a canonical reference sees the order difference, just as the differential oracle saw the recall drop where local tests stayed green."
+    }
+  ]}
+/>
+
+## Towards chapter 7
+
+The index is now durable and verified: it survives restarts and we can prove we reload it faithfully. But it is still missing something. All the search we have built rests on MEANING, captured by vectors. Yet there are queries where meaning is not enough: an exact reference number, a rare proper noun, a keyword that must appear verbatim. Vector search, brilliant on paraphrases, can miss an obvious literal match. Chapter 7 therefore marries our vectors to the lexical world, that of exact words at BM25, to build a hybrid search that looks for both meaning and letter.
+
+## Sources
+
+- Haerder, T. & Reuter, A. (1983). "Principles of Transaction-Oriented Database Recovery." _ACM Computing Surveys_ 15(4), 287-317. [DOI 10.1145/289.291](https://doi.org/10.1145/289.291)
+- Pillai, T. S., Chidambaram, V., Alagappan, R., Al-Kiswany, S., Arpaci-Dusseau, A. C. & Arpaci-Dusseau, R. H. (2014). "All File Systems Are Not Created Equal: On the Complexity of Crafting Crash-Consistent Applications." _OSDI_. [USENIX](https://www.usenix.org/conference/osdi14/technical-sessions/presentation/pillai)
+- O'Neil, P., Cheng, E., Gawlick, D. & O'Neil, E. (1996). "The Log-Structured Merge-Tree (LSM-Tree)." _Acta Informatica_ 33(4), 351-385. [DOI 10.1007/s002360050048](https://doi.org/10.1007/s002360050048)
+
+### Going further
+
+- Documentation for redb, an embedded transactional key-value store in Rust: [redb.org](https://www.redb.org/)

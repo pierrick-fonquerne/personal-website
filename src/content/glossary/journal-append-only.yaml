@@ -1,0 +1,11 @@
+slug: journal-append-only
+fr:
+  term: Journal en ajout seul
+  definition: "Stratégie de persistance où l'on n'écrase jamais : chaque changement est ajouté à la fin d'un journal. Une panne ne peut donc abîmer que le dernier enregistrement, en cours d'écriture ; à la relecture, on tronque cette queue déchirée et on rejoue le reste, ce qui redonne toujours un état cohérent (un préfixe consistant), jamais corrompu. Le prix : le journal grandit sans fin et doit être compacté. En anglais : append-only log. Fondement des bases de données journalisées et du log-structured merge."
+en:
+  term: Append-only log
+  definition: "A persistence strategy where nothing is ever overwritten: every change is appended to the end of a log. A crash can therefore only damage the last, in-progress record; on re-read that torn tail is truncated and the rest replayed, which always yields a consistent state (a consistent prefix), never corruption. The cost: the log grows without bound and must be compacted. The foundation of journaled databases and log-structured merge trees."
+seeAlso:
+  - instantane
+  - ecriture-partielle
+  - durabilite

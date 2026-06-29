@@ -1,0 +1,11 @@
+slug: fichier-mappe-en-memoire
+fr:
+  term: Fichier mappé en mémoire
+  definition: "Mécanisme par lequel le système d'exploitation expose un fichier comme une zone de mémoire : lire ou écrire un octet du fichier revient à lire ou écrire en mémoire, le système se chargeant de charger et d'écrire les pages à la demande. Très rapide et élégant pour un index (le fichier EST la structure en mémoire), mais la durabilité reste à la merci du moment où le système décide d'écrire les pages : sans barrière explicite, une panne peut laisser une écriture partielle. En anglais : memory-mapped file (mmap)."
+en:
+  term: Memory-mapped file
+  definition: "A mechanism by which the operating system exposes a file as a region of memory: reading or writing a byte of the file is just reading or writing memory, with the OS loading and flushing pages on demand. Very fast and elegant for an index (the file IS the in-memory structure), but durability is left to the OS's choice of when to flush pages: without an explicit barrier, a crash can leave a torn write. Known as mmap."
+seeAlso:
+  - durabilite
+  - fsync
+  - ecriture-partielle
