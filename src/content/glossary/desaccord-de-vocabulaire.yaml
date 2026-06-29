@@ -1,0 +1,10 @@
+slug: desaccord-de-vocabulaire
+fr:
+  term: Désaccord de vocabulaire
+  definition: "Situation où deux textes parlent de la même chose avec des mots entièrement différents (en anglais vocabulary mismatch). Par exemple « annuler un règlement » et « procédure de remboursement » ne partagent aucun mot : une recherche purement lexicale les croit étrangers, là où la recherche sémantique les rapproche."
+en:
+  term: Vocabulary mismatch
+  definition: "A situation where two texts discuss the same thing using entirely different words. For example, 'cancel a payment' and 'refund procedure' share no words: a purely lexical search treats them as unrelated, whereas semantic search brings them together."
+seeAlso:
+  - recherche-hybride
+  - similarite-cosinus

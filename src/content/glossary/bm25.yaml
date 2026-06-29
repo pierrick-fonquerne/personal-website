@@ -1,0 +1,13 @@
+slug: bm25
+fr:
+  term: BM25
+  definition: "Fonction de score lexicale de référence en recherche d'information (Best Matching 25). Elle note la pertinence d'un document pour une requête de mots-clés en combinant trois ingrédients : la fréquence de terme saturée, la rareté du terme (IDF) et une normalisation par la longueur du document."
+  source: Robertson & Zaragoza, 2009
+en:
+  term: BM25
+  definition: "The reference lexical scoring function in information retrieval (Best Matching 25). It rates how relevant a document is to a keyword query by combining three ingredients: saturated term frequency, term rarity (IDF) and a document-length normalization."
+  source: Robertson & Zaragoza, 2009
+seeAlso:
+  - frequence-de-terme
+  - frequence-inverse-de-document
+  - normalisation-par-longueur

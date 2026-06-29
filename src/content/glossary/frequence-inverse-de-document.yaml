@@ -1,0 +1,12 @@
+slug: frequence-inverse-de-document
+fr:
+  term: Fréquence inverse de document
+  definition: "Poids qui mesure la rareté d'un terme dans le corpus (en anglais inverse document frequency, IDF). Il croît quand le terme apparaît dans peu de documents : un mot rare et discriminant pèse fort, un mot banal présent partout pèse presque rien."
+  source: Spärck Jones, 1972
+en:
+  term: Inverse document frequency
+  definition: "A weight that measures how rare a term is across the corpus (IDF). It grows when the term appears in few documents: a rare, discriminating word weighs heavily, while a common word found everywhere weighs almost nothing."
+  source: Spärck Jones, 1972
+seeAlso:
+  - bm25
+  - frequence-de-terme

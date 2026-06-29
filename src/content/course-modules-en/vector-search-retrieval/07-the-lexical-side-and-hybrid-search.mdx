@@ -1,0 +1,239 @@
+---
+course: vector-search-retrieval
+order: 7
+title: "The lexical side: BM25 and hybrid search"
+subtitle: "Semantic search, brilliant on paraphrases, misses an exact invoice number. How do you marry vectors to the world of exact words, without one score scale crushing the other?"
+estimatedMinutes: 32
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import HybridSearchLab from '../../../components/learning/HybridSearchLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we made the index durable and verified it: it survives restarts, and a round-trip oracle proves we read it back faithfully. All the search we have built since the beginning of this course rests on a solid foundation. But it also rests on one thing alone: meaning, captured by vectors. And there are queries where meaning, precisely, is not enough.
+
+Imagine your personal document base, and this query: "invoice 8831". You are not looking for a document that vaguely talks about billing. You are looking for invoice number 8831 - that exact one. Yet to a semantic engine, "8831" is just another point in space, a neighbor of "8830" and "2207". It will hand you a pile of very similar invoices, unable to tell the right one apart. Semantic search just ran into what it cannot see: the letter.
+
+## Two blind spots, not one
+
+The reflex would be to say: "let's go back to good old keyword search - it finds the exact number." True, but we would fall back into the trap that opened this course. Keyword search is blind to meaning: ask it "cancel a settlement," it will never find a document titled "procedure for refunding an order," because not a single word is shared. That is the <Term slug="desaccord-de-vocabulaire">vocabulary mismatch</Term>: two texts can be about the same thing using entirely different words.
+
+So we have two blind spots, symmetrical and complementary:
+
+- **Semantic** search excels at paraphrases and synonyms, but floats on exact identifiers, rare proper nouns, literal references. It sees meaning, not letters.
+- **Lexical** search (by words) pins the exact token every time, but is deaf to synonyms. It sees letters, not meaning.
+
+The idea of this chapter is to refuse the choice. Rather than pitting the two worlds against each other, we will make them collaborate: that is <Term slug="recherche-hybride">hybrid search</Term>. But before marrying two scores, we first need to know how to build a good one on the lexical side. That is the role of BM25.
+
+## BM25, the score of the letter
+
+How do you rate how well a document "fits" a keyword query? The basic intuition: the more a query word appears in the document, the more relevant that document is. This counting is called <Term slug="frequence-de-terme">term frequency</Term>. But this raw intuition leads to three pitfalls, and <Term slug="bm25">BM25</Term> (for "Best Matching 25") is precisely the formula that corrects all three. Let us walk through them one by one.
+
+**First pitfall: not all words are equal.** If your query is "the consulting contract," the word "the" appears in almost every document: it discriminates nothing. The word "consulting," on the other hand, is rare and therefore very informative. BM25 weights each term by its rarity through the <Term slug="frequence-inverse-de-document">inverse document frequency</Term>, or IDF:
+
+$$
+\text{IDF}(t) = \ln\!\left(1 + \frac{N - n(t) + 0.5}{n(t) + 0.5}\right)
+$$
+
+This equation reads: the weight of term $t$ is the logarithm of a quantity that grows when $n(t)$, the number of documents containing $t$, is small. In other words, a term present in few documents (like "8831") receives a large weight; a term present everywhere receives a tiny one. The rare speaks loudly, the commonplace goes quiet.
+
+**Second pitfall: the tenth occurrence is not worth the first.** A document containing "consulting" five times is more relevant than one containing it only once. But is it five times more relevant? No. The gain must taper off: going from one to two occurrences counts a lot, going from nine to ten counts almost nothing. BM25 makes term frequency **saturate** via a parameter $k_1$, which controls the speed at which this ceiling is reached.
+
+**Third pitfall: long documents cheat.** A very long document mechanically has more chances of containing any given word, without being any more relevant. BM25 corrects this bias with <Term slug="normalisation-par-longueur">length normalization</Term>, dosed by a parameter $b$: at equal frequency, a document longer than average is penalized. Everything comes together in a single formula:
+
+$$
+\text{BM25}(q, d) = \sum_{t \in q} \text{IDF}(t) \cdot \frac{f(t,d)\,(k_1 + 1)}{f(t,d) + k_1\left(1 - b + b\,\dfrac{|d|}{\text{avgdl}}\right)}
+$$
+
+Read it as follows: the score of document $d$ for query $q$ is the sum, over each term $t$ in the query, of its rarity weight $\text{IDF}(t)$ multiplied by a saturated frequency. In the numerator, $f(t,d)$ is the number of times $t$ appears in $d$. In the denominator, the term $|d|/\text{avgdl}$ compares the document length to the average corpus length: that is what penalizes long documents. Typical values are $k_1 = 1.5$ and $b = 0.75$.
+
+<Callout kind="note" title="A detail that matters: token normalization">
+Before counting, we split the text into tokens and normalize them: lowercase, without accents, punctuation removed. "Settlement" and "settlement" become the same token, otherwise a typo would cause a missed match. This is an engineering choice, not a universal truth: over-normalizing (for example conflating "bank" the financial institution and "bank" of a river) can also hurt. Here we keep things simple.
+</Callout>
+
+## The fusion trap
+
+We now know how to produce two scores for the same document: a lexical BM25 score, and a semantic score via <Term slug="similarite-cosinus">cosine similarity</Term> (the one from chapter 1). The temptation is immediate: add them up, and the best of both worlds will emerge.
+
+That is a trap, and a subtle one. The two scores do not live on the same scale. Cosine similarity is bounded in $[0, 1]$. BM25 is not bounded: it grows with term rarity and count, and commonly reaches values of 2, 10, 15. Adding $0.9$ (an excellent cosine) to $14$ (a strong BM25) gives $14.9$: the cosine is drowned, it no longer matters. The naive sum does not merge two signals - it lets the noisiest one crush the other. In practice, it behaves almost like a purely lexical search in disguise.
+
+## Fusion by rank: RRF
+
+The remedy is almost insolently elegant: if the problem comes from score scales, then let us stop using scores altogether. Let us use only **ranks**. Whether you are first with a cosine of $0.99$ or first with a BM25 of $14$, you are first, full stop. That is the idea behind <Term slug="fusion-reciproque-des-rangs">Reciprocal Rank Fusion</Term> (RRF).
+
+$$
+\text{RRF}(d) = \sum_{i} \frac{1}{k + r_i(d)}
+$$
+
+This equation reads: the fused score of document $d$ is the sum, over each ranking $i$ (here the lexical and the semantic), of the inverse of $k + r_i(d)$, where $r_i(d)$ is the rank of $d$ in ranking $i$. Being ranked high (small rank) gives a large contribution; being ranked low gives a small one. The constant $k$, classically set to $60$, dampens the gap between the very top positions so that a single ranking cannot decide everything on its own.
+
+The beauty of this formula is that it never reads a raw score. Multiply all BM25 values by a thousand: the ranks do not move, so the fused result does not move. RRF is **scale-invariant by construction**. A document that gets rewarded must be well ranked in both worlds at once; that is exactly what we expect from a good fusion.
+
+## Your turn to fuse
+
+The component below puts the three rankings side by side on a small document corpus: the lexical ranking (BM25), the semantic ranking (cosine), and the hybrid ranking. Switch between the two queries, and especially switch the fusion method between RRF and naive sum to see BM25's scale take over.
+
+<HybridSearchLab
+  client:visible
+  k1={1.5}
+  b={0.75}
+  rrfK={60}
+  documents={[
+    { id: "d1", text: "Invoice FR-2024-8831, consulting services", tokens: ["invoice", "fr", "2024", "8831", "consulting", "services"], vector: [0.978, 0.208] },
+    { id: "d2", text: "Invoice FR-2024-2207, annual hosting", tokens: ["invoice", "fr", "2024", "2207", "annual", "hosting"], vector: [0.961, 0.276] },
+    { id: "d3", text: "Invoice FR-2023-1180, software license", tokens: ["invoice", "fr", "2023", "1180", "software", "license"], vector: [0.940, 0.342] },
+    { id: "d4", text: "Cancel or get a refund for an order", tokens: ["cancel", "or", "get", "a", "refund", "for", "an", "order"], vector: [0.208, 0.978] },
+    { id: "d5", text: "Settlement of internal staff rules", tokens: ["settlement", "of", "internal", "staff", "rules"], vector: [0.643, 0.766] },
+    { id: "d6", text: "Expense report, trip to Lyon", tokens: ["expense", "report", "trip", "to", "lyon"], vector: [0.469, 0.883] }
+  ]}
+  queries={[
+    { id: "qa", label: "invoice 8831", caption: "an exact identifier", tokens: ["invoice", "8831"], vector: [0.978, 0.208] },
+    { id: "qb", label: "cancel the settlement", caption: "a paraphrase", tokens: ["cancel", "settlement"], vector: [0.225, 0.974] }
+  ]}
+  labels={{
+    queryTitle: "Query",
+    queryTokensLabel: "lexical tokens",
+    fusionTitle: "Fusion method",
+    fusionRrf: "RRF (by rank)",
+    fusionNaive: "Naive sum (by score)",
+    lexicalTitle: "Lexical (BM25)",
+    semanticTitle: "Semantic (cosine)",
+    hybridTitle: "Hybrid",
+    rankLabel: "rank",
+    scoreLabel: "score",
+    topBadge: "top",
+    zeroHint: "zero score: no shared token",
+    insightTitle: "What you observe",
+    insightExact: "Identifier query: BM25 isolates d1 decisively, while cosine makes d1, d2 and d3 nearly indistinguishable. Meaning cannot tell three almost identical invoices apart; the rare token 8831 can.",
+    insightParaphrase: "Paraphrase query: d4 and d5 each match one query word, but the lexical side pushes the intruder d5 ('settlement' in the HR sense) to the top because it is shorter, while the right document d4 comes only second. Cosine, on the other hand, gets it right.",
+    insightFusion: "With naive sum, BM25's large scale crushes the cosine: on the paraphrase, the wrong d5 stays on top. RRF, which reads only ranks, restores the right d4."
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+1. On the "invoice 8831" query, compare the lexical column and the semantic column. Which one places the right document far ahead? Which one hesitates between three invoices nearly tied? Why?
+2. Switch to "cancel the settlement". Which document does the lexical column put at the top, and is it the right one? What does the semantic column do?
+3. Still on the paraphrase, switch fusion from RRF to naive sum. Does the document at the top of the hybrid column change? Which of the two fusion modes keeps the right document, and why does the other get it wrong?
+
+<Callout kind="info" title="The thread running through it: why my engine keeps both indexes">
+On the sovereign vector engine serving as the thread of this course, I do not settle for the vector index built in the previous chapters. I maintain a lexical index in parallel, and I merge the two results by RRF at query time. The reason is exactly what this chapter describes: my documents mix natural language (where meaning comes first) and identifiers, file names, references (where the letter comes first). Either index alone would always leave one family of queries stranded. And I chose RRF rather than a weighted sum precisely so I do not have to recalibrate two scales every time I change the embedding model: the rank does not depend on the model.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: computing an IDF and understanding rarity">
+A corpus contains $N = 100$ documents. The term "invoice" appears in $60$ of them, the term "8831" in just one. We compute the IDF weight of each to understand which one discriminates.
+
+**Step 1. The frequent term "invoice".** We have $n(t) = 60$. We apply the formula.
+
+$$
+\text{IDF}(\text{invoice}) = \ln\!\left(1 + \frac{100 - 60 + 0.5}{60 + 0.5}\right)
+$$
+
+**Step 2. We simplify the fraction.**
+
+$$
+\frac{40.5}{60.5} \approx 0.669
+$$
+
+**Step 3. We take the logarithm.**
+
+$$
+\text{IDF}(\text{invoice}) = \ln(1.669) \approx 0.512
+$$
+
+**Step 4. The rare term "8831".** We have $n(t) = 1$.
+
+$$
+\text{IDF}(\text{8831}) = \ln\!\left(1 + \frac{100 - 1 + 0.5}{1 + 0.5}\right) = \ln(1 + 66.33\ldots) \approx \ln(67.3) \approx 4.21
+$$
+
+**Result.** The rare term weighs approximately $4.21$ against $0.51$ for the frequent one, more than eight times as much. That is why, in the component, the document carrying "8831" stands out so clearly from the other invoices: all its weight comes from a single token, but a rare one.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: why naive sum betrays on the paraphrase">
+On the "cancel the settlement" query, two documents compete: d4, the right one ("Cancel or get a refund for an order"), and d5, an intruder ("Settlement of internal staff rules"). We have the rounded scores from the component.
+
+**Step 1. The raw scores.** On the cosine side, d4 scores $1.00$ and d5 scores $0.89$. On the BM25 side, it is the opposite: d5 scores $1.67$ and d4 scores $1.34$.
+
+**Step 2. The naive sum.** We add the two scores for each document.
+
+$$
+\text{naive}(d4) = 1.00 + 1.34 = 2.34
+$$
+
+$$
+\text{naive}(d5) = 0.89 + 1.67 = 2.56
+$$
+
+**Partial result.** The naive sum places d5 ($2.56$) ahead of d4 ($2.34$): it gets it wrong, because the magnitude of BM25 outweighed the precision of cosine.
+
+**Step 3. RRF.** We no longer look at scores, only ranks. d4 is rank 1 in semantic and rank 2 in lexical; d5 is rank 1 in lexical but much further down in semantic. With $k = 60$:
+
+$$
+\text{RRF}(d4) = \frac{1}{60 + 1} + \frac{1}{60 + 2} \approx 0.0325
+$$
+
+**Result.** RRF puts d4 back at the top: being first in meaning AND second in letters beats being first in letters but distanced in meaning. Rank fusion did what naive sum could not, without ever comparing two incomparable scales.
+</Callout>
+
+## In one sentence
+
+Semantic search and lexical search have symmetrical blind spots (one misses exact identifiers, the other misses synonyms); they are reconciled through hybrid search, on the condition of fusing not the raw scores (whose incompatible scales let BM25 crush the cosine) but the ranks, via reciprocal rank fusion, scale-invariant by construction.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why can a purely semantic search miss the query 'invoice 8831'?",
+      options: [
+        "Because it cannot read numbers",
+        "Because to a vector, '8831' is a point neighboring other numbers: it returns similar invoices without distinguishing the exact one",
+        "Because BM25 is disabled",
+        "Because the number is too long"
+      ],
+      answer: 1,
+      explain: "Meaning places invoices nearly in the same spot in space. Cosine makes them nearly tied, as seen in the component: d1, d2 and d3 at 1.00, 0.998 and 0.99. Only the exact token, via BM25, isolates the right one."
+    },
+    {
+      q: "What is the IDF factor in BM25 for?",
+      options: [
+        "To penalize documents that are too short",
+        "To speed up computation",
+        "To give more weight to rare terms than to frequent ones",
+        "To normalize vectors"
+      ],
+      answer: 2,
+      explain: "IDF (inverse document frequency) grows when a term appears in few documents. A rare word like '8831' gets a large weight; a common word present everywhere gets a tiny one. The rare discriminates, the commonplace does not."
+    },
+    {
+      q: "Why fuse with RRF rather than by summing scores?",
+      options: [
+        "Because RRF is faster to compute",
+        "Because the cosine and BM25 scales are incompatible; RRF uses only ranks, so it is scale-invariant",
+        "Because RRF removes duplicates",
+        "Because score sum only works in English"
+      ],
+      answer: 1,
+      explain: "Cosine lives in [0, 1], BM25 is unbounded. Adding them lets BM25 crush the cosine. RRF reads only ranks: multiplying a scale by a thousand changes nothing in the fused result."
+    }
+  ]}
+/>
+
+## Toward chapter 8
+
+We now know how to retrieve the right documents: by meaning, by letters, and by their robust fusion. But retrieving is not answering. If you ask your document base a real question, you do not want a list of documents to read yourself - you want a written answer, grounded in those documents. That is the whole challenge of the final chapter: connecting our search engine to a language model. We will give it, in context, the best passages surfaced by hybrid search, and it will compose the answer by drawing on them. That is the architecture known as retrieval-augmented generation, RAG, where everything we have built finally converges.
+
+## Sources
+
+- Robertson, S. & Zaragoza, H. (2009). "The Probabilistic Relevance Framework: BM25 and Beyond." _Foundations and Trends in Information Retrieval_ 3(4), 333-389. [DOI 10.1561/1500000019](https://doi.org/10.1561/1500000019)
+- Spärck Jones, K. (1972). "A Statistical Interpretation of Term Specificity and its Application in Retrieval." _Journal of Documentation_ 28(1), 11-21. [DOI 10.1108/eb026526](https://doi.org/10.1108/eb026526)
+- Cormack, G. V., Clarke, C. L. A. & Büttcher, S. (2009). "Reciprocal Rank Fusion Outperforms Condorcet and Individual Rank Learning Methods." _SIGIR '09_, 758-759. [DOI 10.1145/1571941.1572114](https://doi.org/10.1145/1571941.1572114)
+
+### Further reading
+
+- Manning, C. D., Raghavan, P. & Schütze, H. (2008). _Introduction to Information Retrieval_. Cambridge University Press. [Free online version](https://nlp.stanford.edu/IR-book/)
