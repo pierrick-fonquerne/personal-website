@@ -11,7 +11,7 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 176
+estimatedMinutes: 208
 modules:
   - 00-foreword
   - 01-embeddings-and-similarity
@@ -20,6 +20,7 @@ modules:
   - 04-the-ann-index-landscape
   - 05-the-differential-oracle
   - 06-making-the-index-durable
+  - 07-the-lexical-side-and-hybrid-search
 personalNote: |
   This course grew out of a very real build. I am writing a sovereign vector database, in Rust, whose first goal is modest: to replace an existing brick in my personal intranet. Building it forced me to truly understand what hides behind the buzzwords: embedding, nearest neighbor, HNSW, hybrid search, RAG. Not the marketing version, the version that compiles.
 

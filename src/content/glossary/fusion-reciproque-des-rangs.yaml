@@ -1,0 +1,13 @@
+slug: fusion-reciproque-des-rangs
+fr:
+  term: Fusion réciproque des rangs
+  definition: "Méthode de fusion de plusieurs classements (en anglais Reciprocal Rank Fusion, RRF). Le score d'un document est la somme, sur chaque classement, de 1 / (k + rang), avec k souvent fixé à 60. Comme elle n'utilise que les rangs et jamais les scores bruts, elle est insensible à l'échelle : idéale pour fusionner un cosinus borné et un BM25 non borné."
+  source: Cormack et al., 2009
+en:
+  term: Reciprocal rank fusion
+  definition: "A method for fusing several rankings (RRF). A document's score is the sum, over each ranking, of 1 / (k + rank), with k often set to 60. Because it uses only ranks and never raw scores, it is scale-invariant: ideal for fusing a bounded cosine and an unbounded BM25."
+  source: Cormack et al., 2009
+seeAlso:
+  - recherche-hybride
+  - bm25
+  - similarite-cosinus

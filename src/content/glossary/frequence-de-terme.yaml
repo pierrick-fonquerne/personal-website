@@ -1,0 +1,10 @@
+slug: frequence-de-terme
+fr:
+  term: Fréquence de terme
+  definition: "Nombre de fois qu'un terme apparaît dans un document donné (en anglais term frequency, TF). Plus elle est élevée, plus le document semble porter sur ce terme, mais BM25 fait saturer ce gain : la dixième occurrence apporte beaucoup moins que la première."
+en:
+  term: Term frequency
+  definition: "The number of times a term appears in a given document (TF). The higher it is, the more the document seems to be about that term, but BM25 saturates this gain: the tenth occurrence adds far less than the first."
+seeAlso:
+  - bm25
+  - frequence-inverse-de-document

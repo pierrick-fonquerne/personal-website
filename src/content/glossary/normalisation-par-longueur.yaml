@@ -1,0 +1,10 @@
+slug: normalisation-par-longueur
+fr:
+  term: Normalisation par longueur
+  definition: "Correction qui empêche les documents longs de tricher. À fréquence de terme égale, un document plus long que la moyenne du corpus a mécaniquement plus de chances de contenir n'importe quel mot ; BM25 le pénalise via le paramètre b (0 = aucune correction, 1 = correction pleine)."
+en:
+  term: Length normalization
+  definition: "A correction that stops long documents from cheating. At equal term frequency, a document longer than the corpus average is mechanically more likely to contain any given word; BM25 penalizes it through the parameter b (0 = no correction, 1 = full correction)."
+seeAlso:
+  - bm25
+  - frequence-de-terme

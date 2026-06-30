@@ -1,0 +1,11 @@
+slug: recherche-hybride
+fr:
+  term: Recherche hybride
+  definition: "Stratégie de recherche qui combine un signal sémantique (proximité de sens entre vecteurs) et un signal lexical (correspondance de mots exacts, par exemple BM25), puis fusionne leurs classements. Elle vise à couvrir les angles morts complémentaires des deux approches : synonymes pour le sens, identifiants exacts pour la lettre."
+en:
+  term: Hybrid search
+  definition: "A search strategy that combines a semantic signal (meaning proximity between vectors) and a lexical signal (exact word matching, e.g. BM25), then fuses their rankings. It aims to cover the complementary blind spots of both approaches: synonyms for meaning, exact identifiers for the letter."
+seeAlso:
+  - bm25
+  - similarite-cosinus
+  - fusion-reciproque-des-rangs
