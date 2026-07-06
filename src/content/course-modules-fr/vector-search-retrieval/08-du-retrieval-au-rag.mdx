@@ -1,0 +1,261 @@
+---
+course: vector-search-retrieval
+order: 8
+title: "Du retrieval au RAG"
+subtitle: "On sait retrouver les bons passages, par le sens, par la lettre, par leur fusion. Mais retrouver n'est pas repondre. Comment brancher notre moteur sur un modele de langage pour qu'il compose une reponse fondee, sans inventer ?"
+estimatedMinutes: 40
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import RagPipelineLab from '../../../components/learning/RagPipelineLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+Au chapitre precedent, on a marie les deux mondes de la recherche : le sens, capte par les vecteurs, et la lettre, epinglee par BM25, fusionnes par le rang pour rester robustes. On sait donc retrouver les bons passages dans une base, quelle que soit la forme de la requete. C'est un aboutissement. Mais c'est aussi une frustration qui monte depuis huit chapitres : quand tu poses une vraie question a ta base, tu ne veux pas une pile de documents a lire toi-meme. Tu veux une reponse, redigee, et fondee sur ces documents. Retrouver n'est pas repondre. Ce dernier chapitre franchit ce pas.
+
+## Le candidat brillant qui n'a pas le droit d'ouvrir ses fiches
+
+Imagine un candidat exceptionnel a un grand oral. Il a une culture generale immense, il parle avec aisance, il enchaine les raisonnements. Mais il passe l'epreuve les mains vides : interdiction d'ouvrir la moindre fiche. Pose-lui une question de culture generale, il brille. Demande-lui le montant exact de ta facture numero 8831, et il est perdu : cette information n'a jamais fait partie de ce qu'il a appris. Un modele de langage seul, c'est ce candidat.
+
+Il souffre de trois manques, tres precis :
+
+- **Sa connaissance est figee.** Il a ete entraine sur des donnees arretees a une certaine date. Tout ce qui s'est passe apres lui echappe. Il ne sait pas ce qu'il ne pouvait pas avoir lu.
+- **Il ignore tes documents prives.** Ta base personnelle, tes factures, tes notes, tes contrats : rien de tout cela n'etait dans son entrainement. Ton particulier lui est invisible.
+- **Il comble les vides.** C'est le plus dangereux. Plutot que d'avouer son ignorance, un modele produit spontanement une reponse plausible, enoncee avec le meme aplomb qu'une reponse juste. C'est l'<Term slug="hallucination">hallucination</Term> : un defaut structurel de l'entrainement, qui pousse le modele a toujours dire quelque chose, meme quand il devrait dire qu'il ne sait pas.
+
+Un <Term slug="foundation-model">modele de fondation</Term> est donc merveilleux sur le general et aveugle sur ton particulier. Le probleme n'est pas qu'il soit bete, il est brillant. Le probleme est qu'on lui a confisque ses fiches. Toute l'idee de ce chapitre tient dans le geste inverse : lui rendre les fiches, au bon moment.
+
+## L'idee du RAG : lui glisser les bonnes fiches avant qu'il reponde
+
+Et si, juste avant de laisser le modele repondre, on allait chercher dans ta base les passages qui parlent de la question, pour les lui poser sous les yeux ? Il ne repondrait plus de memoire, mais en lisant. C'est exactement l'architecture qu'on appelle la <Term slug="rag">generation augmentee par la recherche</Term>, ou RAG. Elle se decompose en trois temps, et le premier t'est deja parfaitement familier.
+
+$$
+\underbrace{\mathcal{C} = \text{top-}k\big(\text{hybride}(q)\big)}_{\text{1. retrouver}}
+\qquad
+\underbrace{p = \text{prompt}(q, \mathcal{C})}_{\text{2. assembler}}
+\qquad
+\underbrace{r = \text{LLM}(p)}_{\text{3. generer}}
+$$
+
+Cette chaine se lit ainsi. D'abord, pour une question $q$, on construit le contexte $\mathcal{C}$ en retenant les $k$ meilleurs passages remontes par la recherche hybride du chapitre precedent. Ensuite, on assemble un prompt $p$ qui contient la question et ces passages. Enfin, on donne ce prompt au modele, qui produit la reponse $r$. Le point remarquable est le premier terme : le retrieval du RAG, ce n'est rien d'autre que la recherche qu'on a batie tout au long du cours. Le RAG ne remplace pas ce qu'on a appris, il le couronne. Embeddings, plus proches voisins, HNSW, index durable, fusion hybride : tout cela etait la fondation qui rend ce dernier etage possible.
+
+<Callout kind="note" title="Le prompt, en pratique">
+Assembler le prompt, ce n'est pas de la magie : c'est un texte. On y ecrit en clair une consigne du genre « Reponds a la question en t'appuyant uniquement sur les passages ci-dessous, et cite leur numero. Si la reponse ne s'y trouve pas, dis que tu ne sais pas. », suivie de la question, puis des passages numerotes. Toute la subtilite du RAG n'est pas dans cette mise en page, elle est dans la qualite des passages qu'on y met.
+</Callout>
+
+## Ancrer la reponse, ou se taire
+
+Donner les passages au modele ne suffit pas : encore faut-il exiger qu'il s'en serve, et seulement d'eux. C'est la notion d'<Term slug="grounding">ancrage</Term> : la reponse doit reposer sur le contexte fourni, pas sur la memoire interne du modele, et elle doit citer ses sources pour qu'on puisse verifier. Un lecteur doit pouvoir remonter de chaque affirmation au passage qui la soutient.
+
+Vient alors la question qui fait toute la difference : que se passe-t-il quand le contexte ne contient pas la reponse ? La tentation du modele, on l'a vu, est de combler le vide. Le bon comportement est l'inverse : le dire. Repondre « je ne trouve pas cette information dans tes documents » est une bonne reponse, pas un echec. C'est le remede direct a l'hallucination : on ne demande plus au modele de savoir, on lui demande de lire, de citer, et d'avouer quand la source manque. Le refus honnete est une fonctionnalite, pas un defaut.
+
+Ce basculement a une consequence lourde, qu'il faut regarder en face : la qualite de la reponse est desormais plafonnee par la qualite du retrieval. Si le bon passage n'est pas remonte, ou s'il n'entre pas dans le contexte, le modele le mieux ancre du monde ne pourra que refuser. C'est exactement ce que le composant qui suit te met entre les mains.
+
+## A toi de brancher le pipeline
+
+Le composant ci-dessous fait tourner le pipeline complet sur une petite base personnelle. Choisis une requete, puis bascule entre les deux mondes : le modele **seul**, qui repond de memoire, et le modele **plus RAG**, qui lit d'abord les passages recuperes. En mode RAG, un levier regle le budget de contexte $k$, c'est-a-dire le nombre de passages qu'on autorise a entrer sous les yeux du modele. Regarde ce qui se passe quand tu le serres.
+
+<RagPipelineLab
+  client:visible
+  k1={1.5}
+  b={0.75}
+  rrfK={60}
+  defaultK={1}
+  documents={[
+    { id: "d0", text: "Reunion de conseil strategique du 12 mars, compte rendu.", tokens: ["reunion", "conseil", "strategique", "compte", "rendu"], vector: [0.62, 0.79] },
+    { id: "d1", text: "Facture FR-2024-8831, prestation de conseil, montant 4 200 euros.", tokens: ["facture", "fr", "2024", "8831", "prestation", "conseil"], vector: [0.80, 0.60], fact: "La facture 8831 correspond a une prestation de conseil d'un montant de 4 200 euros.", answersQueryIds: ["qa"] },
+    { id: "d2", text: "Facture FR-2024-2207, hebergement annuel.", tokens: ["facture", "fr", "2024", "2207", "hebergement", "annuel"], vector: [0.93, 0.37] },
+    { id: "d3", text: "Facture FR-2023-1180, licence logicielle.", tokens: ["facture", "fr", "2023", "1180", "licence", "logicielle"], vector: [0.96, 0.28] },
+    { id: "d4", text: "Reglement interieur du personnel.", tokens: ["reglement", "interieur", "du", "personnel"], vector: [0.35, 0.94] },
+    { id: "d5", text: "Note de frais, deplacement a Lyon.", tokens: ["note", "de", "frais", "deplacement", "lyon"], vector: [0.47, 0.88] }
+  ]}
+  queries={[
+    { id: "qa", label: "montant de la facture de conseil", caption: "la reponse est dans la base", tokens: ["facture", "conseil"], vector: [0.66, 0.75], parametricAnswer: "La facture de conseil s'eleve a 1 500 euros.", parametricStatus: "hallucinated", refusalText: "Je ne trouve pas cette information dans les passages fournis." },
+    { id: "qb", label: "date d'echeance de la facture 2207", caption: "la reponse n'est nulle part", tokens: ["date", "echeance", "facture", "2207"], vector: [0.94, 0.34], parametricAnswer: "La facture 2207 arrive a echeance le 15 mars.", parametricStatus: "hallucinated", refusalText: "Je ne trouve pas cette information dans les passages fournis." }
+  ]}
+  labels={{
+    queryTitle: "Requete",
+    modeTitle: "Modele",
+    modeParametric: "LLM seul",
+    modeRag: "LLM + RAG",
+    budgetTitle: "Budget de contexte k",
+    retrievedTitle: "Passages recuperes",
+    inContextBadge: "dans le contexte",
+    outOfBudgetBadge: "hors budget",
+    parametricIgnores: "Le modele seul ne consulte aucun passage : il repond de memoire.",
+    answerTitle: "Reponse",
+    sourcesLabel: "Sources citees :",
+    noSourceLabel: "Aucune source.",
+    badgeGrounded: "ancree",
+    badgeRefusal: "refus honnete",
+    badgeHallucinated: "hallucination",
+    badgeVague: "approximative",
+    insightTitle: "Ce que tu observes",
+    insightParametric: "Le modele seul repond de memoire, sans jamais lire ta base. Sur un fait prive comme le montant d'une facture, il ne peut pas savoir, alors il invente un chiffre plausible et faux, avec aplomb. C'est l'hallucination.",
+    insightGrounded: "Le bon passage est entre dans le contexte. Le modele fonde sa reponse dessus et cite sa source. La reponse est exacte parce que le retrieval a fait son travail.",
+    insightRefusalBudget: "Le bon passage existe et a bien ete recupere, mais ton budget k est trop serre : il reste juste sous la barre, hors du contexte. Le modele, honnete, refuse plutot que d'inventer. Elargis k pour le laisser entrer.",
+    insightRefusalMissing: "Aucun passage de la base ne porte cette information. Le modele ancre refuse honnetement, la ou le modele seul, lui, hallucinait une date. Ne pas savoir est ici la bonne reponse."
+  }}
+/>
+
+Trois questions a te poser en jouant :
+
+1. Sur la requete « montant de la facture de conseil », reste en mode LLM seul. Que repond le modele, et ce chiffre vient-il de ta base ? Bascule ensuite en LLM plus RAG avec un budget $k = 1$ : que se passe-t-il, et pourquoi le bon passage n'est-il pas encore la ?
+2. Toujours sur cette requete, augmente $k$ a $2$. La reponse change de statut. Quel passage vient d'entrer dans le contexte, a quel rang etait-il, et pourquoi le modele peut-il enfin repondre ?
+3. Passe a la requete « date d'echeance de la facture 2207 ». Compare le modele seul et le RAG. Lequel invente, lequel refuse ? En quoi le refus est-il ici la meilleure des reponses ?
+
+<Callout kind="info" title="Le fil rouge : pourquoi je construis ce moteur pour mon assistant personnel">
+Le moteur vectoriel souverain qui traverse ce cours n'est pas une fin en soi : il est la brique de recherche d'un assistant personnel que je developpe pour mon intranet. L'objectif final est exactement ce chapitre : quand je pose une question a mon assistant, je veux qu'il aille lire mes propres notes, mes documents, ma memoire accumulee, et qu'il compose une reponse fondee dessus, en citant d'ou elle vient. La recherche hybride des chapitres precedents est le retrieval ; le RAG est ce qui la transforme en reponse. Et le refus honnete est, pour un assistant qui touche a mes vraies affaires, une propriete non negociable : je prefere mille fois un « je ne trouve pas » a une facture inventee.
+</Callout>
+
+## Trois horizons pour aller plus loin
+
+Le pipeline qu'on vient de brancher est le RAG dans sa forme la plus simple. Trois raffinements le separent des systemes reels. On les formalise ici, car ce sont eux que tu rencontreras des que tu quitteras le corpus jouet.
+
+### Decouper avant d'indexer : le chunking
+
+Jusqu'ici, un passage egalait un document. Mais un vrai document fait quarante pages. L'indexer d'un bloc serait absurde : sa reponse noierait le paragraphe utile dans un ocean de texte, et il ne tiendrait jamais dans le contexte du modele. On le coupe donc en morceaux courts avant de l'indexer. C'est le <Term slug="chunking">decoupage en passages</Term>.
+
+Reste a choisir la taille. Trop grand, chaque passage melange plusieurs idees et gaspille le budget ; trop petit, on tranche une idee en deux et chaque morceau devient incomprehensible isole. On fait donc se **chevaucher** les passages : chaque morceau reprend la fin du precedent, pour qu'une phrase coupee par une frontiere se retrouve entiere dans au moins un passage. Si un document a une longueur $L$ (en tokens), qu'on choisit des passages de taille $s$ avec un chevauchement $o$, le nombre de passages produits vaut environ :
+
+$$
+n_{\text{passages}} \approx \left\lceil \frac{L - s}{s - o} \right\rceil + 1
+$$
+
+Cette formule se lit : chaque nouveau passage avance de $s - o$ tokens (la taille, moins ce qu'on reprend du precedent), le pas d'une fenetre qui glisse. On compte combien de pas il faut pour couvrir toute la longueur, plus le passage initial. Plus le chevauchement $o$ est grand, plus le pas est petit, donc plus on produit de passages : la securite contre les coupures se paie en volume d'index.
+
+### La fenetre de contexte : un budget qu'on ne peut pas depasser
+
+On a manipule le levier $k$ sans le nommer vraiment. Ce qui le borne est une contrainte dure du modele : sa <Term slug="fenetre-de-contexte">fenetre de contexte</Term>, la quantite maximale de texte, mesuree en tokens, qu'il peut lire d'un coup. On ne peut donc pas verser toute la base dans le prompt, seulement les $k$ meilleurs passages. C'est precisement ce plafond qui rend le classement du retrieval decisif : si le bon passage sort au rang $12$ et que le budget n'en tient que $8$, il est perdu, exactement comme dans le composant a $k = 1$.
+
+De la vient un raffinement tres utile en pratique : le <Term slug="reranking">reclassement</Term>. On laisse d'abord le retrieval rapide (BM25, vecteurs) remonter un large lot de candidats, disons cinquante. Puis un modele plus couteux, mais plus fin, souvent un cross-encoder qui lit ensemble la requete et chaque passage, les reordonne pour que les tout meilleurs occupent les premieres places, celles qui tiendront dans la fenetre. Deux etages : un premier rapide qui ratisse large, un second precis qui trie serre.
+
+### Le modele qui cherche lui-meme : le retrieval agentique
+
+Dans tout ce qui precede, le pipeline est un aller simple : une requete, une recherche, une reponse. Mais certaines questions ne se laissent pas resoudre en une seule recherche. « Compare le montant de ma facture de conseil avec mon budget annuel formation » demande d'aller chercher deux choses distinctes, puis de les confronter. Un aller simple echoue.
+
+L'idee qui leve cette limite est de donner au modele la recherche non plus comme une etape fixe, mais comme un **outil** qu'il actionne lui-meme, autant de fois qu'il le juge utile. C'est la boucle ReAct (pour Reasoning and Acting, Yao et al. 2022), qui alterne trois gestes jusqu'a ce que le modele estime pouvoir conclure :
+
+$$
+\text{Raisonner} \;\rightarrow\; \text{Agir (chercher)} \;\rightarrow\; \text{Observer} \;\rightarrow\; \text{Raisonner} \;\rightarrow\; \cdots
+$$
+
+Le modele raisonne sur ce qui lui manque, decide quoi chercher, observe les passages remontes, puis recommence en fonction de ce qu'il vient d'apprendre. Le retrieval devient dynamique, pilote par le modele lui-meme. C'est le pont vers ce qu'on appelle aujourd'hui les agents : un modele qui ne se contente plus de repondre, mais qui va chercher, en boucle, ce dont il a besoin pour repondre.
+
+<Callout kind="warn" title="La verite crue : le RAG ne cree pas de connaissance">
+Aussi elegant soit-il, le RAG ne fabrique aucune information. Il ne fait que fonder une reponse sur ce que le retrieval a su trouver. Si ta base ne contient pas la reponse, ou si ta recherche ne la remonte pas assez haut pour entrer dans le contexte, aucun modele, aussi puissant soit-il, ne la devinera. C'est le vieux principe : rien de bon n'entre, rien de bon ne sort. Voila pourquoi ce cours a passe sept chapitres sur le retrieval avant d'arriver au RAG : le maillon faible d'un systeme de reponse n'est presque jamais le modele, c'est la recherche qui le nourrit.
+</Callout>
+
+## Exercices
+
+<Callout kind="tip" title="Corrige de l'exercice 1 : compter les passages d'un chunking">
+Un document fait $L = 1\,000$ tokens. On le decoupe en passages de taille $s = 200$ tokens, avec un chevauchement $o = 50$ tokens. Combien de passages obtient-on ?
+
+**Etape 1. Le pas de la fenetre.** Chaque nouveau passage avance de la taille moins le chevauchement.
+
+$$
+s - o = 200 - 50 = 150
+$$
+
+**Etape 2. Le nombre de pas apres le premier passage.** On applique la formule, en commencant par la fraction.
+
+$$
+\frac{L - s}{s - o} = \frac{1\,000 - 200}{150} = \frac{800}{150} \approx 5{,}33
+$$
+
+**Etape 3. On arrondit au superieur.** Une fenetre partielle compte quand meme pour couvrir la fin du document.
+
+$$
+\lceil 5{,}33 \rceil = 6
+$$
+
+**Etape 4. On rajoute le passage initial.**
+
+$$
+n_{\text{passages}} = 6 + 1 = 7
+$$
+
+**Resultat.** Le document produit $7$ passages. Note qu'avec un chevauchement nul ($o = 0$), le pas serait de $200$ et l'on tomberait a $5$ passages : le chevauchement, qui protege des coupures, augmente mecaniquement le volume d'index.
+</Callout>
+
+<Callout kind="tip" title="Corrige de l'exercice 2 : pourquoi k=1 refuse et k=2 repond">
+Sur la requete « montant de la facture de conseil » du composant, le modele refuse a $k = 1$ mais repond a $k = 2$. On explique ce basculement par les rangs.
+
+**Etape 1. Le classement hybride.** Le retrieval remonte, dans l'ordre, le passage d0 (« reunion de conseil strategique ») au rang $1$, puis le passage d1 (la facture de conseil, qui porte le montant) au rang $2$. Le distracteur d0 gagne le rang $1$ car il est le plus proche par le sens du mot « conseil », alors que d1, la vraie facture, arrive juste derriere.
+
+**Etape 2. Le budget k=1.** On ne garde qu'un seul passage dans le contexte : d0. Or d0 parle d'une reunion, pas d'un montant. Aucun passage du contexte ne porte la reponse.
+
+$$
+\text{contexte} = \{\, d0 \,\} \quad\Rightarrow\quad \text{aucune source} \quad\Rightarrow\quad \text{refus honnete}
+$$
+
+**Etape 3. Le budget k=2.** On garde les deux premiers passages : d0 et d1. Cette fois, d1, la facture, entre dans le contexte.
+
+$$
+\text{contexte} = \{\, d0,\ d1 \,\} \quad\Rightarrow\quad d1 \text{ porte le montant} \quad\Rightarrow\quad \text{reponse ancree, source } [2]
+$$
+
+**Resultat.** Le bon passage etait toujours la, correctement recupere au rang $2$. Seul le budget de contexte decidait s'il entrait ou non sous les yeux du modele. C'est toute la lecon du chapitre : un retrieval juste ne suffit pas, il faut aussi que le rang du bon passage tienne dans la fenetre.
+</Callout>
+
+## En une phrase
+
+Le RAG transforme une recherche en reponse : il retrouve les meilleurs passages (par la recherche hybride du cours), les glisse dans le contexte borne du modele, et lui demande de composer une reponse ancree sur eux en citant ses sources, ou de refuser honnetement quand la source manque, de sorte que la qualite de la reponse reste plafonnee par celle du retrieval.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Pourquoi un modele de langage seul hallucine-t-il un montant de facture prive ?",
+      options: [
+        "Parce qu'il calcule mal les nombres",
+        "Parce que cette information n'etait pas dans son entrainement, et qu'il comble le vide par une reponse plausible au lieu d'avouer son ignorance",
+        "Parce que sa fenetre de contexte est trop petite",
+        "Parce que le retrieval est desactive"
+      ],
+      answer: 1,
+      explain: "Un fait prive n'a jamais fait partie des donnees d'entrainement du modele. Faute d'ancrage, il produit une reponse plausible mais fausse : c'est l'hallucination, un defaut structurel de l'entrainement."
+    },
+    {
+      q: "Dans le pipeline RAG, que designe le contexte donne au modele ?",
+      options: [
+        "La totalite de la base documentaire",
+        "Les k meilleurs passages remontes par le retrieval pour la question posee",
+        "L'historique de la conversation",
+        "Les poids internes du modele"
+      ],
+      answer: 1,
+      explain: "Le contexte est le sous-ensemble des passages les plus pertinents, limite a k par la fenetre de contexte. C'est le retrieval, ici la recherche hybride, qui le selectionne."
+    },
+    {
+      q: "Que revele le fait que le RAG refuse a k=1 mais repond a k=2 sur une meme requete ?",
+      options: [
+        "Que le modele est trop faible",
+        "Que la qualite de la reponse est plafonnee par le retrieval : le bon passage doit non seulement etre trouve, mais aussi entrer dans le budget de contexte",
+        "Que BM25 est mal calibre",
+        "Que le chunking est trop fin"
+      ],
+      answer: 1,
+      explain: "Le bon passage etait recupere au rang 2 dans les deux cas. Seul le budget de contexte decidait de son entree. Un retrieval juste ne suffit pas si le rang du bon passage depasse le budget."
+    }
+  ]}
+/>
+
+## Le mot de la fin
+
+Nous voici au bout du fil. Repense au chemin : on est parti d'une idee presque philosophique, le sens comme une position dans l'espace, et on a construit, marche apres marche, tout ce qu'il fallait pour en faire un moteur reel. Representer un texte par un vecteur. Mesurer la proximite, et se heurter a la malediction de la dimension. Contourner la comparaison exhaustive avec HNSW, puis situer ce choix dans le paysage des index approches. Se donner un oracle differentiel pour verifier sans se mentir. Rendre l'index durable, capable de survivre a un redemarrage. Le marier au versant lexical pour ne plus rater ni un synonyme ni un numero exact. Et, aujourd'hui, brancher tout cela sur un modele de langage pour passer du document retrouve a la reponse redigee.
+
+Chaque chapitre repondait a une limite laissee par le precedent, et ce dernier ferme la boucle : le RAG n'existe que parce que tout le reste existe d'abord. C'est ce qui fait la beaute de cette chaine, et c'est ce que je voulais partager en l'ecrivant. Le moteur souverain que je construis continuera d'evoluer, il deviendra la memoire d'un assistant personnel qui lit mes propres documents pour me repondre. Mais l'essentiel est desormais entre tes mains : tu sais ce qui se cache derriere ces mots a la mode, non pas la version marketing, la version qui compile. Merci d'avoir fait ce chemin.
+
+## Sources
+
+- Lewis, P. et al. (2020). « Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks. » _NeurIPS 2020_. [arXiv:2005.11401](https://arxiv.org/abs/2005.11401)
+- Karpukhin, V. et al. (2020). « Dense Passage Retrieval for Open-Domain Question Answering. » _EMNLP 2020_. [arXiv:2004.04906](https://arxiv.org/abs/2004.04906)
+- Yao, S. et al. (2022). « ReAct: Synergizing Reasoning and Acting in Language Models. » _ICLR 2023_. [arXiv:2210.03629](https://arxiv.org/abs/2210.03629)
+
+### Pour aller plus loin
+
+- Ji, Z. et al. (2023). « Survey of Hallucination in Natural Language Generation. » _ACM Computing Surveys_ 55(12), 1-38. [DOI 10.1145/3571730](https://doi.org/10.1145/3571730)
+- Gao, Y. et al. (2023). « Retrieval-Augmented Generation for Large Language Models: A Survey. » [arXiv:2312.10997](https://arxiv.org/abs/2312.10997)

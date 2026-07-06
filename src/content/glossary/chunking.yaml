@@ -1,0 +1,10 @@
+slug: chunking
+fr:
+  term: Decoupage en passages
+  definition: "Operation qui coupe un document long en morceaux plus courts (les passages, ou chunks) avant de les indexer. On indexe et on recupere des passages, pas des documents entiers, pour cibler la reponse et tenir dans la fenetre de contexte du modele. La taille et le chevauchement des passages sont des reglages sensibles."
+en:
+  term: Chunking
+  definition: "Splitting a long document into shorter pieces (chunks, or passages) before indexing them. One indexes and retrieves passages, not whole documents, to focus the answer and fit within the model's context window. Chunk size and overlap are sensitive settings."
+seeAlso:
+  - rag
+  - fenetre-de-contexte
