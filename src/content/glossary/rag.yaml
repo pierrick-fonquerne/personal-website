@@ -1,0 +1,14 @@
+slug: rag
+fr:
+  term: RAG
+  definition: "Generation augmentee par la recherche (Retrieval-Augmented Generation) : architecture qui, avant de laisser un modele de langage repondre, va d abord retrouver les passages pertinents dans une base documentaire, puis les lui fournit en contexte pour qu il fonde sa reponse dessus. Popularisee par Lewis et al. en 2020."
+  source: Lewis et al., 2020
+en:
+  term: RAG
+  definition: "Retrieval-Augmented Generation: an architecture that, before letting a language model answer, first retrieves the relevant passages from a document store, then feeds them to the model as context so it can ground its answer on them. Popularised by Lewis et al. in 2020."
+  source: Lewis et al., 2020
+seeAlso:
+  - grounding
+  - hallucination
+  - recherche-hybride
+  - foundation-model

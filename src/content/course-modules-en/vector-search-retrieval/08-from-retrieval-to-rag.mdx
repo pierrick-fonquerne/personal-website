@@ -1,0 +1,261 @@
+---
+course: vector-search-retrieval
+order: 8
+title: "From retrieval to RAG"
+subtitle: "We can retrieve the right passages, by meaning, by the letter, by their fusion. But retrieving is not answering. How do we wire our engine to a language model so it composes a grounded answer, without making things up?"
+estimatedMinutes: 40
+published: false
+---
+
+import Callout from '../../../components/learning/Callout.astro';
+import Formula from '../../../components/learning/Formula.astro';
+import Term from '../../../components/learning/Term.astro';
+import RagPipelineLab from '../../../components/learning/RagPipelineLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
+
+In the previous chapter, we married the two worlds of search: meaning, captured by vectors, and the letter, pinned down by BM25, fused by rank to stay robust. So we can now retrieve the right passages from a store, whatever the shape of the query. That is an achievement. But it is also a frustration that has been building for eight chapters: when you ask your store a real question, you do not want a pile of documents to read yourself. You want an answer, written, and grounded on those documents. Retrieving is not answering. This final chapter takes that step.
+
+## The brilliant candidate who is not allowed to open their notes
+
+Picture an exceptional candidate at a major oral exam. They have vast general knowledge, they speak with ease, they string arguments together. But they sit the exam empty-handed: not a single note allowed. Ask them a general-knowledge question and they shine. Ask them the exact amount of your invoice number 8831, and they are lost: that information was never part of what they learned. A language model on its own is that candidate.
+
+It suffers from three very specific gaps:
+
+- **Its knowledge is frozen.** It was trained on data cut off at a certain date. Everything after that escapes it. It does not know what it could not have read.
+- **It ignores your private documents.** Your personal store, your invoices, your notes, your contracts: none of that was in its training. Your particular is invisible to it.
+- **It fills the gaps.** This is the most dangerous one. Rather than admit ignorance, a model spontaneously produces a plausible answer, stated with the same confidence as a correct one. This is <Term slug="hallucination">hallucination</Term>: a structural flaw of training, which pushes the model to always say something, even when it should say it does not know.
+
+A <Term slug="foundation-model">foundation model</Term> is therefore wonderful on the general and blind on your particular. The problem is not that it is dim, it is brilliant. The problem is that its notes have been confiscated. The whole idea of this chapter is the opposite gesture: give the notes back, at the right moment.
+
+## The RAG idea: slip it the right notes before it answers
+
+What if, just before letting the model answer, we went and fetched from your store the passages that speak to the question, and laid them under its eyes? It would no longer answer from memory, but by reading. This is exactly the architecture called <Term slug="rag">retrieval-augmented generation</Term>, or RAG. It breaks into three stages, and the first is already perfectly familiar to you.
+
+$$
+\underbrace{\mathcal{C} = \text{top-}k\big(\text{hybrid}(q)\big)}_{\text{1. retrieve}}
+\qquad
+\underbrace{p = \text{prompt}(q, \mathcal{C})}_{\text{2. assemble}}
+\qquad
+\underbrace{r = \text{LLM}(p)}_{\text{3. generate}}
+$$
+
+Here is how the chain reads. First, for a question $q$, we build the context $\mathcal{C}$ by keeping the $k$ best passages returned by the previous chapter's hybrid search. Then we assemble a prompt $p$ that contains the question and those passages. Finally, we hand that prompt to the model, which produces the answer $r$. The remarkable point is the first term: the retrieval in RAG is nothing other than the search we built throughout the course. RAG does not replace what we learned, it crowns it. Embeddings, nearest neighbors, HNSW, durable index, hybrid fusion: all of it was the foundation that makes this final stage possible.
+
+<Callout kind="note" title="The prompt, in practice">
+Assembling the prompt is no magic: it is a piece of text. In it we write a plain instruction along the lines of "Answer the question using only the passages below, and cite their number. If the answer is not there, say you do not know.", followed by the question, then the numbered passages. All the subtlety of RAG is not in this layout, it is in the quality of the passages we put into it.
+</Callout>
+
+## Ground the answer, or stay silent
+
+Handing the passages to the model is not enough: we must also require that it use them, and only them. This is the notion of <Term slug="grounding">grounding</Term>: the answer must rest on the provided context, not on the model's internal memory, and it must cite its sources so they can be checked. A reader must be able to trace every claim back to the passage that supports it.
+
+Then comes the question that makes all the difference: what happens when the context does not contain the answer? The model's temptation, as we saw, is to fill the void. The right behavior is the opposite: say so. Answering "I cannot find this information in your documents" is a good answer, not a failure. It is the direct remedy to hallucination: we no longer ask the model to know, we ask it to read, to cite, and to admit when the source is missing. The honest refusal is a feature, not a defect.
+
+This shift has a heavy consequence, which we must face squarely: the quality of the answer is now capped by the quality of the retrieval. If the right passage is not retrieved, or if it does not make it into the context, the most grounded model in the world can only refuse. That is exactly what the component below puts into your hands.
+
+## Wire the pipeline yourself
+
+The component below runs the full pipeline on a small personal store. Pick a query, then switch between the two worlds: the model **alone**, which answers from memory, and the model **plus RAG**, which first reads the retrieved passages. In RAG mode, a lever sets the context budget $k$, that is the number of passages we allow into the model's view. Watch what happens when you squeeze it.
+
+<RagPipelineLab
+  client:visible
+  k1={1.5}
+  b={0.75}
+  rrfK={60}
+  defaultK={1}
+  documents={[
+    { id: "d0", text: "Strategy board meeting of March 12, minutes.", tokens: ["board", "meeting", "strategy", "minutes", "notes"], vector: [0.62, 0.79] },
+    { id: "d1", text: "Invoice FR-2024-8831, consulting services, amount 4,200 euros.", tokens: ["invoice", "fr", "2024", "8831", "consulting", "services"], vector: [0.80, 0.60], fact: "Invoice 8831 corresponds to consulting services for an amount of 4,200 euros.", answersQueryIds: ["qa"] },
+    { id: "d2", text: "Invoice FR-2024-2207, annual hosting.", tokens: ["invoice", "fr", "2024", "2207", "hosting", "annual"], vector: [0.93, 0.37] },
+    { id: "d3", text: "Invoice FR-2023-1180, software license.", tokens: ["invoice", "fr", "2023", "1180", "software", "license"], vector: [0.96, 0.28] },
+    { id: "d4", text: "Staff internal regulations.", tokens: ["staff", "internal", "regulations"], vector: [0.35, 0.94] },
+    { id: "d5", text: "Expense report, trip to Lyon.", tokens: ["expense", "report", "trip", "lyon"], vector: [0.47, 0.88] }
+  ]}
+  queries={[
+    { id: "qa", label: "amount of the consulting invoice", caption: "the answer is in the store", tokens: ["invoice", "consulting"], vector: [0.66, 0.75], parametricAnswer: "The consulting invoice amounts to 1,500 euros.", parametricStatus: "hallucinated", refusalText: "I cannot find this information in the provided passages." },
+    { id: "qb", label: "due date of invoice 2207", caption: "the answer is nowhere", tokens: ["due", "date", "invoice", "2207"], vector: [0.94, 0.34], parametricAnswer: "Invoice 2207 is due on March 15.", parametricStatus: "hallucinated", refusalText: "I cannot find this information in the provided passages." }
+  ]}
+  labels={{
+    queryTitle: "Query",
+    modeTitle: "Model",
+    modeParametric: "LLM alone",
+    modeRag: "LLM + RAG",
+    budgetTitle: "Context budget k",
+    retrievedTitle: "Retrieved passages",
+    inContextBadge: "in context",
+    outOfBudgetBadge: "over budget",
+    parametricIgnores: "The model alone consults no passage: it answers from memory.",
+    answerTitle: "Answer",
+    sourcesLabel: "Cited sources:",
+    noSourceLabel: "No source.",
+    badgeGrounded: "grounded",
+    badgeRefusal: "honest refusal",
+    badgeHallucinated: "hallucination",
+    badgeVague: "vague",
+    insightTitle: "What you observe",
+    insightParametric: "The model alone answers from memory, never reading your store. On a private fact like an invoice amount, it cannot know, so it makes up a plausible, wrong figure, with confidence. That is hallucination.",
+    insightGrounded: "The right passage has entered the context. The model grounds its answer on it and cites its source. The answer is correct because retrieval did its job.",
+    insightRefusalBudget: "The right passage exists and was indeed retrieved, but your budget k is too tight: it sits just below the line, outside the context. The model, being honest, refuses rather than invent. Widen k to let it in.",
+    insightRefusalMissing: "No passage in the store carries this information. The grounded model refuses honestly, where the model alone hallucinated a date. Not knowing is here the right answer."
+  }}
+/>
+
+Three questions to ask yourself while playing:
+
+1. On the query "amount of the consulting invoice", stay in LLM alone mode. What does the model answer, and does that figure come from your store? Then switch to LLM plus RAG with a budget $k = 1$: what happens, and why is the right passage not there yet?
+2. Still on this query, raise $k$ to $2$. The answer changes status. Which passage just entered the context, at what rank was it, and why can the model finally answer?
+3. Switch to the query "due date of invoice 2207". Compare the model alone and RAG. Which one invents, which one refuses? In what way is the refusal here the best possible answer?
+
+<Callout kind="info" title="The running thread: why I build this engine for my personal assistant">
+The sovereign vector engine that runs through this course is not an end in itself: it is the search brick of a personal assistant I am building for my intranet. The final goal is exactly this chapter: when I ask my assistant a question, I want it to go and read my own notes, my documents, my accumulated memory, and to compose an answer grounded on them, citing where it comes from. The hybrid search of the previous chapters is the retrieval; RAG is what turns it into an answer. And the honest refusal is, for an assistant that touches my real affairs, a non-negotiable property: I far prefer an "I cannot find it" to an invented invoice.
+</Callout>
+
+## Three horizons to go further
+
+The pipeline we just wired is RAG in its simplest form. Three refinements separate it from real systems. We formalize them here, because these are the ones you will meet as soon as you leave the toy corpus.
+
+### Split before you index: chunking
+
+So far, one passage equaled one document. But a real document runs forty pages. Indexing it as a single block would be absurd: its answer would drown the useful paragraph in an ocean of text, and it would never fit in the model's context. So we cut it into short pieces before indexing. This is <Term slug="chunking">chunking</Term>.
+
+The size remains to be chosen. Too large, and each passage mixes several ideas and wastes the budget; too small, and we cut an idea in two, so each piece becomes incomprehensible on its own. So we make the passages **overlap**: each piece repeats the end of the previous one, so that a sentence cut by a boundary is found whole in at least one passage. If a document has length $L$ (in tokens), and we choose passages of size $s$ with overlap $o$, the number of passages produced is about:
+
+$$
+n_{\text{passages}} \approx \left\lceil \frac{L - s}{s - o} \right\rceil + 1
+$$
+
+This formula reads: each new passage advances by $s - o$ tokens (the size, minus what we repeat from the previous one), the step of a sliding window. We count how many steps it takes to cover the whole length, plus the initial passage. The larger the overlap $o$, the smaller the step, so the more passages we produce: the safety against cuts is paid in index volume.
+
+### The context window: a budget you cannot exceed
+
+We handled the lever $k$ without really naming it. What bounds it is a hard constraint of the model: its <Term slug="fenetre-de-contexte">context window</Term>, the maximum amount of text, measured in tokens, that it can read at once. We therefore cannot pour the whole store into the prompt, only the $k$ best passages. It is precisely this ceiling that makes the retrieval ranking decisive: if the right passage comes out at rank $12$ and the budget only holds $8$, it is lost, exactly as in the component at $k = 1$.
+
+From this comes a very useful refinement in practice: <Term slug="reranking">reranking</Term>. We first let the fast retrieval (BM25, vectors) return a large batch of candidates, say fifty. Then a more expensive but finer model, often a cross-encoder that reads the query and each passage together, reorders them so the very best take the top spots, the ones that will fit in the window. Two stages: a first, fast one that rakes wide, a second, precise one that sorts tight.
+
+### The model that searches on its own: agentic retrieval
+
+In everything above, the pipeline is a one-way trip: one query, one search, one answer. But some questions cannot be resolved in a single search. "Compare the amount of my consulting invoice with my annual training budget" requires fetching two distinct things, then confronting them. A one-way trip fails.
+
+The idea that lifts this limit is to give the model search not as a fixed step, but as a **tool** it wields itself, as many times as it deems useful. This is the ReAct loop (for Reasoning and Acting, Yao et al. 2022), which alternates three gestures until the model judges it can conclude:
+
+$$
+\text{Reason} \;\rightarrow\; \text{Act (search)} \;\rightarrow\; \text{Observe} \;\rightarrow\; \text{Reason} \;\rightarrow\; \cdots
+$$
+
+The model reasons about what it is missing, decides what to search for, observes the passages returned, then starts again based on what it just learned. Retrieval becomes dynamic, driven by the model itself. This is the bridge to what we now call agents: a model that no longer merely answers, but goes and fetches, in a loop, what it needs in order to answer.
+
+<Callout kind="warn" title="The blunt truth: RAG creates no knowledge">
+As elegant as it is, RAG manufactures no information. All it does is ground an answer on what the retrieval managed to find. If your store does not contain the answer, or if your search does not surface it high enough to enter the context, no model, however powerful, will guess it. It is the old principle: nothing good in, nothing good out. This is why this course spent seven chapters on retrieval before reaching RAG: the weak link of an answering system is almost never the model, it is the search that feeds it.
+</Callout>
+
+## Exercises
+
+<Callout kind="tip" title="Solution to exercise 1: counting the passages of a chunking">
+A document has $L = 1{,}000$ tokens. We split it into passages of size $s = 200$ tokens, with an overlap $o = 50$ tokens. How many passages do we get?
+
+**Step 1. The step of the window.** Each new passage advances by the size minus the overlap.
+
+$$
+s - o = 200 - 50 = 150
+$$
+
+**Step 2. The number of steps after the first passage.** We apply the formula, starting with the fraction.
+
+$$
+\frac{L - s}{s - o} = \frac{1{,}000 - 200}{150} = \frac{800}{150} \approx 5.33
+$$
+
+**Step 3. We round up.** A partial window still counts, to cover the end of the document.
+
+$$
+\lceil 5.33 \rceil = 6
+$$
+
+**Step 4. We add the initial passage.**
+
+$$
+n_{\text{passages}} = 6 + 1 = 7
+$$
+
+**Result.** The document produces $7$ passages. Note that with zero overlap ($o = 0$), the step would be $200$ and we would drop to $5$ passages: the overlap, which guards against cuts, mechanically increases the index volume.
+</Callout>
+
+<Callout kind="tip" title="Solution to exercise 2: why k=1 refuses and k=2 answers">
+On the component's query "amount of the consulting invoice", the model refuses at $k = 1$ but answers at $k = 2$. We explain this switch through the ranks.
+
+**Step 1. The hybrid ranking.** Retrieval returns, in order, passage d0 ("strategy board meeting") at rank $1$, then passage d1 (the consulting invoice, which carries the amount) at rank $2$. The distractor d0 wins rank $1$ because it is the closest by meaning to the word "consulting", while d1, the actual invoice, comes just behind.
+
+**Step 2. The budget k=1.** We keep only one passage in the context: d0. But d0 is about a meeting, not an amount. No passage in the context carries the answer.
+
+$$
+\text{context} = \{\, d0 \,\} \quad\Rightarrow\quad \text{no source} \quad\Rightarrow\quad \text{honest refusal}
+$$
+
+**Step 3. The budget k=2.** We keep the first two passages: d0 and d1. This time, d1, the invoice, enters the context.
+
+$$
+\text{context} = \{\, d0,\ d1 \,\} \quad\Rightarrow\quad d1 \text{ carries the amount} \quad\Rightarrow\quad \text{grounded answer, source } [2]
+$$
+
+**Result.** The right passage was there all along, correctly retrieved at rank $2$. Only the context budget decided whether it entered the model's view. That is the whole lesson of the chapter: a correct retrieval is not enough, the rank of the right passage must also fit in the window.
+</Callout>
+
+## In one sentence
+
+RAG turns a search into an answer: it retrieves the best passages (via the course's hybrid search), slips them into the model's bounded context, and asks it to compose an answer grounded on them while citing its sources, or to refuse honestly when the source is missing, so that the quality of the answer stays capped by that of the retrieval.
+
+<Quiz
+  client:load
+  questions={[
+    {
+      q: "Why does a language model alone hallucinate a private invoice amount?",
+      options: [
+        "Because it computes numbers badly",
+        "Because that information was not in its training, and it fills the void with a plausible answer instead of admitting ignorance",
+        "Because its context window is too small",
+        "Because retrieval is disabled"
+      ],
+      answer: 1,
+      explain: "A private fact was never part of the model's training data. Lacking grounding, it produces a plausible but wrong answer: that is hallucination, a structural flaw of training."
+    },
+    {
+      q: "In the RAG pipeline, what does the context given to the model refer to?",
+      options: [
+        "The entire document store",
+        "The k best passages returned by retrieval for the asked question",
+        "The conversation history",
+        "The model's internal weights"
+      ],
+      answer: 1,
+      explain: "The context is the subset of the most relevant passages, limited to k by the context window. It is retrieval, here the hybrid search, that selects it."
+    },
+    {
+      q: "What does the fact that RAG refuses at k=1 but answers at k=2 on the same query reveal?",
+      options: [
+        "That the model is too weak",
+        "That the quality of the answer is capped by retrieval: the right passage must not only be found, but also fit into the context budget",
+        "That BM25 is miscalibrated",
+        "That chunking is too fine"
+      ],
+      answer: 1,
+      explain: "The right passage was retrieved at rank 2 in both cases. Only the context budget decided its entry. A correct retrieval is not enough if the rank of the right passage exceeds the budget."
+    }
+  ]}
+/>
+
+## The closing word
+
+Here we are at the end of the thread. Think back over the path: we started from an almost philosophical idea, meaning as a position in space, and built, step after step, everything needed to make it a real engine. Represent a text as a vector. Measure proximity, and run into the curse of dimensionality. Bypass exhaustive comparison with HNSW, then place that choice within the landscape of approximate indexes. Give ourselves a differential oracle to verify without fooling ourselves. Make the index durable, able to survive a restart. Marry it with the lexical side so as to miss neither a synonym nor an exact number. And, today, wire all of it to a language model to move from the retrieved document to the written answer.
+
+Each chapter answered a limit left by the previous one, and this last one closes the loop: RAG only exists because everything else exists first. That is the beauty of this chain, and it is what I wanted to share by writing it. The sovereign engine I am building will keep evolving, it will become the memory of a personal assistant that reads my own documents to answer me. But the essential is now in your hands: you know what hides behind these buzzwords, not the marketing version, the version that compiles. Thank you for walking this path.
+
+## Sources
+
+- Lewis, P. et al. (2020). "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." _NeurIPS 2020_. [arXiv:2005.11401](https://arxiv.org/abs/2005.11401)
+- Karpukhin, V. et al. (2020). "Dense Passage Retrieval for Open-Domain Question Answering." _EMNLP 2020_. [arXiv:2004.04906](https://arxiv.org/abs/2004.04906)
+- Yao, S. et al. (2022). "ReAct: Synergizing Reasoning and Acting in Language Models." _ICLR 2023_. [arXiv:2210.03629](https://arxiv.org/abs/2210.03629)
+
+### Going further
+
+- Ji, Z. et al. (2023). "Survey of Hallucination in Natural Language Generation." _ACM Computing Surveys_ 55(12), 1-38. [DOI 10.1145/3571730](https://doi.org/10.1145/3571730)
+- Gao, Y. et al. (2023). "Retrieval-Augmented Generation for Large Language Models: A Survey." [arXiv:2312.10997](https://arxiv.org/abs/2312.10997)

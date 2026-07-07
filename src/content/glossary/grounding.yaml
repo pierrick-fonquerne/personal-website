@@ -1,0 +1,11 @@
+slug: grounding
+fr:
+  term: Ancrage
+  definition: "Fait de contraindre la reponse d un modele de langage a s appuyer uniquement sur des sources fournies (les passages recuperes), plutot que sur sa memoire interne. Un modele bien ancre cite ses sources et refuse de repondre quand le contexte ne contient pas l information, au lieu d inventer."
+en:
+  term: Grounding
+  definition: "Constraining a language model's answer to rely only on provided sources (the retrieved passages) rather than on its internal memory. A well-grounded model cites its sources and declines to answer when the context lacks the information, instead of making something up."
+seeAlso:
+  - rag
+  - hallucination
+  - fenetre-de-contexte

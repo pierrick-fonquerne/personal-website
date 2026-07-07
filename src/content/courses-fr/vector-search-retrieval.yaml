@@ -21,6 +21,7 @@ modules:
   - 05-oracle-differentiel
   - 06-rendre-l-index-durable
   - 07-versant-lexical-et-recherche-hybride
+  - 08-du-retrieval-au-rag
 personalNote: |
   Ce cours est né d'un chantier bien réel. Je construis une base de données vectorielle souveraine, en Rust, dont le premier objectif est modeste : remplacer une brique existante dans mon intranet personnel. En la construisant, j'ai dû comprendre pour de vrai ce qui se cache derrière les mots à la mode : embedding, plus proche voisin, HNSW, recherche hybride, RAG. Pas la version marketing, la version qui compile.
 

@@ -1,0 +1,11 @@
+slug: reranking
+fr:
+  term: Reclassement
+  definition: "Deuxieme etage de tri applique aux passages deja recuperes. Un premier retrieval rapide (BM25, vecteurs) remonte un lot de candidats ; un modele plus couteux, souvent un cross-encoder qui lit ensemble la requete et chaque passage, les reordonne finement pour que les meilleurs occupent les premieres places, celles qui tiendront dans la fenetre de contexte."
+en:
+  term: Reranking
+  definition: "A second sorting stage applied to the already-retrieved passages. A fast first retrieval (BM25, vectors) brings back a batch of candidates; a more expensive model, often a cross-encoder that reads the query and each passage together, finely reorders them so the best ones take the top spots, the ones that will fit in the context window."
+seeAlso:
+  - rag
+  - recherche-hybride
+  - fenetre-de-contexte

@@ -1,0 +1,11 @@
+slug: fenetre-de-contexte
+fr:
+  term: Fenetre de contexte
+  definition: "Quantite maximale de texte, mesuree en tokens, qu un modele de langage peut lire d un coup en entree. Elle est bornee : on ne peut donc pas verser toute une base documentaire dans le prompt, seulement les k meilleurs passages retenus par le retrieval. Ce budget limite est ce qui rend le classement du retrieval decisif."
+en:
+  term: Context window
+  definition: "The maximum amount of text, measured in tokens, that a language model can read at once as input. It is bounded: one cannot pour an entire document store into the prompt, only the top k passages kept by retrieval. This limited budget is what makes the retrieval ranking decisive."
+seeAlso:
+  - rag
+  - chunking
+  - grounding
