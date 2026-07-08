@@ -33,11 +33,11 @@ vi.mock('astro:content', () => {
 import { localizedPath, switchLocalePath, resolveTranslatedPath, resolveAlternatePaths } from './i18n';
 
 describe('localizedPath', () => {
-  it('laisse la racine par defaut (fr) sans prefixe', () => {
+  it('laisse la racine par défaut (fr) sans préfixe', () => {
     expect(localizedPath('/about', 'fr')).toBe('/about');
   });
 
-  it('prefixe les autres locales', () => {
+  it('préfixe les autres locales', () => {
     expect(localizedPath('/about', 'en')).toBe('/en/about');
   });
 });
@@ -47,8 +47,8 @@ describe('switchLocalePath (pages statiques, pas de slug traduit)', () => {
     expect(switchLocalePath('/about', 'fr', 'en')).toBe('/en/about');
   });
 
-  it('ne connait pas les slugs de chapitre traduits (comportement legue)', () => {
-    // Le slug FR n'existe pas en EN : switchLocalePath copie betement le chemin.
+  it('ne connaît pas les slugs de chapitre traduits (comportement légué)', () => {
+    // Le slug FR n'existe pas en EN : switchLocalePath copie bêtement le chemin.
     expect(
       switchLocalePath(
         '/interactive-courses/vector-search-retrieval/03-hnsw-graphe-de-proximite',
@@ -60,12 +60,12 @@ describe('switchLocalePath (pages statiques, pas de slug traduit)', () => {
 });
 
 describe('resolveTranslatedPath', () => {
-  it('renvoie le chemin inchange quand la locale cible est la locale courante', async () => {
+  it('renvoie le chemin inchangé quand la locale cible est la locale courante', async () => {
     const path = '/interactive-courses/vector-search-retrieval/03-hnsw-graphe-de-proximite';
     expect(await resolveTranslatedPath(path, 'fr', 'fr')).toBe(path);
   });
 
-  it('resout le vrai slug EN d’un chapitre de cours depuis le FR', async () => {
+  it('résout le vrai slug EN d\'un chapitre de cours depuis le FR', async () => {
     const result = await resolveTranslatedPath(
       '/interactive-courses/vector-search-retrieval/03-hnsw-graphe-de-proximite',
       'fr',
@@ -74,7 +74,7 @@ describe('resolveTranslatedPath', () => {
     expect(result).toBe('/en/interactive-courses/vector-search-retrieval/03-hnsw-proximity-graph');
   });
 
-  it('resout le vrai slug FR d’un chapitre de cours depuis le EN', async () => {
+  it('résout le vrai slug FR d\'un chapitre de cours depuis le EN', async () => {
     const result = await resolveTranslatedPath(
       '/en/interactive-courses/vector-search-retrieval/03-hnsw-proximity-graph',
       'en',
@@ -83,11 +83,11 @@ describe('resolveTranslatedPath', () => {
     expect(result).toBe('/interactive-courses/vector-search-retrieval/03-hnsw-graphe-de-proximite');
   });
 
-  it('retombe sur le comportement generique pour une page hors chapitre de cours', async () => {
+  it('retombe sur le comportement générique pour une page hors chapitre de cours', async () => {
     expect(await resolveTranslatedPath('/about', 'fr', 'en')).toBe('/en/about');
   });
 
-  it('retombe sur le comportement generique quand le module source est introuvable', async () => {
+  it('retombe sur le comportement générique quand le module source est introuvable', async () => {
     const result = await resolveTranslatedPath(
       '/interactive-courses/cours-inconnu/aucun-module',
       'fr',
@@ -98,7 +98,7 @@ describe('resolveTranslatedPath', () => {
 });
 
 describe('resolveAlternatePaths', () => {
-  it('construit la carte complete des chemins alternes, y compris le chemin courant', async () => {
+  it('construit la carte complète des chemins alternes, y compris le chemin courant', async () => {
     const result = await resolveAlternatePaths(
       '/interactive-courses/vector-search-retrieval/03-hnsw-graphe-de-proximite',
       'fr',
