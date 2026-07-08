@@ -118,3 +118,24 @@ export async function resolveTranslatedPath(
 
   return localizedPath(translateProgramSegment(stripped, target), target);
 }
+
+/**
+ * Resolves the translated path for every supported locale, reusing
+ * {@link resolveTranslatedPath} so routes with locale-specific slugs
+ * (notably interactive course chapters) get their real alternate URL
+ * instead of a naive path copy.
+ *
+ * Intended for pages that need to hand an explicit alternate-locale map
+ * to BaseLayout for hreflang generation.
+ */
+export async function resolveAlternatePaths(
+  currentPath: string,
+  locale: Locale,
+): Promise<Record<Locale, string>> {
+  const entries = await Promise.all(
+    LOCALES.map(
+      async (target) => [target, await resolveTranslatedPath(currentPath, locale, target)] as const,
+    ),
+  );
+  return Object.fromEntries(entries) as Record<Locale, string>;
+}
