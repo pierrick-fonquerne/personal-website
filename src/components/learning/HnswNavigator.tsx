@@ -254,6 +254,22 @@ export default function HnswNavigator({
     setSearchState({ status: 'idle', currentLayerStep: 0, resultId: null, oracleId: null, perLayerPath: [] });
   };
 
+  const QUERY_KEYBOARD_STEP = 0.02;
+
+  // Arrow keys on the query point -> move the query
+  const handleQueryPointKeyDown = (e: React.KeyboardEvent<SVGGElement>): void => {
+    let dx = 0;
+    let dy = 0;
+    if (e.key === 'ArrowLeft') dx = -QUERY_KEYBOARD_STEP;
+    else if (e.key === 'ArrowRight') dx = QUERY_KEYBOARD_STEP;
+    else if (e.key === 'ArrowUp') dy = -QUERY_KEYBOARD_STEP;
+    else if (e.key === 'ArrowDown') dy = QUERY_KEYBOARD_STEP;
+    else return;
+    e.preventDefault();
+    setQuery(([x, y]) => [Math.max(0, Math.min(1, x + dx)), Math.max(0, Math.min(1, y + dy))]);
+    setSearchState({ status: 'idle', currentLayerStep: 0, resultId: null, oracleId: null, perLayerPath: [] });
+  };
+
   // ---------------------------------------------------------------------------
   // Rendu d une couche SVG
   // ---------------------------------------------------------------------------
@@ -376,9 +392,17 @@ export default function HnswNavigator({
             );
           })}
 
-          {/* Point de requete (couche de base seulement) */}
+          {/* Point de requete (couche de base seulement), accessible au clavier */}
           {isBase && (
-            <>
+            <g
+              tabIndex={0}
+              role="slider"
+              aria-label={labels.queryLabel}
+              aria-valuemin={0}
+              aria-valuemax={1}
+              aria-valuenow={query[0]}
+              onKeyDown={handleQueryPointKeyDown}
+            >
               <circle
                 cx={toSvgX(query[0])}
                 cy={toSvgY(query[1])}
@@ -395,7 +419,7 @@ export default function HnswNavigator({
                 fill={COLOR_QUERY}
                 fillOpacity={0.9}
               />
-            </>
+            </g>
           )}
         </svg>
       </div>

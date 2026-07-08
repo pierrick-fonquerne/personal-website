@@ -249,13 +249,18 @@ export default function ChapterAudioPlayer({
     };
   }, []);
 
+  const progressRef = useRef<number>(0);
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
   useEffect(() => {
     if (status !== 'playing') return undefined;
     const id = window.setInterval(() => {
-      saveStoredPosition(locale, courseSlug, moduleSlug, progress);
+      saveStoredPosition(locale, courseSlug, moduleSlug, progressRef.current);
     }, 5000);
     return () => window.clearInterval(id);
-  }, [courseSlug, locale, moduleSlug, progress, status]);
+  }, [courseSlug, locale, moduleSlug, status]);
 
   useEffect(() => {
     if (source === 'mp3' && !dismissed) {
@@ -314,12 +319,13 @@ export default function ChapterAudioPlayer({
   }, [rate]);
 
   const speakFromChar = useCallback(
-    (text: string, startChar: number): void => {
+    (text: string, startChar: number, rateOverride?: number): void => {
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
         setStatus('error');
         return;
       }
       window.speechSynthesis.cancel();
+      const effectiveRate = rateOverride ?? rate;
       const clampedStart = Math.max(0, Math.min(startChar, text.length - 1));
       const remaining = text.slice(clampedStart);
       const utterance = new SpeechSynthesisUtterance(remaining);
@@ -327,18 +333,18 @@ export default function ChapterAudioPlayer({
       utterance.lang = langTag;
       const bestVoice = pickBestVoice(langTag);
       if (bestVoice) utterance.voice = bestVoice;
-      utterance.rate = rate;
+      utterance.rate = effectiveRate;
       speechCharsRef.current = text.length;
       speechTextRef.current = text;
       speechStartRef.current = Date.now();
-      const totalDuration = text.length / (speechCharsPerSecondRef.current * rate);
+      const totalDuration = text.length / (speechCharsPerSecondRef.current * effectiveRate);
       setDuration(totalDuration);
-      setProgress(clampedStart / speechCharsPerSecondRef.current / rate);
+      setProgress(clampedStart / speechCharsPerSecondRef.current / effectiveRate);
 
       utterance.onboundary = (ev) => {
         if (typeof ev.charIndex === 'number' && speechCharsRef.current > 0) {
           const absoluteChar = clampedStart + ev.charIndex;
-          setProgress(absoluteChar / speechCharsPerSecondRef.current / rate);
+          setProgress(absoluteChar / speechCharsPerSecondRef.current / effectiveRate);
         }
       };
       utterance.onend = () => {
@@ -436,15 +442,20 @@ export default function ChapterAudioPlayer({
 
   const handleRateChange = useCallback(
     (newRate: number): void => {
+      if (source === 'speech' && status === 'playing') {
+        const charIndex = Math.floor(progress * speechCharsPerSecondRef.current * rate);
+        setRate(newRate);
+        saveStoredRate(newRate);
+        speakFromChar(speechTextRef.current, charIndex, newRate);
+        return;
+      }
       setRate(newRate);
       saveStoredRate(newRate);
       if (source === 'mp3' && audioRef.current) {
         audioRef.current.playbackRate = newRate;
-      } else if (source === 'speech' && status === 'playing') {
-        playSpeech();
       }
     },
-    [playSpeech, source, status],
+    [progress, rate, source, speakFromChar, status],
   );
 
   const onAudioLoadedMetadata = (): void => {
