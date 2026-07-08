@@ -11,7 +11,7 @@ tags:
 theme: ai
 subtheme: vector-search
 level: intermediate
-estimatedMinutes: 208
+estimatedMinutes: 248
 modules:
   - 00-avant-propos
   - 01-embeddings-et-geometrie
