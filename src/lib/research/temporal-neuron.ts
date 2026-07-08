@@ -206,7 +206,7 @@ export function evaluate(
     const predicted = unit.run(stimulus, sim.dtMs, sim.durationMs).fired;
     if (predicted === stimulus.label) correct += 1;
   }
-  const accuracy = correct / stimuli.length;
+  const accuracy = stimuli.length === 0 ? 0 : correct / stimuli.length;
   return { task, unit: unit.name, accuracy, solved: accuracy >= criterion };
 }
 
