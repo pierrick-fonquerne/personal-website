@@ -227,15 +227,37 @@ function nodeColor(node: NodePos, highlight: LayerTag, phase: Phase): string {
   return phaseAccent(phase);
 }
 
-function edgeLit(fromIdx: number, toIdx: number, highlight: LayerTag, phase: Phase): boolean {
+// Layer immediately downstream (output side) of each layer, used to
+// determine which edge carries the error signal during the backward pass.
+const DOWNSTREAM_LAYER: Partial<Record<LayerTag, LayerTag>> = {
+  input: 'hidden',
+  hidden: 'output',
+};
+
+export function edgeLit(
+  fromIdx: number,
+  toIdx: number,
+  highlight: LayerTag,
+  phase: Phase,
+): boolean {
   const from = NODES[fromIdx];
   const to = NODES[toIdx];
   if (!from || !to) return false;
   if (phase === 'forward') {
+    // forward: the signal travels along the edge from input to output, so
+    // an edge lights up as soon as it touches the highlighted layer.
     return from.layer === highlight || to.layer === highlight;
   }
-  // backward: highlight flows right-to-left, so invert which side is "active"
-  return from.layer === highlight || to.layer === highlight;
+  // backward: the error signal travels back the other way, from output
+  // toward input. So we light up the edge that connects the highlighted
+  // layer to its downstream layer (where the signal is coming back from),
+  // not its upstream layer as in forward: this is the true inversion of
+  // the propagation direction.
+  const downstream = DOWNSTREAM_LAYER[highlight];
+  if (!downstream) {
+    return from.layer === highlight || to.layer === highlight;
+  }
+  return from.layer === highlight && to.layer === downstream;
 }
 
 function PhaseTag({ phase, label }: { phase: Phase; label: string }): JSX.Element {
