@@ -1,10 +1,16 @@
 ---
-// Rendu conditionnel : ModuleLayout n'inclut ce composant que lorsque le
-// chapitre contient effectivement des formules KaTeX (voir hasMath).
-// L'import en ?url resout l'asset (fonts inclus) sans laisser Vite le
-// fusionner dans un chunk CSS partage avec d'autres composants toujours
-// rendus (ModuleNavMobile...) : le <link> n'est emis que sur les pages
-// qui rendent reellement ce composant.
+// Rendered conditionally: ModuleLayout only includes this component when the
+// chapter actually contains KaTeX formulas (see hasMath in ModuleLayout).
+// Importing as ?url resolves the asset (fonts included) without letting Vite
+// merge it into a CSS chunk shared with components that are always rendered
+// (ModuleNavMobile...): the <link> is only emitted on pages that actually
+// render this component.
+//
+// ModuleLayout renders this component before the chapter content itself
+// (not after), so the <link> reaches the browser before any .katex element
+// does. Placing it later, once .katex content has already been emitted,
+// would risk a flash of unstyled math on the very pages this stylesheet
+// targets.
 import katexHref from 'katex/dist/katex.min.css?url';
 ---
 
