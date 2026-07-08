@@ -74,7 +74,7 @@ And the bridge between the two: each service maintains a **local projection** of
       C2[Parcels ✦]
     end
     style CP fill:#7c5cff,color:#fff`}
-  caption="* local projection of the referential — ✦ resources the service is the source of truth for"
+  caption="* local projection of the referential ; ✦ resources the service is the source of truth for"
 />
 
 Read the diagram carefully: it shows the most important property of the model. **Each service remains complete and autonomous**: its local projection of `Shop` is enough to operate without a control plane. And **the whole remains consistent**: when the control plane exists, it is the one creating and synchronizing those projections. The same binary serves both scenarios: standalone product or integrated building block of a suite.

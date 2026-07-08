@@ -9,4 +9,4 @@ en:
   source: Bommasani et al., 2021
 seeAlso:
   - transformer
-  - llm-mcp
+  - hallucination

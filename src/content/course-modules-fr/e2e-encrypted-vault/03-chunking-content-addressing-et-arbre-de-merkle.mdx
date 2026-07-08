@@ -11,36 +11,36 @@ import Callout from '../../../components/learning/Callout.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 
-Nous savons chiffrer un blob et le lier à son rôle. Reste à décider **ce qu'on chiffre** : un fichier de 20 Gio n'est pas un blob — pour reprendre un transfert interrompu, pour ne re-téléverser que ce qui a changé, pour ne pas saturer la mémoire, il faut découper. Et une fois les fichiers découpés en morceaux anonymes, il faut bien que _quelque chose_ se souvienne de l'arborescence — sans que le serveur, qui stocke ce quelque chose, puisse la lire.
+Nous savons chiffrer un blob et le lier à son rôle. Reste à décider **ce qu'on chiffre** : un fichier de 20 Gio n'est pas un blob : pour reprendre un transfert interrompu, pour ne re-téléverser que ce qui a changé, pour ne pas saturer la mémoire, il faut découper. Et une fois les fichiers découpés en morceaux anonymes, il faut bien que _quelque chose_ se souvienne de l'arborescence, sans que le serveur, qui stocke ce quelque chose, puisse la lire.
 
-À la fin de ce chapitre, tu sauras expliquer le découpage défini par le contenu et son rôle dans la synchronisation différentielle, justifier l'adressage par empreinte du texte chiffré, argumenter le refus de la déduplication inter-utilisateurs, et dérouler le fonctionnement d'une arborescence de Merkle chiffrée — y compris la gestion des écritures concurrentes de plusieurs appareils.
+À la fin de ce chapitre, tu sauras expliquer le découpage défini par le contenu et son rôle dans la synchronisation différentielle, justifier l'adressage par empreinte du texte chiffré, argumenter le refus de la déduplication inter-utilisateurs, et dérouler le fonctionnement d'une arborescence de Merkle chiffrée, y compris la gestion des écritures concurrentes de plusieurs appareils.
 
 ## Découper là où le contenu le décide
 
-L'approche naïve découpe en blocs de taille fixe : 4 Mio, frontières aux multiples de 4 Mio. Elle a un défaut fatal pour la synchronisation : **insère un octet au début d'un fichier, et toutes les frontières se décalent** — chaque bloc change, tout est à re-téléverser.
+L'approche naïve découpe en blocs de taille fixe : 4 Mio, frontières aux multiples de 4 Mio. Elle a un défaut fatal pour la synchronisation : **insère un octet au début d'un fichier, et toutes les frontières se décalent** : chaque bloc change, tout est à re-téléverser.
 
-Le découpage **défini par le contenu** (_content-defined chunking_, algorithme FastCDC) place les frontières là où une empreinte glissante du contenu local atteint un motif particulier. Les frontières sont donc _attachées au contenu_, pas aux positions : insère un octet au début, et seules les frontières du voisinage immédiat bougent — les morceaux suivants, définis par leur contenu inchangé, restent identiques. Modifier 1 Ko au milieu d'un fichier de 2 Gio n'invalide que le ou les morceaux touchés.
+Le découpage **défini par le contenu** (_content-defined chunking_, algorithme FastCDC) place les frontières là où une empreinte glissante du contenu local atteint un motif particulier. Les frontières sont donc _attachées au contenu_, pas aux positions : insère un octet au début, et seules les frontières du voisinage immédiat bougent : les morceaux suivants, définis par leur contenu inchangé, restent identiques. Modifier 1 Ko au milieu d'un fichier de 2 Gio n'invalide que le ou les morceaux touchés.
 
-C'est la fondation de la **synchronisation différentielle** : re-téléverser uniquement les morceaux nouveaux. Les tailles sont bornées (minimum, cible, maximum — par exemple 1, 4 et 16 Mio) pour garder des objets maniables, et le pipeline travaille **en flux** : un seul morceau en mémoire à la fois, jamais le fichier entier — condition pour traiter une vidéo de 20 Gio sur une machine ordinaire.
+C'est la fondation de la **synchronisation différentielle** : re-téléverser uniquement les morceaux nouveaux. Les tailles sont bornées (minimum, cible, maximum, par exemple 1, 4 et 16 Mio) pour garder des objets maniables, et le pipeline travaille **en flux** : un seul morceau en mémoire à la fois, jamais le fichier entier : condition pour traiter une vidéo de 20 Gio sur une machine ordinaire.
 
 ## L'adressage par contenu
 
-Chaque morceau, une fois chiffré, reçoit son adresse : **l'empreinte (hash) de son texte chiffré**. Cette adresse — le _chunk id_ — est ce que le serveur connaît : pour lui, le coffre n'est qu'une collection de blobs adressés par empreinte. Trois propriétés en découlent :
+Chaque morceau, une fois chiffré, reçoit son adresse : **l'empreinte (hash) de son texte chiffré**. Cette adresse (le _chunk id_) est ce que le serveur connaît : pour lui, le coffre n'est qu'une collection de blobs adressés par empreinte. Trois propriétés en découlent :
 
-1. **L'intégrité se vérifie sans clé.** Au téléchargement, le client re-calcule l'empreinte du blob reçu : si elle diffère de l'adresse demandée, le blob a été altéré ou substitué — détection _avant même_ de tenter le déchiffrement.
+1. **L'intégrité se vérifie sans clé.** Au téléchargement, le client re-calcule l'empreinte du blob reçu : si elle diffère de l'adresse demandée, le blob a été altéré ou substitué : détection _avant même_ de tenter le déchiffrement.
 2. **Les téléversements sont idempotents.** Envoyer deux fois le même blob écrit deux fois la même chose à la même adresse : les reprises sur erreur deviennent triviales.
-3. **Le serveur peut vérifier sans comprendre.** Il re-calcule l'empreinte du blob reçu et refuse les écritures incohérentes — un contrôle d'intégrité qui ne lui apprend rien sur le contenu.
+3. **Le serveur peut vérifier sans comprendre.** Il re-calcule l'empreinte du blob reçu et refuse les écritures incohérentes : un contrôle d'intégrité qui ne lui apprend rien sur le contenu.
 
-Pourquoi l'empreinte du texte **chiffré** et pas du texte clair ? Parce que l'adresse est visible du serveur : une empreinte du texte clair lui offrirait un test d'appartenance (« cet utilisateur possède-t-il ce fichier connu ? »). L'empreinte du texte chiffré — qui dépend d'une clé de fichier aléatoire que le serveur n'a pas — ne révèle rien.
+Pourquoi l'empreinte du texte **chiffré** et pas du texte clair ? Parce que l'adresse est visible du serveur : une empreinte du texte clair lui offrirait un test d'appartenance (« cet utilisateur possède-t-il ce fichier connu ? »). L'empreinte du texte chiffré (qui dépend d'une clé de fichier aléatoire que le serveur n'a pas) ne révèle rien.
 
 <Callout kind="warn" title="Pourquoi refuser la déduplication inter-utilisateurs">
   Si deux utilisateurs téléversent le même film, ne pourrait-on le stocker une seule fois ? Cela
-  exigerait que des contenus identiques produisent des textes chiffrés identiques — le *chiffrement
+  exigerait que des contenus identiques produisent des textes chiffrés identiques : le *chiffrement
   convergent*, où la clé dérive du contenu. Or ce schéma est vulnérable aux **attaques par
   confirmation** : quiconque possède un fichier candidat peut le chiffrer de la même manière et
   vérifier, par l'adresse, si quelqu'un d'autre le détient. Pour un coffre-fort, c'est éliminatoire.
   Nos clés de fichier sont aléatoires : le même contenu chez deux utilisateurs donne deux textes
-  chiffrés sans aucun rapport. La sécurité coûte ici de l'espace de stockage — un arbitrage
+  chiffrés sans aucun rapport. La sécurité coûte ici de l'espace de stockage : un arbitrage
   explicite et assumé.
 </Callout>
 
@@ -48,13 +48,13 @@ Pourquoi l'empreinte du texte **chiffré** et pas du texte clair ? Parce que l'a
 
 Les morceaux sont anonymes ; le **manifeste de fichier** est l'objet qui les relie. Il contient le nom du fichier, sa taille, sa date de modification, la liste _ordonnée_ des adresses de morceaux avec leur taille en clair, et l'enveloppe de la clé de fichier. Le manifeste entier est chiffré sous la clé de compte, avec son contexte de domaine dédié (chapitre 2).
 
-Note ce qui est chiffré : **le nom du fichier est dedans**. Les noms, l'arborescence, les extensions sont des métadonnées aussi sensibles que le contenu — un serveur qui lit `declaration-impots-2026.pdf` ou la structure d'un répertoire de projets en sait déjà beaucoup. Côté serveur, un manifeste n'a pour identité qu'un identifiant aléatoire opaque.
+Note ce qui est chiffré : **le nom du fichier est dedans**. Les noms, l'arborescence, les extensions sont des métadonnées aussi sensibles que le contenu : un serveur qui lit `declaration-impots-2026.pdf` ou la structure d'un répertoire de projets en sait déjà beaucoup. Côté serveur, un manifeste n'a pour identité qu'un identifiant aléatoire opaque.
 
-L'ordre des morceaux dans le manifeste est une donnée d'intégrité : il est _dans_ le blob authentifié. Un serveur qui voudrait servir les bons morceaux dans le mauvais ordre ne peut pas réécrire le manifeste pour le faire croire — on y reviendra au chapitre 4.
+L'ordre des morceaux dans le manifeste est une donnée d'intégrité : il est _dans_ le blob authentifié. Un serveur qui voudrait servir les bons morceaux dans le mauvais ordre ne peut pas réécrire le manifeste pour le faire croire. On y reviendra au chapitre 4.
 
 ## L'arborescence de Merkle chiffrée
 
-Reste la structure des dossiers. Le serveur ne devant rien en connaître, c'est un objet chiffré de plus : chaque dossier est un **objet d'arbre** (_tree object_) listant ses enfants — nom confidentiel, et référence vers un manifeste de fichier ou un sous-arbre. La racine référence tout : connaître la racine, c'est pouvoir reconstruire (avec les clés) l'état complet du coffre.
+Reste la structure des dossiers. Le serveur ne devant rien en connaître, c'est un objet chiffré de plus : chaque dossier est un **objet d'arbre** (_tree object_) listant ses enfants : nom confidentiel, et référence vers un manifeste de fichier ou un sous-arbre. La racine référence tout : connaître la racine, c'est pouvoir reconstruire (avec les clés) l'état complet du coffre.
 
 <MermaidDiagram
   client:visible
@@ -72,24 +72,24 @@ Reste la structure des dossiers. Le serveur ne devant rien en connaître, c'est 
   caption="L'arborescence de Merkle : la racine identifie l'état complet du coffre"
 />
 
-Cette structure — un graphe dirigé où chaque nœud référence ses enfants, comparable au modèle interne de git — a trois propriétés précieuses :
+Cette structure (un graphe dirigé où chaque nœud référence ses enfants, comparable au modèle interne de git) a trois propriétés précieuses :
 
 - **Modifications localisées.** Changer un fichier ne réécrit que son manifeste et la branche d'arbres qui y mène, pas l'ensemble.
 - **Instantanés gratuits.** Conserver une ancienne racine, c'est conserver une photographie complète et cohérente du coffre à un instant donné : le versionnage est un sous-produit de la structure.
-- **La synchronisation devient un diff.** Comparer deux racines suffit à savoir ce qui a changé entre deux états — fondation du client de synchronisation.
+- **La synchronisation devient un diff.** Comparer deux racines suffit à savoir ce qui a changé entre deux états : fondation du client de synchronisation.
 
-Un détail de robustesse au passage : les noms d'enfants sont **validés au scellement et à l'ouverture** des objets d'arbre — pas de nom vide, pas de `..`, pas de séparateurs de chemin, pas de doublons dans un même dossier. Un blob forgé contenant `../../quelque-chose` doit échouer à l'ouverture, _avant_ qu'un client ne matérialise quoi que ce soit sur un disque réel.
+Un détail de robustesse au passage : les noms d'enfants sont **validés au scellement et à l'ouverture** des objets d'arbre : pas de nom vide, pas de `..`, pas de séparateurs de chemin, pas de doublons dans un même dossier. Un blob forgé contenant `../../quelque-chose` doit échouer à l'ouverture, _avant_ qu'un client ne matérialise quoi que ce soit sur un disque réel.
 
 ## Plusieurs appareils, une seule racine
 
 Dernier problème, et il est beau : ton ordinateur portable et ta machine de bureau synchronisent en même temps. Chacun veut faire avancer la racine. Qui gagne ?
 
-La réponse tient en un mécanisme : le pointeur de racine, côté serveur, est versionné et ne se met à jour que par **compare-and-swap** (CAS) — « remplace la racine _seulement si_ elle est encore à la version N ». Le premier appareil réussit. Le second reçoit un refus, télécharge la nouvelle racine, **fusionne localement** — c'est lui qui a les clés, lui seul peut comparer les arborescences — puis retente avec la version à jour.
+La réponse tient en un mécanisme : le pointeur de racine, côté serveur, est versionné et ne se met à jour que par **compare-and-swap** (CAS) : « remplace la racine _seulement si_ elle est encore à la version N ». Le premier appareil réussit. Le second reçoit un refus, télécharge la nouvelle racine, **fusionne localement** (c'est lui qui a les clés, lui seul peut comparer les arborescences) puis retente avec la version à jour.
 
 <Callout kind="tip" title="Le serveur arbitre sans comprendre">
   C'est l'essence du design zero-knowledge : le pointeur de racine est l'unique point de
   sérialisation du système, et le serveur l'arbitre **sans rien comprendre** à ce qu'il ordonne.
-  Toute l'intelligence — diff, fusion, résolution de conflits — vit chez les clients, seuls
+  Toute l'intelligence (diff, fusion, résolution de conflits) vit chez les clients, seuls
   détenteurs des clés. Le serveur ne fournit qu'une primitive : l'ordre des écritures.
 </Callout>
 
@@ -110,7 +110,7 @@ Soyons honnêtes sur ce que le serveur _voit_ malgré tout : les tailles approxi
       ],
       answer: 1,
       explain:
-        "Avec des blocs fixes, insérer un octet décale toutes les frontières suivantes : tout change. Avec des frontières définies par le contenu, les morceaux non touchés gardent les mêmes frontières et les mêmes empreintes — c'est ce qui rend la synchronisation différentielle efficace.",
+        "Avec des blocs fixes, insérer un octet décale toutes les frontières suivantes : tout change. Avec des frontières définies par le contenu, les morceaux non touchés gardent les mêmes frontières et les mêmes empreintes : c'est ce qui rend la synchronisation différentielle efficace.",
     },
     {
       q: "Pourquoi l'adresse d'un morceau est-elle l'empreinte de son texte chiffré, et non de son texte clair ?",
@@ -122,7 +122,7 @@ Soyons honnêtes sur ce que le serveur _voit_ malgré tout : les tailles approxi
       ],
       answer: 1,
       explain:
-        "L'adresse est une métadonnée publique côté serveur. Si elle dérivait du contenu en clair, quiconque possède un fichier candidat pourrait calculer son adresse et tester si tu le détiens. L'empreinte du texte chiffré dépend d'une clé aléatoire : elle ne révèle rien — et permet quand même la vérification d'intégrité et l'idempotence.",
+        "L'adresse est une métadonnée publique côté serveur. Si elle dérivait du contenu en clair, quiconque possède un fichier candidat pourrait calculer son adresse et tester si tu le détiens. L'empreinte du texte chiffré dépend d'une clé aléatoire : elle ne révèle rien, et permet quand même la vérification d'intégrité et l'idempotence.",
     },
     {
       q: 'Pourquoi ce système refuse-t-il la déduplication entre utilisateurs ?',
@@ -146,16 +146,16 @@ Soyons honnêtes sur ce que le serveur _voit_ malgré tout : les tailles approxi
       ],
       answer: 1,
       explain:
-        "Le pointeur de racine est versionné : la mise à jour n'aboutit que si la version attendue est encore la version courante. Le perdant fusionne côté client — le serveur, sans clés, ne peut pas fusionner des arborescences qu'il ne sait pas lire. Il n'offre qu'une primitive : la sérialisation des écritures.",
+        "Le pointeur de racine est versionné : la mise à jour n'aboutit que si la version attendue est encore la version courante. Le perdant fusionne côté client : le serveur, sans clés, ne peut pas fusionner des arborescences qu'il ne sait pas lire. Il n'offre qu'une primitive : la sérialisation des écritures.",
     },
   ]}
 />
 
 ## Ce qu'il faut retenir
 
-- Le **découpage défini par le contenu** attache les frontières au contenu lui-même : les modifications locales n'invalident que les morceaux touchés — fondation de la synchronisation différentielle ; le pipeline reste **en flux**, un morceau en mémoire à la fois.
-- L'**adressage par contenu** (empreinte du texte _chiffré_) donne l'intégrité vérifiable sans clé, l'idempotence des transferts, et ne fuit rien — contrairement à une empreinte du clair.
+- Le **découpage défini par le contenu** attache les frontières au contenu lui-même : les modifications locales n'invalident que les morceaux touchés : fondation de la synchronisation différentielle ; le pipeline reste **en flux**, un morceau en mémoire à la fois.
+- L'**adressage par contenu** (empreinte du texte _chiffré_) donne l'intégrité vérifiable sans clé, l'idempotence des transferts, et ne fuit rien, contrairement à une empreinte du clair.
 - **Pas de déduplication inter-utilisateurs** : le chiffrement convergent expose aux attaques par confirmation ; la sécurité est payée en espace de stockage, explicitement.
 - Les **manifestes** et **objets d'arbre** chiffrent les métadonnées sensibles (noms, arborescence) ; les noms d'enfants sont validés à l'ouverture contre les blobs forgés (traversée de chemin, doublons).
-- L'**arborescence de Merkle** localise les modifications, offre des instantanés gratuits et réduit la synchronisation à un diff de racines ; la concurrence multi-appareils se règle par **compare-and-swap** sur la racine — le serveur sérialise sans comprendre.
+- L'**arborescence de Merkle** localise les modifications, offre des instantanés gratuits et réduit la synchronisation à un diff de racines ; la concurrence multi-appareils se règle par **compare-and-swap** sur la racine : le serveur sérialise sans comprendre.
 - Ce que le serveur voit malgré tout (tailles, horodatages, graphe de références) est **assumé et documenté**, pas nié.

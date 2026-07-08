@@ -11,48 +11,48 @@ import Callout from '../../../components/learning/Callout.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 
-We know how to encrypt a blob and bind it to its role. What remains is deciding **what to encrypt**: a 20 GiB file is not one blob — to resume an interrupted transfer, to re-upload only what changed, to avoid saturating memory, you must split. And once files are split into anonymous chunks, _something_ must remember the directory tree — without the server, which stores that something, being able to read it.
+We know how to encrypt a blob and bind it to its role. What remains is deciding **what to encrypt**: a 20 GiB file is not one blob: to resume an interrupted transfer, to re-upload only what changed, to avoid saturating memory, you must split. And once files are split into anonymous chunks, _something_ must remember the directory tree, without the server, which stores that something, being able to read it.
 
-By the end of this chapter, you will be able to explain content-defined chunking and its role in differential sync, justify addressing chunks by the digest of their ciphertext, argue the case against cross-user deduplication, and walk through an encrypted Merkle tree — including how concurrent writes from several devices get resolved.
+By the end of this chapter, you will be able to explain content-defined chunking and its role in differential sync, justify addressing chunks by the digest of their ciphertext, argue the case against cross-user deduplication, and walk through an encrypted Merkle tree, including how concurrent writes from several devices get resolved.
 
 ## Split where the content decides
 
-The naive approach cuts fixed-size blocks: 4 MiB, boundaries at multiples of 4 MiB. It has a fatal flaw for synchronization: **insert one byte at the start of a file, and every boundary shifts** — every block changes, everything must be re-uploaded.
+The naive approach cuts fixed-size blocks: 4 MiB, boundaries at multiples of 4 MiB. It has a fatal flaw for synchronization: **insert one byte at the start of a file, and every boundary shifts**: every block changes, everything must be re-uploaded.
 
-**Content-defined chunking** (the FastCDC algorithm) places boundaries where a rolling fingerprint of the local content hits a particular pattern. Boundaries are therefore _attached to the content_, not to positions: insert a byte at the start, and only the boundaries in the immediate neighborhood move — the following chunks, defined by their unchanged content, stay identical. Modifying 1 KB in the middle of a 2 GiB file only invalidates the chunk or chunks it touches.
+**Content-defined chunking** (the FastCDC algorithm) places boundaries where a rolling fingerprint of the local content hits a particular pattern. Boundaries are therefore _attached to the content_, not to positions: insert a byte at the start, and only the boundaries in the immediate neighborhood move: the following chunks, defined by their unchanged content, stay identical. Modifying 1 KB in the middle of a 2 GiB file only invalidates the chunk or chunks it touches.
 
-This is the foundation of **differential synchronization**: re-upload only the new chunks. Sizes are bounded (minimum, target, maximum — for instance 1, 4 and 16 MiB) to keep objects manageable, and the pipeline works **streaming**: one chunk in memory at a time, never the whole file — the condition for handling a 20 GiB video on an ordinary machine.
+This is the foundation of **differential synchronization**: re-upload only the new chunks. Sizes are bounded (minimum, target, maximum, for instance 1, 4 and 16 MiB) to keep objects manageable, and the pipeline works **streaming**: one chunk in memory at a time, never the whole file: the condition for handling a 20 GiB video on an ordinary machine.
 
 ## Content addressing
 
-Each chunk, once encrypted, gets its address: **the digest (hash) of its ciphertext**. That address — the _chunk id_ — is what the server knows: to it, the vault is just a collection of digest-addressed blobs. Three properties follow:
+Each chunk, once encrypted, gets its address: **the digest (hash) of its ciphertext**. That address (the _chunk id_) is what the server knows: to it, the vault is just a collection of digest-addressed blobs. Three properties follow:
 
-1. **Integrity is verifiable without a key.** On download, the client recomputes the digest of the received blob: if it differs from the requested address, the blob was altered or substituted — detected _before even attempting_ decryption.
+1. **Integrity is verifiable without a key.** On download, the client recomputes the digest of the received blob: if it differs from the requested address, the blob was altered or substituted: detected _before even attempting_ decryption.
 2. **Uploads are idempotent.** Sending the same blob twice writes the same thing at the same address: retry-on-error becomes trivial.
-3. **The server can verify without understanding.** It recomputes the digest of any received blob and rejects inconsistent writes — an integrity check that teaches it nothing about the content.
+3. **The server can verify without understanding.** It recomputes the digest of any received blob and rejects inconsistent writes: an integrity check that teaches it nothing about the content.
 
-Why the digest of the **ciphertext** and not the plaintext? Because the address is visible to the server: a plaintext digest would hand it a membership test ("does this user own this known file?"). The ciphertext digest — which depends on a random file key the server does not have — reveals nothing.
+Why the digest of the **ciphertext** and not the plaintext? Because the address is visible to the server: a plaintext digest would hand it a membership test ("does this user own this known file?"). The ciphertext digest (which depends on a random file key the server does not have) reveals nothing.
 
 <Callout kind="warn" title="Why refuse cross-user deduplication">
   If two users upload the same movie, could we store it once? That would require identical content
-  to produce identical ciphertext — *convergent encryption*, where the key derives from the content.
+  to produce identical ciphertext: *convergent encryption*, where the key derives from the content.
   But that scheme is vulnerable to **confirmation attacks**: anyone holding a candidate file can
   encrypt it the same way and check, via the address, whether someone else has it. For a vault, that
   is disqualifying. Our file keys are random: the same content under two users yields two unrelated
-  ciphertexts. Security is paid for in storage space here — an explicit, owned trade-off.
+  ciphertexts. Security is paid for in storage space here: an explicit, owned trade-off.
 </Callout>
 
 ## Manifests: the encrypted memory of files
 
 Chunks are anonymous; the **file manifest** is the object that ties them together. It contains the file name, its size, its modification date, the _ordered_ list of chunk addresses with their plaintext sizes, and the envelope of the file key. The entire manifest is encrypted under the account key, with its dedicated domain context (chapter 2).
 
-Note what is encrypted: **the file name is inside**. Names, directory structure, extensions are metadata as sensitive as the content — a server reading `tax-return-2026.pdf` or the layout of a projects directory already knows a lot. Server-side, a manifest's only identity is an opaque random identifier.
+Note what is encrypted: **the file name is inside**. Names, directory structure, extensions are metadata as sensitive as the content: a server reading `tax-return-2026.pdf` or the layout of a projects directory already knows a lot. Server-side, a manifest's only identity is an opaque random identifier.
 
-The order of chunks in the manifest is integrity data: it lives _inside_ the authenticated blob. A server wanting to serve the right chunks in the wrong order cannot rewrite the manifest to make it so — chapter 4 returns to this.
+The order of chunks in the manifest is integrity data: it lives _inside_ the authenticated blob. A server wanting to serve the right chunks in the wrong order cannot rewrite the manifest to make it so. Chapter 4 returns to this.
 
 ## The encrypted Merkle tree
 
-What remains is the directory structure. Since the server must know nothing about it, it is one more encrypted object: each directory is a **tree object** listing its children — confidential name, plus a reference to a file manifest or a subtree. The root references everything: knowing the root means being able to rebuild (with the keys) the complete state of the vault.
+What remains is the directory structure. Since the server must know nothing about it, it is one more encrypted object: each directory is a **tree object** listing its children: confidential name, plus a reference to a file manifest or a subtree. The root references everything: knowing the root means being able to rebuild (with the keys) the complete state of the vault.
 
 <MermaidDiagram
   client:visible
@@ -70,24 +70,24 @@ What remains is the directory structure. Since the server must know nothing abou
   caption="The Merkle tree: the root identifies the complete state of the vault"
 />
 
-This structure — a directed graph where each node references its children, comparable to git's internal model — has three precious properties:
+This structure (a directed graph where each node references its children, comparable to git's internal model) has three precious properties:
 
 - **Localized modifications.** Changing one file only rewrites its manifest and the branch of trees leading to it, not the whole structure.
 - **Free snapshots.** Keeping an old root means keeping a complete, consistent photograph of the vault at a point in time: versioning is a by-product of the structure.
-- **Synchronization becomes a diff.** Comparing two roots is enough to know what changed between two states — the foundation of a sync client.
+- **Synchronization becomes a diff.** Comparing two roots is enough to know what changed between two states: the foundation of a sync client.
 
-One robustness detail along the way: child names are **validated at sealing and at opening** of tree objects — no empty names, no `..`, no path separators, no duplicates within a directory. A forged blob containing `../../something` must fail at opening, _before_ any client materializes anything onto a real disk.
+One robustness detail along the way: child names are **validated at sealing and at opening** of tree objects: no empty names, no `..`, no path separators, no duplicates within a directory. A forged blob containing `../../something` must fail at opening, _before_ any client materializes anything onto a real disk.
 
 ## Several devices, one root
 
 Last problem, and it is a beautiful one: your laptop and your desktop sync at the same time. Each wants to advance the root. Who wins?
 
-The answer fits in one mechanism: the root pointer, server-side, is versioned and only updates through **compare-and-swap** (CAS) — "replace the root _only if_ it is still at version N". The first device succeeds. The second gets a rejection, downloads the new root, **merges locally** — it holds the keys, only it can compare the trees — then retries with the up-to-date version.
+The answer fits in one mechanism: the root pointer, server-side, is versioned and only updates through **compare-and-swap** (CAS): "replace the root _only if_ it is still at version N". The first device succeeds. The second gets a rejection, downloads the new root, **merges locally** (it holds the keys, only it can compare the trees) then retries with the up-to-date version.
 
 <Callout kind="tip" title="The server arbitrates without understanding">
   This is the essence of zero-knowledge design: the root pointer is the single serialization point
   of the system, and the server arbitrates it **while understanding nothing** of what it orders. All
-  the intelligence — diff, merge, conflict resolution — lives in the clients, sole holders of the
+  the intelligence (diff, merge, conflict resolution) lives in the clients, sole holders of the
   keys. The server provides one primitive only: the ordering of writes.
 </Callout>
 
@@ -108,7 +108,7 @@ Let's be honest about what the server _does_ see regardless: approximate blob si
       ],
       answer: 1,
       explain:
-        'With fixed blocks, inserting one byte shifts every following boundary: everything changes. With content-defined boundaries, untouched chunks keep the same boundaries and the same digests — which is what makes differential synchronization efficient.',
+        'With fixed blocks, inserting one byte shifts every following boundary: everything changes. With content-defined boundaries, untouched chunks keep the same boundaries and the same digests: which is what makes differential synchronization efficient.',
     },
     {
       q: 'Why is the address of a chunk the digest of its ciphertext, and not of its plaintext?',
@@ -120,7 +120,7 @@ Let's be honest about what the server _does_ see regardless: approximate blob si
       ],
       answer: 1,
       explain:
-        'The address is public metadata on the server side. If it derived from the cleartext content, anyone holding a candidate file could compute its address and test whether you have it. The ciphertext digest depends on a random key: it reveals nothing — while still enabling integrity verification and idempotence.',
+        'The address is public metadata on the server side. If it derived from the cleartext content, anyone holding a candidate file could compute its address and test whether you have it. The ciphertext digest depends on a random key: it reveals nothing, while still enabling integrity verification and idempotence.',
     },
     {
       q: 'Why does this system refuse deduplication across users?',
@@ -144,16 +144,16 @@ Let's be honest about what the server _does_ see regardless: approximate blob si
       ],
       answer: 1,
       explain:
-        'The root pointer is versioned: the update only goes through if the expected version is still current. The loser merges client-side — the server, without keys, cannot merge trees it cannot read. It offers a single primitive: write serialization.',
+        'The root pointer is versioned: the update only goes through if the expected version is still current. The loser merges client-side: the server, without keys, cannot merge trees it cannot read. It offers a single primitive: write serialization.',
     },
   ]}
 />
 
 ## Key takeaways
 
-- **Content-defined chunking** attaches boundaries to the content itself: local edits only invalidate the touched chunks — the foundation of differential sync; the pipeline stays **streaming**, one chunk in memory at a time.
-- **Content addressing** (digest of the _ciphertext_) provides key-less integrity verification and transfer idempotence, and leaks nothing — unlike a plaintext digest.
+- **Content-defined chunking** attaches boundaries to the content itself: local edits only invalidate the touched chunks: the foundation of differential sync; the pipeline stays **streaming**, one chunk in memory at a time.
+- **Content addressing** (digest of the _ciphertext_) provides key-less integrity verification and transfer idempotence, and leaks nothing, unlike a plaintext digest.
 - **No cross-user deduplication**: convergent encryption exposes confirmation attacks; security is paid for in storage space, explicitly.
 - **Manifests** and **tree objects** encrypt the sensitive metadata (names, structure); child names are validated at opening against forged blobs (path traversal, duplicates).
-- The **Merkle tree** localizes modifications, provides free snapshots and reduces synchronization to a root diff; multi-device concurrency is settled by **compare-and-swap** on the root — the server serializes without understanding.
+- The **Merkle tree** localizes modifications, provides free snapshots and reduces synchronization to a root diff; multi-device concurrency is settled by **compare-and-swap** on the root: the server serializes without understanding.
 - What the server still sees (sizes, timestamps, reference graph) is **accepted and documented**, not denied.

@@ -18,7 +18,7 @@ By the end of this chapter, you will be able to explain why end-to-end encryptio
 <Callout kind="info" title="Prerequisites and level">
 **What you need to know**: what symmetric encryption is (one key, a plaintext, a ciphertext), and the general idea of a hash function.
 
-**What you do not need to know**: the details of the primitives (AEAD, Argon2, BLAKE3) — they are introduced throughout the course by their role rather than their mathematics.
+**What you do not need to know**: the details of the primitives (AEAD, Argon2, BLAKE3): they are introduced throughout the course by their role rather than their mathematics.
 
 </Callout>
 
@@ -26,15 +26,15 @@ By the end of this chapter, you will be able to explain why end-to-end encryptio
 
 When a service stores your encrypted files, there are exactly two places the keys can live.
 
-**Model 1: server-side encryption.** The server encrypts your data at rest (on its disks) and in transit (TLS), but it holds the keys. The benefits are immediate: the server can generate previews, index content for full-text search, produce thumbnails, recover a forgotten password. The cost is just as immediate: the server — and whoever compromises it, administers it, or legally compels it — can read your files.
+**Model 1: server-side encryption.** The server encrypts your data at rest (on its disks) and in transit (TLS), but it holds the keys. The benefits are immediate: the server can generate previews, index content for full-text search, produce thumbnails, recover a forgotten password. The cost is just as immediate: the server (and whoever compromises it, administers it, or legally compels it) can read your files.
 
-**Model 2: end-to-end encryption (E2E), also called _zero-knowledge_.** The keys never leave your devices. The server only sees opaque blobs: it stores, it serves, it understands nothing. Even compromised top to bottom, it has nothing exploitable to offer. The cost: every feature that required reading the content must move client-side. Previews happen in the browser, search runs over an encrypted index, and a lost password cannot be "reset" by support — there is mathematically nothing to reset.
+**Model 2: end-to-end encryption (E2E), also called _zero-knowledge_.** The keys never leave your devices. The server only sees opaque blobs: it stores, it serves, it understands nothing. Even compromised top to bottom, it has nothing exploitable to offer. The cost: every feature that required reading the content must move client-side. Previews happen in the browser, search runs over an encrypted index, and a lost password cannot be "reset" by support: there is mathematically nothing to reset.
 
 <Callout kind="warn" title="An irreversible choice">
   Zero-knowledge is not a feature you add in v2: it is a decision that constrains the storage
   format, the protocol, and the design of every screen. Retrofitting E2E onto a system designed
   server-side means re-encrypting all the data and rewriting every feature that read content. Going
-  the other way — relaxing E2E into server-side — is trivial. Which is exactly why you choose E2E
+  the other way (relaxing E2E into server-side) is trivial. Which is exactly why you choose E2E
   before the first stored byte, or accept never having it.
 </Callout>
 
@@ -42,11 +42,11 @@ When a service stores your encrypted files, there are exactly two places the key
 
 Everything starts from a human secret: a passphrase. And immediately, two contradictory requirements appear.
 
-On one hand, the server must be able to **authenticate** the user: verify it is really you, to serve your blobs and not someone else's. It therefore needs _something_ derived from your passphrase. On the other hand, your passphrase must produce the **encryption key** for your data — and that one, the server must never see, or zero-knowledge collapses.
+On one hand, the server must be able to **authenticate** the user: verify it is really you, to serve your blobs and not someone else's. It therefore needs _something_ derived from your passphrase. On the other hand, your passphrase must produce the **encryption key** for your data, and that one, the server must never see, or zero-knowledge collapses.
 
 Sending the passphrase to the server for both purposes is disqualifying. The standard solution: a **domain-separated double derivation**. The passphrase goes once through an expensive key-derivation function (Argon2id), producing a pre-key. That pre-key is then stretched into two independent keys by a fast derivation with two distinct contexts:
 
-- an **auth key**, sent to the server — which re-hashes it before storing it, like a classic password;
+- an **auth key**, sent to the server, which re-hashes it before storing it, like a classic password;
 - a **master key**, which never leaves the client.
 
 The two keys are cryptographically independent: knowing one tells you nothing about the other. The server authenticates without being able to decrypt.
@@ -60,7 +60,7 @@ The two keys are cryptographically independent: knowing one tells you nothing ab
 
 ## The envelope hierarchy
 
-Could we encrypt all files directly with the master key? Yes, and it would be a mistake. The day you change your passphrase, the master key changes — and you would need to re-encrypt terabytes. The remedy is a great classic: **envelope encryption**. Each key encrypts only one other key, and only the last one encrypts data.
+Could we encrypt all files directly with the master key? Yes, and it would be a mistake. The day you change your passphrase, the master key changes, and you would need to re-encrypt terabytes. The remedy is a great classic: **envelope encryption**. Each key encrypts only one other key, and only the last one encrypts data.
 
 <MermaidDiagram
   client:visible
@@ -79,12 +79,12 @@ Could we encrypt all files directly with the master key? Yes, and it would be a 
 
 Let's detail the levels, because each answers a precise problem.
 
-- **The account key** is random — it derives from nothing. It is stored on the server, encrypted under the master key. Changing your passphrase means re-encrypting that single envelope: 32 bytes, not terabytes. That is the whole value of the indirection.
-- **The file keys** are random too, one per file, each stored encrypted under the account key, inside the file's metadata. Two identical files have different keys — chapter 3 explains why that is a security property, not waste.
+- **The account key** is random: it derives from nothing. It is stored on the server, encrypted under the master key. Changing your passphrase means re-encrypting that single envelope: 32 bytes, not terabytes. That is the whole value of the indirection.
+- **The file keys** are random too, one per file, each stored encrypted under the account key, inside the file's metadata. Two identical files have different keys: chapter 3 explains why that is a security property, not waste.
 - **The recovery key** is a second envelope of the account key. Generated at registration, displayed exactly once as a transcribable (and printable) code, it is the only safety net if the passphrase is lost.
 
 <Callout kind="tip" title="The recovery kit is not optional">
-  In a zero-knowledge system, losing the passphrase without a recovery kit means losing the data —
+  In a zero-knowledge system, losing the passphrase without a recovery kit means losing the data,
   and it is *provable*: the server holds nothing that could recover it. This is the UX detail that
   separates a usable product from a data trap. Technically, it is a second envelope of the account
   key: planned into the initial format, its implementation cost is near zero.
@@ -94,7 +94,7 @@ Let's detail the levels, because each answers a precise problem.
 
 Here is the subtlety that separates a correct design from a design that _looks_ correct. The Argon2id parameters (memory, iterations, salt) are stored server-side: the client needs them to re-derive the same keys at every login. So, at login time, **the server announces the parameters to the client**.
 
-Do you see the attack? A compromised server replies: "your parameters are 8 MiB of memory, 1 iteration". The client obeys, derives with those weak parameters, and sends the corresponding auth key. The server now holds a hash derived through a function that is _trivial_ to attack: offline brute force on the passphrase becomes practical again, and with it the reconstruction of the master key. The entire zero-knowledge guarantee rests on the strength of the derivation — and the server just disabled it remotely.
+Do you see the attack? A compromised server replies: "your parameters are 8 MiB of memory, 1 iteration". The client obeys, derives with those weak parameters, and sends the corresponding auth key. The server now holds a hash derived through a function that is _trivial_ to attack: offline brute force on the passphrase becomes practical again, and with it the reconstruction of the master key. The entire zero-knowledge guarantee rests on the strength of the derivation, and the server just disabled it remotely.
 
 The defense is simple and must live _client-side_: a **validation floor**. The client refuses any derivation whose parameters fall below a hard-coded minimum (for instance the OWASP baseline for Argon2id: 19 MiB, 2 iterations). Weak parameters do not produce a weak derivation: they produce an error.
 
@@ -139,7 +139,7 @@ This is a general reasoning pattern worth keeping: **in a protocol where an untr
       ],
       answer: 2,
       explain:
-        'The account key is random and does not derive from the passphrase: it is simply stored encrypted under the master key. Changing the passphrase changes the master key, so only that single envelope is re-encrypted — the terabytes encrypted under file keys do not move.',
+        'The account key is random and does not derive from the passphrase: it is simply stored encrypted under the master key. Changing the passphrase changes the master key, so only that single envelope is re-encrypted: the terabytes encrypted under file keys do not move.',
     },
     {
       q: 'A compromised server announces very weak Argon2id parameters to the client at login. What is the correct defense?',
@@ -161,5 +161,5 @@ This is a general reasoning pattern worth keeping: **in a protocol where an untr
 - Two trust models: **server-side** (easy features, server = single point of compromise) and **zero-knowledge** (the server only sees blobs; all the intelligence moves client-side). The choice is **irreversible** in practice: it is made before the first stored byte.
 - The **domain-separated double derivation** splits what the server must know (auth key) from what it must never see (master key), from a single passphrase run through Argon2id.
 - The **envelope hierarchy** (master → account → file → data) localizes every change: new passphrase = 32 re-encrypted bytes; one key per file = isolation between files.
-- The **recovery kit** is a second envelope of the account key — indispensable, because without it, losing the passphrase is a mathematically unrecoverable data loss.
+- The **recovery kit** is a second envelope of the account key, indispensable, because without it, losing the passphrase is a mathematically unrecoverable data loss.
 - When an **untrusted party supplies security parameters**, the other party enforces a **floor**: without a client-side KDF floor, a compromised server can make the passphrase brute-forceable remotely.

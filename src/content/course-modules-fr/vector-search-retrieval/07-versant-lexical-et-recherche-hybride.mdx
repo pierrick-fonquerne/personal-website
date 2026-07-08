@@ -57,7 +57,7 @@ Avant de compter, on découpe le texte en tokens et on les normalise : minuscule
 
 ## Le piège de la fusion
 
-On sait maintenant produire deux scores pour un même document : un score lexical BM25, et un score sémantique par <Term slug="similarite-cosinus">similarité cosinus</Term> (celui du chapitre 1). La tentation est immédiate : additionnons-les, et le meilleur des deux mondes émergera.
+On sait maintenant produire deux scores pour un même document : un score lexical BM25, et un score sémantique par similarité cosinus (celui du chapitre 1). La tentation est immédiate : additionnons-les, et le meilleur des deux mondes émergera.
 
 C'est un piège, et il est subtil. Les deux scores ne vivent pas sur la même échelle. La similarité cosinus est bornée dans $[0, 1]$. BM25, lui, n'est pas borné : il grandit avec la rareté des termes et leur nombre, et atteint couramment des valeurs de 2, 10, 15. Additionner $0{,}9$ (un excellent cosinus) avec $14$ (un fort BM25) donne $14{,}9$ : le cosinus est noyé, il ne pèse plus rien. La somme naïve ne fusionne pas deux signaux, elle laisse le plus bruyant écraser l'autre. En pratique, elle se comporte presque comme une recherche purement lexicale déguisée.
 

@@ -27,8 +27,8 @@ const JOB_TITLE: Record<Locale, string> = {
 };
 
 const PERSON_DESCRIPTION: Record<Locale, string> = {
-  fr: 'Développeur full-stack — .NET, Rust, TypeScript. Cours interactifs et recherche en informatique.',
-  en: 'Full-stack developer — .NET, Rust, TypeScript. Interactive courses and computer science research.',
+  fr: 'Développeur full-stack : .NET, Rust, TypeScript. Cours interactifs et recherche en informatique.',
+  en: 'Full-stack developer: .NET, Rust, TypeScript. Interactive courses and computer science research.',
 };
 
 const KNOWS_ABOUT: readonly string[] = [
