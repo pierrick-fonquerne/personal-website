@@ -25,6 +25,14 @@ interface Props {
   current?: string;
   locale?: Locale;
   schema?: readonly Thing[];
+  /**
+   * Explicit alternate-locale path map, keyed by locale. Pages whose slug
+   * differs between languages (notably interactive course chapters) must
+   * provide this so hreflang alternates point to the real translated URL
+   * instead of a naive path copy. Falls back to switchLocalePath when
+   * absent (static pages, where the path is identical across locales).
+   */
+  alternatePaths?: Partial<Record<Locale, string>>;
 }
 
 const {
@@ -34,11 +42,15 @@ const {
   current,
   locale = getLocaleFromUrl(Astro.url),
   schema = [],
+  alternatePaths,
 } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site).toString();
 const t = useTranslations(locale);
 const resolvedDescription = description ?? t.meta.description;
+
+const alternatePathFor = (target: Locale): string =>
+  alternatePaths?.[target] ?? switchLocalePath(Astro.url.pathname, locale, target);
 ---
 
 <!doctype html>
@@ -59,17 +71,13 @@ const resolvedDescription = description ?? t.meta.description;
 
     {
       LOCALES.map((l) => (
-        <link
-          rel="alternate"
-          hreflang={l}
-          href={new URL(switchLocalePath(Astro.url.pathname, locale, l), Astro.site).toString()}
-        />
+        <link rel="alternate" hreflang={l} href={new URL(alternatePathFor(l), Astro.site).toString()} />
       ))
     }
     <link
       rel="alternate"
       hreflang="x-default"
-      href={new URL(switchLocalePath(Astro.url.pathname, locale, 'en'), Astro.site).toString()}
+      href={new URL(alternatePathFor('en'), Astro.site).toString()}
     />
     <link
       rel="alternate"

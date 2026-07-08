@@ -12,7 +12,7 @@ import {
   moduleSlugOf,
   neighbors,
 } from '../../../../lib/courses';
-import { localizedPath, useTranslations } from '../../../../lib/i18n';
+import { localizedPath, resolveAlternatePaths, useTranslations } from '../../../../lib/i18n';
 import { buildBreadcrumb, buildLearningResourceNode } from '../../../../lib/seo';
 
 export async function getStaticPaths() {
@@ -53,6 +53,7 @@ const sidebarModules = modules.map((m) => ({
 
 const coursePath = localizedPath(`/interactive-courses/${courseSlug}`, locale);
 const modulePath = localizedPath(`/interactive-courses/${courseSlug}/${moduleSlug}`, locale);
+const alternatePaths = await resolveAlternatePaths(Astro.url.pathname, locale);
 const schema = [
   buildLearningResourceNode({
     locale,
@@ -75,6 +76,7 @@ const schema = [
   current="/interactive-courses"
   locale={locale}
   schema={schema}
+  alternatePaths={alternatePaths}
 >
   <div class="container-page">
     <div class="lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-12">
