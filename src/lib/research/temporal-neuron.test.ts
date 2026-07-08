@@ -19,7 +19,7 @@ function stimulusOf(a: readonly number[], b: readonly number[], label = true): R
 }
 
 describe('createLifNeuron', () => {
-  it('reste a zero tant qu aucun courant n est injecte', () => {
+  it('stays at zero as long as no current has been injected', () => {
     const config: LifConfig = {
       tauMs: 10,
       threshold: 0.5,
@@ -34,7 +34,7 @@ describe('createLifNeuron', () => {
     expect(trace.potential?.slice(0, 9)).toEqual(new Array(9).fill(0));
   });
 
-  it('monte le potentiel a l arrivee du courant puis declenche des que le seuil est atteint', () => {
+  it('raises the potential when the current arrives then fires as soon as the threshold is reached', () => {
     const config: LifConfig = {
       tauMs: 10,
       threshold: 0.5,
@@ -47,11 +47,11 @@ describe('createLifNeuron', () => {
     const stimulus = stimulusOf([5], []);
     const trace = neuron.run(stimulus, 0.5, 20);
     expect(trace.fired).toBe(true);
-    // t=5ms au pas dt=0.5 correspond a l index 10.
+    // t=5ms at step dt=0.5 corresponds to index 10.
     expect(trace.potential?.[10]).toBeCloseTo(0, 10);
   });
 
-  it('reinitialise le potentiel a 0 immediatement apres un spike (reset)', () => {
+  it('resets the potential to 0 immediately after a spike (reset)', () => {
     const config: LifConfig = {
       tauMs: 10,
       threshold: 0.3,
@@ -65,11 +65,11 @@ describe('createLifNeuron', () => {
     const trace = neuron.run(stimulus, 0.5, 20);
     expect(trace.fired).toBe(true);
     expect(trace.potential?.[10]).toBe(0);
-    // Sans nouveau courant, le potentiel reste a 0 apres le reset.
+    // Without new current, the potential stays at 0 after the reset.
     expect(trace.potential?.[11]).toBe(0);
   });
 
-  it('fuit exponentiellement le potentiel en l absence de nouveau stimulus', () => {
+  it('leaks the potential exponentially in the absence of a new stimulus', () => {
     const config: LifConfig = {
       tauMs: 10,
       threshold: 100,
@@ -88,7 +88,7 @@ describe('createLifNeuron', () => {
     expect(trace.fired).toBe(false);
   });
 
-  it('applique un delai independant par ligne (delayAMs)', () => {
+  it('applies an independent delay per line (delayAMs)', () => {
     const config: LifConfig = {
       tauMs: 1000,
       threshold: 100,
@@ -100,12 +100,12 @@ describe('createLifNeuron', () => {
     const neuron = createLifNeuron(config);
     const stimulus = stimulusOf([5], []);
     const trace = neuron.run(stimulus, 0.5, 20);
-    // t=5ms + delai 3ms = 8ms, soit l index 16 au pas 0.5.
+    // t=5ms + delay 3ms = 8ms, i.e. index 16 at step 0.5.
     expect(trace.potential?.slice(0, 16)).toEqual(new Array(16).fill(0));
     expect(trace.potential?.[16]).toBeCloseTo(1, 10);
   });
 
-  it('applique un delai independant par ligne (delayBMs)', () => {
+  it('applies an independent delay per line (delayBMs)', () => {
     const config: LifConfig = {
       tauMs: 1000,
       threshold: 100,
@@ -117,12 +117,12 @@ describe('createLifNeuron', () => {
     const neuron = createLifNeuron(config);
     const stimulus = stimulusOf([], [5]);
     const trace = neuron.run(stimulus, 0.5, 20);
-    // t=5ms + delai 4ms = 9ms, soit l index 18 au pas 0.5.
+    // t=5ms + delay 4ms = 9ms, i.e. index 18 at step 0.5.
     expect(trace.potential?.slice(0, 18)).toEqual(new Array(18).fill(0));
     expect(trace.potential?.[18]).toBeCloseTo(1, 10);
   });
 
-  it('additionne les courants des deux lignes quand elles coincident (integration)', () => {
+  it('sums the currents of both lines when they coincide (integration)', () => {
     const config: LifConfig = {
       tauMs: 1000,
       threshold: 100,
@@ -137,7 +137,7 @@ describe('createLifNeuron', () => {
     expect(trace.potential?.[10]).toBeCloseTo(0.8, 10);
   });
 
-  it('additionne deux impulsions de la meme ligne tombant dans le meme pas discretise', () => {
+  it('sums two pulses on the same line landing in the same discretized step', () => {
     const config: LifConfig = {
       tauMs: 1000,
       threshold: 100,
@@ -147,26 +147,26 @@ describe('createLifNeuron', () => {
       delayBMs: 0,
     };
     const neuron = createLifNeuron(config);
-    // Avec dt=2, stepOf(5.9)=stepOf(6.1)=3 : les deux impulsions tombent dans le meme pas.
+    // With dt=2, stepOf(5.9)=stepOf(6.1)=3: both pulses land in the same step.
     const stimulus = stimulusOf([5.9, 6.1], []);
     const trace = neuron.run(stimulus, 2, 20);
     expect(trace.potential?.[3]).toBeCloseTo(0.6, 10);
   });
 
-  it('ne declenche jamais sur un stimulus vide', () => {
+  it('never fires on an empty stimulus', () => {
     const neuron = createLifNeuron(TUNED_LIF.T1);
     const trace = neuron.run(stimulusOf([], []), DEFAULT_SIMULATION.dtMs, DEFAULT_SIMULATION.durationMs);
     expect(trace.fired).toBe(false);
     expect(trace.potential?.every((v) => v === 0)).toBe(true);
   });
 
-  it('renvoie une trace de potentiel de longueur steps + 1', () => {
+  it('returns a potential trace of length steps + 1', () => {
     const neuron = createLifNeuron(TUNED_LIF.T0);
     const trace = neuron.run(stimulusOf([10], [11]), 0.5, 50);
     expect(trace.potential).toHaveLength(101);
   });
 
-  it('peut decharger plusieurs fois sur la duree de simulation (fired reste vrai)', () => {
+  it('can fire multiple times over the simulation duration (fired stays true)', () => {
     const config: LifConfig = {
       tauMs: 1,
       threshold: 0.5,
@@ -179,14 +179,14 @@ describe('createLifNeuron', () => {
     const stimulus = stimulusOf([5, 30], []);
     const trace = neuron.run(stimulus, 0.5, 40);
     expect(trace.fired).toBe(true);
-    // Chaque impulsion declenche son propre reset a 0.
+    // Each pulse triggers its own reset to 0.
     expect(trace.potential?.[10]).toBe(0);
     expect(trace.potential?.[60]).toBe(0);
   });
 });
 
 describe('evaluate', () => {
-  it('calcule l exactitude sur une batterie de stimuli', () => {
+  it('computes accuracy over a battery of stimuli', () => {
     const stateless = createStatelessUnit({ threshold: 2 });
     const result = evaluate(stateless, 'T0', 20, 0.8);
     expect(result.accuracy).toBeGreaterThanOrEqual(0);
@@ -195,13 +195,13 @@ describe('evaluate', () => {
     expect(result.task).toBe('T0');
   });
 
-  it('marque solved a vrai quand l exactitude atteint le critere', () => {
+  it('marks solved as true when accuracy reaches the criterion', () => {
     const stateless = createStatelessUnit({ threshold: 2 });
     const result = evaluate(stateless, 'T0', 50, 0.8);
     expect(result.solved).toBe(result.accuracy >= 0.8);
   });
 
-  it('ne renvoie jamais NaN quand le nombre d essais vaut 0', () => {
+  it('never returns NaN when the trial count is 0', () => {
     const stateless = createStatelessUnit({ threshold: 2 });
     const result = evaluate(stateless, 'T0', 0, 0.8);
     expect(result.accuracy).not.toBeNaN();
@@ -215,7 +215,7 @@ describe('checkRefutation', () => {
     return { task, unit, accuracy: solved ? 0.95 : 0.5, solved };
   }
 
-  it('tient H1 quand le neurone a etat resout T1 et T2 et le sans etat aucun des deux', () => {
+  it('holds H1 when the stateful neuron solves T1 and T2 and the stateless unit solves neither', () => {
     const verdict = checkRefutation([
       resultOf('stateless', 'T1', false),
       resultOf('stateless', 'T2', false),
@@ -225,7 +225,7 @@ describe('checkRefutation', () => {
     expect(verdict.h1Holds).toBe(true);
   });
 
-  it('refute H1 des qu une unite sans etat resout T1', () => {
+  it('refutes H1 as soon as a stateless unit solves T1', () => {
     const verdict = checkRefutation([
       resultOf('stateless', 'T1', true),
       resultOf('stateless', 'T2', false),
@@ -236,7 +236,7 @@ describe('checkRefutation', () => {
     expect(verdict.reason).toContain('T1');
   });
 
-  it('refute H1 des qu une unite sans etat resout T2', () => {
+  it('refutes H1 as soon as a stateless unit solves T2', () => {
     const verdict = checkRefutation([
       resultOf('stateless', 'T1', false),
       resultOf('stateless', 'T2', true),
@@ -247,7 +247,7 @@ describe('checkRefutation', () => {
     expect(verdict.reason).toContain('T2');
   });
 
-  it('ne tient pas H1 si l unite a etat ne resout pas les deux taches temporelles', () => {
+  it('does not hold H1 if the stateful unit does not solve both temporal tasks', () => {
     const verdict = checkRefutation([
       resultOf('stateless', 'T1', false),
       resultOf('stateless', 'T2', false),
@@ -257,14 +257,14 @@ describe('checkRefutation', () => {
     expect(verdict.h1Holds).toBe(false);
   });
 
-  it('ne tient pas H1 sur une liste de resultats vide', () => {
+  it('does not hold H1 on an empty result list', () => {
     const verdict = checkRefutation([]);
     expect(verdict.h1Holds).toBe(false);
   });
 });
 
-describe('scenario de refutation publie (page /research/neurone-a-etat)', () => {
-  it('reproduit le verdict affiche par TemporalIntegrationLab : H1 tenue', () => {
+describe('published refutation scenario (page /research/neurone-a-etat)', () => {
+  it('reproduces the verdict shown by TemporalIntegrationLab: H1 holds', () => {
     const trials = 100;
     const criterion = 0.8;
     const stateless = createStatelessUnit({ threshold: 2 });
@@ -285,13 +285,13 @@ describe('scenario de refutation publie (page /research/neurone-a-etat)', () => 
     expect(verdict.h1Holds).toBe(true);
   });
 
-  it('le neurone sans etat reussit T0, la tache controle de simultaneite', () => {
+  it('the stateless neuron succeeds at T0, the simultaneity control task', () => {
     const stateless = createStatelessUnit({ threshold: 2 });
     const result = evaluate(stateless, 'T0', 100, 0.8);
     expect(result.solved).toBe(true);
   });
 
-  it('expectedLabel et generateStimuli restent coherents avec les fenetres de TASK_META', () => {
+  it('expectedLabel and generateStimuli remain consistent with the TASK_META windows', () => {
     const stimuli = generateStimuli('T1', 40, 12345);
     for (const stimulus of stimuli) {
       const label = expectedLabel('T1', stimulus);
