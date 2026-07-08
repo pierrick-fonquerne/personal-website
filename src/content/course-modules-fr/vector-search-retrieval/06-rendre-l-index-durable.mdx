@@ -189,7 +189,7 @@ $$
 Un index en mémoire ne devient durable qu'écrit sur disque, et l'écrire naïvement par-dessus l'ancien fichier l'expose à l'écriture partielle, une corruption silencieuse qu'on neutralise par l'atomicité (écrire à côté puis renommer d'un coup, ou n'ajouter qu'en fin de journal) ; et comme au chapitre 5, seul un oracle de round-trip octet pour octet, et non un simple contrôle logique, garantit que ce qu'on relit est exactement ce qu'on avait en mémoire.
 
 <Quiz
-  client:load
+  client:visible
   questions={[
     {
       q: "Pourquoi une écriture partielle est-elle plus dangereuse qu'une simple perte de données ?",

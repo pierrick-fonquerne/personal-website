@@ -2,6 +2,7 @@
 import ChapterToolbar from './ChapterToolbar';
 import ChapterAudioPlayer from './ChapterAudioPlayer';
 import MathZoom from './MathZoom.astro';
+import MathStyles from './MathStyles.astro';
 import CodeCopy from './CodeCopy.astro';
 import TermSheet from './TermSheet.astro';
 import ReadingPosition from './ReadingPosition.astro';
@@ -22,6 +23,15 @@ interface Props {
 const { badge, title, subtitle, locale, courseSlug, courseTitle, moduleSlug, nextHref, nextTitle } =
   Astro.props;
 const t = useTranslations(locale);
+
+const chapterContent = await Astro.slots.render('default');
+// Cheap string search rather than parsing the rendered HTML: rehype-katex
+// always wraps its output in an element carrying class="katex", so this is
+// a reliable signal in practice. It would however also match if that exact
+// string ever appeared in a code sample or as literal chapter text, loading
+// the stylesheet needlessly in that rare case (a false positive, never a
+// false negative for real formulas).
+const hasMath = chapterContent.includes('class="katex"');
 
 const audioLabels = {
   listen: t.toolbar.listen,
@@ -50,6 +60,12 @@ const audioLabels = {
 };
 ---
 
+{
+  /* Rendered before the article, not after: the KaTeX stylesheet must reach
+    the browser ahead of the .katex markup below, otherwise formulas paint
+    unstyled for a moment (flash of unstyled math). */
+}
+{hasMath && <MathStyles />}
 <article class="min-w-0 pt-6 pb-12 lg:pt-12">
   <header class="mb-10">
     <span
@@ -86,9 +102,7 @@ const audioLabels = {
       nextTitle={nextTitle}
     />
   </div>
-  <div id="chapter-content" class="prose-module">
-    <slot />
-  </div>
+  <div id="chapter-content" class="prose-module" set:html={chapterContent} />
 </article>
 <MathZoom zoomLabel={t.a11y.zoomEquation} closeLabel={t.a11y.closeZoom} />
 <CodeCopy copyLabel={t.a11y.copyCode} copiedLabel={t.a11y.copiedCode} />
