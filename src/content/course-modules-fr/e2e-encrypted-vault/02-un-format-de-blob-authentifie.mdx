@@ -11,24 +11,24 @@ import Callout from '../../../components/learning/Callout.astro';
 import Quiz from '../../../components/learning/Quiz.tsx';
 import MermaidDiagram from '../../../components/learning/MermaidDiagram.tsx';
 
-Le chapitre 1 a posé qui détient quelles clés. Celui-ci décide **à quoi ressemble un octet chiffré sur le disque du serveur**. C'est un exercice de conception de format — et un format de stockage se fige vite : le premier blob écrit en production devra rester déchiffrable dans dix ans. Chaque décision prise ici est un engagement quasi permanent.
+Le chapitre 1 a posé qui détient quelles clés. Celui-ci décide **à quoi ressemble un octet chiffré sur le disque du serveur**. C'est un exercice de conception de format, et un format de stockage se fige vite : le premier blob écrit en production devra rester déchiffrable dans dix ans. Chaque décision prise ici est un engagement quasi permanent.
 
 À la fin de ce chapitre, tu sauras lire la structure d'un blob chiffré, expliquer pourquoi l'en-tête en clair doit quand même être authentifié, et utiliser la séparation de domaines pour qu'un blob ne puisse jamais être rejoué dans un autre rôle.
 
 ## L'AEAD : chiffrer ne suffit pas
 
-Le chiffrement seul garantit la **confidentialité** : sans la clé, le contenu est illisible. Il ne garantit pas l'**intégrité** : un attaquant qui ne peut pas lire peut quand même _modifier_ — inverser des bits du texte chiffré et observer ce que le déchiffrement produit. Les attaques les plus célèbres de l'histoire récente (oracles de padding, bit-flipping sur les modes non authentifiés) exploitent exactement cet écart.
+Le chiffrement seul garantit la **confidentialité** : sans la clé, le contenu est illisible. Il ne garantit pas l'**intégrité** : un attaquant qui ne peut pas lire peut quand même _modifier_ : inverser des bits du texte chiffré et observer ce que le déchiffrement produit. Les attaques les plus célèbres de l'histoire récente (oracles de padding, bit-flipping sur les modes non authentifiés) exploitent exactement cet écart.
 
-La réponse moderne est l'**AEAD** : _Authenticated Encryption with Associated Data_. Une primitive AEAD produit, en plus du texte chiffré, un **tag d'authentification** : au déchiffrement, la moindre modification du texte chiffré invalide le tag et le déchiffrement échoue — proprement, sans rien révéler. Le « AD » de AEAD est tout aussi important : des **données associées** (_additional authenticated data_, AAD) peuvent être liées au blob sans être chiffrées. Elles ne sont pas secrètes, mais elles sont couvertes par le tag : si elles diffèrent entre chiffrement et déchiffrement, l'ouverture échoue. Retiens cette intuition : **l'AAD lie un texte chiffré à son contexte d'usage**.
+La réponse moderne est l'**AEAD** : _Authenticated Encryption with Associated Data_. Une primitive AEAD produit, en plus du texte chiffré, un **tag d'authentification** : au déchiffrement, la moindre modification du texte chiffré invalide le tag et le déchiffrement échoue, proprement, sans rien révéler. Le « AD » de AEAD est tout aussi important : des **données associées** (_additional authenticated data_, AAD) peuvent être liées au blob sans être chiffrées. Elles ne sont pas secrètes, mais elles sont couvertes par le tag : si elles diffèrent entre chiffrement et déchiffrement, l'ouverture échoue. Retiens cette intuition : **l'AAD lie un texte chiffré à son contexte d'usage**.
 
 Notre choix de primitive : **XChaCha20-Poly1305**. Deux raisons précises :
 
-1. **Des nonces de 192 bits.** Un nonce (_number used once_) ne doit jamais être réutilisé avec la même clé — c'est catastrophique pour ces constructions. Avec 192 bits, on peut tirer chaque nonce au hasard : la probabilité de collision est négligeable à toute échelle réaliste. Les variantes à nonce court (96 bits) imposent des compteurs synchronisés, fragiles dans un système distribué.
-2. **Un temps d'exécution constant partout.** ChaCha20 ne repose pas sur des tables en mémoire : pas de fuite par canal temporel, même compilé en WebAssembly dans un navigateur — là où les implémentations logicielles d'AES sont notoirement délicates. Or notre client web exécutera précisément cette crypto en WASM.
+1. **Des nonces de 192 bits.** Un nonce (_number used once_) ne doit jamais être réutilisé avec la même clé : c'est catastrophique pour ces constructions. Avec 192 bits, on peut tirer chaque nonce au hasard : la probabilité de collision est négligeable à toute échelle réaliste. Les variantes à nonce court (96 bits) imposent des compteurs synchronisés, fragiles dans un système distribué.
+2. **Un temps d'exécution constant partout.** ChaCha20 ne repose pas sur des tables en mémoire : pas de fuite par canal temporel, même compilé en WebAssembly dans un navigateur, là où les implémentations logicielles d'AES sont notoirement délicates. Or notre client web exécutera précisément cette crypto en WASM.
 
 ## La structure d'un blob
 
-Chaque objet chiffré du système — morceau de fichier, métadonnées, enveloppe de clé — partage la même structure :
+Chaque objet chiffré du système (morceau de fichier, métadonnées, enveloppe de clé) partage la même structure :
 
 <MermaidDiagram
   client:visible
@@ -40,29 +40,29 @@ Chaque objet chiffré du système — morceau de fichier, métadonnées, envelop
   caption="Le format de blob : version, nonce, puis la charge utile authentifiée"
 />
 
-Le **nonce** est en clair par nécessité : il faut le lire pour déchiffrer, et il n'est pas secret — son unicité compte, pas sa confidentialité. L'octet de **version** est en clair pour une autre raison, plus profonde : la **crypto-agilité**. Le jour où une primitive doit être remplacée (faiblesse découverte, migration post-quantique), les nouveaux blobs porteront une version 2 — et le client doit lire la version _avant_ de savoir comment déchiffrer le reste. Un format sans octet de version est un format qu'on ne peut faire évoluer qu'en cassant tout.
+Le **nonce** est en clair par nécessité : il faut le lire pour déchiffrer, et il n'est pas secret : son unicité compte, pas sa confidentialité. L'octet de **version** est en clair pour une autre raison, plus profonde : la **crypto-agilité**. Le jour où une primitive doit être remplacée (faiblesse découverte, migration post-quantique), les nouveaux blobs porteront une version 2, et le client doit lire la version _avant_ de savoir comment déchiffrer le reste. Un format sans octet de version est un format qu'on ne peut faire évoluer qu'en cassant tout.
 
 ## L'en-tête en clair doit être authentifié
 
 Voici le piège le plus subtil du chapitre. L'octet de version est en clair, _en dehors_ du texte chiffré. Le tag AEAD couvre le texte chiffré… mais qui couvre l'octet de version ?
 
-Personne, si l'on n'y prend garde. Un attaquant — le serveur, typiquement — pourrait alors modifier cet octet sans invalider le tag. Aujourd'hui, avec une seule version, l'effet est nul. Mais dans un futur système à deux versions, basculer l'étiquette d'un blob v2 vers v1 enverrait le déchiffreur dans la mauvaise logique de parsing : une **confusion inter-versions**, terrain de chasse classique des attaques sur les formats.
+Personne, si l'on n'y prend garde. Un attaquant (le serveur, typiquement) pourrait alors modifier cet octet sans invalider le tag. Aujourd'hui, avec une seule version, l'effet est nul. Mais dans un futur système à deux versions, basculer l'étiquette d'un blob v2 vers v1 enverrait le déchiffreur dans la mauvaise logique de parsing : une **confusion inter-versions**, terrain de chasse classique des attaques sur les formats.
 
 La parade coûte zéro octet : **replier l'en-tête dans l'AAD**. Au chiffrement comme au déchiffrement, l'AAD effective est la concaténation de l'octet de version et du contexte applicatif. L'octet de version reste lisible en clair, mais le modifier invalide le tag : l'en-tête est en clair _et_ authentifié.
 
 <Callout kind="warn" title="Authentifie tout ce que tu parses">
   Règle générale de conception de formats cryptographiques : **tout champ que le déchiffreur lit et
   interprète doit être couvert par le tag**, qu'il soit chiffré ou non. La majorité des failles de
-  formats viennent de champs de contrôle — versions, longueurs, types — laissés hors de
+  formats viennent de champs de contrôle (versions, longueurs, types) laissés hors de
   l'authentification. Et ce genre de correction doit arriver *avant* le premier blob de production :
   après, c'est une migration de format complète.
 </Callout>
 
 ## La séparation de domaines : un blob, un rôle
 
-Imagine le système complet : des enveloppes de clés, des métadonnées de fichiers, des objets de dossiers, des morceaux de données — tous chiffrés, beaucoup sous la même clé de compte. Le serveur stocke tous ces blobs. Que se passe-t-il s'il en sert un _à la place_ d'un autre ? Si un blob de métadonnées est présenté là où le client attend une enveloppe de clé ?
+Imagine le système complet : des enveloppes de clés, des métadonnées de fichiers, des objets de dossiers, des morceaux de données : tous chiffrés, beaucoup sous la même clé de compte. Le serveur stocke tous ces blobs. Que se passe-t-il s'il en sert un _à la place_ d'un autre ? Si un blob de métadonnées est présenté là où le client attend une enveloppe de clé ?
 
-Si rien ne distingue les blobs, le déchiffrement _réussit_ — la clé est la bonne — et le client interprète des octets valides dans le mauvais rôle. C'est une **attaque par confusion de types**, version cryptographique. La défense est élégante : chaque famille de blobs reçoit une **chaîne de contexte** unique, passée en AAD :
+Si rien ne distingue les blobs, le déchiffrement _réussit_ (la clé est la bonne) et le client interprète des octets valides dans le mauvais rôle. C'est une **attaque par confusion de types**, version cryptographique. La défense est élégante : chaque famille de blobs reçoit une **chaîne de contexte** unique, passée en AAD :
 
 ```text
 vault/v1/account-key-envelope/master
@@ -78,7 +78,7 @@ Un blob scellé avec le contexte `file-manifest` ne peut être ouvert qu'avec ce
 Note le raffinement sur les enveloppes de la clé de compte : l'enveloppe sous clé maîtresse et l'enveloppe sous clé de récupération portent des contextes _différents_. Les deux protègent la même clé de compte, mais un serveur qui servirait l'enveloppe de récupération dans le créneau de l'enveloppe maîtresse serait détecté immédiatement. C'est de la défense en profondeur : l'attaque ne mène nulle part dans le modèle de menace actuel, mais la distinction coûte deux chaînes de caractères et transforme une confusion silencieuse en erreur franche.
 
 <Callout kind="note" title="Des erreurs volontairement opaques">
-  Au déchiffrement, toutes les causes d'échec — mauvaise clé, données modifiées, mauvais contexte —
+  Au déchiffrement, toutes les causes d'échec (mauvaise clé, données modifiées, mauvais contexte)
   produisent la même erreur générique. Distinguer les causes dans le message d'erreur offrirait un
   *oracle* à un attaquant capable d'observer les erreurs. La règle : en cas d'échec cryptographique,
   échouer de façon indistincte.
@@ -99,7 +99,7 @@ Note le raffinement sur les enveloppes de la clé de compte : l'enveloppe sous c
       ],
       answer: 1,
       explain:
-        "Le chiffrement seul protège la confidentialité mais pas l'intégrité : on peut modifier un texte chiffré sans le lire. L'AEAD ajoute un tag d'authentification couvrant le texte chiffré et les données associées (AAD) — la moindre altération fait échouer l'ouverture.",
+        "Le chiffrement seul protège la confidentialité mais pas l'intégrité : on peut modifier un texte chiffré sans le lire. L'AEAD ajoute un tag d'authentification couvrant le texte chiffré et les données associées (AAD) : la moindre altération fait échouer l'ouverture.",
     },
     {
       q: 'Pourquoi choisir une variante AEAD à nonce de 192 bits pour ce système ?',
@@ -111,7 +111,7 @@ Note le raffinement sur les enveloppes de la clé de compte : l'enveloppe sous c
       ],
       answer: 1,
       explain:
-        "La réutilisation d'un nonce sous une même clé est catastrophique. À 192 bits, le tirage aléatoire rend la collision négligeable à toute échelle réaliste — aucun état partagé à maintenir entre appareils. Un nonce n'ajoute pas de « force » au chiffrement : son unicité est ce qui compte.",
+        "La réutilisation d'un nonce sous une même clé est catastrophique. À 192 bits, le tirage aléatoire rend la collision négligeable à toute échelle réaliste, aucun état partagé à maintenir entre appareils. Un nonce n'ajoute pas de « force » au chiffrement : son unicité est ce qui compte.",
     },
     {
       q: "L'octet de version est stocké en clair. Comment empêcher un attaquant de le modifier sans toucher au texte chiffré ?",
@@ -123,7 +123,7 @@ Note le raffinement sur les enveloppes de la clé de compte : l'enveloppe sous c
       ],
       answer: 2,
       explain:
-        "Le chiffrer est impossible : il faut le lire avant de savoir comment déchiffrer (crypto-agilité). La solution : l'inclure dans les données associées de l'AEAD. Il est alors en clair ET authentifié — le principe « authentifie tout ce que tu parses ».",
+        "Le chiffrer est impossible : il faut le lire avant de savoir comment déchiffrer (crypto-agilité). La solution : l'inclure dans les données associées de l'AEAD. Il est alors en clair ET authentifié : le principe « authentifie tout ce que tu parses ».",
     },
     {
       q: 'À quoi servent les chaînes de contexte distinctes (file-manifest, tree, chunk…) passées en AAD ?',
@@ -145,6 +145,6 @@ Note le raffinement sur les enveloppes de la clé de compte : l'enveloppe sous c
 - Un format de stockage chiffré est un **engagement de long terme** : le premier blob de production fige les décisions. Les corrections de format se font _avant_, pas après.
 - L'**AEAD** apporte l'intégrité en plus de la confidentialité, et l'**AAD** lie chaque blob à son contexte sans le chiffrer.
 - Des **nonces de 192 bits tirés au hasard** éliminent le problème de coordination des compteurs ; un temps d'exécution constant compte d'autant plus que la crypto tournera en WASM dans le navigateur.
-- **L'en-tête en clair (version) doit être authentifié** : replié dans l'AAD, il reste lisible mais inviolable — « authentifie tout ce que tu parses ».
+- **L'en-tête en clair (version) doit être authentifié** : replié dans l'AAD, il reste lisible mais inviolable : « authentifie tout ce que tu parses ».
 - La **séparation de domaines** (une chaîne de contexte par famille de blobs, jusqu'à distinguer les enveloppes maîtresse et récupération) transforme toute permutation de blobs par le serveur en échec détectable.
 - Les erreurs de déchiffrement sont **opaques** : distinguer les causes offrirait un oracle.

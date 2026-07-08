@@ -45,7 +45,7 @@ How do we escape a hollow? By not putting all our eggs in one basket. Rather tha
 With $\mathit{ef} = 1$, we recover exactly greedy navigation, with all its traps. With $\mathit{ef} = 2$, we always keep a fallback track: if the best path hits a local minimum, the second candidate can go around the obstacle and reach a region the first would never have seen. The larger $\mathit{ef}$ is, the more we explore, the fewer mistakes we make, but the more we compute. The tension from the previous chapter reappears, intact: we will need to measure what we gain and what we lose.
 
 <Callout kind="note" title="HNSW is an approximate method, by design">
-Unlike the <Term slug="recherche-exhaustive">exhaustive search</Term> from chapter 2, which is exact by construction, HNSW may miss the true nearest neighbor. That is a deliberate choice: we trade a little accuracy for a great deal of speed. That is precisely why <Term slug="rappel">recall@k</Term> exists. We will measure the quality of an HNSW index by comparing its results to those of the exhaustive oracle, and $\mathit{ef}$ will be the dial that moves the cursor between speed and recall.
+Unlike exhaustive search from chapter 2, which is exact by construction, HNSW may miss the true nearest neighbor. That is a deliberate choice: we trade a little accuracy for a great deal of speed. That is precisely why recall@k exists. We will measure the quality of an HNSW index by comparing its results to those of the exhaustive oracle, and $\mathit{ef}$ will be the dial that moves the cursor between speed and recall.
 </Callout>
 
 ## Under the hood: small worlds and construction

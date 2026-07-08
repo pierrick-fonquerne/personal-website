@@ -57,7 +57,7 @@ Before counting, we split the text into tokens and normalize them: lowercase, wi
 
 ## The fusion trap
 
-We now know how to produce two scores for the same document: a lexical BM25 score, and a semantic score via <Term slug="similarite-cosinus">cosine similarity</Term> (the one from chapter 1). The temptation is immediate: add them up, and the best of both worlds will emerge.
+We now know how to produce two scores for the same document: a lexical BM25 score, and a semantic score via cosine similarity (the one from chapter 1). The temptation is immediate: add them up, and the best of both worlds will emerge.
 
 That is a trap, and a subtle one. The two scores do not live on the same scale. Cosine similarity is bounded in $[0, 1]$. BM25 is not bounded: it grows with term rarity and count, and commonly reaches values of 2, 10, 15. Adding $0.9$ (an excellent cosine) to $14$ (a strong BM25) gives $14.9$: the cosine is drowned, it no longer matters. The naive sum does not merge two signals - it lets the noisiest one crush the other. In practice, it behaves almost like a purely lexical search in disguise.
 

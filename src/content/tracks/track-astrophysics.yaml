@@ -14,7 +14,7 @@ fr:
     Curieux du ciel et autodidactes. Les premiers stages sont accessibles dès
     le lycée ; à partir du stage licence, le socle de physique généraliste
     (mécanique, thermodynamique, électromagnétisme, quantique) est supposé
-    acquis — niveau bac+2/+3.
+    acquis : niveau bac+2/+3.
 
 en:
   title: Astrophysics
@@ -27,8 +27,8 @@ en:
   audience: >-
     Sky enthusiasts and self-taught learners. The first stages are accessible
     from high school; from the bachelor stage onward, general physics
-    (mechanics, thermodynamics, electromagnetism, quantum physics) is assumed
-    — roughly two to three years of undergraduate physics.
+    (mechanics, thermodynamics, electromagnetism, quantum physics) is assumed:
+    roughly two to three years of undergraduate physics.
 
 stages:
   - stage: lycee

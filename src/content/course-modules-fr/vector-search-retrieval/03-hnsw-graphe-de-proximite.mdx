@@ -45,7 +45,7 @@ Comment échapper à un creux ? En ne mettant pas tous ses oeufs dans le même p
 Avec $\mathit{ef} = 1$, on retrouve exactement la navigation gloutonne, et ses pièges. Avec $\mathit{ef} = 2$, on garde toujours une piste de secours : si le meilleur chemin bute sur un minimum local, le second candidat peut contourner l'obstacle et atteindre une région que le premier n'aurait jamais vue. Plus $\mathit{ef}$ est grand, plus on explore, moins on se trompe, mais plus on calcule. On retrouve, intacte, la tension du chapitre précédent : il va falloir mesurer ce qu'on gagne et ce qu'on perd.
 
 <Callout kind="note" title="HNSW est une méthode approchée, assumé">
-À la différence de la <Term slug="recherche-exhaustive">recherche exhaustive</Term> du chapitre 2, qui est exacte par construction, HNSW peut manquer le vrai plus proche voisin. C'est un choix : on échange un peu d'exactitude contre énormément de vitesse. C'est précisément pour ça que le <Term slug="rappel">rappel@k</Term> existe. On mesurera la qualité d'un index HNSW en comparant ses résultats à ceux de l'oracle exhaustif, et $\mathit{ef}$ sera la molette qui déplace le curseur entre vitesse et rappel.
+À la différence de la recherche exhaustive du chapitre 2, qui est exacte par construction, HNSW peut manquer le vrai plus proche voisin. C'est un choix : on échange un peu d'exactitude contre énormément de vitesse. C'est précisément pour ça que le rappel@k existe. On mesurera la qualité d'un index HNSW en comparant ses résultats à ceux de l'oracle exhaustif, et $\mathit{ef}$ sera la molette qui déplace le curseur entre vitesse et rappel.
 </Callout>
 
 ## Sous le capot : petits mondes et construction
