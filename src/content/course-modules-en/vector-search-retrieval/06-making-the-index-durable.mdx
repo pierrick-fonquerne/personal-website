@@ -189,7 +189,7 @@ $$
 An in-memory index only becomes durable once written to disk, and writing it naively over the old file exposes it to a torn write, a silent corruption neutralized by atomicity (write alongside then rename in one move, or append only at the end of a log); and as in chapter 5, only a byte-for-byte round-trip oracle, not a simple logical check, guarantees that what we reload is exactly what we had in memory.
 
 <Quiz
-  client:load
+  client:visible
   questions={[
     {
       q: "Why is a torn write more dangerous than a simple data loss?",

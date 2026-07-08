@@ -2,6 +2,7 @@
 import ChapterToolbar from './ChapterToolbar';
 import ChapterAudioPlayer from './ChapterAudioPlayer';
 import MathZoom from './MathZoom.astro';
+import MathStyles from './MathStyles.astro';
 import CodeCopy from './CodeCopy.astro';
 import TermSheet from './TermSheet.astro';
 import ReadingPosition from './ReadingPosition.astro';
@@ -22,6 +23,9 @@ interface Props {
 const { badge, title, subtitle, locale, courseSlug, courseTitle, moduleSlug, nextHref, nextTitle } =
   Astro.props;
 const t = useTranslations(locale);
+
+const chapterContent = await Astro.slots.render('default');
+const hasMath = chapterContent.includes('class="katex"');
 
 const audioLabels = {
   listen: t.toolbar.listen,
@@ -86,10 +90,9 @@ const audioLabels = {
       nextTitle={nextTitle}
     />
   </div>
-  <div id="chapter-content" class="prose-module">
-    <slot />
-  </div>
+  <div id="chapter-content" class="prose-module" set:html={chapterContent} />
 </article>
+{hasMath && <MathStyles />}
 <MathZoom zoomLabel={t.a11y.zoomEquation} closeLabel={t.a11y.closeZoom} />
 <CodeCopy copyLabel={t.a11y.copyCode} copiedLabel={t.a11y.copiedCode} />
 <TermSheet openGlossaryLabel={t.a11y.openGlossary} closeLabel={t.a11y.closeDefinition} />

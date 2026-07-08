@@ -41,6 +41,6 @@ const labels = {
     >
       {piece.titleFr}
     </h1>
-    <Atelier client:only="react" pieceId={piece.id} locale={locale} labels={labels} />
+    <Atelier client:load pieceId={piece.id} locale={locale} labels={labels} />
   </section>
 </BaseLayout>
