@@ -43,7 +43,7 @@ if (!course || !current) {
 
 const { Content } = await render(current);
 const { prev, next } = neighbors(modules, current.id);
-const total = modules.length;
+const total = Math.max(...modules.map((m) => m.data.order));
 const badge = `${course.data.title} · ${String(current.data.order).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
 const sidebarModules = modules.map((m) => ({
   slug: moduleSlugOf(m),

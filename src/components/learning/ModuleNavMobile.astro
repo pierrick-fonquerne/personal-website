@@ -17,7 +17,7 @@ interface Props {
 }
 
 const { courseSlug, courseTitle, locale, modules, activeSlug, openLabel } = Astro.props;
-const total = modules.length;
+const total = Math.max(...modules.map((m) => m.order));
 const current = modules.find((m) => m.slug === activeSlug);
 const currentOrder = current?.order ?? 1;
 const currentTitle = current?.title ?? courseTitle;
