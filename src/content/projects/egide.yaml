@@ -8,20 +8,24 @@ links:
   - label: Code source
     href: https://github.com/nubster-opensources/egide
     type: repo
+  - label: crates.io
+    href: https://crates.io/crates/egide
+    type: crates
 fr:
   title: Egide
-  tagline: Plateforme de gestion des secrets, des clés et des certificats.
+  tagline: Gestionnaire de secrets auto-hébergé en Rust.
   summary: >-
-    Gestion centralisée des secrets, chiffrement (KMS), PKI interne et
-    chiffrement à la demande (Transit), réunis dans un seul outil. Les clés ne
-    quittent jamais votre infrastructure. Auto-hébergeable, conçue pour la
-    conformité RGPD.
+    Coffre auto-hébergé pour vos secrets : stockage clé/valeur versionné et
+    chiffré, chiffrement à la demande (Transit), descellement par partage de
+    secret de Shamir, API REST et gRPC. Les clés ne quittent jamais votre
+    infrastructure. Version alpha 0.1 : les moteurs KMS et PKI sont prévus,
+    pas encore implémentés.
 en:
   title: Egide
-  tagline: A platform for secrets, keys and certificates.
+  tagline: A self-hosted secrets manager in Rust.
   summary: >-
-    Centralized secrets management, encryption (KMS), an internal PKI and
-    encryption as a service (Transit), unified in a single tool. Your keys
-    never leave your infrastructure. Self-hostable, designed for GDPR
-    compliance.
+    A self-hosted vault for your secrets: versioned encrypted key/value
+    storage, encryption as a service (Transit), Shamir-based unsealing, REST
+    and gRPC APIs. Your keys never leave your infrastructure. Alpha 0.1: the
+    KMS and PKI engines are planned, not yet implemented.
 published: true

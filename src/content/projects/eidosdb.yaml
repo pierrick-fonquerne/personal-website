@@ -11,16 +11,19 @@ links:
     type: repo
 fr:
   title: EidosDB
-  tagline: Base de données vectorielle en Rust pur.
+  tagline: Index vectoriel en Rust pur pour la recherche ANN.
   summary: >-
-    Index vectoriel pur Rust qui sert la recherche des plus proches voisins
+    Bibliothèque Rust qui sert la recherche des plus proches voisins
     approximatifs (ANN) à partir d'embeddings pré-calculés, sans inférence
-    embarquée ni JVM. Binaire unique, déployable en périphérie.
+    embarquée ni JVM. Version pre-alpha : l'API reste de niveau bibliothèque,
+    le serveur réseau et le binaire unique déployable en périphérie sont
+    encore devant.
 en:
   title: EidosDB
-  tagline: A pure-Rust vector database.
+  tagline: A pure-Rust vector index for ANN search.
   summary: >-
-    A pure-Rust vector index serving approximate nearest neighbor search from
-    precomputed embeddings, with no embedded inference and no JVM. A single
-    binary, edge-deployable.
+    A Rust library serving approximate nearest neighbor search from
+    precomputed embeddings, with no embedded inference and no JVM. Pre-alpha:
+    the API is library-level only, the network server and the single
+    edge-deployable binary are still ahead.
 published: true
