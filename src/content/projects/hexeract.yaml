@@ -2,6 +2,7 @@ slug: hexeract
 category: opensource
 status: active
 period: "2026 - aujourd'hui"
+featured: true
 stack:
   - Rust
 links:
