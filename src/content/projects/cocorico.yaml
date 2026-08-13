@@ -2,7 +2,6 @@ slug: cocorico
 category: opensource
 status: active
 period: "2026 - aujourd'hui"
-featured: true
 stack:
   - Rust
 links:
@@ -26,4 +25,4 @@ en:
     each with its own tab and session. A massive shared-context engine (a
     hybrid code index plus durable memory) keeps the right code and decisions
     at hand. Model-agnostic, built developer-first.
-published: true
+published: false

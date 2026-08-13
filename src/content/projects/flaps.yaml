@@ -12,20 +12,20 @@ fr:
   title: Flaps
   tagline: Serveur et SDK de feature flags en Rust.
   summary: >-
-    Plateforme de feature flags qui compile un modèle riche (projets,
+    Serveur de feature flags qui compile un modèle riche (projets,
     environnements, segments, règles de ciblage) en un artefact flagd canonique
-    par environnement. Le même artefact est évalué à distance via OFREP et
-    dans le processus en sous-milliseconde, sans divergence possible. Rollouts
-    progressifs déterministes et kill switch instantané pour les équipes en
-    trunk-based.
+    par environnement. Le même artefact est évalué à distance via OFREP et dans
+    le processus, sans divergence possible par construction. Pensé pour les
+    équipes en trunk-based, où le kill switch est sur le chemin critique.
+    Version pre-alpha : le premier jalon 0.1 n'est pas encore livré.
 en:
   title: Flaps
   tagline: A feature flag server and SDK in Rust.
   summary: >-
-    A feature flag platform that compiles a rich model (projects, environments,
+    A feature flag server that compiles a rich model (projects, environments,
     segments, targeting rules) into one canonical flagd ruleset per
     environment. The same artifact is evaluated remotely over OFREP and
-    in-process in sub-millisecond time, with no divergence by construction.
-    Deterministic progressive rollouts and an instant kill switch for
-    trunk-based teams.
+    in-process, with no divergence by construction. Built for trunk-based
+    teams, where the kill switch is on the critical path. Pre-alpha: the first
+    0.1 milestone has not shipped yet.
 published: true

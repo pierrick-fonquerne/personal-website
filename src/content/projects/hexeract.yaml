@@ -15,14 +15,18 @@ fr:
   title: Hexeract
   tagline: Framework de messagerie Rust inspiré de Wolverine.
   summary: >-
-    Bus de messages Rust : Mediator, Bus, Outbox, Sagas, Scheduler et
-    Request/Reply. Pensé pour bâtir des systèmes événementiels robustes en
-    Rust idiomatique. Publié sous Nubster Open Sources.
+    Bus de messages Rust : outbox transactionnel multi-base, transport
+    RabbitMQ, mediator CQRS in-process et planificateur durable (délai et
+    cron), livrés en 0.6. Le Request/Reply attend sa publication en 0.7, les
+    sagas restent prévues. Pensé pour bâtir des systèmes événementiels robustes
+    en Rust idiomatique. Publié sous Nubster Open Sources.
 en:
   title: Hexeract
   tagline: Wolverine-style Rust messaging framework.
   summary: >-
-    A Rust message bus with Mediator, Bus, Outbox, Sagas, Scheduler and
-    Request/Reply. Built to compose robust event-driven systems with
-    idiomatic Rust. Released under Nubster Open Sources.
+    A Rust message bus: multi-database transactional outbox, RabbitMQ
+    transport, in-process CQRS mediator and a durable scheduler (delay and
+    cron), all shipped in 0.6. Request/Reply awaits its 0.7 release, sagas are
+    still planned. Built to compose robust event-driven systems with idiomatic
+    Rust. Released under Nubster Open Sources.
 published: true
