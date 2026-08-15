@@ -7,8 +7,7 @@ stack:
   - Vulkan
   - Cargo workspace
 links:
-  - label: Code source
-    href: https://github.com/pierrick-fonquerne/synarion-engine
+  - href: https://github.com/pierrick-fonquerne/synarion-engine
     type: repo
 fr:
   title: Synarion Engine

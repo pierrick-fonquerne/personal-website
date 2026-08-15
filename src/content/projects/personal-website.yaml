@@ -8,8 +8,7 @@ stack:
   - Tailwind CSS
   - MDX
 links:
-  - label: Code source
-    href: https://github.com/pierrick-fonquerne/personal-website
+  - href: https://github.com/pierrick-fonquerne/personal-website
     type: repo
 fr:
   title: personal-website

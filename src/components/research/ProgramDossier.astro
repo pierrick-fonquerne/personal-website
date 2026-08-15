@@ -18,7 +18,7 @@ const dateFormatter = new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-GB
   month: 'short',
 });
 
-function primaryLink(links: { label: string; href: string; type: string }[]) {
+function primaryLink(links: { href: string; type: string }[]) {
   return links.find((l) => l.type === 'site') ?? links.find((l) => l.type === 'repo') ?? links[0];
 }
 ---

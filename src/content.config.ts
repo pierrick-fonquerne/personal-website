@@ -75,7 +75,8 @@ const projectLocaleSchema = z.object({
 });
 
 const projectLinkSchema = z.object({
-  label: z.string(),
+  /** Only when it says what the type cannot, such as one of several repositories. */
+  label: z.string().optional(),
   href: z.string().url(),
   type: z.enum(['site', 'repo', 'crates', 'docs', 'demo']),
 });

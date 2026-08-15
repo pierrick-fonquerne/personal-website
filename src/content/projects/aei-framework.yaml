@@ -7,8 +7,7 @@ stack:
   - Event Sourcing
   - Agents IA
 links:
-  - label: Code source
-    href: https://github.com/pierrick-fonquerne/aei-framework
+  - href: https://github.com/pierrick-fonquerne/aei-framework
     type: repo
 fr:
   title: AEI Framework

@@ -3,6 +3,7 @@ import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../lib/i18n';
+import { resolveProjectLinkLabel } from '../../lib/project-links';
 import Github from '../../components/ui/icons/Github.astro';
 import Crates from '../../components/ui/icons/Crates.astro';
 import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
@@ -106,7 +107,7 @@ const content = project.data.fr;
                 {(link.type === 'site' || link.type === 'docs' || link.type === 'demo') && (
                   <ExternalLink class="h-[14px] w-[14px]" />
                 )}
-                {link.label}
+                {resolveProjectLinkLabel(link, t)}
               </a>
             ))}
           </div>
