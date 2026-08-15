@@ -5,8 +5,7 @@ period: "2026 - aujourd'hui"
 stack:
   - Rust
 links:
-  - label: Code source
-    href: https://github.com/nubster-opensources/cocorico
+  - href: https://github.com/nubster-opensources/cocorico
     type: repo
 fr:
   title: Cocorico

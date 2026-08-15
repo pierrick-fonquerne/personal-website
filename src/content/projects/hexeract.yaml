@@ -6,11 +6,9 @@ featured: true
 stack:
   - Rust
 links:
-  - label: Code source
-    href: https://github.com/nubster-opensources/hexeract
+  - href: https://github.com/nubster-opensources/hexeract
     type: repo
-  - label: crates.io
-    href: https://crates.io/crates/hexeract
+  - href: https://crates.io/crates/hexeract
     type: crates
 fr:
   title: Hexeract

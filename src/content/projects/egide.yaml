@@ -5,11 +5,9 @@ period: "2026 - aujourd'hui"
 stack:
   - Rust
 links:
-  - label: Code source
-    href: https://github.com/nubster-opensources/egide
+  - href: https://github.com/nubster-opensources/egide
     type: repo
-  - label: crates.io
-    href: https://crates.io/crates/egide
+  - href: https://crates.io/crates/egide
     type: crates
 fr:
   title: Egide

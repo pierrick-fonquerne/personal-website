@@ -8,8 +8,7 @@ stack:
   - HLSL
   - ShaderLab
 links:
-  - label: Code source
-    href: https://github.com/pierrick-fonquerne/poc-solar-system-procedural-generation
+  - href: https://github.com/pierrick-fonquerne/poc-solar-system-procedural-generation
     type: repo
 fr:
   title: 'POC : Système solaire procédural'

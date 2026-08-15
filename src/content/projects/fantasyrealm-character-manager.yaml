@@ -11,8 +11,7 @@ stack:
   - MongoDB
   - Docker Compose
 links:
-  - label: Code source
-    href: https://github.com/pierrick-fonquerne/fantasyrealm-character-manager
+  - href: https://github.com/pierrick-fonquerne/fantasyrealm-character-manager
     type: repo
 fr:
   title: FantasyRealm Character Manager

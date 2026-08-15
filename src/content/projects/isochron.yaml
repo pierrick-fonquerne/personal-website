@@ -5,11 +5,9 @@ period: "2026 - aujourd'hui"
 stack:
   - Rust
 links:
-  - label: Code source
-    href: https://github.com/nubster-opensources/isochron
+  - href: https://github.com/nubster-opensources/isochron
     type: repo
-  - label: crates.io
-    href: https://crates.io/crates/isochron
+  - href: https://crates.io/crates/isochron
     type: crates
 fr:
   title: Isochron

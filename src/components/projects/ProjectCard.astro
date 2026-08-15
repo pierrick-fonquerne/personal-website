@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
+import { resolveProjectLinkLabel } from '../../lib/project-links';
 import Github from '../ui/icons/Github.astro';
 import Crates from '../ui/icons/Crates.astro';
 import ExternalLink from '../ui/icons/ExternalLink.astro';
@@ -78,14 +79,14 @@ const isArchived = project.data.status === 'archived' || project.data.status ===
             target="_blank"
             rel="noopener noreferrer"
             class="inline-flex items-center gap-2 rounded-md border border-[var(--color-line)] px-3 py-1.5 font-mono text-[11px] tracking-[0.06em] text-[var(--color-fg-muted)] uppercase transition-colors duration-200 hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-            aria-label={`${content.title} : ${link.label}`}
+            aria-label={`${content.title} : ${resolveProjectLinkLabel(link, t)}`}
           >
             {link.type === 'repo' && <Github class="h-[12px] w-[12px]" />}
             {link.type === 'crates' && <Crates class="h-[12px] w-[12px]" />}
             {(link.type === 'site' || link.type === 'docs' || link.type === 'demo') && (
               <ExternalLink class="h-[12px] w-[12px]" />
             )}
-            {link.label}
+            {resolveProjectLinkLabel(link, t)}
           </a>
         ))}
       </footer>

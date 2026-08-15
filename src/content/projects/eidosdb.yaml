@@ -6,8 +6,7 @@ stack:
   - Rust
   - Recherche vectorielle
 links:
-  - label: Code source
-    href: https://github.com/nubster-opensources/eidosdb
+  - href: https://github.com/nubster-opensources/eidosdb
     type: repo
 fr:
   title: EidosDB
