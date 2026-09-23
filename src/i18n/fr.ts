@@ -365,8 +365,15 @@ const fr: Translations = {
   },
   education: {
     title: '// Études',
-    count: '02 / écoles',
+    count: '03 / écoles',
     items: [
+      {
+        period: '2025 - 2026',
+        role: 'TP Développeur web et web mobile · option Gaming',
+        place: 'Studi · À distance',
+        summary:
+          'Titre professionnel reconnu par l’État (RNCP niveau 5), spécialisation développement de jeux vidéo.',
+      },
       {
         period: '2011 - 2014',
         role: 'Développement logiciel',

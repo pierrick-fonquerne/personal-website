@@ -660,8 +660,15 @@ const en: Translations = {
   },
   education: {
     title: '// Education',
-    count: '02 / schools',
+    count: '03 / schools',
     items: [
+      {
+        period: '2025 - 2026',
+        role: 'Web & web mobile developer certification · Gaming track',
+        place: 'Studi · Remote',
+        summary:
+          'French state-recognized vocational certification (RNCP level 5), specialized in game development.',
+      },
       {
         period: '2011 - 2014',
         role: 'Software engineering',
