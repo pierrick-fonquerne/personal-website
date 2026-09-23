@@ -582,7 +582,7 @@ const en: Translations = {
     iAmLabel: '// I am',
     roles: ['a developer', 'a tinkerer', 'a learner', 'a builder', 'curious'],
     tagline:
-      'Passionate full-stack developer with 12+ years of experience. I build, learn and explore the craft of software.',
+      'Passionate full-stack developer with 13+ years of experience. I build, learn and explore the craft of software.',
     meta: {
       role: 'Role',
       focus: 'Focus',
@@ -590,21 +590,28 @@ const en: Translations = {
       status: 'Status',
       languages: 'Languages',
       values: {
-        role: 'Full-stack developer',
+        role: 'Tech Lead .NET / Architect Consultant',
         focus: '.NET · Angular · Rust',
         based: 'Limoux · Aude · France',
-        status: 'Currently in a role',
+        status: 'Available / on assignment',
         languages: 'FR (native) · EN B2',
       },
     },
   },
   career: {
     title: '// Journey',
-    count: '07 / roles',
+    count: '08 / roles',
     nowLabel: 'NOW',
     items: [
       {
-        period: '2021 - NOW',
+        period: '2026 - NOW',
+        role: 'Tech Lead .NET / Architect Consultant',
+        place: 'Labade Conseil · Toulouse',
+        summary:
+          'Tech lead / technical architect engagement at Infomil (Leclerc), modernizing and progressively rearchitecting Electag, their IoT platform for in-store electronic shelf labels (nearly 20 million labels deployed): a 15+ year old legacy system.',
+      },
+      {
+        period: '2021 - 2026',
         role: 'Full-stack developer',
         place: 'Coperlab / Groupe AGEO Assurances · Bordeaux',
         summary:
@@ -653,8 +660,15 @@ const en: Translations = {
   },
   education: {
     title: '// Education',
-    count: '02 / schools',
+    count: '03 / schools',
     items: [
+      {
+        period: '2025 - 2026',
+        role: 'Web & web mobile developer certification · Gaming track',
+        place: 'Studi · Remote',
+        summary:
+          'French state-recognized vocational certification (RNCP level 5), specialized in game development.',
+      },
       {
         period: '2011 - 2014',
         role: 'Software engineering',
@@ -681,7 +695,7 @@ const en: Translations = {
         role: 'Volunteer firefighter',
         place: 'SDIS de l’Aude · Limoux',
         summary:
-          'Caporal-chef. Fire team leader, vehicle driver, first responder for road rescue and emergency medical care.',
+          'Caporal-chef. Fire team leader, qualified driver (COD1 fire engine, COD2 off-road heavy vehicle, COD6 aerial ladder), first responder for road rescue and emergency medical care.',
       },
       {
         period: '2019 - 2020',
