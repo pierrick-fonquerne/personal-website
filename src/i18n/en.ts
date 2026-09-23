@@ -695,7 +695,7 @@ const en: Translations = {
         role: 'Volunteer firefighter',
         place: 'SDIS de l’Aude · Limoux',
         summary:
-          'Caporal-chef. Fire team leader, vehicle driver, first responder for road rescue and emergency medical care.',
+          'Caporal-chef. Fire team leader, qualified driver (COD2 off-road, COD6 aerial ladder), first responder for road rescue and emergency medical care.',
       },
       {
         period: '2019 - 2020',

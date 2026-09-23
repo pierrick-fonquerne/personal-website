@@ -400,7 +400,7 @@ const fr: Translations = {
         role: 'Sapeur-pompier volontaire',
         place: 'SDIS de l’Aude · Limoux',
         summary:
-          'Caporal-chef. Chef d’équipe incendie, conducteur d’engins, équipier secours routier et secours à personne.',
+          'Caporal-chef. Chef d’équipe incendie, conducteur d’engins (COD2 hors-chemin, COD6 échelle), équipier secours routier et secours à personne.',
       },
       {
         period: '2019 - 2020',
