@@ -286,7 +286,7 @@ const fr: Translations = {
     iAmLabel: '// Je suis',
     roles: ['développeur', 'bidouilleur', 'apprenant', 'bâtisseur', 'curieux'],
     tagline:
-      'Développeur full-stack passionné, plus de 12 ans d’expérience. Je construis, j’apprends et j’explore l’artisanat du logiciel.',
+      'Développeur full-stack passionné, plus de 13 ans d’expérience. Je construis, j’apprends et j’explore l’artisanat du logiciel.',
     meta: {
       role: 'Rôle',
       focus: 'Spécialité',
@@ -294,21 +294,28 @@ const fr: Translations = {
       status: 'Statut',
       languages: 'Langues',
       values: {
-        role: 'Développeur full-stack',
+        role: 'Consultant Tech Lead .NET / Architecte',
         focus: '.NET · Angular · Rust',
         based: 'Limoux · Aude · France',
-        status: 'En poste',
+        status: 'Disponible / En mission',
         languages: 'FR (natif) · EN B2',
       },
     },
   },
   career: {
     title: '// Parcours',
-    count: '07 / postes',
+    count: '08 / postes',
     nowLabel: 'AUJ.',
     items: [
       {
-        period: '2021 - AUJ.',
+        period: '2026 - AUJ.',
+        role: 'Consultant Tech Lead .NET / Architecte',
+        place: 'Labade Conseil · Toulouse',
+        summary:
+          'Mission de tech lead / architecte technique chez Infomil (Leclerc) pour moderniser et refondre progressivement Electag, leur plateforme IoT de gestion des étiquettes électroniques en magasin (près de 20 millions d’étiquettes déployées) : un système historique de plus de 15 ans.',
+      },
+      {
+        period: '2021 - 2026',
         role: 'Développeur full-stack',
         place: 'Coperlab / Groupe AGEO Assurances · Bordeaux',
         summary:
