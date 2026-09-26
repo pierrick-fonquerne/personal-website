@@ -22,3 +22,15 @@ export function journalPath(researchSlug: string, locale: Locale): string {
 export function journalEntryPath(researchSlug: string, entrySlug: string, locale: Locale): string {
   return localizedPath(`/research/${researchSlug}/journal/${entrySlug}`, locale);
 }
+
+export function latestJournalEntry(researchSlug: string, all: JournalEntry[]): JournalEntry | undefined {
+  throw new Error('not implemented');
+}
+
+export function recentJournalEntries(
+  all: JournalEntry[],
+  publishedResearchSlugs: ReadonlySet<string>,
+  limit: number,
+): JournalEntry[] {
+  throw new Error('not implemented');
+}

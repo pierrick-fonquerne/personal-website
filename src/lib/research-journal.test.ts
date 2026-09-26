@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { journalPath, journalEntryPath, journalEntriesFor, journalCount, type JournalEntry } from './research-journal';
+import {
+  journalPath,
+  journalEntryPath,
+  journalEntriesFor,
+  journalCount,
+  latestJournalEntry,
+  recentJournalEntries,
+  type JournalEntry,
+} from './research-journal';
 
 describe('journalPath', () => {
   it('builds the FR journal index path (no locale prefix)', () => {
@@ -58,5 +66,65 @@ describe('journalCount', () => {
   it('counts published entries of a research', () => {
     const all = [makeEntry('a', 'neurone', '2026-06-10'), makeEntry('b', 'autre', '2026-06-10')];
     expect(journalCount('neurone', all)).toBe(1);
+  });
+});
+
+describe('latestJournalEntry', () => {
+  const all = [
+    makeEntry('a', 'neurone', '2026-06-10'),
+    makeEntry('b', 'neurone', '2026-06-12'),
+    makeEntry('c', 'autre', '2026-06-11'),
+    makeEntry('d', 'neurone', '2026-06-13', false),
+  ];
+
+  it('returns the most recent published entry for that research slug', () => {
+    expect(latestJournalEntry('neurone', all)?.data.slug).toBe('b');
+  });
+
+  it('returns undefined when the slug has no entry', () => {
+    expect(latestJournalEntry('inconnu', all)).toBeUndefined();
+  });
+
+  it('ignores unpublished entries even if more recent', () => {
+    expect(latestJournalEntry('neurone', all)?.data.slug).not.toBe('d');
+  });
+
+  it('ignores entries of other research slugs', () => {
+    expect(latestJournalEntry('autre', all)?.data.slug).toBe('c');
+  });
+});
+
+describe('recentJournalEntries', () => {
+  const all = [
+    makeEntry('a', 'neurone', '2026-06-10'),
+    makeEntry('b', 'neurone', '2026-06-12'),
+    makeEntry('c', 'autre', '2026-06-11'),
+    makeEntry('d', 'neurone', '2026-06-13', false),
+    makeEntry('e', 'non-publie', '2026-06-14'),
+  ];
+  const publishedResearchSlugs = new Set(['neurone', 'autre']);
+
+  it('sorts across all research slugs by date, newest first', () => {
+    const slugs = recentJournalEntries(all, publishedResearchSlugs, 10).map((entry) => entry.data.slug);
+    expect(slugs).toEqual(['b', 'c', 'a']);
+  });
+
+  it('respects the limit', () => {
+    const slugs = recentJournalEntries(all, publishedResearchSlugs, 2).map((entry) => entry.data.slug);
+    expect(slugs).toEqual(['b', 'c']);
+  });
+
+  it('excludes unpublished entries', () => {
+    const slugs = recentJournalEntries(all, publishedResearchSlugs, 10).map((entry) => entry.data.slug);
+    expect(slugs).not.toContain('d');
+  });
+
+  it('excludes entries whose research is not in publishedResearchSlugs', () => {
+    const slugs = recentJournalEntries(all, publishedResearchSlugs, 10).map((entry) => entry.data.slug);
+    expect(slugs).not.toContain('e');
+  });
+
+  it('returns an empty array when limit is 0', () => {
+    expect(recentJournalEntries(all, publishedResearchSlugs, 0)).toEqual([]);
   });
 });
