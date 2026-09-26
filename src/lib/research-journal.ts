@@ -24,7 +24,7 @@ export function journalEntryPath(researchSlug: string, entrySlug: string, locale
 }
 
 export function latestJournalEntry(researchSlug: string, all: JournalEntry[]): JournalEntry | undefined {
-  throw new Error('not implemented');
+  return journalEntriesFor(researchSlug, all)[0];
 }
 
 export function recentJournalEntries(
@@ -32,5 +32,8 @@ export function recentJournalEntries(
   publishedResearchSlugs: ReadonlySet<string>,
   limit: number,
 ): JournalEntry[] {
-  throw new Error('not implemented');
+  return all
+    .filter((entry) => entry.data.published && publishedResearchSlugs.has(entry.data.research))
+    .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+    .slice(0, limit);
 }
