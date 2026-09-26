@@ -131,7 +131,6 @@ export interface Translations {
     conceptsUnit: (n: number) => string;
     projectsUnit: (n: number) => string;
     journal: {
-      link: (n: number) => string;
       indexTitle: string;
       eyebrow: string;
       lead: string;
@@ -140,6 +139,9 @@ export interface Translations {
       backToJournal: string;
       readEntry: string;
       dateLabel: string;
+      latestHeading: string;
+      recentHeading: string;
+      seeAll: (n: number) => string;
     };
   };
   courses: {
@@ -418,7 +420,6 @@ const en: Translations = {
     conceptsUnit: (n) => `${n} concept${n === 1 ? '' : 's'}`,
     projectsUnit: (n) => `${n} project${n === 1 ? '' : 's'}`,
     journal: {
-      link: (n) => (n === 1 ? 'Research journal (1 entry)' : `Research journal (${n} entries)`),
       indexTitle: 'Research journal',
       eyebrow: 'Logbook',
       lead: 'A dated logbook of the thinking in progress, entry after entry.',
@@ -427,6 +428,9 @@ const en: Translations = {
       backToJournal: 'Back to the journal',
       readEntry: 'Read',
       dateLabel: 'Written on',
+      latestHeading: 'Latest journal entry',
+      recentHeading: 'Latest journal entries',
+      seeAll: (n) => (n === 1 ? 'Open the journal' : `See all ${n} entries`),
     },
   },
   courses: {

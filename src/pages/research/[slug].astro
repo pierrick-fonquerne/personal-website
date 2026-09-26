@@ -3,10 +3,11 @@ import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
 import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../lib/i18n';
-import { journalCount, journalPath } from '../../lib/research-journal';
+import { journalCount, latestJournalEntry } from '../../lib/research-journal';
 import { buildArticleNode, buildBreadcrumb } from '../../lib/seo';
 import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
 import ChapterAudioPlayer from '../../components/learning/ChapterAudioPlayer';
+import JournalLatest from '../../components/research/JournalLatest.astro';
 
 export const getStaticPaths = (async () => {
   const entries = (await getCollection('research'))
@@ -70,6 +71,7 @@ const audioLabels = {
 
 const journalAll = (await getCollection('research-journal')).filter((e) => e.data.published);
 const journalEntries = journalCount(entry.data.slug, journalAll);
+const latestEntry = latestJournalEntry(entry.data.slug, journalAll);
 
 const body = await getEntry('research-fr', entry.data.slug);
 const Body = body ? (await render(body)).Content : null;
@@ -137,17 +139,24 @@ const updatedAtLabel = entry.data.updatedAt ? dateFormatter.format(entry.data.up
       <p class="mt-5 text-[clamp(17px,3.5vw,22px)] leading-[1.5] text-[var(--color-fg-muted)]">
         {content.tagline}
       </p>
-      {journalEntries > 0 && (
-        <a
-          class="mt-6 inline-flex items-center font-mono text-[12px] tracking-[0.06em] text-[var(--color-fg-dim)] uppercase transition-colors duration-200 hover:text-[var(--color-accent)]"
-          href={journalPath(entry.data.slug, locale)}
-        >{t.research.journal.link(journalEntries)}</a>
-      )}
     </header>
 
     <p class="mt-12 text-[18px] leading-[1.6] text-[var(--color-fg)]">
       {content.summary}
     </p>
+
+    {
+      latestEntry && (
+        <div class="mt-12">
+          <JournalLatest
+            entry={latestEntry}
+            researchSlug={entry.data.slug}
+            count={journalEntries}
+            locale={locale}
+          />
+        </div>
+      )
+    }
 
     {
       entry.data.tags.length > 0 && (
