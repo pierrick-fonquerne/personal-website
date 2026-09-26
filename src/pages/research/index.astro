@@ -19,7 +19,9 @@ const programs = (await getCollection('programs'))
   .sort((a, b) => a.data.order - b.data.order || a.data.slug.localeCompare(b.data.slug))
   .map((program) => resolveProgram(program, entries, projectEntries));
 
-const publishedResearchSlugs = new Set(entries.map((entry) => entry.data.slug));
+const publishedResearchSlugs = new Set(
+  entries.filter((entry) => !entry.data.external).map((entry) => entry.data.slug),
+);
 const journalAll = await getCollection('research-journal');
 const recentEntries = recentJournalEntries(journalAll, publishedResearchSlugs, 3);
 const researchTitles = new Map(entries.map((entry) => [entry.data.slug, entry.data[locale].title]));
@@ -47,9 +49,13 @@ const researchTitles = new Map(entries.map((entry) => [entry.data.slug, entry.da
       <ResearchIntro locale={locale} />
     </div>
 
-    <div class="mt-16">
-      <RecentJournal entries={recentEntries} researchTitles={researchTitles} locale={locale} />
-    </div>
+    {
+      recentEntries.length > 0 && (
+        <div class="mt-16">
+          <RecentJournal entries={recentEntries} researchTitles={researchTitles} locale={locale} />
+        </div>
+      )
+    }
 
     <div class="mt-20">
       <ResearchList entries={entries} programs={programs} locale={locale} />
