@@ -140,6 +140,9 @@ export interface Translations {
       backToJournal: string;
       readEntry: string;
       dateLabel: string;
+      latestHeading: string;
+      recentHeading: string;
+      seeAll: (n: number) => string;
     };
   };
   courses: {
@@ -427,6 +430,9 @@ const en: Translations = {
       backToJournal: 'Back to the journal',
       readEntry: 'Read',
       dateLabel: 'Written on',
+      latestHeading: 'Latest journal entry',
+      recentHeading: 'Latest journal entries',
+      seeAll: (n) => (n === 1 ? 'Open the journal' : `See all ${n} entries`),
     },
   },
   courses: {

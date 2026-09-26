@@ -131,6 +131,9 @@ const fr: Translations = {
       backToJournal: 'Retour au journal',
       readEntry: 'Lire',
       dateLabel: 'Écrit le',
+      latestHeading: 'Dernier billet du journal',
+      recentHeading: 'Derniers billets du journal',
+      seeAll: (n) => (n === 1 ? 'Voir le journal' : `Voir les ${n} entrées`),
     },
   },
   courses: {
