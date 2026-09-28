@@ -1,0 +1,30 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../../lib/i18n';
+import { useTranslations } from '../../lib/i18n';
+import { journalPath } from '../../lib/research-journal';
+import JournalEntryCard from './JournalEntryCard.astro';
+
+interface Props {
+  entry: CollectionEntry<'research-journal'>;
+  researchSlug: string;
+  count: number;
+  locale: Locale;
+}
+
+const { entry, researchSlug, count, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<section>
+  <h2 class="mb-4 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+    {t.research.journal.latestHeading}
+  </h2>
+  <JournalEntryCard entry={entry} researchSlug={researchSlug} locale={locale} />
+  <a
+    href={journalPath(researchSlug, locale)}
+    class="mt-4 inline-flex items-center font-mono text-[13px] tracking-[0.06em] text-[var(--color-accent)] uppercase transition-colors duration-200 hover:underline"
+  >
+    {t.research.journal.seeAll(count)} →
+  </a>
+</section>

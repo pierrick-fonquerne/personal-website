@@ -4,8 +4,10 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Eyebrow from '../../../components/ui/Eyebrow.astro';
 import ResearchIntro from '../../../components/research/ResearchIntro.astro';
 import ResearchList from '../../../components/research/ResearchList.astro';
+import RecentJournal from '../../../components/research/RecentJournal.astro';
 import { useTranslations } from '../../../lib/i18n';
 import { resolveProgram } from '../../../lib/programs';
+import { recentJournalEntries } from '../../../lib/research-journal';
 import ResearchBackdrop from '../../../components/research/ResearchBackdrop.astro';
 
 const locale = 'en' as const;
@@ -16,6 +18,13 @@ const programs = (await getCollection('programs'))
   .filter((p) => p.data.published)
   .sort((a, b) => a.data.order - b.data.order || a.data.slug.localeCompare(b.data.slug))
   .map((program) => resolveProgram(program, entries, projectEntries));
+
+const publishedResearchSlugs = new Set(
+  entries.filter((entry) => !entry.data.external).map((entry) => entry.data.slug),
+);
+const journalAll = await getCollection('research-journal');
+const recentEntries = recentJournalEntries(journalAll, publishedResearchSlugs, 3);
+const researchTitles = new Map(entries.map((entry) => [entry.data.slug, entry.data[locale].title]));
 ---
 
 <BaseLayout
@@ -39,6 +48,14 @@ const programs = (await getCollection('programs'))
     <div class="mt-12">
       <ResearchIntro locale={locale} />
     </div>
+
+    {
+      recentEntries.length > 0 && (
+        <div class="mt-16">
+          <RecentJournal entries={recentEntries} researchTitles={researchTitles} locale={locale} />
+        </div>
+      )
+    }
 
     <div class="mt-20">
       <ResearchList entries={entries} programs={programs} locale={locale} />

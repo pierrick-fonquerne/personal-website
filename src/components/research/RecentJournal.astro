@@ -1,0 +1,60 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import type { Locale } from '../../lib/i18n';
+import { useTranslations } from '../../lib/i18n';
+import { journalEntryPath } from '../../lib/research-journal';
+
+interface Props {
+  entries: CollectionEntry<'research-journal'>[];
+  researchTitles: ReadonlyMap<string, string>;
+  locale: Locale;
+}
+
+const { entries, researchTitles, locale } = Astro.props;
+const t = useTranslations(locale);
+---
+
+{
+  entries.length > 0 && (
+    <section>
+      <h2 class="mb-4 font-mono text-[11px] tracking-[0.16em] text-[var(--color-fg-dim)] uppercase">
+        {t.research.journal.recentHeading}
+      </h2>
+      <ul class="flex flex-col gap-4">
+        {entries.map((entry) => {
+          const href = journalEntryPath(entry.data.research, entry.data.slug, locale);
+          const title = entry.data.title[locale];
+          const projectTitle = researchTitles.get(entry.data.research);
+          const dateLabel = entry.data.date.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-GB', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          return (
+            <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-[var(--color-line)] pb-4">
+              <time
+                datetime={entry.data.date.toISOString()}
+                class="font-mono text-[11px] tracking-[0.1em] text-[var(--color-fg-dim)]"
+              >
+                {dateLabel}
+              </time>
+              <a
+                href={href}
+                class="text-[15px] leading-[1.4] text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)] focus-visible:text-[var(--color-accent)] focus-visible:outline-none"
+              >
+                {title}
+              </a>
+              {
+                projectTitle && (
+                  <span class="font-mono text-[11px] tracking-[0.06em] text-[var(--color-fg-muted)]">
+                    {projectTitle}
+                  </span>
+                )
+              }
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  )
+}
