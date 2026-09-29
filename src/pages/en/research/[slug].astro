@@ -4,6 +4,7 @@ import { getCollection, getEntry, render } from 'astro:content';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../../lib/i18n';
 import { journalCount, latestJournalEntry } from '../../../lib/research-journal';
+import { audioPlayerLabels } from '../../../lib/audio-player-labels';
 import { buildArticleNode, buildBreadcrumb } from '../../../lib/seo';
 import ChapterAudioPlayer from '../../../components/learning/ChapterAudioPlayer';
 import JournalLatest from '../../../components/research/JournalLatest.astro';
@@ -43,31 +44,7 @@ const schema = [
   ]),
 ];
 
-const audioLabels = {
-  listen: t.toolbar.listen,
-  pause: t.toolbar.pause,
-  resume: t.toolbar.resume,
-  stop: t.toolbar.stop,
-  close: t.toolbar.close,
-  speed: t.toolbar.speed,
-  loading: t.toolbar.loading,
-  error: t.toolbar.error,
-  webSpeechBadge: t.toolbar.webSpeechBadge,
-  mp3Badge: t.toolbar.mp3Badge,
-  download: t.toolbar.download,
-  skipBack: t.toolbar.skipBack,
-  skipForward: t.toolbar.skipForward,
-  nextChapterIn: t.toolbar.nextChapterIn,
-  playNext: t.toolbar.playNext,
-  cancel: t.toolbar.cancel,
-  shortcuts: t.toolbar.shortcuts,
-  shortcutsTitle: t.toolbar.shortcutsTitle,
-  shortcutPlayPause: t.toolbar.shortcutPlayPause,
-  shortcutSkipBack: t.toolbar.shortcutSkipBack,
-  shortcutSkipForward: t.toolbar.shortcutSkipForward,
-  shortcutFineSeek: t.toolbar.shortcutFineSeek,
-  shortcutJump: t.toolbar.shortcutJump,
-};
+const audioLabels = audioPlayerLabels(t);
 
 const journalAll = (await getCollection('research-journal')).filter((e) => e.data.published);
 const journalEntries = journalCount(entry.data.slug, journalAll);
