@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
+import { AUDIO_SOURCES, parseRelativePath } from './audio-sources.mjs';
 
 const COST_PER_1K_CHARS = 0.016;
 const fmtCost = (chars) => `$${((chars * COST_PER_1K_CHARS) / 1000).toFixed(4)}`;
@@ -68,13 +69,6 @@ function moduleMatches(name) {
   return filterModules.some((needle) => name.includes(needle));
 }
 
-const SOURCES = [
-  { locale: 'fr', dir: resolve(ROOT, 'src', 'content', 'course-modules-fr') },
-  { locale: 'en', dir: resolve(ROOT, 'src', 'content', 'course-modules-en') },
-  { locale: 'fr', dir: resolve(ROOT, 'src', 'content', 'research-fr'), course: 'research' },
-  { locale: 'en', dir: resolve(ROOT, 'src', 'content', 'research-en'), course: 'research' },
-];
-
 const MAX_CHARS_PER_CHUNK = 3800;
 
 function stripMdx(raw) {
@@ -110,14 +104,6 @@ async function* walkMdx(dir) {
       yield fp;
     }
   }
-}
-
-function parseRel(fp, sourceDir, courseOverride) {
-  const rel = fp.slice(sourceDir.length + 1).replace(/\\/g, '/');
-  const parts = rel.split('/');
-  const moduleName = parts.pop().replace(/\.mdx$/, '');
-  const course = courseOverride ?? parts.join('/');
-  return { course, module: moduleName };
 }
 
 function sha256(input) {
@@ -242,12 +228,12 @@ async function main() {
   let skipped = 0;
   let dropped = 0;
 
-  for (const { locale, dir, course: courseOverride } of SOURCES) {
+  for (const { locale, dir, namespace } of AUDIO_SOURCES) {
     if (filterLocale && locale !== filterLocale) continue;
     if (!existsSync(dir)) continue;
 
     for await (const mdxPath of walkMdx(dir)) {
-      const { course, module: modName } = parseRel(mdxPath, dir, courseOverride);
+      const { course, module: modName } = parseRelativePath(mdxPath, dir, namespace);
       if (filterCourse && course !== filterCourse) continue;
       if (!moduleMatches(modName)) continue;
       const key = `${locale}/${course}/${modName}`;
