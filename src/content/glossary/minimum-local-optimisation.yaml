@@ -1,0 +1,13 @@
+slug: minimum-local-optimisation
+fr:
+  term: Minimum local (optimisation)
+  definition: "Point où une fonction est plus basse que partout dans son voisinage immédiat, sans être pour autant sa valeur la plus basse. La pente y est nulle, donc la descente de gradient peut s'y arrêter. Une fonction convexe n'en a pas d'autre que son minimum global."
+  source: Boyd & Vandenberghe, 2004
+en:
+  term: Local minimum (optimisation)
+  definition: "A point where a function is lower than everywhere in its immediate neighbourhood, without being its lowest value overall. The slope there is zero, so gradient descent may stop at it. A convex function has no local minimum other than its global one."
+  source: Boyd & Vandenberghe, 2004
+seeAlso:
+  - point-selle
+  - surface-de-cout
+  - descente-de-gradient

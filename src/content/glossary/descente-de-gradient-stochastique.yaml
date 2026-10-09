@@ -1,0 +1,13 @@
+slug: descente-de-gradient-stochastique
+fr:
+  term: Descente de gradient stochastique
+  definition: "Variante de la descente de gradient qui estime le gradient sur un seul exemple tiré au hasard (ou, par extension, sur un mini-batch) au lieu de toute la base. L'estimation est bruitée mais sans biais : en moyenne sur les tirages, elle vaut le vrai gradient. Souvent abrégée SGD (Stochastic Gradient Descent)."
+  source: Robbins & Monro, 1951
+en:
+  term: Stochastic gradient descent
+  definition: "A variant of gradient descent that estimates the gradient on a single randomly drawn example (or, by extension, on a mini-batch) instead of the whole set. The estimate is noisy but unbiased: averaged over draws, it equals the true gradient. Often abbreviated SGD."
+  source: Robbins & Monro, 1951
+seeAlso:
+  - descente-de-gradient
+  - mini-batch
+  - epoque

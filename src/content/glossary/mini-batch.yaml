@@ -1,0 +1,13 @@
+slug: mini-batch
+fr:
+  term: Mini-batch
+  definition: "Petit paquet d'exemples tiré au hasard dans la base d'entraînement, sur lequel on calcule le gradient pour faire un pas de descente. Le gradient obtenu est bruité mais juste en moyenne, et il coûte bien moins cher que le gradient sur toute la base. Tailles usuelles : de quelques dizaines à quelques centaines d'exemples."
+  source: Bottou, Curtis & Nocedal, 2018
+en:
+  term: Mini-batch
+  definition: "A small random subset of the training set on which the gradient is computed to take one descent step. The resulting gradient is noisy but correct on average, and far cheaper than the gradient over the whole set. Typical sizes range from a few dozen to a few hundred examples."
+  source: Bottou, Curtis & Nocedal, 2018
+seeAlso:
+  - descente-de-gradient-stochastique
+  - epoque
+  - descente-de-gradient
