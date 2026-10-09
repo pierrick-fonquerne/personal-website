@@ -16,7 +16,31 @@ export interface RavineShape {
   readonly curvatureY: number;
 }
 
+export type DescentMode = 'parabola' | 'ravine';
+
 const EQUALITY_TOLERANCE = 1e-9;
+
+export const DIVERGENCE_LIMIT = 50;
+export const MAX_ITERATIONS = 30;
+export const MIN_RATE = 0.01;
+export const RATE_STEP = 0.01;
+export const PARABOLA_DEFAULT_RATE = 0.1;
+export const PARABOLA_MAX_RATE = 1.2;
+export const RAVINE_DEFAULT_RATE = 0.09;
+export const RAVINE_MAX_RATE = 0.12;
+
+export function clamp(value: number, low: number, high: number): number {
+  return Math.min(high, Math.max(low, value));
+}
+
+export function getMaxRate(mode: DescentMode): number {
+  return mode === 'ravine' ? RAVINE_MAX_RATE : PARABOLA_MAX_RATE;
+}
+
+export function getInitialRate(mode: DescentMode, defaultLearningRate: number | undefined): number {
+  const fallback = mode === 'ravine' ? RAVINE_DEFAULT_RATE : PARABOLA_DEFAULT_RATE;
+  return clamp(defaultLearningRate ?? fallback, MIN_RATE, getMaxRate(mode));
+}
 
 export function parabolaLoss(curvature: number, weight: number): number {
   return curvature * weight * weight;
@@ -70,8 +94,22 @@ export function ravineTrajectory(
   let current = start;
   for (let iteration = 1; iteration <= iterations; iteration += 1) {
     const gradient = ravineGradient(shape, current);
-    current = { x: current.x - learningRate * gradient.x, y: current.y - learningRate * gradient.y };
+    current = {
+      x: current.x - learningRate * gradient.x,
+      y: current.y - learningRate * gradient.y,
+    };
     points.push(current);
   }
   return points;
+}
+
+export type RavineBehavior = 'smooth' | 'zigzag' | 'cycling' | 'diverging';
+
+export function classifyRavine(shape: RavineShape, learningRate: number): RavineBehavior {
+  const steepestCurvature = Math.max(shape.curvatureX, shape.curvatureY);
+  const regime = classifyRegime(steepestCurvature, learningRate);
+  if (regime === 'diverging') return 'diverging';
+  if (regime === 'cycling') return 'cycling';
+  if (regime === 'oscillating') return 'zigzag';
+  return 'smooth';
 }

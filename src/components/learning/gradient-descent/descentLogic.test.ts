@@ -7,6 +7,8 @@ import {
   ravineLoss,
   ravineGradient,
   ravineTrajectory,
+  classifyRavine,
+  getInitialRate,
 } from './descentLogic';
 
 describe('parabola descent', () => {
@@ -73,5 +75,45 @@ describe('ravine descent', () => {
     const xs = trajectory.map((point) => point.x);
     expect(xs[1]).toBeCloseTo(1.64, 10);
     expect(xs.every((x, index) => index === 0 || x < xs[index - 1])).toBe(true);
+  });
+});
+
+describe('classifyRavine', () => {
+  const shape = { curvatureX: 1, curvatureY: 10 };
+
+  it('diverges above 0.1', () => {
+    expect(classifyRavine(shape, 0.11)).toBe('diverging');
+    expect(classifyRavine(shape, 0.12)).toBe('diverging');
+  });
+
+  it('bounces forever at exactly 0.1', () => {
+    expect(classifyRavine(shape, 0.1)).toBe('cycling');
+  });
+
+  it('zigzags between 0.05 and 0.1', () => {
+    expect(classifyRavine(shape, 0.09)).toBe('zigzag');
+    expect(classifyRavine(shape, 0.06)).toBe('zigzag');
+  });
+
+  it('descends without zigzag at 0.05 and below', () => {
+    expect(classifyRavine(shape, 0.05)).toBe('smooth');
+    expect(classifyRavine(shape, 0.01)).toBe('smooth');
+  });
+
+  it('uses the steepest curvature whichever axis it is on', () => {
+    expect(classifyRavine({ curvatureX: 10, curvatureY: 1 }, 0.09)).toBe('zigzag');
+  });
+});
+
+describe('getInitialRate', () => {
+  it('falls back to the default rate of the mode', () => {
+    expect(getInitialRate('parabola', undefined)).toBe(0.1);
+    expect(getInitialRate('ravine', undefined)).toBe(0.09);
+  });
+
+  it('keeps a requested rate inside the range of the mode', () => {
+    expect(getInitialRate('parabola', 0.5)).toBe(0.5);
+    expect(getInitialRate('ravine', 0.5)).toBe(0.12);
+    expect(getInitialRate('parabola', 0)).toBe(0.01);
   });
 });
