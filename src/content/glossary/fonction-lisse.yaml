@@ -5,7 +5,7 @@ fr:
   source: Nesterov, 2004
 en:
   term: β-smooth function
-  definition: "A differentiable function whose slope never changes faster than a constant β: the gap between two slopes is at most β times the gap between the two points. This regularity guarantees that a gradient descent step of length at most 1/β always decreases the function (descent lemma)."
+  definition: 'A differentiable function whose slope never changes faster than a constant β: the gap between two slopes is at most β times the gap between the two points. This regularity guarantees that a gradient descent step of length at most 1/β always decreases the function (descent lemma).'
   source: Nesterov, 2004
 seeAlso:
   - descente-de-gradient

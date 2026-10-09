@@ -5,7 +5,7 @@ fr:
   source: Dauphin et al., 2014
 en:
   term: Saddle point
-  definition: "A point where the gradient is zero but which is neither a minimum nor a maximum: the function rises in some directions and falls in others, like a mountain pass. Classic example: w₁² − w₂² at the origin. In high dimension they are argued to be far more common than local minima, and they slow gradient descent down."
+  definition: 'A point where the gradient is zero but which is neither a minimum nor a maximum: the function rises in some directions and falls in others, like a mountain pass. Classic example: w₁² − w₂² at the origin. In high dimension they are argued to be far more common than local minima, and they slow gradient descent down.'
   source: Dauphin et al., 2014
 seeAlso:
   - minimum-local-optimisation

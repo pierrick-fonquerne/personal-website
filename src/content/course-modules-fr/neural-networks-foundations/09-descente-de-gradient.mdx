@@ -46,7 +46,9 @@ et la rétropropagation fournit justement chacune de ces dérivées partielles. 
 Tu as déjà croisé une règle de cette forme. La règle du perceptron, au chapitre 4, s'écrivait $w \leftarrow w + \eta\,y\,x$. Même structure, poids corrigé par un pas proportionnel à $\eta$. La différence est de fond : le perceptron corrigeait par projection, sans pente, alors qu'ici chaque correction est dictée par la dérivée de la note. C'est ce qui permet d'entraîner un réseau à activations dérivables, couche cachée comprise.
 
 <Callout kind="note" title="D'où vient la méthode">
-L'idée remonte à Augustin Cauchy, qui la propose en 1847 pour résoudre les systèmes d'équations rencontrés en calcul des orbites (Cauchy, 1847). Elle a donc plus d'un siècle d'avance sur les réseaux de neurones.
+  L'idée remonte à Augustin Cauchy, qui la propose en 1847 pour résoudre les systèmes d'équations
+  rencontrés en calcul des orbites (Cauchy, 1847). Elle a donc plus d'un siècle d'avance sur les
+  réseaux de neurones.
 </Callout>
 
 ## Acte 2 : le bon dosage de $\eta$, démontré sur une parabole
@@ -169,6 +171,7 @@ L(w - \eta\,g) \;\le\; L(w) - \frac{\eta}{2}\,\|\nabla L(w)\|^2 \quad \text{pour
 $$
 
 C'est le lemme 1.2.3 de Nesterov (2004), socle de presque toutes les analyses de la descente de gradient.
+
 </Callout>
 
 **Ce que le lemme garantit, et ce qu'il ne garantit pas.** Additionne la garantie sur $T$ pas. Les termes $L(w_t)$ se télescopent, et comme la note ne descend jamais sous son plus petit niveau $L^\star$ (une erreur quadratique n'est jamais négative, donc $L^\star \ge 0$), il reste
@@ -205,11 +208,11 @@ Le même calcul, mené sur chaque exemple d'un paquet tiré au hasard, donne le 
 
 Un passage complet sur toutes les données, paquet après paquet, s'appelle une <Term slug="epoque">époque</Term>. Avec $60\,000$ exemples et des paquets de $100$, une époque compte $600$ pas, là où le batch complet n'en fait qu'un. Le bruit a même un avantage inattendu : il secoue la trajectoire, ce qui peut l'aider à quitter un replat ou un col (Bottou, Curtis et Nocedal, 2018).
 
-| Variante | Exemples par pas | Pas par époque ($N = 60\,000$) | Gradient |
-|---|---|---|---|
-| Batch complet | $N$ | $1$ | exact, coûteux |
-| Mini-batch | $m$ (ex. $100$) | $N/m = 600$ | bruité, sans biais |
-| Stochastique | $1$ | $N = 60\,000$ | très bruité, sans biais |
+| Variante      | Exemples par pas | Pas par époque ($N = 60\,000$) | Gradient                |
+| ------------- | ---------------- | ------------------------------ | ----------------------- |
+| Batch complet | $N$              | $1$                            | exact, coûteux          |
+| Mini-batch    | $m$ (ex. $100$)  | $N/m = 600$                    | bruité, sans biais      |
+| Stochastique  | $1$              | $N = 60\,000$                  | très bruité, sans biais |
 
 ## Acte 5 : les pièges du relief
 
@@ -417,12 +420,7 @@ La descente de gradient fait un pas $-\eta\,\nabla L$ à chaque itération, et l
     },
     {
       q: 'Sur L(w) = a w², pour quels taux la descente converge-t-elle ?',
-      options: [
-        'Pour tout η > 0',
-        'Pour 0 < η < 1/a',
-        'Seulement pour η = 1/(2a)',
-        'Pour η > 1/a',
-      ],
+      options: ['Pour tout η > 0', 'Pour 0 < η < 1/a', 'Seulement pour η = 1/(2a)', 'Pour η > 1/a'],
       answer: 1,
       explain:
         'Chaque pas multiplie le poids par r = 1 − 2ηa. La suite géométrique tend vers 0 si et seulement si |r| < 1, ce qui équivaut à 0 < η < 1/a.',

@@ -5,7 +5,7 @@ fr:
   source: Boyd & Vandenberghe, 2004
 en:
   term: Local minimum (optimisation)
-  definition: "A point where a function is lower than everywhere in its immediate neighbourhood, without being its lowest value overall. The slope there is zero, so gradient descent may stop at it. A convex function has no local minimum other than its global one."
+  definition: 'A point where a function is lower than everywhere in its immediate neighbourhood, without being its lowest value overall. The slope there is zero, so gradient descent may stop at it. A convex function has no local minimum other than its global one.'
   source: Boyd & Vandenberghe, 2004
 seeAlso:
   - point-selle

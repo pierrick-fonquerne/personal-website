@@ -46,7 +46,9 @@ and backpropagation supplies precisely each of these partial derivatives. One de
 You have already met a rule of this form. The perceptron rule, in chapter 4, was $w \leftarrow w + \eta\,y\,x$. Same structure, a weight corrected by a step proportional to $\eta$. The difference runs deep: the perceptron corrected by projection, with no slope, whereas here every correction is dictated by the derivative of the score. That is what makes it possible to train a network with differentiable activations, hidden layer included.
 
 <Callout kind="note" title="Where the method comes from">
-The idea goes back to Augustin Cauchy, who proposed it in 1847 to solve the systems of equations met in orbit calculations (Cauchy, 1847). It therefore predates neural networks by more than a century.
+  The idea goes back to Augustin Cauchy, who proposed it in 1847 to solve the systems of equations
+  met in orbit calculations (Cauchy, 1847). It therefore predates neural networks by more than a
+  century.
 </Callout>
 
 ## Act 2: the right dose of $\eta$, proven on a parabola
@@ -169,6 +171,7 @@ L(w - \eta\,g) \;\le\; L(w) - \frac{\eta}{2}\,\|\nabla L(w)\|^2 \quad \text{for 
 $$
 
 This is Nesterov's lemma 1.2.3 (2004), the foundation of almost every analysis of gradient descent.
+
 </Callout>
 
 **What the lemma guarantees, and what it does not.** Add up the guarantee over $T$ steps. The terms $L(w_t)$ telescope, and since the score never goes below its lowest level $L^\star$ (a squared error is never negative, so $L^\star \ge 0$), what remains is
@@ -205,11 +208,11 @@ The same computation, carried out on each example of a randomly drawn batch, giv
 
 A full pass over the data, batch after batch, is called an <Term slug="epoque">epoch</Term>. With $60{,}000$ examples and batches of $100$, an epoch counts $600$ steps, where full batch makes only one. The noise even has an unexpected advantage: it shakes the trajectory, which can help it leave a flat spot or a pass (Bottou, Curtis and Nocedal, 2018).
 
-| Variant | Examples per step | Steps per epoch ($N = 60{,}000$) | Gradient |
-|---|---|---|---|
-| Full batch | $N$ | $1$ | exact, costly |
-| Mini-batch | $m$ (e.g. $100$) | $N/m = 600$ | noisy, unbiased |
-| Stochastic | $1$ | $N = 60{,}000$ | very noisy, unbiased |
+| Variant    | Examples per step | Steps per epoch ($N = 60{,}000$) | Gradient             |
+| ---------- | ----------------- | -------------------------------- | -------------------- |
+| Full batch | $N$               | $1$                              | exact, costly        |
+| Mini-batch | $m$ (e.g. $100$)  | $N/m = 600$                      | noisy, unbiased      |
+| Stochastic | $1$               | $N = 60{,}000$                   | very noisy, unbiased |
 
 ## Act 5: the traps of the terrain
 
@@ -417,12 +420,7 @@ Gradient descent takes a step $-\eta\,\nabla L$ at each iteration, and the desce
     },
     {
       q: 'On L(w) = a w², for which rates does the descent converge?',
-      options: [
-        'For every η > 0',
-        'For 0 < η < 1/a',
-        'Only for η = 1/(2a)',
-        'For η > 1/a',
-      ],
+      options: ['For every η > 0', 'For 0 < η < 1/a', 'Only for η = 1/(2a)', 'For η > 1/a'],
       answer: 1,
       explain:
         'Each step multiplies the weight by r = 1 − 2ηa. The geometric sequence tends to 0 if and only if |r| < 1, which is equivalent to 0 < η < 1/a.',

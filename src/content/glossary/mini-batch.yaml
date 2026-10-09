@@ -5,7 +5,7 @@ fr:
   source: Bottou, Curtis & Nocedal, 2018
 en:
   term: Mini-batch
-  definition: "A small random subset of the training set on which the gradient is computed to take one descent step. The resulting gradient is noisy but correct on average, and far cheaper than the gradient over the whole set. Typical sizes range from a few dozen to a few hundred examples."
+  definition: 'A small random subset of the training set on which the gradient is computed to take one descent step. The resulting gradient is noisy but correct on average, and far cheaper than the gradient over the whole set. Typical sizes range from a few dozen to a few hundred examples.'
   source: Bottou, Curtis & Nocedal, 2018
 seeAlso:
   - descente-de-gradient-stochastique
