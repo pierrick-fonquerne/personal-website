@@ -3,20 +3,482 @@ course: neural-networks-foundations
 order: 9
 title: Descente de gradient
 subtitle: "Comment utiliser le gradient pour faire baisser l'erreur, itération après itération."
-estimatedMinutes: 15
+estimatedMinutes: 30
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import GradientDescentLab from '../../../components/learning/GradientDescentLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 8, la rétropropagation nous a livré, en un seul passage arrière, la pente de la note par rapport à chaque poids du réseau. On tient la boussole complète. Mais une boussole n'a jamais fait avancer personne : savoir où descendre n'est pas descendre.
+
+La question de ce chapitre est donc très concrète : comment transformer ce gradient en un pas, et de quelle longueur ? Trop court, on n'arrive jamais. Trop long, on saute par-dessus la vallée, et on peut même finir plus haut qu'au départ. On va voir que cette intuition se démontre, et qu'elle donne une règle chiffrée.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : la surface de coût (chapitre 6), le gradient et les dérivées partielles (chapitre 7), la rétropropagation qui calcule ce gradient (chapitre 8). Le lien entre le signe d'une dérivée et le sens de variation d'une fonction, vu au lycée.
+
+**Ce qu'il n'est pas nécessaire de connaître** : la régularisation (chapitre 10), l'initialisation des poids (chapitre 11), le momentum et Adam (chapitre 12). Aucune notion de probabilités au-delà de la moyenne.
+
+**Niveau de rigueur** : on démontre exactement quand la descente converge sur une parabole, puis on énonce et on démontre le lemme de descente, qui garantit la baisse de la note pour toute fonction dont la pente ne varie pas trop vite. Cinq exercices papier-crayon aux corrigés détaillés ligne par ligne.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : le randonneur dans le brouillard
 
-- Taux d'apprentissage : le bon dosage, ni trop grand ni trop petit
-- Variantes : batch, mini-batch, stochastique
-- Pièges classiques : minima locaux, plateaux, oscillations
+Imagine-toi en montagne, pris dans un brouillard épais. Tu veux rejoindre la vallée, mais tu ne vois pas à deux mètres. Une seule information t'est accessible : la pente du sol sous tes pieds. La stratégie raisonnable s'impose d'elle-même. Tu sens dans quel sens le terrain descend le plus fort, tu fais un pas dans ce sens, puis tu recommences.
 
-Le gradient indique la direction de la plus forte pente. La descente de gradient suit cette pente pour minimiser la fonction de coût. Tout l'art tient dans le pas qu'on choisit et la stratégie d'échantillonnage.
+C'est exactement ce que fait la descente de gradient, déjà annoncée au chapitre 4. Le chapitre 7 a établi que le gradient $\nabla L$ pointe vers la plus forte montée de la note. Pour descendre, on fait donc un pas dans la direction opposée, $-\nabla L$. La règle de mise à jour s'écrit :
+
+$$
+w \;\leftarrow\; w - \eta\,\nabla L(w).
+$$
+
+Elle se lit : le nouveau vecteur de poids est l'ancien, moins le gradient de la note en ce point, multiplié par un petit nombre positif $\eta$. Ce nombre est le taux d'apprentissage du chapitre 4. Il fixe la longueur du pas. Poids par poids, la même règle s'écrit
+
+$$
+w_j \;\leftarrow\; w_j - \eta\,\frac{\partial L}{\partial w_j},
+$$
+
+et la rétropropagation fournit justement chacune de ces dérivées partielles. Un pas de descente, c'est donc : une passe avant, une passe arrière, puis cette soustraction sur chaque poids. On répète, et c'est tout.
+
+Tu as déjà croisé une règle de cette forme. La règle du perceptron, au chapitre 4, s'écrivait $w \leftarrow w + \eta\,y\,x$. Même structure, poids corrigé par un pas proportionnel à $\eta$. La différence est de fond : le perceptron corrigeait par projection, sans pente, alors qu'ici chaque correction est dictée par la dérivée de la note. C'est ce qui permet d'entraîner un réseau à activations dérivables, couche cachée comprise.
+
+<Callout kind="note" title="D'où vient la méthode">
+L'idée remonte à Augustin Cauchy, qui la propose en 1847 pour résoudre les systèmes d'équations rencontrés en calcul des orbites (Cauchy, 1847). Elle a donc plus d'un siècle d'avance sur les réseaux de neurones.
+</Callout>
+
+## Acte 2 : le bon dosage de $\eta$, démontré sur une parabole
+
+Pour comprendre le rôle de $\eta$ sans rien cacher, prenons la note la plus simple qui ait un creux : une parabole à un seul poids,
+
+$$
+L(w) = a\,w^2, \qquad a > 0.
+$$
+
+Son minimum est en $w = 0$, et sa dérivée vaut $L'(w) = 2a\,w$. Le nombre $a$ mesure la courbure : plus il est grand, plus la cuvette est étroite et raide.
+
+**Un pas de descente.** On applique la règle :
+
+$$
+w_{t+1} = w_t - \eta \cdot 2a\,w_t.
+$$
+
+On factorise par $w_t$ :
+
+$$
+w_{t+1} = (1 - 2\eta a)\,w_t.
+$$
+
+Cette ligne dit tout. À chaque pas, le poids est multiplié par le même nombre $r = 1 - 2\eta a$. Après $t$ pas, il vaut donc
+
+$$
+w_t = r^t\,w_0.
+$$
+
+C'est une suite géométrique, et tu sais déjà comment elle se comporte : elle tend vers $0$ si et seulement si $|r| < 1$. On traduit cette condition sur $\eta$. L'inégalité $-1 < 1 - 2\eta a < 1$ équivaut à $0 < 2\eta a < 2$, c'est-à-dire
+
+$$
+0 < \eta < \frac{1}{a}.
+$$
+
+Le signe de $r$ précise le comportement. On obtient cinq régimes, tous exacts :
+
+- **$\eta < \frac{1}{2a}$** : $0 < r < 1$. Le poids glisse vers $0$ sans jamais changer de signe. Descente sage, et d'autant plus lente que $\eta$ est petit.
+- **$\eta = \frac{1}{2a}$** : $r = 0$. Le premier pas atterrit pile au fond. C'est le pas idéal pour cette cuvette.
+- **$\frac{1}{2a} < \eta < \frac{1}{a}$** : $-1 < r < 0$. Le poids change de signe à chaque pas : il saute d'un versant à l'autre, mais chaque saut est plus court. Ça oscille, et ça converge quand même.
+- **$\eta = \frac{1}{a}$** : $r = -1$. Le poids rebondit indéfiniment entre $w_0$ et $-w_0$.
+- **$\eta > \frac{1}{a}$** : $r < -1$. Chaque saut est plus long que le précédent. La note explose : la descente diverge.
+
+Retiens surtout la leçon de fond : le seuil dépend de la courbure $a$. Une cuvette étroite exige un petit pas. Le même $\eta$ peut être prudent sur une note et catastrophique sur une autre.
+
+Règle $\eta$ dans le laboratoire et fais des pas. Commence vers $0{,}1$, puis franchis $0{,}5$, puis $1$.
+
+<GradientDescentLab client:visible locale="fr" defaultLearningRate={0.1} />
+
+Trois choses à observer en jouant :
+
+- Entre $0{,}5$ et $1$, la trajectoire zigzague d'un versant à l'autre, mais chaque rebond est plus bas que le précédent. Osciller n'est pas diverger.
+- À $\eta = 0{,}5$ exactement, un seul pas suffit. Sur une vraie note à des millions de poids, ce pas parfait n'existe pas, parce que la courbure change d'une direction à l'autre.
+- Au-delà de $1$, la note grimpe à chaque pas. Un taux d'apprentissage trop grand ne ralentit pas l'apprentissage : il le détruit.
+
+## Acte 3 : le lemme de descente, pour toute note régulière
+
+La parabole est un cas d'école. Un vrai réseau a une note tourmentée, sans formule simple. Peut-on quand même garantir qu'un pas fait baisser la note ? Oui, à une condition : que la pente ne change pas trop brutalement.
+
+Reviens au randonneur. S'il sait que la pente du terrain ne peut pas changer d'un coup, que le relief n'a ni falaise ni marche cachée, alors la pente mesurée sous ses pieds reste fiable sur une certaine distance. Il peut faire un pas en confiance, à condition que ce pas ne soit pas plus long que la zone où la pente reste fiable.
+
+**Définition.** Une fonction dérivable $f$ est dite <Term slug="fonction-lisse">β-lisse</Term>, avec $\beta > 0$, si sa dérivée ne varie jamais plus vite que $\beta$ :
+
+$$
+|f'(u) - f'(v)| \;\le\; \beta\,|u - v| \quad \text{pour tous } u, v.
+$$
+
+On note la constante $\beta$ et non $L$, pour ne pas la confondre avec la note. Sur la parabole $a\,w^2$, on a $|f'(u) - f'(v)| = 2a\,|u - v|$ : elle est $\beta$-lisse avec $\beta = 2a$.
+
+**Lemme de descente.** Si $f$ est $\beta$-lisse, alors pour tous $x$ et $y$,
+
+$$
+f(y) \;\le\; f(x) + f'(x)\,(y - x) + \frac{\beta}{2}\,(y - x)^2.
+$$
+
+Il se lit : la fonction reste toujours sous une parabole qui touche son graphe en $x$, avec la même pente. Autrement dit, la tangente plus une marge de courbure $\beta$ forment un plafond que la note ne peut jamais crever.
+
+**Démonstration.** On fixe $x$ et on étudie l'écart entre ce plafond et la fonction :
+
+$$
+g(y) = f(x) + f'(x)\,(y - x) + \frac{\beta}{2}\,(y - x)^2 - f(y).
+$$
+
+Il faut montrer que $g(y) \ge 0$ partout. D'abord, en $y = x$, tous les termes s'annulent : $g(x) = 0$. Ensuite, on dérive par rapport à $y$ :
+
+$$
+g'(y) = f'(x) + \beta\,(y - x) - f'(y).
+$$
+
+Pour $y \ge x$, la lissité donne $f'(y) - f'(x) \le \beta\,(y - x)$, donc $g'(y) \ge 0$ : $g$ croît à droite de $x$. Pour $y \le x$, elle donne $f'(x) - f'(y) \le \beta\,(x - y)$, donc $g'(y) \le 0$ : $g$ décroît à gauche de $x$. Une fonction qui décroît jusqu'à $x$ puis croît ensuite atteint son minimum en $x$. Ce minimum vaut $g(x) = 0$, donc $g(y) \ge 0$ pour tout $y$. □
+
+**Conséquence pour un pas de descente.** On applique le lemme au pas $y = x - \eta\,f'(x)$. L'écart $y - x$ vaut $-\eta\,f'(x)$, donc
+
+$$
+f(y) \;\le\; f(x) - \eta\,f'(x)^2 + \frac{\beta\,\eta^2}{2}\,f'(x)^2.
+$$
+
+On regroupe les deux derniers termes :
+
+$$
+f(y) \;\le\; f(x) - \eta\Big(1 - \frac{\beta\,\eta}{2}\Big)\,f'(x)^2.
+$$
+
+Si $\eta \le \frac{1}{\beta}$, la parenthèse vaut au moins $\frac{1}{2}$, et on obtient la garantie annoncée :
+
+$$
+f(y) \;\le\; f(x) - \frac{\eta}{2}\,f'(x)^2.
+$$
+
+Elle se lit : avec un pas au plus égal à $1/\beta$, chaque itération fait baisser la note d'au moins la moitié de $\eta$ fois le carré de la pente. Tant que la pente n'est pas nulle, la note baisse, sans exception.
+
+Vérifie la cohérence avec l'acte 2. Sur la parabole, $\beta = 2a$, donc la garantie vaut pour $\eta \le \frac{1}{2a}$ : c'est exactement la zone de descente sage, sans oscillation. Plus généralement, la parenthèse $1 - \beta\eta/2$ reste positive tant que $\eta < 2/\beta = 1/a$ : c'est exactement le seuil de convergence trouvé à la main. Le lemme retrouve la parabole, et il s'applique à bien d'autres notes.
+
+<Callout kind="info" title="Avec des millions de poids">
+Le lemme passe tel quel à plusieurs poids. On dit que la note est β-lisse si son gradient vérifie $\|\nabla L(u) - \nabla L(v)\| \le \beta\,\|u - v\|$. On pose $g = \nabla L(w)$ et on regarde la note le long de la seule droite du pas, $\varphi(t) = L(w - t\,g)$. La règle de la chaîne donne $\varphi'(t) = -\nabla L(w - t\,g) \cdot g$, et l'inégalité de Cauchy-Schwarz du chapitre 2 montre que $\varphi$ est $\beta\|g\|^2$-lisse. On applique alors le lemme à $\varphi$ entre $0$ et $\eta$, avec $\varphi'(0) = -\|g\|^2$. On obtient
+
+$$
+L(w - \eta\,g) \;\le\; L(w) - \frac{\eta}{2}\,\|\nabla L(w)\|^2 \quad \text{pour } \eta \le \frac{1}{\beta}.
+$$
+
+C'est le lemme 1.2.3 de Nesterov (2004), socle de presque toutes les analyses de la descente de gradient.
+</Callout>
+
+**Ce que le lemme garantit, et ce qu'il ne garantit pas.** Additionne la garantie sur $T$ pas. Les termes $L(w_t)$ se télescopent, et comme la note ne descend jamais sous son plus petit niveau $L^\star$ (une note quadratique est positive), il reste
+
+$$
+\frac{\eta}{2}\sum_{t=0}^{T-1}\|\nabla L(w_t)\|^2 \;\le\; L(w_0) - L^\star.
+$$
+
+Le membre de droite est un nombre fixe, alors que la somme de gauche s'allonge à chaque pas. Les gradients rencontrés doivent donc devenir aussi petits qu'on veut : la descente finit par s'arrêter sur un point où la pente est nulle. Mais attention à ce que dit ce résultat. Une pente nulle n'est pas forcément le fond de la vallée. Ce peut être un creux secondaire, un col, un replat. L'acte 5 va les passer en revue.
+
+## Acte 4 : batch, mini-batch, stochastique
+
+Jusqu'ici, on a fait comme si la note était une seule fonction. En réalité, elle est une moyenne sur les $N$ exemples d'entraînement :
+
+$$
+L(w) = \frac{1}{N}\sum_{i=1}^{N} \ell_i(w),
+$$
+
+où $\ell_i$ est la note du seul exemple $i$. Son gradient est la moyenne des gradients individuels, et chacun coûte une passe avant et une passe arrière. Avec $N = 60\,000$ images, un seul pas de descente exigerait donc $60\,000$ rétropropagations. C'est la descente de gradient **par batch complet** : exacte, mais terriblement lente.
+
+L'idée qui débloque tout est de ne pas attendre d'avoir tout vu. On tire au hasard un petit paquet d'exemples, un <Term slug="mini-batch">mini-batch</Term> $B$ de taille $m$, et on estime le gradient sur ce paquet seul :
+
+$$
+g_B = \frac{1}{m}\sum_{i \in B} \nabla \ell_i(w).
+$$
+
+Cette estimation est bruitée : un paquet de $100$ images ne ressemble jamais exactement à la base entière. Mais elle est juste **en moyenne**. Vérifions-le dans le cas extrême $m = 1$. Si on tire l'exemple $i$ avec la probabilité $\frac{1}{N}$, la moyenne de $\nabla \ell_i$ sur tous les tirages possibles vaut
+
+$$
+\sum_{i=1}^{N} \frac{1}{N}\,\nabla \ell_i(w) = \nabla L(w).
+$$
+
+On dit que $g_B$ est un estimateur sans biais du gradient : il se trompe à chaque tirage, mais ses erreurs se compensent. Le cas $m = 1$ porte le nom de <Term slug="descente-de-gradient-stochastique">descente de gradient stochastique</Term>, et l'idée d'avancer avec des mesures bruitées remonte à Robbins et Monro (1951). En pratique, on prend des paquets de quelques dizaines à quelques centaines d'exemples : assez pour lisser le bruit, assez peu pour faire beaucoup de pas.
+
+Un passage complet sur toutes les données, paquet après paquet, s'appelle une <Term slug="epoque">époque</Term>. Avec $60\,000$ exemples et des paquets de $100$, une époque compte $600$ pas, là où le batch complet n'en fait qu'un. Le bruit a même un avantage inattendu : il secoue la trajectoire, ce qui peut l'aider à quitter un replat ou un col (Bottou, Curtis et Nocedal, 2018).
+
+| Variante | Exemples par pas | Pas par époque ($N = 60\,000$) | Gradient |
+|---|---|---|---|
+| Batch complet | $N$ | $1$ | exact, coûteux |
+| Mini-batch | $m$ (ex. $100$) | $N/m = 600$ | bruité, sans biais |
+| Stochastique | $1$ | $N = 60\,000$ | très bruité, sans biais |
+
+## Acte 5 : les pièges du relief
+
+Le lemme garantit qu'on s'arrête là où la pente s'annule. Voici les endroits où cela peut arriver sans qu'on soit au fond.
+
+**Les minima locaux.** Un <Term slug="minimum-local-optimisation">minimum local</Term> est un creux plus bas que tous ses voisins proches, mais plus haut que le vrai fond. Le randonneur qui y tombe ne voit que des montées autour de lui et s'arrête. Il existe une famille de notes sans ce piège : les fonctions **convexes**, dont la tangente reste toujours sous la courbe (Boyd et Vandenberghe, 2004). Pour elles, $f(y) \ge f(x) + f'(x)\,(y - x)$, donc un point où $f'(x) = 0$ vérifie $f(y) \ge f(x)$ pour tout $y$ : c'est forcément le minimum global. Malheureusement, la note d'un réseau à couche cachée n'est pas convexe en général.
+
+**Les points selles.** Un <Term slug="point-selle">point selle</Term> est un col : un minimum dans certaines directions, un maximum dans d'autres. L'exemple type est $L(w_1, w_2) = w_1^2 - w_2^2$ à l'origine. Le gradient y est nul, alors que la note descend encore dès qu'on bouge selon $w_2$. Dauphin et ses coauteurs (2014) soutiennent, avec des arguments de physique statistique et des expériences sur des réseaux, qu'en très grande dimension les points critiques à note élevée sont surtout des cols, pas des minima locaux. Le vrai danger n'est pas de rester piégé, c'est de ralentir longuement autour d'eux.
+
+**Les plateaux.** Sur un replat, la pente est minuscule sans être nulle, et le pas $\eta\,\nabla L$ l'est aussi. On avance à pas de fourmi. C'est le cousin du vanishing gradient du chapitre 8 : quand des sigmoïdes saturent, leurs dérivées s'écrasent et la note devient plate.
+
+**Les ravines.** Reprends la note du chapitre 7, en plus accentué : $L = w_1^2 + 10\,w_2^2$. La cuvette est dix fois plus raide selon $w_2$ que selon $w_1$. D'après l'acte 2, chaque direction a son propre seuil : $\eta < 1$ selon $w_1$, mais $\eta < 0{,}1$ selon $w_2$. Avec un seul $\eta$ pour tout le monde, on est coincé. Prends-le grand et on zigzague d'une paroi à l'autre. Prends-le petit et on rampe le long du fond. Passe le laboratoire en mode ravine pour le voir.
+
+<GradientDescentLab client:visible locale="fr" defaultMode="ravine" defaultLearningRate={0.09} />
+
+Trois choses à observer en jouant :
+
+- À $\eta = 0{,}09$, la coordonnée $w_2$ est multipliée par $1 - 2 \cdot 0{,}09 \cdot 10 = -0{,}8$ à chaque pas : elle change de signe, d'où le zigzag. La coordonnée $w_1$, elle, n'est multipliée que par $0{,}82$ : elle avance lentement.
+- Baisse $\eta$ : le zigzag disparaît, mais la progression le long du fond devient interminable.
+- Monte au-dessus de $0{,}1$ : la direction raide diverge, alors que la direction plate aurait supporté un pas dix fois plus grand. Le chapitre 12 réglera ce conflit en donnant à chaque direction sa propre mémoire et sa propre échelle.
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne.
+
+**Exercice 1.** Au chapitre 8, sur le réseau jouet, on a trouvé $\partial L / \partial w^{(2)}_1 = -0{,}077$ pour un poids qui vaut $w^{(2)}_1 = 0{,}5$. Fais un pas de descente avec $\eta = 0{,}5$. Le poids augmente-t-il ou diminue-t-il, et pourquoi ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : un pas sur le réseau jouet">
+**Étape 1.** Écris la règle de mise à jour pour ce poids.
+
+$$
+w^{(2)}_1 \leftarrow w^{(2)}_1 - \eta\,\frac{\partial L}{\partial w^{(2)}_1}.
+$$
+
+**Étape 2.** Calcule le produit du taux par la dérivée.
+
+$$
+\eta\,\frac{\partial L}{\partial w^{(2)}_1} = 0{,}5 \cdot (-0{,}077) = -0{,}0385.
+$$
+
+**Étape 3.** Soustrais ce produit. Soustraire un nombre négatif revient à ajouter.
+
+$$
+w^{(2)}_1 \leftarrow 0{,}5 - (-0{,}0385) = 0{,}5385.
+$$
+
+**Résultat.** Le poids passe de $0{,}5$ à $0{,}5385$. Il augmente parce que la dérivée est négative : la note baisse quand ce poids monte, et la règle suit précisément cette pente.
+
+</Callout>
+
+**Exercice 2.** Sur $L(w) = w^2$, en partant de $w_0 = 2$, calcule $w_1$ et $w_2$ pour $\eta = 0{,}1$, puis $\eta = 0{,}75$, puis $\eta = 1{,}1$. Dis à chaque fois si la descente converge.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : trois taux sur une parabole">
+Ici $a = 1$, donc le facteur multiplicatif vaut $r = 1 - 2\eta$.
+
+**Étape 1.** Pour $\eta = 0{,}1$, calcule le facteur.
+
+$$
+r = 1 - 2 \cdot 0{,}1 = 0{,}8.
+$$
+
+**Étape 2.** Applique-le deux fois.
+
+$$
+w_1 = 0{,}8 \cdot 2 = 1{,}6, \qquad w_2 = 0{,}8 \cdot 1{,}6 = 1{,}28.
+$$
+
+**Étape 3.** Pour $\eta = 0{,}75$, calcule le facteur.
+
+$$
+r = 1 - 2 \cdot 0{,}75 = -0{,}5.
+$$
+
+**Étape 4.** Applique-le deux fois.
+
+$$
+w_1 = -0{,}5 \cdot 2 = -1, \qquad w_2 = -0{,}5 \cdot (-1) = 0{,}5.
+$$
+
+**Étape 5.** Pour $\eta = 1{,}1$, calcule le facteur.
+
+$$
+r = 1 - 2 \cdot 1{,}1 = -1{,}2.
+$$
+
+**Étape 6.** Applique-le deux fois.
+
+$$
+w_1 = -1{,}2 \cdot 2 = -2{,}4, \qquad w_2 = -1{,}2 \cdot (-2{,}4) = 2{,}88.
+$$
+
+**Résultat.** Avec $\eta = 0{,}1$, la descente converge sans osciller ($|r| = 0{,}8$). Avec $\eta = 0{,}75$, elle oscille mais converge ($|r| = 0{,}5$). Avec $\eta = 1{,}1$, elle diverge ($|r| = 1{,}2 > 1$) : le poids s'éloigne du minimum à chaque pas.
+
+</Callout>
+
+**Exercice 3.** Pour la note $L(w) = 3\,w^2$, donne le taux qui atteint le minimum en un seul pas, puis le plus grand taux pour lequel la descente converge encore.
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : les seuils d'une cuvette plus raide">
+**Étape 1.** Identifie la courbure.
+
+$$
+a = 3.
+$$
+
+**Étape 2.** Le pas parfait annule le facteur $r = 1 - 2\eta a$.
+
+$$
+1 - 2 \cdot \eta \cdot 3 = 0 \quad\Longleftrightarrow\quad \eta = \frac{1}{6}.
+$$
+
+**Étape 3.** La convergence exige $\eta < \frac{1}{a}$.
+
+$$
+\eta < \frac{1}{3}.
+$$
+
+**Résultat.** Le pas parfait vaut $\eta = 1/6 \approx 0{,}167$, et la descente converge pour tout $\eta$ strictement compris entre $0$ et $1/3 \approx 0{,}333$. Une cuvette trois fois plus raide que $w^2$ divise les seuils par trois.
+
+</Callout>
+
+**Exercice 4.** Sur $L(w) = w^2$, on part de $w = 2$ avec $\eta = 0{,}25$. Que garantit le lemme de descente sur la baisse de la note ? Compare avec la baisse réelle.
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : le lemme face au calcul exact">
+**Étape 1.** Trouve la constante de lissité. Pour $a\,w^2$, on a $\beta = 2a$.
+
+$$
+\beta = 2 \cdot 1 = 2.
+$$
+
+**Étape 2.** Vérifie la condition du lemme.
+
+$$
+\eta = 0{,}25 \le \frac{1}{\beta} = 0{,}5.
+$$
+
+**Étape 3.** Calcule la pente au point de départ.
+
+$$
+L'(2) = 2 \cdot 2 = 4.
+$$
+
+**Étape 4.** Calcule la baisse garantie, $\frac{\eta}{2}\,L'(w)^2$.
+
+$$
+\frac{0{,}25}{2} \cdot 4^2 = 0{,}125 \cdot 16 = 2.
+$$
+
+**Étape 5.** Fais le pas réel.
+
+$$
+w \leftarrow 2 - 0{,}25 \cdot 4 = 1.
+$$
+
+**Étape 6.** Calcule la baisse réelle de la note.
+
+$$
+L(2) - L(1) = 4 - 1 = 3.
+$$
+
+**Résultat.** Le lemme garantit une baisse d'au moins $2$, et la baisse réelle vaut $3$. La garantie est tenue, avec de la marge : un lemme donne un plancher valable pour toutes les notes $\beta$-lisses, pas la valeur exacte pour celle-ci.
+
+</Callout>
+
+**Exercice 5.** Une base contient $N = 60\,000$ exemples. Combien de pas de descente fait-on par époque avec des mini-batchs de $100$ exemples ? Et avec des mini-batchs de $32$ ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 5 : compter les pas d'une époque">
+**Étape 1.** Une époque parcourt toute la base une fois, un mini-batch par pas. Le nombre de pas est donc $N / m$.
+
+**Étape 2.** Avec $m = 100$ :
+
+$$
+\frac{60\,000}{100} = 600.
+$$
+
+**Étape 3.** Avec $m = 32$ :
+
+$$
+\frac{60\,000}{32} = 1\,875.
+$$
+
+**Résultat.** On fait $600$ pas par époque avec des paquets de $100$, et $1\,875$ avec des paquets de $32$, contre un seul pas en batch complet. Des paquets plus petits donnent plus de pas, chacun plus bruité.
+
+</Callout>
+
+## En une phrase
+
+La descente de gradient fait un pas $-\eta\,\nabla L$ à chaque itération, et le lemme de descente garantit que la note baisse tant que le pas reste sous $1/\beta$, où $\beta$ mesure la vitesse à laquelle la pente peut changer.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Que fait un pas de descente de gradient ?',
+      options: [
+        'Il ajoute le gradient aux poids',
+        'Il retranche aux poids le gradient multiplié par le taux d’apprentissage',
+        'Il remet les poids à zéro',
+        'Il choisit des poids au hasard',
+      ],
+      answer: 1,
+      explain:
+        'La règle est w ← w − η ∇L(w). Le gradient pointe vers la montée, donc on va dans le sens opposé, avec un pas de longueur réglée par η.',
+    },
+    {
+      q: 'Sur L(w) = a w², pour quels taux la descente converge-t-elle ?',
+      options: [
+        'Pour tout η > 0',
+        'Pour 0 < η < 1/a',
+        'Seulement pour η = 1/(2a)',
+        'Pour η > 1/a',
+      ],
+      answer: 1,
+      explain:
+        'Chaque pas multiplie le poids par r = 1 − 2ηa. La suite géométrique tend vers 0 si et seulement si |r| < 1, ce qui équivaut à 0 < η < 1/a.',
+    },
+    {
+      q: 'Que garantit le lemme de descente pour une note β-lisse et η ≤ 1/β ?',
+      options: [
+        'Que la descente atteint le minimum global',
+        'Que la note baisse d’au moins (η/2) fois le carré de la pente à chaque pas',
+        'Que la note ne bouge plus',
+        'Que le gradient devient négatif',
+      ],
+      answer: 1,
+      explain:
+        'Le lemme donne L(w − η∇L) ≤ L(w) − (η/2)‖∇L‖². La note baisse tant que la pente n’est pas nulle. Il ne promet pas le minimum global : la descente peut s’arrêter sur un col ou un creux secondaire.',
+    },
+    {
+      q: 'Pourquoi le gradient d’un mini-batch est-il utile alors qu’il est bruité ?',
+      options: [
+        'Parce qu’il est exact',
+        'Parce qu’il est juste en moyenne et beaucoup moins coûteux à calculer',
+        'Parce qu’il est toujours plus grand',
+        'Parce qu’il évite la rétropropagation',
+      ],
+      answer: 1,
+      explain:
+        'C’est un estimateur sans biais : en moyenne sur les tirages, il vaut le vrai gradient. Il ne demande qu’une poignée de rétropropagations au lieu de N, ce qui permet beaucoup plus de pas par époque.',
+    },
+    {
+      q: 'Pourquoi la descente zigzague-t-elle dans une ravine comme L = w₁² + 10 w₂² ?',
+      options: [
+        'Parce que le gradient est faux',
+        'Parce qu’un seul η est trop grand pour la direction raide et trop petit pour la direction plate',
+        'Parce que la note est convexe',
+        'Parce que le mini-batch est trop petit',
+      ],
+      answer: 1,
+      explain:
+        'Chaque direction a son propre seuil, 1/a. Un η commun proche du seuil de la direction raide la fait osciller, alors qu’il reste minuscule pour la direction plate. Le chapitre 12 résout ce conflit.',
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 10
+
+On sait maintenant faire baisser la note, pas à pas, avec une garantie démontrée. Mais quelle note fait-on baisser ? Celle des exemples d'entraînement, et uniquement celle-là. Or ce qui compte, c'est la performance sur des exemples que le réseau n'a jamais vus. Pense à une courbe qui doit passer par dix points de mesure. Un polynôme de degré neuf peut les traverser tous exactement, avec une note nulle, et osciller follement entre eux. Il a appris les points par cœur, pas la tendance. Un réseau assez grand peut faire exactement la même chose, et la descente de gradient l'y aidera de toutes ses forces. Le chapitre 10 apprend à descendre sans apprendre par cœur : c'est la régularisation.
+
+## Sources
+
+- Cauchy, A. (1847). « Méthode générale pour la résolution des systèmes d'équations simultanées. » _Comptes rendus hebdomadaires des séances de l'Académie des sciences_ 25, 536-538. Repris dans les _Œuvres complètes_, série 1, tome 10, 399-402.
+- Robbins, H. & Monro, S. (1951). « A Stochastic Approximation Method. » _The Annals of Mathematical Statistics_ 22(3), 400-407. [DOI 10.1214/aoms/1177729586](https://doi.org/10.1214/aoms/1177729586)
+- Nesterov, Y. (2004). _Introductory Lectures on Convex Optimization: A Basic Course_. Kluwer. Lemme 1.2.3 (lemme de descente).
+- Boyd, S. & Vandenberghe, L. (2004). _Convex Optimization_. Cambridge University Press. Section 3.1.3 (condition du premier ordre). https://web.stanford.edu/~boyd/cvxbook/
+- Dauphin, Y. N., Pascanu, R., Gulcehre, C., Cho, K., Ganguli, S. & Bengio, Y. (2014). « Identifying and attacking the saddle point problem in high-dimensional non-convex optimization. » _NeurIPS 2014_. [arXiv:1406.2572](https://arxiv.org/abs/1406.2572)
+- Bottou, L., Curtis, F. E. & Nocedal, J. (2018). « Optimization Methods for Large-Scale Machine Learning. » _SIAM Review_ 60(2), 223-311. [DOI 10.1137/16M1080173](https://doi.org/10.1137/16M1080173)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Sections 4.3 (optimisation par gradient) et 8.1 à 8.3 (apprentissage, difficultés, SGD). https://www.deeplearningbook.org
