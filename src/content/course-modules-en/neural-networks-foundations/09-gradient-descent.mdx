@@ -2,21 +2,481 @@
 course: neural-networks-foundations
 order: 9
 title: Gradient descent
-subtitle: 'How to use the gradient to drive the loss down, iteration after iteration.'
-estimatedMinutes: 15
+subtitle: 'How to use the gradient to drive the score down, iteration after iteration.'
+estimatedMinutes: 30
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import GradientDescentLab from '../../../components/learning/GradientDescentLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 8, backpropagation handed us, in a single backward pass, the slope of the score with respect to every weight of the network. We hold the full compass. But a compass never moved anyone: knowing where to descend is not descending.
+
+The question of this chapter is therefore very concrete: how do we turn this gradient into a step, and how long should that step be? Too short, and we never arrive. Too long, and we leap over the valley, and may even end up higher than where we started. We will see that this intuition can be proven, and that it yields a numerical rule.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: the cost surface (chapter 6), the gradient and partial derivatives (chapter 7), backpropagation, which computes that gradient (chapter 8). The link between the sign of a derivative and the direction in which a function varies, seen in high school.
+
+**What you do not need to know**: regularisation (chapter 10), weight initialisation (chapter 11), momentum and Adam (chapter 12). No probability beyond the average.
+
+**Level of rigour**: we prove exactly when descent converges on a parabola, then we state and prove the descent lemma, which guarantees the score goes down for any function whose slope does not change too fast. Five pencil-and-paper exercises with detailed line-by-line solutions.
+
 </Callout>
 
-## What you will learn
+## Act 1: the hiker in the fog
 
-- Learning rate: striking the right step size
-- Variants: batch, mini-batch, stochastic
-- Classic pitfalls: local minima, plateaus, oscillations
+Picture yourself in the mountains, caught in thick fog. You want to reach the valley, but you cannot see two metres ahead. Only one piece of information is within reach: the slope of the ground under your feet. The sensible strategy is obvious. You feel which way the terrain drops most steeply, you take a step that way, and you start again.
 
-The gradient points along the steepest slope. Gradient descent follows that slope to minimise the loss. All the craft sits in the step size you pick and the sampling strategy you use.
+That is exactly what gradient descent does, already announced in chapter 4. Chapter 7 established that the gradient $\nabla L$ points towards the steepest rise of the score. To go down, we therefore step in the opposite direction, $-\nabla L$. The update rule reads:
+
+$$
+w \;\leftarrow\; w - \eta\,\nabla L(w).
+$$
+
+It reads: the new weight vector is the old one, minus the gradient of the score at that point, multiplied by a small positive number $\eta$. This number is the learning rate from chapter 4. It sets the length of the step. Weight by weight, the same rule is written
+
+$$
+w_j \;\leftarrow\; w_j - \eta\,\frac{\partial L}{\partial w_j},
+$$
+
+and backpropagation supplies precisely each of these partial derivatives. One descent step is therefore: a forward pass, a backward pass, then this subtraction on every weight. We repeat, and that is all.
+
+You have already met a rule of this form. The perceptron rule, in chapter 4, was $w \leftarrow w + \eta\,y\,x$. Same structure, a weight corrected by a step proportional to $\eta$. The difference runs deep: the perceptron corrected by projection, with no slope, whereas here every correction is dictated by the derivative of the score. That is what makes it possible to train a network with differentiable activations, hidden layer included.
+
+<Callout kind="note" title="Where the method comes from">
+  The idea goes back to Augustin Cauchy, who proposed it in 1847 to solve the systems of equations
+  met in orbit calculations (Cauchy, 1847). It therefore predates neural networks by more than a
+  century.
+</Callout>
+
+## Act 2: the right dose of $\eta$, proven on a parabola
+
+To understand the role of $\eta$ with nothing hidden, let us take the simplest score that has a dip: a parabola with a single weight,
+
+$$
+L(w) = a\,w^2, \qquad a > 0.
+$$
+
+Its minimum is at $w = 0$, and its derivative is $L'(w) = 2a\,w$. The number $a$ measures the curvature: the larger it is, the narrower and steeper the bowl.
+
+**One descent step.** We apply the rule:
+
+$$
+w_{t+1} = w_t - \eta \cdot 2a\,w_t.
+$$
+
+We factor out $w_t$:
+
+$$
+w_{t+1} = (1 - 2\eta a)\,w_t.
+$$
+
+This line says it all. At each step, the weight is multiplied by the same number $r = 1 - 2\eta a$. After $t$ steps, it is therefore
+
+$$
+w_t = r^t\,w_0.
+$$
+
+This is a geometric sequence, and you already know how it behaves: it tends to $0$ if and only if $|r| < 1$. We translate this condition into a condition on $\eta$. The inequality $-1 < 1 - 2\eta a < 1$ is equivalent to $0 < 2\eta a < 2$, that is,
+
+$$
+0 < \eta < \frac{1}{a}.
+$$
+
+The sign of $r$ refines the behaviour. We get five regimes, all exact:
+
+- **$\eta < \frac{1}{2a}$**: $0 < r < 1$. The weight glides towards $0$ without ever changing sign. A well-behaved descent, and the slower the smaller $\eta$ is.
+- **$\eta = \frac{1}{2a}$**: $r = 0$. The first step lands exactly at the bottom. This is the ideal step for this bowl.
+- **$\frac{1}{2a} < \eta < \frac{1}{a}$**: $-1 < r < 0$. The weight changes sign at every step: it jumps from one slope to the other, but each jump is shorter. It oscillates, and still converges.
+- **$\eta = \frac{1}{a}$**: $r = -1$. The weight bounces forever between $w_0$ and $-w_0$.
+- **$\eta > \frac{1}{a}$**: $r < -1$. Each jump is longer than the previous one. The score blows up: the descent diverges.
+
+Above all, keep the lesson that runs deep: the threshold depends on the curvature $a$. A narrow bowl demands a small step. The same $\eta$ can be cautious on one score and catastrophic on another.
+
+Set $\eta$ in the lab and take steps. Start around $0.1$, then cross $0.5$, then $1$.
+
+<GradientDescentLab client:visible locale="en" defaultLearningRate={0.1} />
+
+Three things to watch as you play:
+
+- Between $0.5$ and $1$, the trajectory zigzags from one slope to the other, but each bounce is lower than the previous one. Oscillating is not diverging.
+- At exactly $\eta = 0.5$, a single step is enough. On a real score with millions of weights, this perfect step does not exist, because the curvature changes from one direction to another.
+- Beyond $1$, the score climbs at every step. A learning rate that is too large does not slow learning down: it destroys it.
+
+## Act 3: the descent lemma, for any smooth score
+
+The parabola is a textbook case. A real network has a tormented score, with no simple formula. Can we still guarantee that a step lowers the score? Yes, on one condition: the slope must not change too abruptly.
+
+Back to the hiker. If they know the slope of the terrain cannot change all at once, that the relief has no cliff or hidden step, then the slope measured under their feet stays reliable over a certain distance. They can take a step with confidence, provided that step is no longer than the zone where the slope stays reliable.
+
+**Definition.** A differentiable function $f$ is called <Term slug="fonction-lisse">β-smooth</Term>, with $\beta > 0$, if its derivative never varies faster than $\beta$:
+
+$$
+|f'(u) - f'(v)| \;\le\; \beta\,|u - v| \quad \text{for all } u, v.
+$$
+
+We write the constant $\beta$ and not $L$, so as not to confuse it with the score. On the parabola $a\,w^2$, we have $|f'(u) - f'(v)| = 2a\,|u - v|$: it is $\beta$-smooth with $\beta = 2a$.
+
+**Descent lemma.** If $f$ is $\beta$-smooth, then for all $x$ and $y$,
+
+$$
+f(y) \;\le\; f(x) + f'(x)\,(y - x) + \frac{\beta}{2}\,(y - x)^2.
+$$
+
+It reads: the function always stays below a parabola that touches its graph at $x$, with the same slope. In other words, the tangent plus a curvature margin $\beta$ form a ceiling that the score can never break through.
+
+**Proof.** We fix $x$ and study the gap between this ceiling and the function:
+
+$$
+g(y) = f(x) + f'(x)\,(y - x) + \frac{\beta}{2}\,(y - x)^2 - f(y).
+$$
+
+We must show that $g(y) \ge 0$ everywhere. First, at $y = x$, all the terms vanish: $g(x) = 0$. Next, we differentiate with respect to $y$:
+
+$$
+g'(y) = f'(x) + \beta\,(y - x) - f'(y).
+$$
+
+For $y \ge x$, smoothness gives $f'(y) - f'(x) \le \beta\,(y - x)$, hence $g'(y) \ge 0$: $g$ increases to the right of $x$. For $y \le x$, it gives $f'(x) - f'(y) \le \beta\,(x - y)$, hence $g'(y) \le 0$: $g$ decreases to the left of $x$. A function that decreases up to $x$ and then increases reaches its minimum at $x$. This minimum equals $g(x) = 0$, so $g(y) \ge 0$ for every $y$. □
+
+**Consequence for a descent step.** We apply the lemma to the step $y = x - \eta\,f'(x)$. The gap $y - x$ equals $-\eta\,f'(x)$, so
+
+$$
+f(y) \;\le\; f(x) - \eta\,f'(x)^2 + \frac{\beta\,\eta^2}{2}\,f'(x)^2.
+$$
+
+We group the last two terms:
+
+$$
+f(y) \;\le\; f(x) - \eta\Big(1 - \frac{\beta\,\eta}{2}\Big)\,f'(x)^2.
+$$
+
+If $\eta \le \frac{1}{\beta}$, the parenthesis is at least $\frac{1}{2}$, and we get the announced guarantee:
+
+$$
+f(y) \;\le\; f(x) - \frac{\eta}{2}\,f'(x)^2.
+$$
+
+It reads: with a step at most equal to $1/\beta$, each iteration lowers the score by at least half of $\eta$ times the square of the slope. As long as the slope is not zero, the score goes down, without exception.
+
+Check the consistency with act 2. On the parabola, $\beta = 2a$, so the guarantee holds for $\eta \le \frac{1}{2a}$: this is exactly the zone of well-behaved descent, with no oscillation. More generally, the parenthesis $1 - \beta\eta/2$ stays positive as long as $\eta < 2/\beta = 1/a$: this is exactly the convergence threshold found by hand. The lemma recovers the parabola, and it applies to many other scores.
+
+<Callout kind="info" title="With millions of weights">
+The lemma carries over unchanged to several weights. We say the score is β-smooth if its gradient satisfies $\|\nabla L(u) - \nabla L(v)\| \le \beta\,\|u - v\|$. We set $g = \nabla L(w)$ and look at the score along the single line of the step, $\varphi(t) = L(w - t\,g)$. The chain rule gives $\varphi'(t) = -\nabla L(w - t\,g) \cdot g$, and the Cauchy-Schwarz inequality from chapter 2 shows that $\varphi$ is $\beta\|g\|^2$-smooth. We then apply the lemma to $\varphi$ between $0$ and $\eta$, with $\varphi'(0) = -\|g\|^2$. We obtain
+
+$$
+L(w - \eta\,g) \;\le\; L(w) - \frac{\eta}{2}\,\|\nabla L(w)\|^2 \quad \text{for } \eta \le \frac{1}{\beta}.
+$$
+
+This is Nesterov's lemma 1.2.3 (2004), the foundation of almost every analysis of gradient descent.
+
+</Callout>
+
+**What the lemma guarantees, and what it does not.** Add up the guarantee over $T$ steps. The terms $L(w_t)$ telescope, and since the score never goes below its lowest level $L^\star$ (a squared error is never negative, so $L^\star \ge 0$), what remains is
+
+$$
+\frac{\eta}{2}\sum_{t=0}^{T-1}\|\nabla L(w_t)\|^2 \;\le\; L(w_0) - L^\star.
+$$
+
+The right-hand side is a fixed number, whereas the sum on the left grows at every step. The gradients encountered must therefore become as small as we like: the descent ends up stopping at a point where the slope is zero. But be careful about what this result says. A zero slope is not necessarily the bottom of the valley. It can be a secondary dip, a pass, a flat spot. Act 5 will go through them.
+
+## Act 4: batch, mini-batch, stochastic
+
+So far, we have acted as if the score were a single function. In reality, it is an average over the $N$ training examples:
+
+$$
+L(w) = \frac{1}{N}\sum_{i=1}^{N} \ell_i(w),
+$$
+
+where $\ell_i$ is the score of example $i$ alone. Its gradient is the average of the individual gradients, and each one costs a forward pass and a backward pass. With $N = 60{,}000$ images, a single descent step would therefore require $60{,}000$ backpropagations. This is **full-batch** gradient descent: exact, but terribly slow.
+
+The idea that unlocks everything is not to wait until we have seen everything. We randomly draw a small batch of examples, a <Term slug="mini-batch">mini-batch</Term> $B$ of size $m$, and we estimate the gradient on that batch alone:
+
+$$
+g_B = \frac{1}{m}\sum_{i \in B} \nabla \ell_i(w).
+$$
+
+This estimate is noisy: a batch of $100$ images never looks exactly like the whole dataset. But it is right **on average**. Let us check this in the extreme case $m = 1$. If we draw example $i$ with probability $\frac{1}{N}$, the average of $\nabla \ell_i$ over all possible draws is
+
+$$
+\sum_{i=1}^{N} \frac{1}{N}\,\nabla \ell_i(w) = \nabla L(w).
+$$
+
+The same computation, carried out on each example of a randomly drawn batch, gives the same result for any $m$. We say that $g_B$ is an unbiased estimator of the gradient: it is wrong at every draw, but its errors cancel out. The case $m = 1$ is called <Term slug="descente-de-gradient-stochastique">stochastic gradient descent</Term>, and the idea of moving forward with noisy measurements goes back to Robbins and Monro (1951). In practice, we take batches of a few dozen to a few hundred examples: enough to smooth the noise, few enough to take many steps.
+
+A full pass over the data, batch after batch, is called an <Term slug="epoque">epoch</Term>. With $60{,}000$ examples and batches of $100$, an epoch counts $600$ steps, where full batch makes only one. The noise even has an unexpected advantage: it shakes the trajectory, which can help it leave a flat spot or a pass (Bottou, Curtis and Nocedal, 2018).
+
+| Variant    | Examples per step | Steps per epoch ($N = 60{,}000$) | Gradient             |
+| ---------- | ----------------- | -------------------------------- | -------------------- |
+| Full batch | $N$               | $1$                              | exact, costly        |
+| Mini-batch | $m$ (e.g. $100$)  | $N/m = 600$                      | noisy, unbiased      |
+| Stochastic | $1$               | $N = 60{,}000$                   | very noisy, unbiased |
+
+## Act 5: the traps of the terrain
+
+The lemma guarantees that we stop where the slope vanishes. Here are the places where that can happen without our being at the bottom.
+
+**Local minima.** A <Term slug="minimum-local-optimisation">local minimum</Term> is a dip lower than all its close neighbours, but higher than the true bottom. The hiker who falls into one sees only climbs around and stops. There is a family of scores without this trap: **convex** functions, shaped like a bowl with no bump. For a differentiable convex function, the tangent always stays below the curve (Boyd and Vandenberghe, 2004): $f(y) \ge f(x) + f'(x)\,(y - x)$, so a point where $f'(x) = 0$ satisfies $f(y) \ge f(x)$ for every $y$: it is necessarily the global minimum. Unfortunately, the score of a network with a hidden layer is not convex in general.
+
+**Saddle points.** A <Term slug="point-selle">saddle point</Term> is a pass: a minimum in some directions, a maximum in others. The typical example is $L(w_1, w_2) = w_1^2 - w_2^2$ at the origin. The gradient is zero there, yet the score still goes down as soon as we move along $w_2$. Dauphin and his co-authors (2014) argue, with arguments from statistical physics and experiments on networks, that in very high dimension the critical points with a high score are mostly passes, not local minima. The real danger is not getting trapped, it is slowing down for a long time around them.
+
+**Plateaus.** On a flat spot, the slope is tiny without being zero, and the step $\eta\,\nabla L$ is tiny too. We advance at an ant's pace. This is the cousin of the vanishing gradient from chapter 8: when sigmoids saturate, their derivatives are squashed and the score becomes flat.
+
+**Ravines.** Take the score from chapter 7 again, in a more pronounced version: $L = w_1^2 + 10\,w_2^2$. The bowl is ten times steeper along $w_2$ than along $w_1$. According to act 2, each direction has its own threshold: $\eta < 1$ along $w_1$, but $\eta < 0.1$ along $w_2$. With a single $\eta$ for everyone, we are stuck. Take it large and we zigzag from one wall to the other. Take it small and we crawl along the bottom. Switch the lab to ravine mode to see it.
+
+<GradientDescentLab client:visible locale="en" defaultMode="ravine" defaultLearningRate={0.09} />
+
+Three things to watch as you play:
+
+- At $\eta = 0.09$, the coordinate $w_2$ is multiplied by $1 - 2 \cdot 0.09 \cdot 10 = -0.8$ at every step: it changes sign, hence the zigzag. The coordinate $w_1$, for its part, is multiplied only by $0.82$: it advances slowly.
+- Lower $\eta$: the zigzag disappears, but progress along the bottom becomes endless.
+- Go above $0.1$: the steep direction diverges, whereas the flat direction could have handled a step ten times larger. Chapter 12 will settle this conflict by giving each direction its own memory and its own scale.
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line.
+
+**Exercise 1.** In chapter 8, on the toy network, we found $\partial L / \partial w^{(2)}_1 = -0.077$ for a weight equal to $w^{(2)}_1 = 0.5$. Take one descent step with $\eta = 0.5$. Does the weight increase or decrease, and why?
+
+<Callout kind="tip" title="Solution to exercise 1: one step on the toy network">
+**Step 1.** Write the update rule for this weight.
+
+$$
+w^{(2)}_1 \leftarrow w^{(2)}_1 - \eta\,\frac{\partial L}{\partial w^{(2)}_1}.
+$$
+
+**Step 2.** Compute the product of the rate and the derivative.
+
+$$
+\eta\,\frac{\partial L}{\partial w^{(2)}_1} = 0.5 \cdot (-0.077) = -0.0385.
+$$
+
+**Step 3.** Subtract this product. Subtracting a negative number amounts to adding.
+
+$$
+w^{(2)}_1 \leftarrow 0.5 - (-0.0385) = 0.5385.
+$$
+
+**Result.** The weight goes from $0.5$ to $0.5385$. It increases because the derivative is negative: the score goes down when this weight goes up, and the rule follows precisely this slope.
+
+</Callout>
+
+**Exercise 2.** On $L(w) = w^2$, starting from $w_0 = 2$, compute $w_1$ and $w_2$ for $\eta = 0.1$, then $\eta = 0.75$, then $\eta = 1.1$. Say each time whether the descent converges.
+
+<Callout kind="tip" title="Solution to exercise 2: three rates on a parabola">
+Here $a = 1$, so the multiplicative factor is $r = 1 - 2\eta$.
+
+**Step 1.** For $\eta = 0.1$, compute the factor.
+
+$$
+r = 1 - 2 \cdot 0.1 = 0.8.
+$$
+
+**Step 2.** Apply it twice.
+
+$$
+w_1 = 0.8 \cdot 2 = 1.6, \qquad w_2 = 0.8 \cdot 1.6 = 1.28.
+$$
+
+**Step 3.** For $\eta = 0.75$, compute the factor.
+
+$$
+r = 1 - 2 \cdot 0.75 = -0.5.
+$$
+
+**Step 4.** Apply it twice.
+
+$$
+w_1 = -0.5 \cdot 2 = -1, \qquad w_2 = -0.5 \cdot (-1) = 0.5.
+$$
+
+**Step 5.** For $\eta = 1.1$, compute the factor.
+
+$$
+r = 1 - 2 \cdot 1.1 = -1.2.
+$$
+
+**Step 6.** Apply it twice.
+
+$$
+w_1 = -1.2 \cdot 2 = -2.4, \qquad w_2 = -1.2 \cdot (-2.4) = 2.88.
+$$
+
+**Result.** With $\eta = 0.1$, the descent converges without oscillating ($|r| = 0.8$). With $\eta = 0.75$, it oscillates but converges ($|r| = 0.5$). With $\eta = 1.1$, it diverges ($|r| = 1.2 > 1$): the weight moves away from the minimum at every step.
+
+</Callout>
+
+**Exercise 3.** For the score $L(w) = 3\,w^2$, give the rate that reaches the minimum in a single step, then the largest rate for which the descent still converges.
+
+<Callout kind="tip" title="Solution to exercise 3: the thresholds of a steeper bowl">
+**Step 1.** Identify the curvature.
+
+$$
+a = 3.
+$$
+
+**Step 2.** The perfect step cancels the factor $r = 1 - 2\eta a$.
+
+$$
+1 - 2 \cdot \eta \cdot 3 = 0 \quad\Longleftrightarrow\quad \eta = \frac{1}{6}.
+$$
+
+**Step 3.** Convergence requires $\eta < \frac{1}{a}$.
+
+$$
+\eta < \frac{1}{3}.
+$$
+
+**Result.** The perfect step is $\eta = 1/6 \approx 0.167$, and the descent converges for every $\eta$ strictly between $0$ and $1/3 \approx 0.333$. A bowl three times steeper than $w^2$ divides the thresholds by three.
+
+</Callout>
+
+**Exercise 4.** On $L(w) = w^2$, we start from $w = 2$ with $\eta = 0.25$. What does the descent lemma guarantee about the drop in the score? Compare with the actual drop.
+
+<Callout kind="tip" title="Solution to exercise 4: the lemma against the exact computation">
+**Step 1.** Find the smoothness constant. For $a\,w^2$, we have $\beta = 2a$.
+
+$$
+\beta = 2 \cdot 1 = 2.
+$$
+
+**Step 2.** Check the lemma's condition.
+
+$$
+\eta = 0.25 \le \frac{1}{\beta} = 0.5.
+$$
+
+**Step 3.** Compute the slope at the starting point.
+
+$$
+L'(2) = 2 \cdot 2 = 4.
+$$
+
+**Step 4.** Compute the guaranteed drop, $\frac{\eta}{2}\,L'(w)^2$.
+
+$$
+\frac{0.25}{2} \cdot 4^2 = 0.125 \cdot 16 = 2.
+$$
+
+**Step 5.** Take the actual step.
+
+$$
+w \leftarrow 2 - 0.25 \cdot 4 = 1.
+$$
+
+**Step 6.** Compute the actual drop in the score.
+
+$$
+L(2) - L(1) = 4 - 1 = 3.
+$$
+
+**Result.** The lemma guarantees a drop of at least $2$, and the actual drop is $3$. The guarantee holds, with room to spare: a lemma gives a floor valid for all $\beta$-smooth scores, not the exact value for this one.
+
+</Callout>
+
+**Exercise 5.** A dataset contains $N = 60{,}000$ examples. How many descent steps do we take per epoch with mini-batches of $100$ examples? And with mini-batches of $32$?
+
+<Callout kind="tip" title="Solution to exercise 5: counting the steps of an epoch">
+**Step 1.** An epoch runs through the whole dataset once, one mini-batch per step. The number of steps is therefore $N / m$.
+
+**Step 2.** With $m = 100$:
+
+$$
+\frac{60{,}000}{100} = 600.
+$$
+
+**Step 3.** With $m = 32$:
+
+$$
+\frac{60{,}000}{32} = 1{,}875.
+$$
+
+**Result.** We take $600$ steps per epoch with batches of $100$, and $1{,}875$ with batches of $32$, against a single step in full batch. Smaller batches give more steps, each one noisier.
+
+</Callout>
+
+## In one sentence
+
+Gradient descent takes a step $-\eta\,\nabla L$ at each iteration, and the descent lemma guarantees that the score goes down as long as the step stays below $1/\beta$, where $\beta$ measures how fast the slope can change.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'What does a gradient descent step do?',
+      options: [
+        'It adds the gradient to the weights',
+        'It subtracts from the weights the gradient multiplied by the learning rate',
+        'It resets the weights to zero',
+        'It picks weights at random',
+      ],
+      answer: 1,
+      explain:
+        'The rule is w ← w − η ∇L(w). The gradient points uphill, so we go in the opposite direction, with a step whose length is set by η.',
+    },
+    {
+      q: 'On L(w) = a w², for which rates does the descent converge?',
+      options: ['For every η > 0', 'For 0 < η < 1/a', 'Only for η = 1/(2a)', 'For η > 1/a'],
+      answer: 1,
+      explain:
+        'Each step multiplies the weight by r = 1 − 2ηa. The geometric sequence tends to 0 if and only if |r| < 1, which is equivalent to 0 < η < 1/a.',
+    },
+    {
+      q: 'What does the descent lemma guarantee for a β-smooth score and η ≤ 1/β?',
+      options: [
+        'That the descent reaches the global minimum',
+        'That the score drops by at least (η/2) times the square of the slope at each step',
+        'That the score stops moving',
+        'That the gradient becomes negative',
+      ],
+      answer: 1,
+      explain:
+        'The lemma gives L(w − η∇L) ≤ L(w) − (η/2)‖∇L‖². The score goes down as long as the slope is not zero. It does not promise the global minimum: the descent can stop on a pass or a secondary dip.',
+    },
+    {
+      q: 'Why is a mini-batch gradient useful even though it is noisy?',
+      options: [
+        'Because it is exact',
+        'Because it is right on average and far cheaper to compute',
+        'Because it is always larger',
+        'Because it avoids backpropagation',
+      ],
+      answer: 1,
+      explain:
+        'It is an unbiased estimator: averaged over the draws, it equals the true gradient. It needs only a handful of backpropagations instead of N, which allows many more steps per epoch.',
+    },
+    {
+      q: 'Why does the descent zigzag in a ravine like L = w₁² + 10 w₂²?',
+      options: [
+        'Because the gradient is wrong',
+        'Because a single η is too large for the steep direction and too small for the flat one',
+        'Because the score is convex',
+        'Because the mini-batch is too small',
+      ],
+      answer: 1,
+      explain:
+        'Each direction has its own threshold, 1/a. A shared η close to the steep direction’s threshold makes it oscillate, while it stays tiny for the flat direction. Chapter 12 settles this conflict.',
+    },
+  ]}
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Towards chapter 10
+
+We now know how to drive the score down, step by step, with a proven guarantee. But which score are we lowering? The one on the training examples, and only that one. Yet what matters is performance on examples the network has never seen. Think of a curve that must pass through ten measurement points. A degree-nine polynomial can go through all of them exactly, with a zero score, and oscillate wildly between them. It has learned the points by heart, not the trend. A large enough network can do exactly the same thing, and gradient descent will help it with all its might. Chapter 10 teaches how to descend without learning by heart: that is regularisation.
+
+## Sources
+
+- Cauchy, A. (1847). « Méthode générale pour la résolution des systèmes d'équations simultanées. » _Comptes rendus hebdomadaires des séances de l'Académie des sciences_ 25, 536-538. Reprinted in the _Œuvres complètes_, series 1, volume 10, 399-402.
+- Robbins, H. & Monro, S. (1951). "A Stochastic Approximation Method." _The Annals of Mathematical Statistics_ 22(3), 400-407. [DOI 10.1214/aoms/1177729586](https://doi.org/10.1214/aoms/1177729586)
+- Nesterov, Y. (2004). _Introductory Lectures on Convex Optimization: A Basic Course_. Kluwer. Lemma 1.2.3 (descent lemma).
+- Boyd, S. & Vandenberghe, L. (2004). _Convex Optimization_. Cambridge University Press. Section 3.1.3 (first-order condition). https://web.stanford.edu/~boyd/cvxbook/
+- Dauphin, Y. N., Pascanu, R., Gulcehre, C., Cho, K., Ganguli, S. & Bengio, Y. (2014). "Identifying and attacking the saddle point problem in high-dimensional non-convex optimization." _NeurIPS 2014_. [arXiv:1406.2572](https://arxiv.org/abs/1406.2572)
+- Bottou, L., Curtis, F. E. & Nocedal, J. (2018). "Optimization Methods for Large-Scale Machine Learning." _SIAM Review_ 60(2), 223-311. [DOI 10.1137/16M1080173](https://doi.org/10.1137/16M1080173)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Sections 4.3 (gradient-based optimization) and 8.1 to 8.3 (learning, challenges, SGD). https://www.deeplearningbook.org

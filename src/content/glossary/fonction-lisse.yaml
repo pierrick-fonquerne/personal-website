@@ -1,0 +1,13 @@
+slug: fonction-lisse
+fr:
+  term: Fonction β-lisse
+  definition: "Fonction dérivable dont la pente ne varie jamais plus vite qu'une constante β : l'écart entre deux pentes est au plus β fois l'écart entre les deux points. Cette régularité garantit qu'un pas de descente de gradient de longueur au plus 1/β fait toujours baisser la fonction (lemme de descente)."
+  source: Nesterov, 2004
+en:
+  term: β-smooth function
+  definition: 'A differentiable function whose slope never changes faster than a constant β: the gap between two slopes is at most β times the gap between the two points. This regularity guarantees that a gradient descent step of length at most 1/β always decreases the function (descent lemma).'
+  source: Nesterov, 2004
+seeAlso:
+  - descente-de-gradient
+  - taux-apprentissage
+  - gradient
