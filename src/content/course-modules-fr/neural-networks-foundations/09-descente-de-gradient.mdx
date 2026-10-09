@@ -171,7 +171,7 @@ $$
 C'est le lemme 1.2.3 de Nesterov (2004), socle de presque toutes les analyses de la descente de gradient.
 </Callout>
 
-**Ce que le lemme garantit, et ce qu'il ne garantit pas.** Additionne la garantie sur $T$ pas. Les termes $L(w_t)$ se télescopent, et comme la note ne descend jamais sous son plus petit niveau $L^\star$ (une note quadratique est positive), il reste
+**Ce que le lemme garantit, et ce qu'il ne garantit pas.** Additionne la garantie sur $T$ pas. Les termes $L(w_t)$ se télescopent, et comme la note ne descend jamais sous son plus petit niveau $L^\star$ (une erreur quadratique n'est jamais négative, donc $L^\star \ge 0$), il reste
 
 $$
 \frac{\eta}{2}\sum_{t=0}^{T-1}\|\nabla L(w_t)\|^2 \;\le\; L(w_0) - L^\star.
@@ -201,7 +201,7 @@ $$
 \sum_{i=1}^{N} \frac{1}{N}\,\nabla \ell_i(w) = \nabla L(w).
 $$
 
-On dit que $g_B$ est un estimateur sans biais du gradient : il se trompe à chaque tirage, mais ses erreurs se compensent. Le cas $m = 1$ porte le nom de <Term slug="descente-de-gradient-stochastique">descente de gradient stochastique</Term>, et l'idée d'avancer avec des mesures bruitées remonte à Robbins et Monro (1951). En pratique, on prend des paquets de quelques dizaines à quelques centaines d'exemples : assez pour lisser le bruit, assez peu pour faire beaucoup de pas.
+Le même calcul, mené sur chaque exemple d'un paquet tiré au hasard, donne le même résultat pour tout $m$. On dit que $g_B$ est un estimateur sans biais du gradient : il se trompe à chaque tirage, mais ses erreurs se compensent. Le cas $m = 1$ porte le nom de <Term slug="descente-de-gradient-stochastique">descente de gradient stochastique</Term>, et l'idée d'avancer avec des mesures bruitées remonte à Robbins et Monro (1951). En pratique, on prend des paquets de quelques dizaines à quelques centaines d'exemples : assez pour lisser le bruit, assez peu pour faire beaucoup de pas.
 
 Un passage complet sur toutes les données, paquet après paquet, s'appelle une <Term slug="epoque">époque</Term>. Avec $60\,000$ exemples et des paquets de $100$, une époque compte $600$ pas, là où le batch complet n'en fait qu'un. Le bruit a même un avantage inattendu : il secoue la trajectoire, ce qui peut l'aider à quitter un replat ou un col (Bottou, Curtis et Nocedal, 2018).
 
@@ -215,7 +215,7 @@ Un passage complet sur toutes les données, paquet après paquet, s'appelle une 
 
 Le lemme garantit qu'on s'arrête là où la pente s'annule. Voici les endroits où cela peut arriver sans qu'on soit au fond.
 
-**Les minima locaux.** Un <Term slug="minimum-local-optimisation">minimum local</Term> est un creux plus bas que tous ses voisins proches, mais plus haut que le vrai fond. Le randonneur qui y tombe ne voit que des montées autour de lui et s'arrête. Il existe une famille de notes sans ce piège : les fonctions **convexes**, dont la tangente reste toujours sous la courbe (Boyd et Vandenberghe, 2004). Pour elles, $f(y) \ge f(x) + f'(x)\,(y - x)$, donc un point où $f'(x) = 0$ vérifie $f(y) \ge f(x)$ pour tout $y$ : c'est forcément le minimum global. Malheureusement, la note d'un réseau à couche cachée n'est pas convexe en général.
+**Les minima locaux.** Un <Term slug="minimum-local-optimisation">minimum local</Term> est un creux plus bas que tous ses voisins proches, mais plus haut que le vrai fond. Le randonneur qui y tombe ne voit que des montées autour de lui et s'arrête. Il existe une famille de notes sans ce piège : les fonctions **convexes**, en forme de cuvette sans bosse. Pour une fonction convexe dérivable, la tangente reste toujours sous la courbe (Boyd et Vandenberghe, 2004) : $f(y) \ge f(x) + f'(x)\,(y - x)$, donc un point où $f'(x) = 0$ vérifie $f(y) \ge f(x)$ pour tout $y$ : c'est forcément le minimum global. Malheureusement, la note d'un réseau à couche cachée n'est pas convexe en général.
 
 **Les points selles.** Un <Term slug="point-selle">point selle</Term> est un col : un minimum dans certaines directions, un maximum dans d'autres. L'exemple type est $L(w_1, w_2) = w_1^2 - w_2^2$ à l'origine. Le gradient y est nul, alors que la note descend encore dès qu'on bouge selon $w_2$. Dauphin et ses coauteurs (2014) soutiennent, avec des arguments de physique statistique et des expériences sur des réseaux, qu'en très grande dimension les points critiques à note élevée sont surtout des cols, pas des minima locaux. Le vrai danger n'est pas de rester piégé, c'est de ralentir longuement autour d'eux.
 
