@@ -23,6 +23,18 @@ papers:
   - title: 'Surrogate Gradient Learning in Spiking Neural Networks'
     authors: 'Neftci, Mostafa & Zenke (2019)'
     href: 'https://ieeexplore.ieee.org/document/8891809'
+  - title: 'The Cost of Long Memory: State, Context, and Stability Complexity in Sequence Models'
+    authors: 'Song (2026)'
+    href: 'https://arxiv.org/abs/2610.08816'
+    note:
+      fr: "Retenir une traîne en loi de puissance a un coût chiffré en états, en contexte et en stabilité. C'est utile pour dimensionner un neurone à état."
+      en: "Retaining a power-law tail has a measurable cost in states, context and stability. Useful for sizing a stateful neuron."
+  - title: 'Multi-Behavioral Evolved Substrates Through Neuromodulation and Activation Selection'
+    authors: 'Claret et al. (2026)'
+    href: 'https://arxiv.org/abs/2610.00148'
+    note:
+      fr: "Contrepoint : la neuromodulation seule ne suffit pas. C'est le choix du type de neurone (la fonction d'activation) pour chaque tâche qui débloque la situation."
+      en: "Counterpoint: neuromodulation alone is not enough. What unlocks the problem is choosing the neuron type (the activation function) for each task."
 fr:
   title: 'Le neurone à état'
   tagline: "Ce que l'état interne d'un neurone permet de calculer qu'un neurone sans mémoire ne peut pas."

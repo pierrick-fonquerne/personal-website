@@ -5,9 +5,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { localizedPath, useTranslations } from '../../lib/i18n';
 import { journalCount, latestJournalEntry } from '../../lib/research-journal';
 import { buildArticleNode, buildBreadcrumb } from '../../lib/seo';
-import ExternalLink from '../../components/ui/icons/ExternalLink.astro';
 import ChapterAudioPlayer from '../../components/learning/ChapterAudioPlayer';
 import JournalLatest from '../../components/research/JournalLatest.astro';
+import ResearchSource from '../../components/research/ResearchSource.astro';
 
 export const getStaticPaths = (async () => {
   const entries = (await getCollection('research'))
@@ -204,20 +204,7 @@ const updatedAtLabel = entry.data.updatedAt ? dateFormatter.format(entry.data.up
           </h2>
           <ul class="flex flex-col gap-3">
             {entry.data.papers.map((paper) => (
-              <li class="flex flex-col gap-1">
-                <a
-                  href={paper.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="inline-flex items-center gap-2 text-[16px] leading-[1.4] text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)]"
-                >
-                  {paper.title}
-                  <ExternalLink class="h-[12px] w-[12px] opacity-70" />
-                </a>
-                <span class="font-mono text-[12px] text-[var(--color-fg-dim)]">
-                  {paper.authors}
-                </span>
-              </li>
+              <ResearchSource paper={paper} locale={locale} />
             ))}
           </ul>
         </section>
