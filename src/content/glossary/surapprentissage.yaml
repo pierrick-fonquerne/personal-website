@@ -1,0 +1,13 @@
+slug: surapprentissage
+fr:
+  term: Sur-apprentissage
+  definition: "Situation où un modèle colle si bien à ses exemples d'entraînement qu'il en apprend aussi le bruit : sa note d'entraînement est excellente, mais sa performance sur des exemples neufs est mauvaise. Il a appris les points par cœur au lieu de la tendance."
+  source: Goodfellow, Bengio et Courville, 2016
+en:
+  term: Overfitting
+  definition: 'A situation where a model fits its training examples so closely that it also learns their noise: its training loss is excellent, but its performance on new examples is poor. It has memorised the points instead of the trend.'
+  source: Goodfellow, Bengio and Courville, 2016
+seeAlso:
+  - regularisation
+  - ensemble-de-validation
+  - fonction-cout

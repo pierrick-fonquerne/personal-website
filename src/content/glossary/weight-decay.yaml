@@ -1,0 +1,13 @@
+slug: weight-decay
+fr:
+  term: Weight decay (pénalité L2)
+  definition: "Régularisation qui ajoute à la note λ fois la somme des carrés des poids. Chaque pas de descente multiplie alors les poids par 1 − 2ηλ avant la correction du gradient, d'où le nom de décroissance des poids. Elle écrase surtout les directions que les données déterminent mal."
+  source: Krogh et Hertz, 1992
+en:
+  term: Weight decay (L2 penalty)
+  definition: 'A regularisation that adds λ times the sum of the squared weights to the loss. Each descent step then multiplies the weights by 1 − 2ηλ before the gradient correction, hence the name. It mostly shrinks the directions that the data determine poorly.'
+  source: Krogh and Hertz, 1992
+seeAlso:
+  - regularisation
+  - descente-de-gradient
+  - norme

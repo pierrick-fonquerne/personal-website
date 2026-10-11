@@ -1,0 +1,12 @@
+slug: dropout
+fr:
+  term: Dropout
+  definition: "Régularisation qui, à chaque pas d'entraînement, éteint au hasard chaque neurone caché avec une probabilité 1 − p. Les sorties gardées sont divisées par p pour conserver leur moyenne, si bien qu'au moment de la prédiction on utilise le réseau complet sans correction."
+  source: Srivastava et al., 2014
+en:
+  term: Dropout
+  definition: 'A regularisation that, at each training step, randomly switches off each hidden neuron with probability 1 − p. The kept outputs are divided by p to preserve their mean, so the full network is used at prediction time without any correction.'
+  source: Srivastava et al., 2014
+seeAlso:
+  - regularisation
+  - couche-cachee
