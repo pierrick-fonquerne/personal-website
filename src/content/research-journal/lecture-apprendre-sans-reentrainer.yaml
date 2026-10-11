@@ -1,0 +1,10 @@
+slug: lecture-apprendre-sans-reentrainer
+research: plasticite-structurelle
+date: 2026-10-11
+title:
+  fr: 'Apprendre sans réentraîner : note de lecture'
+  en: 'Learning without retraining: a reading note'
+excerpt:
+  fr: "Un modèle gelé apprend de nouvelles classes en rangeant des exemples en mémoire : un contrepoint utile à ma page sur la plasticité structurelle."
+  en: 'A frozen model learns new classes just by storing examples in memory: a useful counterpoint to my page on structural plasticity.'
+published: false
