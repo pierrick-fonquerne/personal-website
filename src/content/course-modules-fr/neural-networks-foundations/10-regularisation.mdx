@@ -3,20 +3,557 @@ course: neural-networks-foundations
 order: 10
 title: Régularisation et généralisation
 subtitle: "Comment empêcher un réseau d'apprendre par cœur, et le forcer à bien généraliser."
-estimatedMinutes: 18
+estimatedMinutes: 35
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import RegularizationLab from '../../../components/learning/RegularizationLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 9, on a démontré que la descente de gradient fait baisser la note, pas à pas, tant que le pas reste raisonnable. C'est une vraie garantie. Mais elle porte sur la note d'entraînement, celle des exemples que le réseau a sous les yeux. Or un polynôme de degré neuf peut traverser exactement dix points de mesure, avec une note nulle, et osciller follement entre eux.
+
+La question de ce chapitre est donc : comment savoir si un réseau a appris la tendance ou seulement les points ? Et surtout, comment l'empêcher d'apprendre par cœur sans l'empêcher d'apprendre ? On va voir que les réponses classiques se démontrent, et qu'elles sont plus proches les unes des autres qu'elles n'en ont l'air.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : la descente de gradient et son facteur multiplicatif $r = 1 - 2\eta a$ sur une parabole (chapitre 9), la norme d'un vecteur (chapitre 2), la fonction de coût (chapitre 6). La notion de moyenne.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les statistiques au-delà de la moyenne, les valeurs propres d'une matrice, l'initialisation des poids (chapitre 11), Adam (chapitre 12).
+
+**Niveau de rigueur** : on démontre la décomposition biais-variance, l'effet exact de la pénalité L2, le seuillage de la pénalité L1, la formule exacte de l'arrêt précoce et sa parenté avec L2, et la conservation de la moyenne par le dropout. Cinq exercices papier-crayon aux corrigés détaillés ligne par ligne.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : apprendre par cœur n'est pas apprendre
 
-- La différence entre apprentissage et généralisation, le sur-apprentissage
-- Découper le jeu de données en train, validation, test
-- Les techniques de régularisation : L1, L2, dropout, early stopping
+Imagine un élève qui prépare un examen avec les annales des dix dernières années. Il a une mémoire prodigieuse : il retient chaque corrigé, mot pour mot. Sur les annales, il a vingt sur vingt. Le jour de l'examen, le sujet est neuf. Il sèche. Il a appris les réponses, pas la méthode.
 
-Un réseau qui obtient 100% sur l'entraînement et 50% sur des données inédites n'a rien appris d'utile. Ce chapitre te donne les outils pour diagnostiquer et corriger ce piège, le plus fréquent en pratique.
+Un réseau de neurones court exactement le même risque. Ce qu'on lui demande, c'est de bien répondre sur des exemples qu'il n'a jamais vus : c'est la **généralisation**. Ce qu'on lui fait minimiser, c'est la note sur les exemples d'entraînement. Les deux ne coïncident pas. Quand la note d'entraînement est excellente mais que la performance sur des exemples neufs est mauvaise, on parle de <Term slug="surapprentissage">sur-apprentissage</Term>.
+
+**Le polynôme qui passe partout.** Prends dix points de mesure $(x_1, y_1), \ldots, (x_{10}, y_{10})$ avec des abscisses toutes différentes. Il existe toujours un polynôme de degré au plus neuf qui les traverse tous. On peut l'écrire explicitement :
+
+$$
+P(x) = \sum_{i=1}^{10} y_i \prod_{j \ne i} \frac{x - x_j}{x_i - x_j}.
+$$
+
+C'est le polynôme d'interpolation de Lagrange. Il se lit : pour chaque point $i$, on fabrique un produit qui vaut $1$ en $x_i$ et $0$ en tous les autres $x_j$, puis on le multiplie par $y_i$. En $x = x_k$, tous les termes s'annulent sauf celui de $k$, qui vaut $y_k$. Donc $P(x_k) = y_k$ pour chaque point : la note d'entraînement est exactement nulle.
+
+Si les mesures sont bruitées, ce polynôme épouse aussi le bruit. Entre les points, il fait des boucles qui n'ont rien à voir avec la tendance réelle, surtout près des bords. Runge (1901) a montré que, même sans bruit, l'interpolation par des points équidistants peut se mettre à osciller de plus en plus fort quand on augmente le degré.
+
+**Un réseau fait pareil.** Le théorème d'approximation universelle du chapitre 5 dit qu'un réseau assez large peut représenter presque n'importe quelle fonction. La contrepartie est brutale : il peut aussi représenter n'importe quel par-cœur. Zhang et ses coauteurs (2017) l'ont vérifié de façon spectaculaire. Ils ont remplacé les étiquettes d'une base d'images par des étiquettes tirées au hasard, sans aucun lien avec les images. Les réseaux ont quand même atteint une note d'entraînement parfaite. Sur des images neuves, ils répondaient évidemment au hasard. La note d'entraînement seule ne dit donc rien de la généralisation.
+
+<Callout kind="note" title="La décomposition biais-variance">
+Il existe une façon exacte de dire pourquoi un modèle trop simple et un modèle trop souple échouent tous les deux (Geman, Bienenstock et Doursat, 1992).
+
+On suppose que les mesures valent $y = f(x) + \varepsilon$, où $f$ est la vraie tendance et $\varepsilon$ un bruit de moyenne nulle et de variance $\sigma^2$. On entraîne un modèle $\hat f$ sur un jeu de données tiré au hasard, puis on le teste en un point $x$ sur une mesure neuve, dont le bruit est indépendant du jeu d'entraînement. On note $\mathbb{E}$ la moyenne sur tous les tirages possibles (du jeu d'entraînement et du bruit), et $m = \mathbb{E}[\hat f(x)]$ la prédiction moyenne.
+
+**Énoncé.** L'erreur moyenne au point $x$ se décompose en trois morceaux positifs :
+
+$$
+\mathbb{E}\big[(y - \hat f(x))^2\big] = \sigma^2 + \big(f(x) - m\big)^2 + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+$$
+
+**Démonstration.** On découpe l'écart en trois :
+
+$$
+y - \hat f(x) = \varepsilon + \big(f(x) - m\big) + \big(m - \hat f(x)\big).
+$$
+
+On élève au carré. On obtient les trois carrés, plus trois doubles produits. Chaque double produit a une moyenne nulle. Le produit de $\varepsilon$ par un terme qui ne dépend que du jeu d'entraînement a une moyenne nulle, car $\varepsilon$ est indépendant de ce jeu et de moyenne nulle. Le produit de $f(x) - m$, qui est un nombre fixe, par $m - \hat f(x)$ a une moyenne nulle, car $\mathbb{E}[m - \hat f(x)] = m - m = 0$. Il reste la moyenne des trois carrés, avec $\mathbb{E}[\varepsilon^2] = \sigma^2$. □
+
+Le premier terme est le bruit : aucun modèle ne peut le supprimer. Le deuxième est le **biais** au carré : l'écart entre la prédiction moyenne et la vérité. Il est grand quand le modèle est trop rigide, comme une droite face à une sinusoïde. Le troisième est la **variance** : à quel point la prédiction change d'un jeu d'entraînement à l'autre. Elle est grande quand le modèle est trop souple, comme le polynôme de degré neuf qui suit chaque bruit. Régulariser, c'est accepter un peu de biais pour gagner beaucoup de variance.
+
+</Callout>
+
+## Acte 2 : trois jeux de données
+
+Puisque la note d'entraînement ment, il faut mesurer autre chose. L'idée est simple : on met de côté des exemples que le réseau ne verra jamais pendant l'entraînement, et on le note dessus. On découpe donc les données en trois paquets disjoints.
+
+- **L'ensemble d'entraînement** sert à calculer les gradients et à mettre à jour les poids.
+- **L'<Term slug="ensemble-de-validation">ensemble de validation</Term>** sert à faire des choix : quel degré, quelle force de régularisation, quand s'arrêter. Le réseau ne s'entraîne jamais dessus, mais nous, on le consulte souvent.
+- **L'ensemble de test** sert à une seule chose : annoncer la performance finale, une fois que tous les choix sont faits.
+
+Pourquoi ne pas fusionner validation et test ? Parce qu'à force de choisir le réglage qui donne la meilleure note sur un ensemble, on finit par s'adapter à cet ensemble. Chaque choix est une petite dose d'apprentissage. Si on annonçait la note de validation comme performance finale, elle serait optimiste. Le test doit rester vierge jusqu'au bout.
+
+Comparer les deux notes donne un diagnostic :
+
+| Note d'entraînement | Note de validation | Diagnostic                                                 |
+| ------------------- | ------------------ | ---------------------------------------------------------- |
+| mauvaise            | mauvaise           | **sous-apprentissage** : le modèle est trop simple          |
+| très bonne          | mauvaise           | **sur-apprentissage** : le modèle a appris le bruit         |
+| bonne               | presque aussi bonne | **bon équilibre** : le modèle a appris la tendance         |
+
+Le reste du chapitre présente des remèdes au sur-apprentissage. Ils portent un nom commun : la <Term slug="regularisation">régularisation</Term>, c'est-à-dire tout ce qu'on ajoute à l'entraînement pour améliorer la généralisation, même au prix d'une note d'entraînement un peu moins bonne.
+
+## Acte 3 : la pénalité L2, ou weight decay
+
+Le polynôme de degré neuf qui oscille a une signature : des coefficients énormes, qui se compensent les uns les autres pour passer par chaque point. Une idée naturelle est donc de pénaliser les grands poids. On ne minimise plus la note seule, mais la note plus une amende proportionnelle au carré de la norme des poids :
+
+$$
+J(w) = L(w) + \lambda\,\|w\|^2, \qquad \lambda \ge 0.
+$$
+
+Elle se lit : la nouvelle note est l'ancienne, plus $\lambda$ fois la somme des carrés des poids. Le nombre $\lambda$ règle la force de l'amende. À $\lambda = 0$, on retrouve la note d'origine. Plus $\lambda$ est grand, plus les grands poids coûtent cher.
+
+**La règle de mise à jour.** Le gradient de $\lambda\,\|w\|^2 = \lambda\sum_j w_j^2$ vaut $2\lambda\,w$. Un pas de descente sur $J$ s'écrit donc
+
+$$
+w \;\leftarrow\; w - \eta\big(\nabla L(w) + 2\lambda\,w\big).
+$$
+
+On regroupe les termes en $w$ :
+
+$$
+w \;\leftarrow\; (1 - 2\eta\lambda)\,w - \eta\,\nabla L(w).
+$$
+
+Cette ligne explique le nom anglais, <Term slug="weight-decay">weight decay</Term>, la décroissance des poids. Avant même la correction du gradient, chaque pas multiplie tous les poids par $1 - 2\eta\lambda$, un nombre légèrement inférieur à $1$. Si les données ne réclament pas un poids, il fond tout seul, pas après pas (Krogh et Hertz, 1992). En pratique, on ne pénalise que les poids, pas les biais : un biais ne fait que décaler une sortie, il ne fabrique pas d'oscillations.
+
+**Ce que fait exactement la pénalité.** Pour le savoir, on étudie une note dont on connaît tout : une somme de paraboles, une par poids,
+
+$$
+L(w) = \sum_{i=1}^{n} a_i\,(w_i - w_i^\star)^2, \qquad a_i > 0.
+$$
+
+Sans pénalité, son minimum est $w^\star$. Chaque $a_i$ est la courbure selon le poids $i$, exactement comme au chapitre 9. Ce cas n'est pas qu'un jouet : près d'un minimum, toute note régulière ressemble à une cuvette de ce type, après un changement d'axes bien choisi (Goodfellow, Bengio et Courville, 2016, section 7.1.1).
+
+**Théorème (rétrécissement).** Le minimum de $J(w) = L(w) + \lambda\,\|w\|^2$ est atteint en
+
+$$
+w_i = \frac{a_i}{a_i + \lambda}\,w_i^\star \quad \text{pour chaque } i.
+$$
+
+**Démonstration.** La note pénalisée est une somme de termes qui ne dépendent chacun que d'un seul poids :
+
+$$
+J(w) = \sum_{i=1}^{n} \Big( a_i\,(w_i - w_i^\star)^2 + \lambda\,w_i^2 \Big).
+$$
+
+On peut donc minimiser chaque terme séparément. On fixe $i$ et on dérive le terme $g(w_i) = a_i\,(w_i - w_i^\star)^2 + \lambda\,w_i^2$ :
+
+$$
+g'(w_i) = 2a_i\,(w_i - w_i^\star) + 2\lambda\,w_i.
+$$
+
+Cette dérivée s'annule quand $(a_i + \lambda)\,w_i = a_i\,w_i^\star$, c'est-à-dire en $w_i = \frac{a_i}{a_i + \lambda}\,w_i^\star$. Enfin, $g$ est une parabole dont le coefficient de $w_i^2$ vaut $a_i + \lambda > 0$ : elle est tournée vers le haut, donc ce point est son unique minimum. □
+
+**Comment le lire.** Chaque poids optimal est multiplié par un facteur $\frac{a_i}{a_i + \lambda}$, compris entre $0$ et $1$. Ce facteur dépend de la courbure :
+
+- si $a_i$ est grand devant $\lambda$, le facteur est proche de $1$ : le poids est presque intact ;
+- si $a_i$ est petit devant $\lambda$, le facteur est proche de $0$ : le poids est écrasé.
+
+Or une courbure faible signifie que bouger ce poids change à peine la note d'entraînement. Les données ne savent pas bien quoi en faire. C'est précisément dans ces directions floues que le bruit se loge, parce que rien ne l'en empêche. La pénalité L2 laisse donc en place ce que les données déterminent clairement, et efface ce qu'elles déterminent mal. C'est la régression ridge de Hoerl et Kennard (1970), retrouvée sous un autre nom par les réseaux de neurones.
+
+**Un bonus pour la descente.** Sur la note pénalisée, la courbure selon le poids $i$ devient $a_i + \lambda$. D'après le chapitre 9, la descente converge donc pour $\eta < \frac{1}{a_i + \lambda}$ dans chaque direction. Et la ravine s'adoucit : avec des courbures $1$ et $10$, le rapport entre la direction raide et la direction plate vaut $10$. Avec $\lambda = 1$, il devient $\frac{11}{2} = 5{,}5$.
+
+Joue avec le laboratoire. Les dix points sont des mesures bruitées d'une sinusoïde, tracée en pointillés. Commence au degré neuf sans pénalité, puis augmente $\lambda$ cran par cran.
+
+<RegularizationLab client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- À $\lambda = 0$ et au degré neuf, la courbe passe exactement par les dix points : l'erreur d'entraînement est nulle, mais l'erreur de validation est mauvaise. C'est le par-cœur.
+- En montant $\lambda$, l'erreur d'entraînement augmente toujours, alors que l'erreur de validation baisse d'abord, puis remonte. Le graphe de droite dessine un U : le bon réglage est au fond.
+- Avec un $\lambda$ très grand, la courbe s'aplatit vers la moyenne des points. C'est le sous-apprentissage, causé cette fois par une amende trop lourde.
+
+## Acte 4 : la pénalité L1 et la parcimonie
+
+Une autre amende possible utilise la valeur absolue au lieu du carré :
+
+$$
+J(w) = L(w) + \lambda\,\|w\|_1, \qquad \|w\|_1 = \sum_{j} |w_j|.
+$$
+
+Ça ressemble à un détail. C'est une différence de nature : la pénalité L1 met des poids **exactement** à zéro, ce que la pénalité L2 ne fait jamais. Pour le voir, on prend le cas le plus simple, un seul poids avec une note de courbure $1$ centrée en $c$.
+
+**Proposition (seuillage doux).** Pour $\lambda > 0$, la fonction $h(w) = (w - c)^2 + \lambda\,|w|$ atteint son minimum en
+
+$$
+w = \begin{cases} c - \frac{\lambda}{2} & \text{si } c > \frac{\lambda}{2}, \\[4pt] 0 & \text{si } |c| \le \frac{\lambda}{2}, \\[4pt] c + \frac{\lambda}{2} & \text{si } c < -\frac{\lambda}{2}. \end{cases}
+$$
+
+**Démonstration.** La valeur absolue change de formule en $0$, donc on raisonne par cas.
+
+*Cas $|c| \le \frac{\lambda}{2}$.* On compare $h(w)$ à $h(0) = c^2$. Pour $w > 0$, on a $|w| = w$ et
+
+$$
+h(w) - h(0) = w^2 - 2cw + \lambda w = w\,(w + \lambda - 2c).
+$$
+
+Comme $c \le \frac{\lambda}{2}$, le nombre $\lambda - 2c$ est positif ou nul, donc la parenthèse est strictement positive, et le produit aussi. Pour $w < 0$, on a $|w| = -w$ et
+
+$$
+h(w) - h(0) = w^2 - 2cw - \lambda w = w\,(w - 2c - \lambda).
+$$
+
+Comme $c \ge -\frac{\lambda}{2}$, le nombre $-2c - \lambda$ est négatif ou nul, donc la parenthèse est strictement négative. Un nombre négatif fois un nombre négatif est positif. Dans les deux cas, $h(w) > h(0)$ : le minimum est en $0$.
+
+*Cas $c > \frac{\lambda}{2}$.* Pour $w \ge 0$, $h(w) = (w - c)^2 + \lambda w$ est une parabole tournée vers le haut, de dérivée $2(w - c) + \lambda$, qui s'annule en $w = c - \frac{\lambda}{2}$. Ce point est bien positif, c'est donc le minimum sur $w \ge 0$. Pour $w \le 0$, la dérivée de $h(w) = (w - c)^2 - \lambda w$ vaut $2(w - c) - \lambda$, qui est strictement négative puisque $w \le 0 < c$ : $h$ décroît jusqu'en $0$, donc rien ne fait mieux que $h(0)$, qui est lui-même battu par $h(c - \frac{\lambda}{2})$.
+
+*Cas $c < -\frac{\lambda}{2}$.* C'est le cas précédent vu dans un miroir : on remplace $w$ par $-w$ et $c$ par $-c$. □
+
+**Comment le lire.** La pénalité L1 rapproche chaque poids de zéro d'une quantité fixe, $\frac{\lambda}{2}$, et s'il n'a pas de quoi payer, il tombe à zéro et y reste. Comparons avec L2 dans la même situation : le minimum de $(w - c)^2 + \lambda\,w^2$ vaut $\frac{c}{1 + \lambda}$, qui n'est jamais nul tant que $c \ne 0$. L2 rabote tous les poids proportionnellement. L1 en éteint certains.
+
+Un modèle dont beaucoup de poids sont exactement nuls est dit **parcimonieux**. C'est utile quand on soupçonne que seules quelques entrées comptent vraiment : L1 fait le tri tout seul. C'est le lasso de Tibshirani (1996). Quand la note a plusieurs poids de courbures $a_i$, le même calcul donne un seuil $\frac{\lambda}{2a_i}$ par poids.
+
+## Acte 5 : l'arrêt précoce
+
+La troisième méthode ne touche pas à la note. Elle touche au calendrier. Pendant l'entraînement, on mesure la note de validation à chaque époque. Au début, elle baisse avec la note d'entraînement. Puis, à un moment, elle se met à remonter alors que la note d'entraînement continue de baisser : le réseau commence à apprendre le bruit. On garde les poids du meilleur moment, et on arrête. C'est l'<Term slug="arret-precoce">arrêt précoce</Term>.
+
+En pratique, on ne s'arrête pas à la première remontée, qui peut n'être qu'un soubresaut. On se donne une patience de quelques époques, et on garde en mémoire les meilleurs poids vus jusque-là (Prechelt, 1998).
+
+Ça ressemble à une astuce d'ingénieur. On va voir que c'est une régularisation au sens plein, et même une cousine très proche de L2.
+
+**Théorème (trajectoire exacte).** On reprend la note $L(w) = \sum_i a_i\,(w_i - w_i^\star)^2$, et on lance la descente de gradient sans pénalité depuis $w = 0$, avec un taux $\eta$. Après $t$ pas, chaque poids vaut
+
+$$
+w_i(t) = \Big(1 - (1 - 2\eta a_i)^t\Big)\,w_i^\star.
+$$
+
+**Démonstration.** La dérivée de la note selon $w_i$ vaut $2a_i\,(w_i - w_i^\star)$. Un pas de descente donne donc
+
+$$
+w_i(t+1) = w_i(t) - 2\eta a_i\,\big(w_i(t) - w_i^\star\big).
+$$
+
+On retranche $w_i^\star$ des deux côtés et on factorise :
+
+$$
+w_i(t+1) - w_i^\star = (1 - 2\eta a_i)\,\big(w_i(t) - w_i^\star\big).
+$$
+
+C'est exactement la suite géométrique du chapitre 9, appliquée à l'écart au minimum. Au départ, l'écart vaut $0 - w_i^\star = -w_i^\star$. Après $t$ pas, il vaut donc $-(1 - 2\eta a_i)^t\,w_i^\star$. On ajoute $w_i^\star$ pour retrouver le poids, et on obtient la formule. □
+
+**Comment le lire.** Comme pour L2, chaque poids final $w_i^\star$ est multiplié par un facteur entre $0$ et $1$, qui dépend de la courbure. Les directions raides convergent en quelques pas : leur facteur atteint vite $1$. Les directions plates avancent à peine : leur facteur reste proche de $0$ tant que $t$ est petit. Arrêter tôt, c'est donc garder les directions bien déterminées et laisser en plan les directions floues. Exactement ce que faisait la pénalité L2.
+
+**Corollaire (même enveloppe que L2).** On suppose $\eta \le \frac{1}{2a_i}$, la zone de descente sage du chapitre 9. Alors le facteur de l'arrêt précoce et celui de L2 vérifient
+
+$$
+1 - (1 - 2\eta a_i)^t \;\le\; 2\eta t\,a_i \qquad\text{et}\qquad \frac{a_i}{a_i + \lambda} \;\le\; \frac{a_i}{\lambda}.
+$$
+
+Si l'on choisit $\lambda = \frac{1}{2\eta t}$, les deux facteurs sont donc sous la même droite $2\eta t\,a_i$.
+
+**Démonstration.** La seconde inégalité est immédiate : agrandir un dénominateur, en lui ajoutant $a_i > 0$, fait diminuer une fraction positive. Pour la première, on pose $u = 2\eta a_i$, qui est compris entre $0$ et $1$. Il suffit de montrer l'inégalité de Bernoulli,
+
+$$
+(1 - u)^t \;\ge\; 1 - t\,u \quad \text{pour tout entier } t \ge 0.
+$$
+
+On procède par récurrence. Pour $t = 0$, elle se lit $1 \ge 1$. Si elle est vraie au rang $t$, on la multiplie par $1 - u$, qui est positif ou nul, ce qui conserve le sens de l'inégalité :
+
+$$
+(1 - u)^{t+1} \;\ge\; (1 - t\,u)(1 - u) = 1 - (t+1)\,u + t\,u^2.
+$$
+
+Le dernier terme $t\,u^2$ est positif ou nul, donc $(1 - u)^{t+1} \ge 1 - (t+1)\,u$ : c'est le rang $t + 1$. □
+
+**Comment le lire.** Le nombre de pas joue le rôle de l'inverse de la pénalité : $\lambda \approx \frac{1}{2\eta t}$. Arrêter très tôt revient à régulariser très fort, laisser tourner longtemps revient à ne presque pas régulariser. Attention à ce que dit exactement le corollaire : il démontre que les deux facteurs partagent la même enveloppe pour les directions plates, et que tous deux tendent vers $1$ pour les directions raides. Il ne dit pas qu'ils sont égaux. L'équivalence entre arrêt précoce et L2 est une approximation, très bonne en pratique, analysée en détail par Sjöberg et Ljung (1995) et par Goodfellow, Bengio et Courville (2016, section 7.8). L'exercice 5 te fera mesurer l'écart.
+
+Passe le laboratoire en mode arrêt précoce. La descente part de coefficients nuls, au degré neuf, sans pénalité.
+
+<RegularizationLab client:visible locale="fr" defaultMode="early-stopping" />
+
+Trois choses à observer en jouant :
+
+- Au début, la courbe est plate, puis elle prend la forme de la sinusoïde : les directions raides, la tendance générale, sont apprises en premier.
+- L'erreur de validation atteint son minimum assez tôt, puis remonte pendant que la courbe se tord pour attraper chaque point.
+- Compare la meilleure erreur de validation avec celle du meilleur $\lambda$ en mode pénalité. Elles sont très proches : deux chemins différents vers la même régularisation.
+
+## Acte 6 : le dropout
+
+La dernière méthode est née avec les réseaux profonds. Pendant l'entraînement, à chaque pas, on éteint au hasard une partie des neurones cachés. Chaque neurone est gardé avec une probabilité $p$, et éteint sinon, indépendamment des autres. Au pas suivant, on retire au sort. C'est le <Term slug="dropout">dropout</Term> (Hinton et al., 2012 ; Srivastava et al., 2014).
+
+Pense à une équipe de foot qui s'entraîne sans jamais savoir quels joueurs seront présents. Personne ne peut se reposer entièrement sur un coéquipier précis, alors chacun apprend à être utile tout seul. Dans un réseau, le danger symétrique s'appelle la co-adaptation : des neurones qui ne fonctionnent qu'ensemble, en se corrigeant mutuellement, souvent pour coller au bruit. Le dropout casse ces combines.
+
+**Le dropout inversé.** On tire pour chaque neurone caché $j$ un masque $m_j$ qui vaut $1$ avec la probabilité $p$ et $0$ sinon. La sortie $h_j$ du neurone est remplacée par
+
+$$
+\tilde h_j = \frac{m_j\,h_j}{p}.
+$$
+
+Elle se lit : si le neurone est gardé, sa sortie est divisée par $p$, donc amplifiée ; s'il est éteint, elle vaut zéro. Pourquoi amplifier ?
+
+**Proposition (la moyenne est conservée).** En moyenne sur les tirages du masque, $\mathbb{E}[\tilde h_j] = h_j$.
+
+**Démonstration.** Le masque vaut $1$ avec la probabilité $p$ et $0$ avec la probabilité $1 - p$, donc sa moyenne est
+
+$$
+\mathbb{E}[m_j] = p \cdot 1 + (1 - p) \cdot 0 = p.
+$$
+
+Comme $h_j$ et $p$ sont fixés pendant le tirage, on obtient
+
+$$
+\mathbb{E}[\tilde h_j] = \frac{h_j}{p}\,\mathbb{E}[m_j] = \frac{h_j}{p} \cdot p = h_j. \qquad \square
+$$
+
+Par linéarité, la somme pondérée reçue par la couche suivante, $\sum_j w_j\,\tilde h_j + b$, a elle aussi pour moyenne $\sum_j w_j\,h_j + b$. Conséquence pratique : au moment de la prédiction, on éteint le dropout et on utilise le réseau complet, sans aucune correction. La moyenne exacte n'est garantie qu'avant la fonction d'activation. Après une non-linéarité, la conservation n'est plus qu'approchée, ce qui marche très bien en pratique.
+
+**Une foule de sous-réseaux.** Chaque masque définit un sous-réseau. Avec $n$ neurones cachés, il y en a $2^n$, et ils partagent tous les mêmes poids. Avec $100$ neurones, c'est $2^{100}$, plus de $10^{30}$. Entraîner avec le dropout, c'est entraîner un peu chacun d'eux. Prédire avec le réseau complet, c'est faire voter approximativement toute cette foule. Et une moyenne de nombreux modèles a une variance plus faible que chacun d'eux : on retrouve le troisième terme de la décomposition biais-variance. Srivastava et ses coauteurs recommandent $p = 0{,}5$ pour les neurones cachés et une valeur plus proche de $1$, comme $0{,}8$, pour les entrées.
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne.
+
+**Exercice 1.** Trois réseaux donnent les erreurs suivantes (entraînement, validation) : réseau A $(0{,}30\,;\,0{,}32)$, réseau B $(0{,}01\,;\,0{,}25)$, réseau C $(0{,}04\,;\,0{,}06)$. Pose un diagnostic pour chacun. Puis : pour choisir la force $\lambda$ d'une pénalité, sur quel ensemble compares-tu les réglages, et pourquoi pas sur le test ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : poser un diagnostic">
+**Étape 1.** Réseau A. L'erreur d'entraînement est élevée, et celle de validation l'est aussi. Le modèle n'arrive même pas à coller à ses propres données : c'est du sous-apprentissage.
+
+**Étape 2.** Réseau B. L'erreur d'entraînement est presque nulle, mais celle de validation est vingt-cinq fois plus grande. Calcule l'écart :
+
+$$
+0{,}25 - 0{,}01 = 0{,}24.
+$$
+
+Le modèle a appris ses exemples, pas la tendance : c'est du sur-apprentissage.
+
+**Étape 3.** Réseau C. Les deux erreurs sont faibles et proches. Calcule l'écart :
+
+$$
+0{,}06 - 0{,}04 = 0{,}02.
+$$
+
+C'est un bon équilibre.
+
+**Étape 4.** Pour choisir $\lambda$, on compare les réglages sur l'ensemble de validation. Si on utilisait le test, chaque choix l'adapterait un peu à ce test, et la note finale annoncée serait trop optimiste.
+
+**Résultat.** A sous-apprend, B sur-apprend, C est équilibré. On règle sur la validation et on garde le test pour une seule mesure, à la fin.
+
+</Callout>
+
+**Exercice 2.** Un poids vaut $w = 2$, et la rétropropagation donne $\partial L / \partial w = 0{,}5$. Fais un pas de descente avec $\eta = 0{,}1$ et une pénalité L2 de force $\lambda = 0{,}5$. Compare avec le même pas sans pénalité.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : un pas avec weight decay">
+**Étape 1.** Écris la règle avec pénalité.
+
+$$
+w \leftarrow (1 - 2\eta\lambda)\,w - \eta\,\frac{\partial L}{\partial w}.
+$$
+
+**Étape 2.** Calcule le facteur de décroissance.
+
+$$
+1 - 2 \cdot 0{,}1 \cdot 0{,}5 = 1 - 0{,}1 = 0{,}9.
+$$
+
+**Étape 3.** Applique-le au poids.
+
+$$
+0{,}9 \cdot 2 = 1{,}8.
+$$
+
+**Étape 4.** Calcule la correction du gradient.
+
+$$
+\eta\,\frac{\partial L}{\partial w} = 0{,}1 \cdot 0{,}5 = 0{,}05.
+$$
+
+**Étape 5.** Soustrais-la.
+
+$$
+w \leftarrow 1{,}8 - 0{,}05 = 1{,}75.
+$$
+
+**Étape 6.** Sans pénalité, le facteur vaut $1$.
+
+$$
+w \leftarrow 2 - 0{,}05 = 1{,}95.
+$$
+
+**Résultat.** Avec la pénalité, le poids passe à $1{,}75$ au lieu de $1{,}95$. La différence, $0{,}2$, est la décroissance : $2\eta\lambda\,w = 0{,}1 \cdot 2$.
+
+</Callout>
+
+**Exercice 3.** Une note à deux poids vaut $L(w) = 4\,(w_1 - 1)^2 + 0{,}25\,(w_2 - 1)^2$. Avec une pénalité L2 de force $\lambda = 1$, où se trouve le minimum ? Quelle direction est la plus rétrécie, et pourquoi ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : le rétrécissement selon la courbure">
+On lit les données : $a_1 = 4$, $a_2 = 0{,}25$, et $w_1^\star = w_2^\star = 1$.
+
+**Étape 1.** Applique le théorème au premier poids.
+
+$$
+w_1 = \frac{4}{4 + 1} \cdot 1 = 0{,}8.
+$$
+
+**Étape 2.** Applique-le au second.
+
+$$
+w_2 = \frac{0{,}25}{0{,}25 + 1} \cdot 1 = \frac{0{,}25}{1{,}25} = 0{,}2.
+$$
+
+**Résultat.** Le minimum pénalisé est $(0{,}8\,;\,0{,}2)$. Le second poids est le plus rétréci : sa courbure $0{,}25$ est faible devant $\lambda = 1$, donc les données le déterminent mal, et la pénalité l'écrase vers zéro. Le premier, bien déterminé, garde $80\,\%$ de sa valeur.
+
+</Callout>
+
+**Exercice 4.** Trois poids ont pour minimum sans pénalité $c = (3\,;\,0{,}4\,;\,-1)$, chacun sur une note $(w - c)^2$. Calcule les poids optimaux avec une pénalité L1 de force $\lambda = 1$, puis avec une pénalité L2 de même force.
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : L1 contre L2">
+**Étape 1.** Avec L1, le seuil vaut $\frac{\lambda}{2}$.
+
+$$
+\frac{\lambda}{2} = \frac{1}{2} = 0{,}5.
+$$
+
+**Étape 2.** Premier poids : $c = 3 > 0{,}5$, donc on retire le seuil.
+
+$$
+w = 3 - 0{,}5 = 2{,}5.
+$$
+
+**Étape 3.** Deuxième poids : $|c| = 0{,}4 \le 0{,}5$, donc il tombe à zéro.
+
+$$
+w = 0.
+$$
+
+**Étape 4.** Troisième poids : $c = -1 < -0{,}5$, donc on ajoute le seuil.
+
+$$
+w = -1 + 0{,}5 = -0{,}5.
+$$
+
+**Étape 5.** Avec L2, chaque poids est divisé par $1 + \lambda = 2$.
+
+$$
+\frac{3}{2} = 1{,}5, \qquad \frac{0{,}4}{2} = 0{,}2, \qquad \frac{-1}{2} = -0{,}5.
+$$
+
+**Résultat.** L1 donne $(2{,}5\,;\,0\,;\,-0{,}5)$ et L2 donne $(1{,}5\,;\,0{,}2\,;\,-0{,}5)$. L1 éteint le petit poids et ménage le grand. L2 garde tous les poids non nuls, mais rabote le grand beaucoup plus fort.
+
+</Callout>
+
+**Exercice 5.** Une direction a une courbure $a = 0{,}1$ et un minimum $w^\star = 2$. On part de $w = 0$ avec $\eta = 0{,}1$ et on s'arrête après $t = 5$ pas. Calcule le poids obtenu, vérifie la majoration du corollaire, puis compare avec la pénalité L2 associée $\lambda = \frac{1}{2\eta t}$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 5 : arrêt précoce contre L2">
+**Étape 1.** Calcule le facteur de chaque pas.
+
+$$
+1 - 2\eta a = 1 - 2 \cdot 0{,}1 \cdot 0{,}1 = 0{,}98.
+$$
+
+**Étape 2.** Élève-le à la puissance $5$.
+
+$$
+0{,}98^5 \approx 0{,}9039.
+$$
+
+**Étape 3.** Applique la formule de la trajectoire.
+
+$$
+w(5) = (1 - 0{,}9039) \cdot 2 = 0{,}0961 \cdot 2 \approx 0{,}192.
+$$
+
+**Étape 4.** Calcule la majoration du corollaire.
+
+$$
+2\eta t\,a = 2 \cdot 0{,}1 \cdot 5 \cdot 0{,}1 = 0{,}1.
+$$
+
+Le facteur $0{,}0961$ est bien inférieur à $0{,}1$.
+
+**Étape 5.** Calcule la pénalité associée.
+
+$$
+\lambda = \frac{1}{2 \cdot 0{,}1 \cdot 5} = 1.
+$$
+
+**Étape 6.** Applique le théorème de rétrécissement.
+
+$$
+w = \frac{0{,}1}{0{,}1 + 1} \cdot 2 = \frac{0{,}2}{1{,}1} \approx 0{,}182.
+$$
+
+**Résultat.** L'arrêt précoce donne $0{,}192$, la pénalité L2 associée donne $0{,}182$. Les deux restent sous l'enveloppe commune $0{,}1 \cdot 2 = 0{,}2$, et ne diffèrent que d'environ $5\,\%$ : l'équivalence est approchée, mais très bonne.
+
+</Callout>
+
+## En une phrase
+
+Un réseau peut apprendre ses exemples par cœur, et la régularisation (pénalité L2 qui rétrécit les directions floues, pénalité L1 qui éteint des poids, arrêt précoce qui agit comme une pénalité L2 de force $\frac{1}{2\eta t}$, dropout qui fait voter une foule de sous-réseaux) échange un peu de note d'entraînement contre une bien meilleure généralisation, réglée sur un ensemble de validation.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Un réseau a une erreur d’entraînement de 0,01 et une erreur de validation de 0,30. Que se passe-t-il ?',
+      options: [
+        'Il sous-apprend',
+        'Il sur-apprend : il a appris ses exemples, pas la tendance',
+        'Il est parfaitement équilibré',
+        'Le taux d’apprentissage est trop grand',
+      ],
+      answer: 1,
+      explain:
+        'Une note d’entraînement excellente et une note de validation mauvaise sont la signature du sur-apprentissage. Le réseau colle au bruit de ses exemples.',
+    },
+    {
+      q: 'Sur une note Σ aᵢ (wᵢ − wᵢ*)², que fait une pénalité L2 de force λ ?',
+      options: [
+        'Elle met tous les poids à zéro',
+        'Elle multiplie chaque wᵢ* par aᵢ / (aᵢ + λ) : les directions à faible courbure sont les plus écrasées',
+        'Elle ne change rien au minimum',
+        'Elle double tous les poids',
+      ],
+      answer: 1,
+      explain:
+        'Le théorème de rétrécissement donne wᵢ = aᵢ/(aᵢ + λ) · wᵢ*. Une courbure faible, donc une direction mal déterminée par les données, donne un facteur proche de 0.',
+    },
+    {
+      q: 'Quelle pénalité peut mettre un poids exactement à zéro ?',
+      options: ['La pénalité L2', 'La pénalité L1', 'Aucune des deux', 'Les deux, toujours'],
+      answer: 1,
+      explain:
+        'Avec L1, le minimum de (w − c)² + λ|w| est nul dès que |c| ≤ λ/2 : c’est le seuillage doux. Avec L2, le minimum vaut c/(1 + λ), jamais nul si c ≠ 0.',
+    },
+    {
+      q: 'Pourquoi dit-on que l’arrêt précoce est une forme de régularisation ?',
+      options: [
+        'Parce qu’il réduit le temps de calcul',
+        'Parce qu’il laisse en plan les directions plates, comme une pénalité L2 de force environ 1/(2ηt)',
+        'Parce qu’il change la fonction de coût',
+        'Parce qu’il supprime des neurones',
+      ],
+      answer: 1,
+      explain:
+        'Depuis w = 0, chaque poids vaut (1 − (1 − 2ηaᵢ)ᵗ) wᵢ*. Les directions raides convergent vite, les plates à peine. Les deux facteurs partagent la même enveloppe 2ηt·aᵢ quand λ = 1/(2ηt).',
+    },
+    {
+      q: 'Avec le dropout inversé, que fait-on au moment de la prédiction ?',
+      options: [
+        'On garde le dropout actif',
+        'On utilise le réseau complet, sans correction, car la division par p a déjà conservé la moyenne',
+        'On multiplie toutes les sorties par p',
+        'On éteint la moitié des neurones',
+      ],
+      answer: 1,
+      explain:
+        'Pendant l’entraînement, chaque sortie gardée est divisée par p, si bien que sa moyenne sur les tirages vaut exactement la sortie d’origine. Au test, le réseau complet a donc déjà la bonne échelle.',
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 11
+
+L'arrêt précoce part de poids nuls, et la pénalité L2 tire les poids vers zéro. Tout pousse vers le zéro. Alors pourquoi ne pas simplement démarrer un réseau avec tous ses poids à zéro ? Parce que ce serait fatal. Reprends le réseau jouet du chapitre 8, avec ses deux neurones cachés. Si leurs poids sont identiques au départ, ils calculent la même sortie, reçoivent le même signal d'erreur, et subissent exactement la même mise à jour. Au pas suivant, ils sont encore identiques, et ainsi de suite pour toujours. Deux neurones jumeaux n'en valent qu'un : le réseau a perdu sa couche cachée. À l'inverse, des poids de départ trop grands font saturer les sigmoïdes, et on retombe sur le vanishing gradient du chapitre 8. Il faut donc partir de poids petits, mais différents, et à la bonne échelle. Le chapitre 11 calcule cette échelle, puis montre comment la maintenir couche après couche pendant tout l'entraînement : c'est l'initialisation, et la batch normalization.
+
+## Sources
+
+- Runge, C. (1901). « Über empirische Funktionen und die Interpolation zwischen äquidistanten Ordinaten. » _Zeitschrift für Mathematik und Physik_ 46, 224-243. [archive.org](https://archive.org/details/zeitschriftfurm46unkn)
+- Hoerl, A. E. & Kennard, R. W. (1970). « Ridge Regression: Biased Estimation for Nonorthogonal Problems. » _Technometrics_ 12(1), 55-67. [DOI 10.1080/00401706.1970.10488634](https://doi.org/10.1080/00401706.1970.10488634)
+- Krogh, A. & Hertz, J. A. (1992). « A Simple Weight Decay Can Improve Generalization. » _Advances in Neural Information Processing Systems 4_, 950-957.
+- Geman, S., Bienenstock, E. & Doursat, R. (1992). « Neural Networks and the Bias/Variance Dilemma. » _Neural Computation_ 4(1), 1-58. [DOI 10.1162/neco.1992.4.1.1](https://doi.org/10.1162/neco.1992.4.1.1)
+- Sjöberg, J. & Ljung, L. (1995). « Overtraining, regularization and searching for a minimum, with application to neural networks. » _International Journal of Control_ 62(6), 1391-1407. [DOI 10.1080/00207179508921605](https://doi.org/10.1080/00207179508921605)
+- Tibshirani, R. (1996). « Regression Shrinkage and Selection via the Lasso. » _Journal of the Royal Statistical Society, Series B_ 58(1), 267-288. [DOI 10.1111/j.2517-6161.1996.tb02080.x](https://doi.org/10.1111/j.2517-6161.1996.tb02080.x)
+- Prechelt, L. (1998). « Early Stopping, But When? » In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 55-69. [DOI 10.1007/3-540-49430-8_3](https://doi.org/10.1007/3-540-49430-8_3)
+- Hinton, G. E., Srivastava, N., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2012). « Improving neural networks by preventing co-adaptation of feature detectors. » [arXiv:1207.0580](https://arxiv.org/abs/1207.0580)
+- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). « Dropout: A Simple Way to Prevent Neural Networks from Overfitting. » _Journal of Machine Learning Research_ 15, 1929-1958. https://www.jmlr.org/papers/v15/srivastava14a.html
+- Zhang, C., Bengio, S., Hardt, M., Recht, B. & Vinyals, O. (2017). « Understanding deep learning requires rethinking generalization. » _ICLR 2017_. [arXiv:1611.03530](https://arxiv.org/abs/1611.03530)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 7, en particulier les sections 7.1.1 (pénalité L2) et 7.8 (arrêt précoce). https://www.deeplearningbook.org
