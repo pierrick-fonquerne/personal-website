@@ -51,7 +51,10 @@ On suppose que les mesures valent $y = f(x) + \varepsilon$, où $f$ est la vraie
 **Énoncé.** L'erreur moyenne au point $x$ se décompose en trois morceaux positifs :
 
 $$
-\mathbb{E}\big[(y - \hat f(x))^2\big] = \sigma^2 + \big(f(x) - m\big)^2 + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+\begin{aligned}
+\mathbb{E}\big[(y - \hat f(x))^2\big] &= \sigma^2 + \big(f(x) - m\big)^2 \\
+&\quad + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+\end{aligned}
 $$
 
 **Démonstration.** On découpe l'écart en trois :
@@ -78,11 +81,9 @@ Pourquoi ne pas fusionner validation et test ? Parce qu'à force de choisir le r
 
 Comparer les deux notes donne un diagnostic :
 
-| Note d'entraînement | Note de validation | Diagnostic                                                 |
-| ------------------- | ------------------ | ---------------------------------------------------------- |
-| mauvaise            | mauvaise           | **sous-apprentissage** : le modèle est trop simple          |
-| très bonne          | mauvaise           | **sur-apprentissage** : le modèle a appris le bruit         |
-| bonne               | presque aussi bonne | **bon équilibre** : le modèle a appris la tendance         |
+- **Les deux notes sont mauvaises** : c'est du **sous-apprentissage**, le modèle est trop simple.
+- **Entraînement très bon, validation mauvaise** : c'est du **sur-apprentissage**, le modèle a appris le bruit.
+- **Les deux sont bonnes et proches** : c'est un **bon équilibre**, le modèle a appris la tendance.
 
 Le reste du chapitre présente des remèdes au sur-apprentissage. Ils portent un nom commun : la <Term slug="regularisation">régularisation</Term>, c'est-à-dire tout ce qu'on ajoute à l'entraînement pour améliorer la généralisation, même au prix d'une note d'entraînement un peu moins bonne.
 
@@ -554,6 +555,6 @@ L'arrêt précoce part de poids nuls, et la pénalité L2 tire les poids vers z�
 - Tibshirani, R. (1996). « Regression Shrinkage and Selection via the Lasso. » _Journal of the Royal Statistical Society, Series B_ 58(1), 267-288. [DOI 10.1111/j.2517-6161.1996.tb02080.x](https://doi.org/10.1111/j.2517-6161.1996.tb02080.x)
 - Prechelt, L. (1998). « Early Stopping, But When? » In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 55-69. [DOI 10.1007/3-540-49430-8_3](https://doi.org/10.1007/3-540-49430-8_3)
 - Hinton, G. E., Srivastava, N., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2012). « Improving neural networks by preventing co-adaptation of feature detectors. » [arXiv:1207.0580](https://arxiv.org/abs/1207.0580)
-- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). « Dropout: A Simple Way to Prevent Neural Networks from Overfitting. » _Journal of Machine Learning Research_ 15, 1929-1958. https://www.jmlr.org/papers/v15/srivastava14a.html
+- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). « Dropout: A Simple Way to Prevent Neural Networks from Overfitting. » _Journal of Machine Learning Research_ 15, 1929-1958. [jmlr.org](https://www.jmlr.org/papers/v15/srivastava14a.html)
 - Zhang, C., Bengio, S., Hardt, M., Recht, B. & Vinyals, O. (2017). « Understanding deep learning requires rethinking generalization. » _ICLR 2017_. [arXiv:1611.03530](https://arxiv.org/abs/1611.03530)
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 7, en particulier les sections 7.1.1 (pénalité L2) et 7.8 (arrêt précoce). https://www.deeplearningbook.org

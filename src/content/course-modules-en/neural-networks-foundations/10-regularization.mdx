@@ -51,7 +51,10 @@ We assume that measurements are $y = f(x) + \varepsilon$, where $f$ is the true 
 **Statement.** The average error at point $x$ splits into three non-negative pieces:
 
 $$
-\mathbb{E}\big[(y - \hat f(x))^2\big] = \sigma^2 + \big(f(x) - m\big)^2 + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+\begin{aligned}
+\mathbb{E}\big[(y - \hat f(x))^2\big] &= \sigma^2 + \big(f(x) - m\big)^2 \\
+&\quad + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+\end{aligned}
 $$
 
 **Proof.** We cut the gap into three:
@@ -78,11 +81,9 @@ Why not merge validation and test? Because by repeatedly picking the setting tha
 
 Comparing the two scores gives a diagnosis:
 
-| Training score | Validation score   | Diagnosis                                            |
-| -------------- | ------------------ | ---------------------------------------------------- |
-| poor           | poor               | **underfitting**: the model is too simple            |
-| very good      | poor               | **overfitting**: the model has learned the noise     |
-| good           | almost as good     | **good balance**: the model has learned the trend    |
+- **Both scores are poor**: this is **underfitting**, the model is too simple.
+- **Training very good, validation poor**: this is **overfitting**, the model has learned the noise.
+- **Both good and close**: this is a **good balance**, the model has learned the trend.
 
 The rest of the chapter presents remedies for overfitting. They share a common name: <Term slug="regularisation">regularisation</Term>, meaning anything we add to training to improve generalisation, even at the price of a slightly worse training score.
 
@@ -554,6 +555,6 @@ Early stopping starts from zero weights, and the L2 penalty pulls the weights to
 - Tibshirani, R. (1996). "Regression Shrinkage and Selection via the Lasso." _Journal of the Royal Statistical Society, Series B_ 58(1), 267-288. [DOI 10.1111/j.2517-6161.1996.tb02080.x](https://doi.org/10.1111/j.2517-6161.1996.tb02080.x)
 - Prechelt, L. (1998). "Early Stopping, But When?" In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 55-69. [DOI 10.1007/3-540-49430-8_3](https://doi.org/10.1007/3-540-49430-8_3)
 - Hinton, G. E., Srivastava, N., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2012). "Improving neural networks by preventing co-adaptation of feature detectors." [arXiv:1207.0580](https://arxiv.org/abs/1207.0580)
-- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). "Dropout: A Simple Way to Prevent Neural Networks from Overfitting." _Journal of Machine Learning Research_ 15, 1929-1958. https://www.jmlr.org/papers/v15/srivastava14a.html
+- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). "Dropout: A Simple Way to Prevent Neural Networks from Overfitting." _Journal of Machine Learning Research_ 15, 1929-1958. [jmlr.org](https://www.jmlr.org/papers/v15/srivastava14a.html)
 - Zhang, C., Bengio, S., Hardt, M., Recht, B. & Vinyals, O. (2017). "Understanding deep learning requires rethinking generalization." _ICLR 2017_. [arXiv:1611.03530](https://arxiv.org/abs/1611.03530)
 - Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 7, especially sections 7.1.1 (L2 penalty) and 7.8 (early stopping). https://www.deeplearningbook.org
