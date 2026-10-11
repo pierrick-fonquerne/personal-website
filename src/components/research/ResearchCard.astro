@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import { localizedPath, useTranslations, type Locale } from '../../lib/i18n';
 import ExternalLink from '../ui/icons/ExternalLink.astro';
+import ResearchSource from './ResearchSource.astro';
 
 interface Props {
   entry: CollectionEntry<'research'>;
@@ -86,17 +87,7 @@ const isMuted = entry.data.status === 'archived' || entry.data.status === 'draft
         </div>
         <ul class="flex flex-col gap-1.5">
           {entry.data.papers.map((paper) => (
-            <li class="text-[13px] leading-[1.45] text-[var(--color-fg-muted)]">
-              <a
-                href={paper.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="transition-colors duration-200 hover:text-[var(--color-accent)]"
-              >
-                {paper.title}
-              </a>
-              <span class="text-[var(--color-fg-dim)]"> · {paper.authors}</span>
-            </li>
+            <ResearchSource paper={paper} locale={locale} variant="card" />
           ))}
         </ul>
       </footer>
