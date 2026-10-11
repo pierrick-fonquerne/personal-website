@@ -1,0 +1,23 @@
+---
+slug: lecture-grokking-decoupe-donnees
+---
+
+I read "Misalignment of Low-Loss Regions Causes Grokking" by Tian, Al-Ars, Kitsak and Hofstee ([arXiv 2610.00620](https://arxiv.org/abs/2610.00620)). I wanted to know whether the way the data is cut explains late generalization, which matters for learning from a stream.
+
+## What the paper shows
+
+Grokking is a network that memorizes its examples, stays at zero on the others, then suddenly generalizes. The authors keep the same small transformer, the same addition modulo 97, the same number of examples (4,705 for training, 4,704 for validation), and change only the split. If the pairs (a, b) and (b, a) always fall on the same side, validation never takes off in 150,000 epochs, across ten seeds.
+
+They propose a "coverage": the share of symmetric pairs with at least one member seen in training. Grokking appears between about 0.64 and 0.70 in two different experiments. As the data grows, pure memorization cases disappear: in their figure 7, I count 36, then 18, 8, 3 and 0.
+
+## What I take from it
+
+The number of examples does not say everything, useful information does. For the [late generalization](/en/research/generalisation-tardive) page, this is the direct link with a stream: few examples per unit of time, and an arrival order that plays the role of the split. I also note a testable prediction: if low-loss regions do not depend on the optimizer, the same split should block a network trained without a gradient.
+
+## What I don't buy
+
+It is a preprint: the "ICLR 2027" header cannot be verified. The word "causes" is too strong, because the misalignment is never measured. The main experiment contains no grokking case. The symmetric split has a coverage of 0.500, close to a 30% random split (0.508) where grokking was already absent. Nothing is tested with weight decay on the blocked case, nor on other architectures, nor on real data. And in my small trial, at equal coverage, one split generalizes (97.5%) and the other memorizes (under 1%).
+
+## Still open
+
+I want to sweep weight decay on the symmetric split, with ten seeds. Then the real experiment: rerun the test with a local rule instead of the gradient.
