@@ -1,0 +1,29 @@
+---
+slug: lecture-neuromodulation-types-neurones
+---
+
+J'ai lu *Multi-Behavioral Evolved Substrates Through Neuromodulation and Activation Selection* de Claret, O'Neill, Cotofrei et Stoffel ([arXiv 2610.00148](https://arxiv.org/abs/2610.00148)), publié aux actes d'ALIFE 2026. Je l'ai lu parce qu'il pose ma question de départ : comment un seul petit réseau tient-il plusieurs tâches, sans gradient ?
+
+## Ce que montre le papier
+
+Un réseau d'environ dix neurones doit résoudre cinq portes logiques (XOR, AND, OR, NAND, NOR). Il est trouvé par évolution, donc sans gradient. D'une tâche à l'autre, seuls changent un petit vecteur de neuromodulation, quatre nombres fixés à la main qui règlent le réseau de l'extérieur, et la fonction d'activation.
+
+Avec tanh partout, la réussite tombe à 0 % pour cinq tâches. Le XOR reste bloqué à 75 %, soit trois réponses justes sur quatre. La raison : tanh est monotone, sa sortie ne fait que monter quand l'entrée monte, et le XOR demande l'inverse. Le même réseau avec Adam atteint 100 %. Le défaut vient donc de la recherche, pas du réseau.
+
+Avec sin pour le XOR, tanh ailleurs, et la neuromodulation, on arrive à 100 %, en 14 générations en médiane. Retirer l'un des deux ingrédients redonne 0 %.
+
+## Ce que j'en retiens
+
+C'est un contrepoint à ma page [neurone à état](/research/neurone-a-etat). J'y défends que l'état interne est ce qui débloque du calcul. Ici, le déblocage vient d'une fonction sans mémoire, sin, et d'un signal de contexte venu du dehors. Le type de neurone compte, pas seulement son état.
+
+Mon cœur plastique n'aura pas de gradient global. Il est donc du côté de l'évolution dans ce papier. Si tous mes neurones sont monotones, je dois m'attendre au même plafond sur la parité. Je prévois au moins deux types de neurones, pas dix : à dix activations différentes, le papier retombe à 0 %.
+
+## Ce que je n'achète pas
+
+C'est un article de conférence court, publié aux actes d'ALIFE 2026. Le banc d'essai est fait de tâches jouets. À quatre entrées, l'activation par tâche tombe à 13,3 %, et à sept tâches et plus tout s'effondre. Sur de la régression continue, sin ne fait que 6,7 % contre 100 % pour tanh.
+
+Sur le banc principal, sin seul suffit déjà (100 %). Et l'activation « par tâche » est choisie par les expérimentateurs. Surtout, rien sur les règles d'apprentissage locales, rien sur l'apprentissage séquentiel, et le contexte est donné au réseau, pas deviné.
+
+## Reste ouvert
+
+Le plateau à 75 % existe-t-il avec une règle locale ? Dès qu'une première règle tourne, je la lance sur XOR et AND ensemble, avec tanh puis avec sin. Je lui donnerai aussi un signal d'apprentissage gradué plutôt que binaire.
