@@ -1,0 +1,13 @@
+Research journal. Grokking: does the data split decide everything? A reading note on a paper that links late generalization to the way the data is cut.
+
+I read a paper by Tian, Al-Ars, Kitsak and Hofstee, titled Misalignment of Low-Loss Regions Causes Grokking. I wanted to know whether the way the data is cut explains late generalization, because that matters for learning from a stream.
+
+Grokking is a network that memorizes its examples, stays at zero on the others, then suddenly generalizes. The authors keep the same small transformer, the same addition modulo ninety-seven and the same number of examples, about four thousand seven hundred for training and as many for validation, and they change only the split. If the pairs a, b and b, a always fall on the same side, validation never takes off, even after one hundred fifty thousand epochs, across ten different seeds. They also propose a coverage, meaning the share of symmetric pairs with at least one member seen in training. Grokking appears between about zero point sixty-four and zero point seventy, in two different experiments. And as the data grows, the pure memorization cases disappear: in their figure seven, I count thirty-six, then eighteen, eight, three, and finally zero.
+
+What I take from it is that the number of examples does not say everything, because useful information counts. For my page on late generalization, this is the direct link with a stream: few examples per unit of time, and an arrival order that plays the role of the split. I also note a testable prediction. If low-loss regions do not depend on the optimizer, then the same split should block a network trained without a gradient.
+
+What I don't buy, now. It is a preprint, and the conference header cannot be verified. The word causes is too strong, because the misalignment is never measured. The main experiment contains no grokking case. The symmetric split has a coverage of zero point five, very close to a thirty percent random split, where grokking was already absent. Nothing is tested with weight decay on the blocked case, nor on other architectures, nor on real data. And in my small trial, at equal coverage, one split generalizes, at ninety-seven point five percent, while the other memorizes, at under one percent.
+
+Still open. I want to sweep weight decay on the symmetric split, with ten seeds. Then the real experiment: rerun the test with a local rule instead of the gradient.
+
+In one sentence. The data split may weigh more than the training settings, but the paper does not prove it yet, and I will first test weight decay, then a local rule.

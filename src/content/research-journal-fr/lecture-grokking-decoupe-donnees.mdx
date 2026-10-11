@@ -1,0 +1,23 @@
+---
+slug: lecture-grokking-decoupe-donnees
+---
+
+J'ai lu « Misalignment of Low-Loss Regions Causes Grokking » de Tian, Al-Ars, Kitsak et Hofstee ([arXiv 2610.00620](https://arxiv.org/abs/2610.00620)). Je voulais savoir si la façon de couper les données explique la généralisation tardive, ce qui compte pour un apprentissage en flux.
+
+## Ce que montre le papier
+
+Le grokking, c'est un réseau qui apprend ses exemples par cœur, reste nul sur les autres, puis généralise d'un coup. Les auteurs gardent le même petit transformer, la même addition modulo 97, le même nombre d'exemples (4 705 en entraînement, 4 704 en validation), et ne changent que la découpe. Si les paires (a, b) et (b, a) tombent toujours du même côté, la validation ne décolle jamais en 150 000 époques, sur dix graines.
+
+Ils proposent une « couverture » : la part des paires symétriques dont au moins un membre est vu à l'entraînement. Le grokking apparaît entre 0,64 et 0,70 environ dans deux expériences différentes. Quand les données grandissent, les cas de pure mémorisation disparaissent : dans leur figure 7, j'en compte 36, puis 18, 8, 3 et 0.
+
+## Ce que j'en retiens
+
+Le nombre d'exemples ne dit pas tout, l'information utile compte. Pour la page [généralisation tardive](/research/generalisation-tardive), c'est le lien direct avec un flux : peu d'exemples par unité de temps, et un ordre d'arrivée qui joue le rôle de la découpe. Je note aussi une prédiction testable : si les régions de faible perte ne dépendent pas de l'optimiseur, la même découpe devrait bloquer un réseau entraîné sans gradient.
+
+## Ce que je n'achète pas
+
+C'est une prépublication : l'en-tête « ICLR 2027 » n'est pas vérifiable. Le mot « cause » est trop fort, car le désalignement n'est jamais mesuré. L'expérience principale ne contient aucun cas de grokking. La découpe symétrique a une couverture de 0,500, proche de celle d'une découpe aléatoire à 30 % (0,508) où le grokking était déjà absent. Rien n'est testé avec du weight decay sur le cas bloqué, ni sur d'autres architectures, ni sur des données réelles. Et dans mon petit essai, à couverture égale, une découpe généralise (97,5 %) et l'autre mémorise (moins de 1 %).
+
+## Reste ouvert
+
+Je veux balayer le weight decay sur la découpe symétrique, avec dix graines. Ensuite, la vraie expérience : refaire le test avec une règle locale à la place du gradient.
