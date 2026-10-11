@@ -1,0 +1,29 @@
+---
+slug: lecture-motifs-hubs-snn
+---
+
+I read "Stochastic Dynamics of Large-Scale Motif-Embedded Spiking Neuronal Networks" by Jagdev, Bertram and Yu ([arXiv 2610.00616](https://arxiv.org/abs/2610.00616)), published on September 30. I read it because it touches my core question: does the shape of the wiring matter, and where does it come from?
+
+## What the paper shows
+
+The authors simulate four networks of 1,000 spiking neurons. The background is either random or hub-based (a few very well-connected neurons). Motifs, meaning small circuits of 2 to 4 neurons, are inserted or not. The controls have the same number of synapses: only the layout changes.
+
+An intermediate level of noise makes the activity the most regular, between 0.30 and 0.43 depending on the network. This is called coherence resonance. Motifs add 11% of regularity on a random background, and only 3% on a hub background. The hub background dominates: a signal-to-noise ratio of about 72 against 26. It also responds faster and stronger, with a peak at 50 ms and 47 Hz against 100 ms and 12 Hz.
+
+Removing the 7.5% most connected neurons drops that ratio from 20 to 11. Removing the same number of random neurons leaves it around 17.
+
+## What I take from it
+
+This paper is a counterpoint to my page on structural plasticity. There I write that topology is only worth the criterion that steers it, and that a template imposed from outside is not the goal. Here, the authors impose motifs and hubs by hand, and the gain is already clear, with no learning at all. The starting shape therefore weighs more than my page lets on.
+
+I also keep that the layout matters, not only the strength: shuffling the connections of an M2 motif drops the ratio from 24 to 18. And the hub brings back the stability problem: what makes the strength also makes the fragility. Finally, the authors point to the next step themselves: motifs and hubs that emerge through plasticity. That is my subject.
+
+## What I don't buy
+
+It is a preprint, not peer reviewed. Everything is simulated, with no biological data. The testbed is small: 1,000 neurons, and even 500 for the rewiring test, with strengthened motifs to make the effect visible. The effect of motifs is modest.
+
+STDP plasticity is active in the simulations, but its role is never measured. Above all, nothing links this rhythm to an ability to learn: the paper measures regularity and signal transmission, nothing else. The code is not published, and a few parameters are missing to reproduce it.
+
+## Still open
+
+First, reproduce the ranking of the four networks in Rust, then rerun without STDP. That is the first measurement the paper does not contain. Then, start from a random network without motifs, add creation and removal of synapses, count the motifs and follow the signal-to-noise ratio over time. Will hubs appear? I don't know, and that is what makes the experiment interesting.
