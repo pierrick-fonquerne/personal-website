@@ -58,4 +58,36 @@ describe('RegularizationLab', () => {
     expect(status.textContent).toBe(before);
     expect(document.querySelector('[aria-live]')).toBeNull();
   });
+
+  it('exposes the mode buttons as toggle buttons that keep focus', () => {
+    render(<RegularizationLab locale="fr" />);
+    const penaltyButton = screen.getByTestId('regularization-mode-penalty');
+    const earlyButton = screen.getByTestId('regularization-mode-early-stopping');
+    expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    expect(penaltyButton).toHaveAttribute('aria-pressed', 'true');
+    expect(earlyButton).toHaveAttribute('aria-pressed', 'false');
+    earlyButton.focus();
+    fireEvent.click(earlyButton);
+    expect(penaltyButton).toHaveAttribute('aria-pressed', 'false');
+    expect(earlyButton).toHaveAttribute('aria-pressed', 'true');
+    expect(earlyButton).toHaveFocus();
+  });
+
+  it('shows a legend naming both curves and both markers', () => {
+    render(<RegularizationLab locale="en" />);
+    const legend = screen.getByTestId('regularization-legend');
+    expect(legend).toHaveTextContent('Training error');
+    expect(legend).toHaveTextContent('Validation error');
+    expect(legend).toHaveTextContent('best');
+    expect(legend).toHaveTextContent('current');
+  });
+
+  it('gives the penalty slider a readable value text', () => {
+    render(<RegularizationLab locale="fr" />);
+    const slider = screen.getByTestId('regularization-penalty');
+    expect(slider).toHaveAttribute('aria-valuetext', '0');
+    fireEvent.change(slider, { target: { value: '5' } });
+    expect(slider.getAttribute('aria-valuetext')).toMatch(/^10 puissance moins \d+$/);
+    expect(slider.getAttribute('aria-valuetext')).not.toMatch(/[⁰-⁹⁻]/);
+  });
 });

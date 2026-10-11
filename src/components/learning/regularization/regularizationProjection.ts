@@ -30,9 +30,9 @@ export function formatNumber(value: number, locale: Locale, digits = 3): string 
   return locale === 'fr' ? text.replace('.', ',') : text;
 }
 
-export function formatPenalty(penalty: number, _locale: Locale): string {
+export function formatPenalty(penalty: number): string {
   if (penalty === 0) return '0';
-  const exponent = Math.round(Math.log10(penalty));
+  const exponent = penaltyExponent(penalty);
   if (exponent === 0) return '1';
   if (exponent === 1) return '10';
   const superscript = [...String(exponent)]
@@ -41,14 +41,24 @@ export function formatPenalty(penalty: number, _locale: Locale): string {
   return `10${superscript}`;
 }
 
+export function roundCoordinate(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+export function penaltyExponent(penalty: number): number {
+  return Math.round(Math.log10(penalty));
+}
+
 export function xToPixel(x: number): number {
   const clamped = Math.min(1, Math.max(-1, x));
-  return PADDING + ((clamped + 1) / 2) * (VIEW_WIDTH - 2 * PADDING);
+  return roundCoordinate(PADDING + ((clamped + 1) / 2) * (VIEW_WIDTH - 2 * PADDING));
 }
 
 export function yToPixel(y: number): number {
   const clamped = Math.min(Y_LIMIT, Math.max(-Y_LIMIT, y));
-  return VIEW_HEIGHT - PADDING - ((clamped + Y_LIMIT) / (2 * Y_LIMIT)) * (VIEW_HEIGHT - 2 * PADDING);
+  return roundCoordinate(
+    VIEW_HEIGHT - PADDING - ((clamped + Y_LIMIT) / (2 * Y_LIMIT)) * (VIEW_HEIGHT - 2 * PADDING),
+  );
 }
 
 function buildCurvePath(evaluate: (x: number) => number): string {
@@ -61,7 +71,7 @@ function buildCurvePath(evaluate: (x: number) => number): string {
       isPenDown = false;
       continue;
     }
-    segments.push(`${isPenDown ? 'L' : 'M'}${xToPixel(x).toFixed(1)},${yToPixel(y).toFixed(1)}`);
+    segments.push(`${isPenDown ? 'L' : 'M'}${xToPixel(x)},${yToPixel(y)}`);
     isPenDown = true;
   }
   return segments.join(' ');
@@ -77,7 +87,7 @@ export function buildTargetPath(): string {
 
 export function errorToPixelX(index: number, count: number): number {
   const ratio = count <= 1 ? 0 : index / (count - 1);
-  return PADDING + ratio * (VIEW_WIDTH - 2 * PADDING);
+  return roundCoordinate(PADDING + ratio * (VIEW_WIDTH - 2 * PADDING));
 }
 
 export function errorToPixelY(error: number): number {
@@ -85,14 +95,14 @@ export function errorToPixelY(error: number): number {
   const ratio =
     (Math.log10(clamped) - Math.log10(ERROR_FLOOR)) /
     (Math.log10(ERROR_CEILING) - Math.log10(ERROR_FLOOR));
-  return VIEW_HEIGHT - PADDING - ratio * (VIEW_HEIGHT - 2 * PADDING);
+  return roundCoordinate(VIEW_HEIGHT - PADDING - ratio * (VIEW_HEIGHT - 2 * PADDING));
 }
 
 export function buildErrorPath(errors: readonly number[]): string {
   return errors
     .map((error, index) => {
       const command = index === 0 ? 'M' : 'L';
-      return `${command}${errorToPixelX(index, errors.length).toFixed(1)},${errorToPixelY(error).toFixed(1)}`;
+      return `${command}${errorToPixelX(index, errors.length)},${errorToPixelY(error)}`;
     })
     .join(' ');
 }

@@ -28,6 +28,7 @@ import {
   errorToPixelX,
   formatNumber,
   formatPenalty,
+  penaltyExponent,
   xToPixel,
   yToPixel,
   type Locale,
@@ -46,6 +47,7 @@ const TARGET_PATH = buildTargetPath();
 const responsiveStyles = `
 .regularization-lab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
 .regularization-lab-panels { display: grid; gap: 16px; }
+.regularization-lab-grid > * { min-width: 0; }
 @media (max-width: 640px) { .regularization-lab-grid { grid-template-columns: 1fr; } }
 `;
 
@@ -92,6 +94,7 @@ export default function RegularizationLab({
   );
   const degreeLabelId = useId();
   const penaltyLabelId = useId();
+  const valuesId = useId();
 
   const isPenaltyMode = mode === 'penalty';
 
@@ -170,7 +173,18 @@ export default function RegularizationLab({
   const fitPath = buildFitPath(fitCoefficients);
   const errorsDiagram = isPenaltyMode ? labels.penaltyDiagram : labels.earlyStoppingDiagram;
 
-  const valueStyle: CSSProperties = { color: 'var(--color-accent)' };
+  const penaltyExponentValue = penaltyExponent(penalty);
+  const spokenPenalty =
+    penalty === 0 || penaltyExponentValue >= 0
+      ? formatPenalty(penalty)
+      : labels.powerOfTenNegative(-penaltyExponentValue);
+  const legendItems: ReadonlyArray<{ label: string; color: string; dash?: string }> = [
+    { label: labels.trainingError, color: 'var(--color-stage-prepa)' },
+    { label: labels.validationError, color: 'var(--color-accent)', dash: '6 3' },
+    { label: labels.legendBest, color: 'var(--color-success)', dash: '3 3' },
+    { label: labels.legendCurrent, color: 'var(--color-fg-muted)' },
+  ];
+  const valueStyle: CSSProperties = { color: 'var(--color-fg)', fontWeight: 600 };
   const labelStyle: CSSProperties = {
     display: 'block',
     fontSize: '12px',
@@ -209,6 +223,7 @@ export default function RegularizationLab({
             style={svgStyle}
             role="img"
             aria-label={labels.fitDiagram}
+            aria-describedby={valuesId}
           >
             <rect width={VIEW_WIDTH} height={VIEW_HEIGHT} fill="var(--color-bg)" rx={10} />
             <line
@@ -243,6 +258,7 @@ export default function RegularizationLab({
             style={svgStyle}
             role="img"
             aria-label={errorsDiagram}
+            aria-describedby={valuesId}
           >
             <rect width={VIEW_WIDTH} height={VIEW_HEIGHT} fill="var(--color-bg)" rx={10} />
             <line
@@ -273,19 +289,69 @@ export default function RegularizationLab({
               fill="none"
               stroke="var(--color-accent)"
               strokeWidth={2}
+              strokeDasharray="6 3"
             />
+            <text
+              x={VIEW_WIDTH / 2}
+              y={VIEW_HEIGHT - 6}
+              textAnchor="middle"
+              fontSize={10}
+              fill="var(--color-fg-muted)"
+            >
+              {isPenaltyMode ? labels.axisPenalty : labels.axisEpoch}
+            </text>
+            <text
+              x={10}
+              y={VIEW_HEIGHT / 2}
+              textAnchor="middle"
+              fontSize={10}
+              fill="var(--color-fg-muted)"
+              transform={`rotate(-90 10 ${VIEW_HEIGHT / 2})`}
+            >
+              {labels.axisError}
+            </text>
           </svg>
+          <ul
+            aria-label={labels.legend}
+            data-testid="regularization-legend"
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px 16px',
+              listStyle: 'none',
+              margin: 0,
+              padding: 0,
+              fontSize: '12px',
+              color: 'var(--color-fg)',
+            }}
+          >
+            {legendItems.map((item) => (
+              <li key={item.label} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width={24} height={8} aria-hidden="true" focusable="false">
+                  <line
+                    x1={0}
+                    y1={4}
+                    x2={24}
+                    y2={4}
+                    stroke={item.color}
+                    strokeWidth={2}
+                    strokeDasharray={item.dash}
+                  />
+                </svg>
+                {item.label}
+              </li>
+            ))}
+          </ul>
         </div>
         <div>
           <div
-            role="radiogroup"
+            role="group"
             aria-label={labels.modeGroup}
             style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}
           >
             <button
               type="button"
-              role="radio"
-              aria-checked={isPenaltyMode}
+              aria-pressed={isPenaltyMode}
               data-testid="regularization-mode-penalty"
               style={modeButtonStyle(isPenaltyMode)}
               onClick={() => changeMode('penalty')}
@@ -294,8 +360,7 @@ export default function RegularizationLab({
             </button>
             <button
               type="button"
-              role="radio"
-              aria-checked={!isPenaltyMode}
+              aria-pressed={!isPenaltyMode}
               data-testid="regularization-mode-early-stopping"
               style={modeButtonStyle(!isPenaltyMode)}
               onClick={() => changeMode('early-stopping')}
@@ -323,14 +388,12 @@ export default function RegularizationLab({
               </label>
               <label style={labelStyle}>
                 <span id={penaltyLabelId}>{labels.penalty}</span> ={' '}
-                <span data-testid="regularization-penalty-value">
-                  {formatPenalty(penalty, locale)}
-                </span>
+                <span data-testid="regularization-penalty-value">{formatPenalty(penalty)}</span>
                 <input
                   type="range"
                   data-testid="regularization-penalty"
                   aria-labelledby={penaltyLabelId}
-                  aria-valuetext={formatPenalty(penalty, locale)}
+                  aria-valuetext={spokenPenalty}
                   min={0}
                   max={PENALTY_LEVELS.length - 1}
                   step={1}
@@ -375,6 +438,7 @@ export default function RegularizationLab({
             </div>
           )}
           <div
+            id={valuesId}
             style={{
               padding: '12px 14px',
               background: 'var(--color-bg)',
@@ -390,7 +454,7 @@ export default function RegularizationLab({
               <div>
                 {labels.bestPenalty} :{' '}
                 <span data-testid="regularization-best-penalty" style={valueStyle}>
-                  {formatPenalty(PENALTY_LEVELS[bestPenaltyIndex], locale)}
+                  {formatPenalty(PENALTY_LEVELS[bestPenaltyIndex])}
                 </span>
               </div>
             ) : (
@@ -423,10 +487,7 @@ export default function RegularizationLab({
             </div>
             <div>
               {labels.diagnosis} :{' '}
-              <span
-                data-testid="regularization-diagnosis"
-                style={{ color: 'var(--color-success)' }}
-              >
+              <span data-testid="regularization-diagnosis" style={{ fontWeight: 600 }}>
                 {labels.diagnoses[diagnosis]}
               </span>
             </div>

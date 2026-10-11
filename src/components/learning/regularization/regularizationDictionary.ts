@@ -21,6 +21,13 @@ export interface Dictionary {
   readonly fitDiagram: string;
   readonly penaltyDiagram: string;
   readonly earlyStoppingDiagram: string;
+  readonly legend: string;
+  readonly legendBest: string;
+  readonly legendCurrent: string;
+  readonly axisPenalty: string;
+  readonly axisEpoch: string;
+  readonly axisError: string;
+  readonly powerOfTenNegative: (exponent: number) => string;
   readonly diagnoses: Record<FitDiagnosis, string>;
 }
 
@@ -48,6 +55,13 @@ export const DICTIONARY_BY_LOCALE: Record<Locale, Dictionary> = {
       'Erreurs d’entraînement et de validation en fonction de la pénalité λ, avec le λ courant et le meilleur λ',
     earlyStoppingDiagram:
       'Erreurs d’entraînement et de validation à chaque point de contrôle de la descente, avec la meilleure époque',
+    legend: 'Légende du graphe des erreurs',
+    legendBest: 'meilleur',
+    legendCurrent: 'courant',
+    axisPenalty: 'λ',
+    axisEpoch: 'époque',
+    axisError: 'erreur (log)',
+    powerOfTenNegative: (exponent) => `10 puissance moins ${exponent}`,
     diagnoses: {
       underfitting: 'sous-apprentissage',
       balanced: 'bon équilibre',
@@ -77,6 +91,13 @@ export const DICTIONARY_BY_LOCALE: Record<Locale, Dictionary> = {
       'Training and validation errors as a function of the penalty λ, with the current λ and the best λ',
     earlyStoppingDiagram:
       'Training and validation errors at each checkpoint of the descent, with the best epoch',
+    legend: 'Error plot legend',
+    legendBest: 'best',
+    legendCurrent: 'current',
+    axisPenalty: 'λ',
+    axisEpoch: 'epoch',
+    axisError: 'error (log)',
+    powerOfTenNegative: (exponent) => `10 to the minus ${exponent}`,
     diagnoses: {
       underfitting: 'underfitting',
       balanced: 'good balance',
