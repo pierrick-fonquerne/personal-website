@@ -1,0 +1,10 @@
+slug: lecture-cout-memoire-longue
+research: neurone-a-etat
+date: 2026-10-08
+title:
+  fr: 'Lecture : le coût de la mémoire longue'
+  en: 'Reading: the cost of long memory'
+excerpt:
+  fr: "Un papier de théorie chiffre ce que coûte une mémoire longue à un modèle à état, et ce que ça dit des constantes de temps d'un neurone."
+  en: 'A theory paper puts numbers on what long memory costs a stateful model, and what that says about the time constants of a neuron.'
+published: false

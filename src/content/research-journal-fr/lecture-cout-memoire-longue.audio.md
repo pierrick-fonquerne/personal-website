@@ -1,0 +1,15 @@
+Journal de recherche. Lecture : le coût de la mémoire longue. Un papier de théorie qui chiffre ce que coûte, à un modèle à état, le fait de se souvenir loin.
+
+J'ai lu « The Cost of Long Memory », de Yuheng Song, une prépublication à auteur unique. Je cherchais un chiffre sur ce que coûte une mémoire longue à un modèle qui garde son passé dans un état interne, et c'est exactement la question du papier.
+
+Le papier ne propose pas de nouveau modèle. Il chiffre trois leviers, pour deviner la valeur suivante d'une série dont le passé s'estompe lentement. Le premier, c'est le nombre d'états internes. Il en faut de l'ordre du carré du logarithme de un sur tau, où tau est l'erreur visée. La borne est démontrée dans les deux sens, donc on sait le faire, et on ne peut pas faire mieux dans cette classe de modèles. Le deuxième, c'est le contexte, c'est-à-dire le nombre d'observations passées qu'on regarde directement. Le surplus d'erreur baisse comme un sur L, si bien que dix fois plus de contexte ne le divise que par dix. Le troisième, c'est la stabilité. Une récurrence est stable quand elle resserre l'état à chaque pas, d'un facteur rho inférieur à un. Elle oublie alors forcément de façon exponentielle, donc viser une petite erreur pousse rho vers un, c'est-à-dire vers la limite d'instabilité. C'est nécessaire, mais pas suffisant.
+
+Un test m'a marqué. Avec rho égal à zéro virgule huit, un modèle à états apprend presque parfaitement une cible qui s'éteint au même rythme, avec une erreur relative d'environ sept millionièmes, et il bute sur une cible plus lente, avec une erreur de quatre virgule cinq centièmes, quelle que soit sa largeur.
+
+Pour mon neurone à état, c'est parlant. Un neurone à état est un accumulateur à fuite. Ce qui compte, ce n'est pas d'avoir beaucoup d'unités, c'est que le rythme d'oubli colle à la queue de ce qu'on veut retenir. Un neurone avec une seule constante de temps aura donc un plancher, et il lui faut des constantes variées, dont certaines très proches de un.
+
+Je n'achète pas tout. C'est une prépublication non relue, et je n'ai pas vérifié les preuves. Le cadre est étroit : un signal gaussien à une dimension, une prévision à un pas. Aucune constante n'est chiffrée, donc la formule ne dit pas s'il faut vingt états ou deux mille. Les expériences sont minuscules, avec une fenêtre de soixante-quatre pas, une largeur de cent vingt-huit au plus, et trois ou quatre graines. Le résultat non linéaire n'est pas testé. Et tout s'entraîne par rétropropagation, donc rien sur l'apprentissage local ou continu.
+
+Reste une question ouverte. Le papier suppose une contraction uniforme, alors qu'un neurone dont les constantes de temps s'adaptent sort de ce cadre. Je veux donc mesurer, sur une cible en loi de puissance, le plancher d'erreur d'un neurone à plusieurs constantes de temps, puis voir si une règle locale les rapproche de un toute seule.
+
+En une phrase. Pour se souvenir loin, un modèle à état doit avoir des constantes de temps variées et proches de la limite d'instabilité, et c'est ce que je vais tester sur un neurone qui apprend localement.

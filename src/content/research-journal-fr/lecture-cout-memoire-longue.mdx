@@ -1,0 +1,25 @@
+---
+slug: lecture-cout-memoire-longue
+---
+
+J'ai lu « The Cost of Long Memory » de Yuheng Song ([arXiv 2610.08816](https://arxiv.org/abs/2610.08816)), une prépublication à auteur unique. Je cherchais un chiffre sur ce que coûte une mémoire longue à un modèle qui garde son passé dans un état interne, et c'est exactement la question du papier.
+
+## Ce que montre le papier
+
+Pas de nouveau modèle : trois leviers chiffrés, pour deviner la valeur suivante d'une série dont le passé s'estompe lentement.
+
+Le nombre d'états internes d'abord. Il en faut de l'ordre de log²(1/τ), où τ est l'erreur visée. La borne est démontrée dans les deux sens : on sait le faire, et on ne peut pas faire mieux dans cette classe de modèles. Le contexte ensuite, c'est-à-dire le nombre d'observations passées qu'on regarde directement. Le surplus d'erreur baisse en 1/L : dix fois plus de contexte ne le divise que par dix. Enfin la stabilité. Une récurrence est stable quand elle resserre l'état d'un facteur ρ inférieur à 1 à chaque pas. Elle oublie alors forcément de façon exponentielle, donc viser une petite erreur pousse ρ vers 1, la limite d'instabilité. C'est nécessaire, pas suffisant.
+
+Un test m'a marqué. À ρ = 0,8, un modèle à états apprend presque parfaitement une cible qui s'éteint au même rythme (erreur relative d'environ 7 × 10⁻⁶), et bute sur une cible plus lente (4,5 × 10⁻²), quelle que soit sa largeur.
+
+## Ce que j'en retiens
+
+Un neurone à état, c'est un accumulateur à fuite : l'objet de la page [neurone à état](/research/neurone-a-etat). Ce qui compte, ce n'est pas d'avoir beaucoup d'unités, c'est que le rythme d'oubli colle à la queue de ce qu'on veut retenir. Un neurone avec une seule constante de temps aura un plancher. Il lui faut des constantes variées, dont certaines très proches de 1.
+
+## Ce que je n'achète pas
+
+C'est une prépublication, non relue, et je n'ai pas vérifié les preuves. Le cadre est étroit : signal gaussien à une dimension, prévision à un pas. Aucune constante n'est chiffrée, donc « log² états » ne dit pas s'il en faut 20 ou 2 000. Les expériences sont minuscules : fenêtre de 64, largeur de 128 au plus, trois ou quatre graines. Le résultat non linéaire n'est pas testé. Et tout s'entraîne par rétropropagation : rien sur l'apprentissage local ou continu.
+
+## Reste ouvert
+
+Le papier suppose une contraction uniforme. Un neurone dont les constantes de temps s'adaptent sort de ce cadre. Je veux donc mesurer, sur une cible en loi de puissance, le plancher d'erreur d'un neurone à plusieurs constantes de temps, puis voir si une règle locale les rapproche de 1 toute seule.

@@ -1,0 +1,25 @@
+---
+slug: lecture-cout-memoire-longue
+---
+
+I read "The Cost of Long Memory" by Yuheng Song ([arXiv 2610.08816](https://arxiv.org/abs/2610.08816)), a single-author preprint. I was looking for a number on what long memory costs a model that keeps its past in an internal state, and that is exactly the paper's question.
+
+## What the paper shows
+
+No new model: three priced levers, for guessing the next value of a series whose past fades slowly.
+
+First, the number of internal states. You need on the order of log²(1/τ), where τ is the target error. The bound is proven in both directions: it can be done, and you cannot do better in this class of models. Second, the context, meaning the number of past observations you look at directly. The extra error falls as 1/L: ten times more context only divides it by ten. Third, stability. A recurrence is stable when it shrinks the state by a factor ρ below 1 at each step. It then necessarily forgets exponentially, so aiming for a small error pushes ρ toward 1, the edge of instability. That is necessary, not sufficient.
+
+One test stayed with me. At ρ = 0.8, a stateful model learns almost perfectly a target that fades at the same rate (relative error around 7 × 10⁻⁶), and hits a floor on a slower target (4.5 × 10⁻²), whatever its width.
+
+## What I take from it
+
+A stateful neuron is a leaky accumulator: the object of the [stateful neuron](/en/research/neurone-a-etat) page. What matters is not having many units, it is that the forgetting rate matches the tail of what you want to keep. A neuron with a single time constant will hit a floor. It needs varied constants, some very close to 1.
+
+## What I don't buy
+
+It is an unreviewed preprint, and I have not checked the proofs. The setting is narrow: a one-dimensional Gaussian signal, one-step forecasting. No constant is given, so "log² states" does not say whether you need 20 or 2,000. The experiments are tiny: a window of 64, width up to 128, three or four seeds. The nonlinear result is not tested. And everything is trained by backpropagation: nothing on local or continual learning.
+
+## Still open
+
+The paper assumes uniform contraction. A neuron whose time constants adapt falls outside that frame. So I want to measure, on a power-law target, the error floor of a neuron with several time constants, then see whether a local rule pushes them toward 1 by itself.
