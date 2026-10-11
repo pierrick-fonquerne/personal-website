@@ -7,6 +7,13 @@ tags:
   - neurosciences-computationnelles
   - spiking-neural-networks
   - memoire
+papers:
+  - title: 'Rapidly reconfigurable dynamic computing in neural networks with fixed synaptic connectivity'
+    authors: 'Mason et al. (2026)'
+    href: 'https://doi.org/10.1038/s42003-026-10877-7'
+    note:
+      fr: "Les synapses sont figées et seul le biais de chaque neurone apprend : l'excitabilité suffit à changer de tâche."
+      en: "Synapses are frozen and only each neuron's bias learns: excitability alone is enough to switch tasks."
 fr:
   title: 'Le neurone vivant et persistant'
   tagline: "Un neurone qui ne se contente pas de calculer le présent : il garde une biographie et s'en sert."

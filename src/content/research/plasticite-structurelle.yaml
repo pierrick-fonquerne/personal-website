@@ -21,6 +21,24 @@ papers:
   - title: 'MorphSNN: Adaptive Graph Diffusion and Structural Plasticity for Spiking Neural Networks'
     authors: 'Liu et al. (2026)'
     href: 'https://arxiv.org/abs/2603.14285'
+  - title: 'Continual Reinforcement Learning with Neuroevolution'
+    authors: 'Nisioti et al. (2026)'
+    href: 'https://arxiv.org/abs/2610.01583'
+    note:
+      fr: "À budget égal, les stratégies d'évolution oublient moins que le gradient. Elles se logent dans des zones larges qui recouvrent la tâche suivante."
+      en: "At equal budget, evolution strategies forget less than gradient methods. They settle in wide regions that also cover the next task."
+  - title: 'Continual Learning without Continual Training'
+    authors: 'Narayanan et al. (2026)'
+    href: 'https://arxiv.org/abs/2610.10379'
+    note:
+      fr: "Contrepoint : on évite l'oubli sans aucune plasticité, en gelant les poids et en adaptant seulement une mémoire d'exemples."
+      en: "Counterpoint: forgetting is avoided with no plasticity at all, by freezing the weights and adapting only a memory of examples."
+  - title: 'Stochastic Dynamics of Large-Scale Motif-Embedded Spiking Neuronal Networks'
+    authors: 'Jagdev, Bertram & Yu (2026)'
+    href: 'https://arxiv.org/abs/2610.00616'
+    note:
+      fr: "Contrepoint : une étude du câblage sans apprentissage. La forme globale du réseau (les hubs) compte plus que les motifs locaux."
+      en: "Counterpoint: a study of wiring without learning. The global shape of the network (the hubs) matters more than local motifs."
 published: true
 fr:
   title: 'Plasticité structurelle : quand le réseau réécrit sa propre architecture'
