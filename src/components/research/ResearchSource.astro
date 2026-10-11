@@ -1,16 +1,17 @@
 ---
 import ExternalLink from '../ui/icons/ExternalLink.astro';
+import type { Locale } from '../../lib/i18n';
 import { resolvePaperNote, type ResearchPaper } from '../../lib/research-paper';
 
 interface Props {
   paper: ResearchPaper;
-  locale: 'fr' | 'en';
+  locale: Locale;
   variant?: 'card' | 'page';
 }
 
 const { paper, locale, variant = 'page' } = Astro.props;
-const note = resolvePaperNote(paper, locale);
 const isCard = variant === 'card';
+const note = isCard ? undefined : resolvePaperNote(paper, locale);
 ---
 
 {
@@ -25,7 +26,6 @@ const isCard = variant === 'card';
         {paper.title}
       </a>
       <span class="text-[var(--color-fg-dim)]"> · {paper.authors}</span>
-      {note && <p class="mt-1 text-[12px] leading-[1.5] text-[var(--color-fg-dim)]">{note}</p>}
     </li>
   ) : (
     <li class="flex flex-col gap-1">

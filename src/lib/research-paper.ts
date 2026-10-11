@@ -1,4 +1,5 @@
 import { z } from 'astro/zod';
+import type { Locale } from './i18n';
 
 export const researchPaperSchema = z.object({
   title: z.string(),
@@ -9,6 +10,6 @@ export const researchPaperSchema = z.object({
 
 export type ResearchPaper = z.infer<typeof researchPaperSchema>;
 
-export function resolvePaperNote(paper: ResearchPaper, locale: 'fr' | 'en'): string | undefined {
+export function resolvePaperNote(paper: ResearchPaper, locale: Locale): string | undefined {
   return paper.note?.[locale];
 }
