@@ -1,0 +1,23 @@
+---
+slug: lecture-rejeu-neurones-silencieux
+---
+
+Je viens de lire « Replay in the Silent Degrees of Freedom: Continual Learning Without an Offline Phase » ([arXiv 2609.31630](https://arxiv.org/abs/2609.31630)), de Zhang Yanhai, Zhang Jie et Xu Chi, accepté à NeurIPS 2026. Je l'ai lue parce qu'elle pose ma question : consolider les anciens souvenirs sans jamais s'arrêter d'apprendre.
+
+## Ce que montre le papier
+
+Le rejeu consiste à réentraîner le réseau sur d'anciens exemples gardés en mémoire, pour qu'il n'oublie pas. D'habitude, on le fait pendant une phase « de nuit », hors ligne. Ici, le rejeu se fait pendant le flux, dans les neurones que l'entrée en cours n'utilise pas. Le réseau est petit (512 puis 256 unités), il apprend avec une règle locale, et il garde 1 000 exemples en mémoire.
+
+Sur split-MNIST, il atteint 91,6 % (± 0,3). La méthode de rejeu DER++ fait 91,5 % (± 0,5), et la version avec une vraie nuit hors ligne 89,0 % (± 3,5). Le gain vient surtout d'une règle simple : les unités actives à un lot sont éteintes au lot suivant. Elle apporte 3,6 points. Le masque qui protège l'entrée en cours en ajoute seulement 0,1 à 0,3.
+
+## Ce que j'en retiens
+
+C'est un des rares papiers qui garde des poids plastiques, une règle locale, et aucune frontière entre apprendre et servir. C'est exactement l'idée de la page [apprentissage local](/research/apprentissage-local). Dans ma version réduite en Rust, la rotation réduit l'oubli (de 10,5 à 6,1), sans changer le score final.
+
+## Ce que je n'achète pas
+
+Le papier est accepté à NeurIPS 2026, mais j'ai lu la version arXiv. Le banc d'essai est petit : MNIST, et sur CIFAR-10 brut le système fait 28,4 % contre 31,6 % pour ER-ACE. Tout repose sur 1 000 images stockées : sans mémoire, on tombe à 19,4 %. Le titre vend l'isolation, alors que le gain vient de la rotation. Sur un flux ordinaire, la rotation coûte : 94,1 % contre 95,4 %. Et le rejeu demande 2,2 fois plus d'exemples et environ 6 fois plus de temps que la nuit. Enfin, je n'ai pas pu lire les annexes B à I. Et le gain de précision ne se retrouve pas dans ma version réduite.
+
+## Reste ouvert
+
+Dans le papier, « éveillé » se définit sur un lot de 16 exemples. Mon système traite un flux. Je veux deux mesures que le papier n'a pas : la rotation contre un dropout ordinaire au même taux, puis une version où chaque neurone garde une trace de son activité récente. Si la rotation ne marche que par lots, elle ne servira pas.

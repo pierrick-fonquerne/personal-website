@@ -1,0 +1,28 @@
+slug: generalisation-tardive
+type: concept
+theme: ai
+status: wip
+publishedAt: 2026-10-05
+tags:
+  - grokking
+  - generalisation
+  - memorisation
+  - decoupe-des-donnees
+  - apprentissage-continu
+  - apprentissage-local
+papers:
+  - title: 'Grokking: Generalization Beyond Overfitting on Small Algorithmic Datasets'
+    authors: 'Power et al. (2022)'
+    href: 'https://arxiv.org/abs/2201.02177'
+  - title: 'Misalignment of Low-Loss Regions Causes Grokking'
+    authors: 'Tian, Al-Ars, Kitsak & Hofstee (2026)'
+    href: 'https://arxiv.org/abs/2610.00620'
+published: false
+fr:
+  title: 'Généralisation tardive : quand le réseau comprend longtemps après avoir appris par cœur'
+  tagline: "Le grokking, ou comment un réseau passe d'une mémorisation parfaite à une généralisation soudaine, et ce que ça dit de nos jeux de données."
+  summary: "Un réseau peut réussir tous ses exemples d'entraînement, rester nul sur les autres pendant très longtemps, puis se mettre à généraliser d'un coup. Un concept pour comprendre ce retard et pour savoir ce qu'il implique quand les exemples arrivent en flux."
+en:
+  title: 'Late generalization: when the network understands long after memorizing'
+  tagline: 'Grokking, or how a network goes from perfect memorization to sudden generalization, and what it says about our datasets.'
+  summary: 'A network can ace every training example, stay at zero on the others for a very long time, then suddenly start to generalize. A concept to understand that delay and what it implies when examples arrive as a stream.'

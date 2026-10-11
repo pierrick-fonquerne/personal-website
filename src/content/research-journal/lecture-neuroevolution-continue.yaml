@@ -1,0 +1,10 @@
+slug: lecture-neuroevolution-continue
+research: plasticite-structurelle
+date: 2026-10-06
+title:
+  fr: 'Lecture : apprendre en continu par neuroévolution'
+  en: 'Reading notes: continual learning through neuroevolution'
+excerpt:
+  fr: "Un optimiseur qui mute et sélectionne garde mieux l'équilibre entre apprendre et retenir que le gradient, mais le papier est une prépublication et le mécanisme reste une corrélation."
+  en: 'An optimizer that mutates and selects holds the balance between learning and retaining better than gradient descent, but the paper is a preprint and the mechanism is only a correlation.'
+published: false

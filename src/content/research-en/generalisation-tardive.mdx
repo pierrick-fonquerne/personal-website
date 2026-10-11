@@ -1,0 +1,36 @@
+---
+slug: generalisation-tardive
+---
+
+A neural network memorizes all its training examples, stays at zero on unseen examples for thousands of epochs, then suddenly starts to generalize. This phenomenon has a name: **grokking**. This page explains what it is, why it matters for a program on continual and local learning, and what we still do not know.
+
+## What grokking is
+
+The phenomenon was described in 2022 by Power and colleagues on small algorithmic tasks, including modular addition (a calculation where you keep only the remainder of a division). The network quickly reaches 100% on training. Validation stays at the floor for a very long time, then jumps.
+
+Four behaviors are possible, and they are worth naming:
+
+- **Comprehension**: training and validation rise together.
+- **Grokking**: validation rises, but well after training.
+- **Memorization**: training rises, validation never does.
+- **Confusion**: nothing rises.
+
+## An explanation through the data split
+
+A September 2026 paper (Tian, Al-Ars, Kitsak and Hofstee, preprint) argues that the delay comes first from how the data is cut between training and validation. Their test: keep the same network, the same optimizer, the same number of examples, and change only the split. When the pairs (a, b) and (b, a) always fall on the same side, validation never takes off. Since addition is commutative, the second pair teaches almost nothing new.
+
+Their underlying idea: what matters is not the number of examples but the useful information they carry. On this reading, grokking would be a warning sign (a dataset too poor for the model) rather than a hidden feat. It is a hypothesis, not an established fact: the proposed cause is not measured directly.
+
+## Why it matters for continual and local learning
+
+A system that learns continuously has no fixed split, but it does have an order in which examples arrive, and the same question applies: how much useful information does each example bring? A stream gives few examples per unit of time. So we may spend a long time in the regime where memorizing and generalizing compete.
+
+Another point: the authors argue that low-loss regions depend on the network and the data, not on the optimizer. If that is true, the same split should also block a network trained by local rules, without a gradient. That is a testable prediction, and it is what ties this concept to my programs.
+
+## Open questions
+
+- Does the result hold with weight decay (the force that pulls weights toward zero)? The paper does not test it on its blocked case.
+- Beyond a transformer and modular arithmetic, what remains? Nothing is tested on other architectures or on real data.
+- Does learning by a local rule behave like learning by gradient when facing the same split?
+- How can we measure the misalignment of the regions directly, instead of inferring it from observed behavior?
+- What becomes of the split when examples arrive one by one, in an order that matters?

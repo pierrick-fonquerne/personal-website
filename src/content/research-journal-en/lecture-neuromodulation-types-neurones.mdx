@@ -1,0 +1,29 @@
+---
+slug: lecture-neuromodulation-types-neurones
+---
+
+I read *Multi-Behavioral Evolved Substrates Through Neuromodulation and Activation Selection* by Claret, O'Neill, Cotofrei and Stoffel ([arXiv 2610.00148](https://arxiv.org/abs/2610.00148)), published in the ALIFE 2026 proceedings. I read it because it asks my starting question: how does one small network hold several tasks, without gradients?
+
+## What the paper shows
+
+A network of about ten neurons must solve five logic gates (XOR, AND, OR, NAND, NOR). It is found by evolution, so without gradients. From one task to the next, only two things change: a small neuromodulation vector, four numbers set by hand that tune the network from the outside, and the activation function.
+
+With tanh everywhere, success drops to 0% for five tasks. XOR stays stuck at 75%, which is three right answers out of four. The reason: tanh is monotone, its output only goes up when the input goes up, and XOR needs the opposite. The same network trained with Adam reaches 100%. So the flaw is in the search, not in the network.
+
+With sin for XOR, tanh elsewhere, and neuromodulation, it reaches 100%, in a median of 14 generations. Remove either ingredient and it falls back to 0%.
+
+## What I take from it
+
+This is a counterpoint to my [stateful neuron](/en/research/neurone-a-etat) page. There I argue that internal state is what unlocks computation. Here, the unlock comes from a memoryless function, sin, and from a context signal coming from outside. The neuron type matters, not only its state.
+
+My plastic core will have no global gradient. So in this paper it sits on the evolution side. If all my neurons are monotone, I should expect the same ceiling on parity. I plan at least two neuron types, not ten: with ten different activations, the paper falls back to 0%.
+
+## What I don't buy
+
+It is a short conference paper, published in the ALIFE 2026 proceedings. The test bench is made of toy tasks. At four inputs, per-task activation drops to 13.3%, and at seven tasks and more everything collapses. On continuous regression, sin reaches only 6.7% against 100% for tanh.
+
+On the main bench, sin alone already suffices (100%). And the "per task" activation is chosen by the experimenters. Above all, nothing on local learning rules, nothing on sequential learning, and the context is handed to the network, not guessed.
+
+## Still open
+
+Does the 75% plateau exist with a local rule? As soon as a first rule runs, I will launch it on XOR and AND together, with tanh then with sin. I will also give it a graded learning signal rather than a binary one.
