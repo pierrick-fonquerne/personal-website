@@ -4,8 +4,8 @@ fr:
   definition: "Toute modification de l'entraînement qui vise à améliorer la généralisation, même au prix d'une note d'entraînement un peu moins bonne. Exemples : pénalités L2 et L1 sur les poids, arrêt précoce, dropout."
   source: Goodfellow, Bengio et Courville, 2016
 en:
-  term: Regularization
-  definition: 'Any change to training that aims to improve generalization, even at the cost of a slightly worse training loss. Examples: L2 and L1 penalties on the weights, early stopping, dropout.'
+  term: Regularisation
+  definition: 'Any change to training that aims to improve generalisation, even at the cost of a slightly worse training loss. Examples: L2 and L1 penalties on the weights, early stopping, dropout.'
   source: Goodfellow, Bengio and Courville, 2016
 seeAlso:
   - surapprentissage

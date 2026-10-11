@@ -4,7 +4,7 @@ fr:
   definition: "Partie des données mise de côté, sur laquelle le réseau ne s'entraîne jamais, et qui sert à faire les choix de réglage : degré, force de régularisation, moment de l'arrêt. Elle se distingue de l'ensemble de test, réservé à la mesure finale."
 en:
   term: Validation set
-  definition: 'A held-out part of the data on which the network is never trained, used to make tuning choices: degree, regularization strength, stopping time. It differs from the test set, which is kept for the final measurement only.'
+  definition: 'A held-out part of the data on which the network is never trained, used to make tuning choices: degree, regularisation strength, stopping time. It differs from the test set, which is kept for the final measurement only.'
 seeAlso:
   - surapprentissage
   - arret-precoce

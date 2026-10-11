@@ -5,7 +5,7 @@ fr:
   source: Krogh et Hertz, 1992
 en:
   term: Weight decay (L2 penalty)
-  definition: 'A regularization that adds λ times the sum of the squared weights to the loss. Each descent step then multiplies the weights by 1 − 2ηλ before the gradient correction, hence the name. It mostly shrinks the directions that the data determine poorly.'
+  definition: 'A regularisation that adds λ times the sum of the squared weights to the loss. Each descent step then multiplies the weights by 1 − 2ηλ before the gradient correction, hence the name. It mostly shrinks the directions that the data determine poorly.'
   source: Krogh and Hertz, 1992
 seeAlso:
   - regularisation

@@ -3,20 +3,557 @@ course: neural-networks-foundations
 order: 10
 title: Regularisation and generalisation
 subtitle: 'How to stop a network from memorising and force it to generalise.'
-estimatedMinutes: 18
+estimatedMinutes: 35
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import RegularizationLab from '../../../components/learning/RegularizationLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 9, we proved that gradient descent drives the score down, step after step, as long as the step stays reasonable. That is a real guarantee. But it concerns the training score, the one computed on the examples the network has in front of it. And a polynomial of degree nine can pass exactly through ten measurement points, with a score of zero, while oscillating wildly between them.
+
+The question of this chapter is therefore: how can we tell whether a network has learned the trend or only the points? And above all, how do we stop it from memorising without stopping it from learning? We will see that the classical answers can be proven, and that they are closer to one another than they look.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: gradient descent and its multiplicative factor $r = 1 - 2\eta a$ on a parabola (chapter 9), the norm of a vector (chapter 2), the cost function (chapter 6). The notion of an average.
+
+**What you do not need to know**: statistics beyond the average, the eigenvalues of a matrix, weight initialisation (chapter 11), Adam (chapter 12).
+
+**Level of rigour**: we prove the bias-variance decomposition, the exact effect of the L2 penalty, the thresholding of the L1 penalty, the exact formula of early stopping and its kinship with L2, and the preservation of the mean by dropout. Five pencil-and-paper exercises with detailed line-by-line solutions.
+
 </Callout>
 
-## What you will learn
+## Act 1: memorising is not learning
 
-- The difference between learning and generalising, the overfitting trap
-- Splitting the dataset into train, validation and test
-- Regularisation techniques: L1, L2, dropout, early stopping
+Picture a student preparing for an exam with the past papers of the last ten years. They have a prodigious memory: they retain every model answer, word for word. On past papers, they score full marks. On exam day, the paper is new. They are stuck. They learned the answers, not the method.
 
-A network that scores 100% on training but 50% on unseen data has learnt nothing useful. This chapter equips you with the tools to diagnose and fix this pitfall, the most common one in practice.
+A neural network runs exactly the same risk. What we ask of it is to answer well on examples it has never seen: that is **generalisation**. What we make it minimise is the score on the training examples. The two do not coincide. When the training score is excellent but the performance on new examples is poor, we speak of <Term slug="surapprentissage">overfitting</Term>.
+
+**The polynomial that goes everywhere.** Take ten measurement points $(x_1, y_1), \ldots, (x_{10}, y_{10})$ whose abscissas are all different. There always exists a polynomial of degree at most nine that passes through all of them. We can write it explicitly:
+
+$$
+P(x) = \sum_{i=1}^{10} y_i \prod_{j \ne i} \frac{x - x_j}{x_i - x_j}.
+$$
+
+This is the Lagrange interpolation polynomial. It reads: for each point $i$, we build a product that equals $1$ at $x_i$ and $0$ at every other $x_j$, then multiply it by $y_i$. At $x = x_k$, every term vanishes except the one for $k$, which equals $y_k$. So $P(x_k) = y_k$ for every point: the training score is exactly zero.
+
+If the measurements are noisy, this polynomial also hugs the noise. Between the points, it makes loops that have nothing to do with the real trend, especially near the edges. Runge (1901) showed that, even without noise, interpolation through equally spaced points can oscillate more and more strongly as the degree increases.
+
+**A network does the same.** The universal approximation theorem of chapter 5 says that a wide enough network can represent almost any function. The flip side is brutal: it can also represent any memorisation. Zhang and his co-authors (2017) verified this spectacularly. They replaced the labels of an image dataset with labels drawn at random, with no link at all to the images. The networks still reached a perfect training score. On new images, of course, they answered at random. The training score alone therefore says nothing about generalisation.
+
+<Callout kind="note" title="The bias-variance decomposition">
+There is an exact way to say why a model that is too simple and a model that is too flexible both fail (Geman, Bienenstock and Doursat, 1992).
+
+We assume that measurements are $y = f(x) + \varepsilon$, where $f$ is the true trend and $\varepsilon$ a noise with zero mean and variance $\sigma^2$. We train a model $\hat f$ on a randomly drawn dataset, then test it at a point $x$ on a new measurement, whose noise is independent of the training set. We write $\mathbb{E}$ for the average over all possible draws (of the training set and of the noise), and $m = \mathbb{E}[\hat f(x)]$ for the average prediction.
+
+**Statement.** The average error at point $x$ splits into three non-negative pieces:
+
+$$
+\mathbb{E}\big[(y - \hat f(x))^2\big] = \sigma^2 + \big(f(x) - m\big)^2 + \mathbb{E}\big[(\hat f(x) - m)^2\big].
+$$
+
+**Proof.** We cut the gap into three:
+
+$$
+y - \hat f(x) = \varepsilon + \big(f(x) - m\big) + \big(m - \hat f(x)\big).
+$$
+
+We square it. We get the three squares, plus three cross terms. Each cross term has zero mean. The product of $\varepsilon$ with a term that depends only on the training set has zero mean, because $\varepsilon$ is independent of that set and has zero mean. The product of $f(x) - m$, which is a fixed number, with $m - \hat f(x)$ has zero mean, because $\mathbb{E}[m - \hat f(x)] = m - m = 0$. What remains is the mean of the three squares, with $\mathbb{E}[\varepsilon^2] = \sigma^2$. □
+
+The first term is the noise: no model can remove it. The second is the squared **bias**: the gap between the average prediction and the truth. It is large when the model is too rigid, like a straight line facing a sine wave. The third is the **variance**: how much the prediction changes from one training set to another. It is large when the model is too flexible, like the degree-nine polynomial that follows every bit of noise. Regularising means accepting a little bias to gain a lot of variance.
+
+</Callout>
+
+## Act 2: three datasets
+
+Since the training score lies, we must measure something else. The idea is simple: we set aside examples that the network will never see during training, and we score it on them. We therefore split the data into three disjoint parts.
+
+- **The training set** is used to compute gradients and update the weights.
+- **The <Term slug="ensemble-de-validation">validation set</Term>** is used to make choices: which degree, which regularisation strength, when to stop. The network never trains on it, but we consult it often.
+- **The test set** serves a single purpose: announcing the final performance, once all choices have been made.
+
+Why not merge validation and test? Because by repeatedly picking the setting that gives the best score on a set, we end up adapting to that set. Each choice is a small dose of learning. If we announced the validation score as the final performance, it would be optimistic. The test set must stay untouched until the very end.
+
+Comparing the two scores gives a diagnosis:
+
+| Training score | Validation score   | Diagnosis                                            |
+| -------------- | ------------------ | ---------------------------------------------------- |
+| poor           | poor               | **underfitting**: the model is too simple            |
+| very good      | poor               | **overfitting**: the model has learned the noise     |
+| good           | almost as good     | **good balance**: the model has learned the trend    |
+
+The rest of the chapter presents remedies for overfitting. They share a common name: <Term slug="regularisation">regularisation</Term>, meaning anything we add to training to improve generalisation, even at the price of a slightly worse training score.
+
+## Act 3: the L2 penalty, or weight decay
+
+The degree-nine polynomial that oscillates has a signature: huge coefficients, which cancel each other out to pass through every point. A natural idea is therefore to penalise large weights. We no longer minimise the score alone, but the score plus a fine proportional to the squared norm of the weights:
+
+$$
+J(w) = L(w) + \lambda\,\|w\|^2, \qquad \lambda \ge 0.
+$$
+
+It reads: the new score is the old one, plus $\lambda$ times the sum of the squared weights. The number $\lambda$ sets how heavy the fine is. At $\lambda = 0$, we recover the original score. The larger $\lambda$, the more expensive large weights become.
+
+**The update rule.** The gradient of $\lambda\,\|w\|^2 = \lambda\sum_j w_j^2$ is $2\lambda\,w$. A descent step on $J$ therefore reads
+
+$$
+w \;\leftarrow\; w - \eta\big(\nabla L(w) + 2\lambda\,w\big).
+$$
+
+We group the terms in $w$:
+
+$$
+w \;\leftarrow\; (1 - 2\eta\lambda)\,w - \eta\,\nabla L(w).
+$$
+
+This line explains the name, <Term slug="weight-decay">weight decay</Term>. Even before the gradient correction, each step multiplies every weight by $1 - 2\eta\lambda$, a number slightly below $1$. If the data do not call for a weight, it melts away on its own, step after step (Krogh and Hertz, 1992). In practice, only the weights are penalised, not the biases: a bias merely shifts an output, it does not create oscillations.
+
+**What the penalty does exactly.** To find out, we study a score we know everything about: a sum of parabolas, one per weight,
+
+$$
+L(w) = \sum_{i=1}^{n} a_i\,(w_i - w_i^\star)^2, \qquad a_i > 0.
+$$
+
+Without a penalty, its minimum is $w^\star$. Each $a_i$ is the curvature along weight $i$, exactly as in chapter 9. This case is not just a toy: near a minimum, any smooth score looks like a bowl of this kind, after a well-chosen change of axes (Goodfellow, Bengio and Courville, 2016, section 7.1.1).
+
+**Theorem (shrinkage).** The minimum of $J(w) = L(w) + \lambda\,\|w\|^2$ is reached at
+
+$$
+w_i = \frac{a_i}{a_i + \lambda}\,w_i^\star \quad \text{for each } i.
+$$
+
+**Proof.** The penalised score is a sum of terms that each depend on a single weight:
+
+$$
+J(w) = \sum_{i=1}^{n} \Big( a_i\,(w_i - w_i^\star)^2 + \lambda\,w_i^2 \Big).
+$$
+
+We can therefore minimise each term separately. Fix $i$ and differentiate the term $g(w_i) = a_i\,(w_i - w_i^\star)^2 + \lambda\,w_i^2$:
+
+$$
+g'(w_i) = 2a_i\,(w_i - w_i^\star) + 2\lambda\,w_i.
+$$
+
+This derivative vanishes when $(a_i + \lambda)\,w_i = a_i\,w_i^\star$, that is at $w_i = \frac{a_i}{a_i + \lambda}\,w_i^\star$. Finally, $g$ is a parabola whose $w_i^2$ coefficient is $a_i + \lambda > 0$: it opens upwards, so this point is its unique minimum. □
+
+**How to read it.** Each optimal weight is multiplied by a factor $\frac{a_i}{a_i + \lambda}$, between $0$ and $1$. This factor depends on the curvature:
+
+- if $a_i$ is large compared with $\lambda$, the factor is close to $1$: the weight is almost untouched;
+- if $a_i$ is small compared with $\lambda$, the factor is close to $0$: the weight is crushed.
+
+Now, a low curvature means that moving this weight barely changes the training score. The data do not really know what to do with it. It is precisely in these blurry directions that noise settles, because nothing stops it. The L2 penalty therefore leaves in place what the data determine clearly, and erases what they determine poorly. This is the ridge regression of Hoerl and Kennard (1970), rediscovered under another name by neural networks.
+
+**A bonus for descent.** On the penalised score, the curvature along weight $i$ becomes $a_i + \lambda$. By chapter 9, descent therefore converges for $\eta < \frac{1}{a_i + \lambda}$ in each direction. And the ravine softens: with curvatures $1$ and $10$, the ratio between the steep and the flat direction is $10$. With $\lambda = 1$, it becomes $\frac{11}{2} = 5.5$.
+
+Play with the lab. The ten points are noisy measurements of a sine wave, drawn as a dotted line. Start at degree nine with no penalty, then raise $\lambda$ notch by notch.
+
+<RegularizationLab client:visible locale="en" />
+
+Three things to watch as you play:
+
+- At $\lambda = 0$ and degree nine, the curve passes exactly through the ten points: the training error is zero, but the validation error is poor. That is memorisation.
+- As you raise $\lambda$, the training error always increases, while the validation error first drops, then rises again. The right-hand graph draws a U: the right setting sits at the bottom.
+- With a very large $\lambda$, the curve flattens towards the mean of the points. That is underfitting, caused this time by a fine that is too heavy.
+
+## Act 4: the L1 penalty and sparsity
+
+Another possible fine uses the absolute value instead of the square:
+
+$$
+J(w) = L(w) + \lambda\,\|w\|_1, \qquad \|w\|_1 = \sum_{j} |w_j|.
+$$
+
+It looks like a detail. It is a difference in kind: the L1 penalty sets weights **exactly** to zero, which the L2 penalty never does. To see it, take the simplest case, a single weight with a score of curvature $1$ centred at $c$.
+
+**Proposition (soft thresholding).** For $\lambda > 0$, the function $h(w) = (w - c)^2 + \lambda\,|w|$ reaches its minimum at
+
+$$
+w = \begin{cases} c - \frac{\lambda}{2} & \text{if } c > \frac{\lambda}{2}, \\[4pt] 0 & \text{if } |c| \le \frac{\lambda}{2}, \\[4pt] c + \frac{\lambda}{2} & \text{if } c < -\frac{\lambda}{2}. \end{cases}
+$$
+
+**Proof.** The absolute value changes formula at $0$, so we reason by cases.
+
+*Case $|c| \le \frac{\lambda}{2}$.* We compare $h(w)$ with $h(0) = c^2$. For $w > 0$, we have $|w| = w$ and
+
+$$
+h(w) - h(0) = w^2 - 2cw + \lambda w = w\,(w + \lambda - 2c).
+$$
+
+Since $c \le \frac{\lambda}{2}$, the number $\lambda - 2c$ is non-negative, so the bracket is strictly positive, and so is the product. For $w < 0$, we have $|w| = -w$ and
+
+$$
+h(w) - h(0) = w^2 - 2cw - \lambda w = w\,(w - 2c - \lambda).
+$$
+
+Since $c \ge -\frac{\lambda}{2}$, the number $-2c - \lambda$ is non-positive, so the bracket is strictly negative. A negative number times a negative number is positive. In both cases, $h(w) > h(0)$: the minimum is at $0$.
+
+*Case $c > \frac{\lambda}{2}$.* For $w \ge 0$, $h(w) = (w - c)^2 + \lambda w$ is an upward parabola, with derivative $2(w - c) + \lambda$, which vanishes at $w = c - \frac{\lambda}{2}$. This point is indeed positive, so it is the minimum over $w \ge 0$. For $w \le 0$, the derivative of $h(w) = (w - c)^2 - \lambda w$ is $2(w - c) - \lambda$, which is strictly negative since $w \le 0 < c$: $h$ decreases down to $0$, so nothing does better than $h(0)$, which is itself beaten by $h(c - \frac{\lambda}{2})$.
+
+*Case $c < -\frac{\lambda}{2}$.* This is the previous case seen in a mirror: replace $w$ with $-w$ and $c$ with $-c$. □
+
+**How to read it.** The L1 penalty moves each weight towards zero by a fixed amount, $\frac{\lambda}{2}$, and if the weight cannot afford it, it falls to zero and stays there. Compare with L2 in the same situation: the minimum of $(w - c)^2 + \lambda\,w^2$ is $\frac{c}{1 + \lambda}$, which is never zero as long as $c \ne 0$. L2 trims every weight proportionally. L1 switches some of them off.
+
+A model in which many weights are exactly zero is called **sparse**. This is useful when we suspect that only a few inputs really matter: L1 does the sorting on its own. This is the lasso of Tibshirani (1996). When the score has several weights with curvatures $a_i$, the same computation gives a threshold of $\frac{\lambda}{2a_i}$ per weight.
+
+## Act 5: early stopping
+
+The third method does not touch the score. It touches the schedule. During training, we measure the validation score at every epoch. At first, it goes down along with the training score. Then, at some point, it starts climbing while the training score keeps falling: the network is starting to learn the noise. We keep the weights from the best moment, and we stop. This is <Term slug="arret-precoce">early stopping</Term>.
+
+In practice, we do not stop at the first rise, which may only be a hiccup. We allow a patience of a few epochs, and we keep in memory the best weights seen so far (Prechelt, 1998).
+
+It looks like an engineering trick. We will see that it is a regularisation in the full sense, and even a very close cousin of L2.
+
+**Theorem (exact trajectory).** Take the score $L(w) = \sum_i a_i\,(w_i - w_i^\star)^2$ again, and run gradient descent without a penalty from $w = 0$, with a rate $\eta$. After $t$ steps, each weight equals
+
+$$
+w_i(t) = \Big(1 - (1 - 2\eta a_i)^t\Big)\,w_i^\star.
+$$
+
+**Proof.** The derivative of the score with respect to $w_i$ is $2a_i\,(w_i - w_i^\star)$. A descent step therefore gives
+
+$$
+w_i(t+1) = w_i(t) - 2\eta a_i\,\big(w_i(t) - w_i^\star\big).
+$$
+
+We subtract $w_i^\star$ from both sides and factor:
+
+$$
+w_i(t+1) - w_i^\star = (1 - 2\eta a_i)\,\big(w_i(t) - w_i^\star\big).
+$$
+
+This is exactly the geometric sequence of chapter 9, applied to the gap from the minimum. At the start, the gap is $0 - w_i^\star = -w_i^\star$. After $t$ steps, it is therefore $-(1 - 2\eta a_i)^t\,w_i^\star$. We add $w_i^\star$ to recover the weight, and we get the formula. □
+
+**How to read it.** As with L2, each final weight $w_i^\star$ is multiplied by a factor between $0$ and $1$ that depends on the curvature. Steep directions converge in a few steps: their factor quickly reaches $1$. Flat directions barely move: their factor stays close to $0$ while $t$ is small. Stopping early therefore means keeping the well-determined directions and leaving the blurry ones behind. Exactly what the L2 penalty did.
+
+**Corollary (same envelope as L2).** Assume $\eta \le \frac{1}{2a_i}$, the zone of calm descent from chapter 9. Then the early stopping factor and the L2 factor satisfy
+
+$$
+1 - (1 - 2\eta a_i)^t \;\le\; 2\eta t\,a_i \qquad\text{and}\qquad \frac{a_i}{a_i + \lambda} \;\le\; \frac{a_i}{\lambda}.
+$$
+
+If we choose $\lambda = \frac{1}{2\eta t}$, both factors therefore lie under the same line $2\eta t\,a_i$.
+
+**Proof.** The second inequality is immediate: enlarging a denominator, by adding $a_i > 0$ to it, makes a positive fraction smaller. For the first, set $u = 2\eta a_i$, which lies between $0$ and $1$. It is enough to show Bernoulli's inequality,
+
+$$
+(1 - u)^t \;\ge\; 1 - t\,u \quad \text{for every integer } t \ge 0.
+$$
+
+We proceed by induction. For $t = 0$, it reads $1 \ge 1$. If it holds at rank $t$, we multiply it by $1 - u$, which is non-negative, so the inequality keeps its direction:
+
+$$
+(1 - u)^{t+1} \;\ge\; (1 - t\,u)(1 - u) = 1 - (t+1)\,u + t\,u^2.
+$$
+
+The last term $t\,u^2$ is non-negative, so $(1 - u)^{t+1} \ge 1 - (t+1)\,u$: this is rank $t + 1$. □
+
+**How to read it.** The number of steps plays the role of the inverse of the penalty: $\lambda \approx \frac{1}{2\eta t}$. Stopping very early amounts to regularising very strongly, letting it run for a long time amounts to barely regularising. Be careful about exactly what the corollary says: it proves that both factors share the same envelope for flat directions, and that both tend to $1$ for steep directions. It does not say they are equal. The equivalence between early stopping and L2 is an approximation, very good in practice, analysed in detail by Sjöberg and Ljung (1995) and by Goodfellow, Bengio and Courville (2016, section 7.8). Exercise 5 will have you measure the gap.
+
+Switch the lab to early stopping mode. Descent starts from zero coefficients, at degree nine, with no penalty.
+
+<RegularizationLab client:visible locale="en" defaultMode="early-stopping" />
+
+Three things to watch as you play:
+
+- At first, the curve is flat, then it takes the shape of the sine wave: the steep directions, the overall trend, are learned first.
+- The validation error reaches its minimum fairly early, then rises again while the curve twists to catch every point.
+- Compare the best validation error with the one for the best $\lambda$ in penalty mode. They are very close: two different roads to the same regularisation.
+
+## Act 6: dropout
+
+The last method was born with deep networks. During training, at each step, we randomly switch off some of the hidden neurons. Each neuron is kept with probability $p$, and switched off otherwise, independently of the others. At the next step, we draw again. This is <Term slug="dropout">dropout</Term> (Hinton et al., 2012; Srivastava et al., 2014).
+
+Think of a football team that trains without ever knowing which players will show up. Nobody can rely entirely on one specific teammate, so everyone learns to be useful on their own. In a network, the matching danger is called co-adaptation: neurons that only work together, correcting each other, often to fit the noise. Dropout breaks up these arrangements.
+
+**Inverted dropout.** For each hidden neuron $j$, we draw a mask $m_j$ equal to $1$ with probability $p$ and $0$ otherwise. The output $h_j$ of the neuron is replaced by
+
+$$
+\tilde h_j = \frac{m_j\,h_j}{p}.
+$$
+
+It reads: if the neuron is kept, its output is divided by $p$, hence amplified; if it is switched off, the output is zero. Why amplify?
+
+**Proposition (the mean is preserved).** On average over the mask draws, $\mathbb{E}[\tilde h_j] = h_j$.
+
+**Proof.** The mask equals $1$ with probability $p$ and $0$ with probability $1 - p$, so its mean is
+
+$$
+\mathbb{E}[m_j] = p \cdot 1 + (1 - p) \cdot 0 = p.
+$$
+
+Since $h_j$ and $p$ are fixed during the draw, we get
+
+$$
+\mathbb{E}[\tilde h_j] = \frac{h_j}{p}\,\mathbb{E}[m_j] = \frac{h_j}{p} \cdot p = h_j. \qquad \square
+$$
+
+By linearity, the weighted sum received by the next layer, $\sum_j w_j\,\tilde h_j + b$, also has mean $\sum_j w_j\,h_j + b$. Practical consequence: at prediction time, we turn dropout off and use the full network, with no correction at all. The exact mean is only guaranteed before the activation function. After a non-linearity, preservation is only approximate, which works very well in practice.
+
+**A crowd of sub-networks.** Each mask defines a sub-network. With $n$ hidden neurons, there are $2^n$ of them, and they all share the same weights. With $100$ neurons, that is $2^{100}$, more than $10^{30}$. Training with dropout means training each of them a little. Predicting with the full network means letting this whole crowd vote, approximately. And an average of many models has a lower variance than each of them: we find the third term of the bias-variance decomposition again. Srivastava and his co-authors recommend $p = 0.5$ for hidden neurons and a value closer to $1$, such as $0.8$, for inputs.
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line.
+
+**Exercise 1.** Three networks give the following errors (training, validation): network A $(0.30,\ 0.32)$, network B $(0.01,\ 0.25)$, network C $(0.04,\ 0.06)$. Give a diagnosis for each. Then: to choose the strength $\lambda$ of a penalty, on which set do you compare the settings, and why not on the test set?
+
+<Callout kind="tip" title="Solution to exercise 1: making a diagnosis">
+**Step 1.** Network A. The training error is high, and so is the validation error. The model cannot even fit its own data: this is underfitting.
+
+**Step 2.** Network B. The training error is almost zero, but the validation error is twenty-five times larger. Compute the gap:
+
+$$
+0.25 - 0.01 = 0.24.
+$$
+
+The model has learned its examples, not the trend: this is overfitting.
+
+**Step 3.** Network C. Both errors are low and close. Compute the gap:
+
+$$
+0.06 - 0.04 = 0.02.
+$$
+
+This is a good balance.
+
+**Step 4.** To choose $\lambda$, we compare the settings on the validation set. If we used the test set, each choice would adapt the model a little to that test set, and the final score we announce would be too optimistic.
+
+**Result.** A underfits, B overfits, C is balanced. We tune on validation and keep the test set for a single measurement, at the end.
+
+</Callout>
+
+**Exercise 2.** A weight equals $w = 2$, and backpropagation gives $\partial L / \partial w = 0.5$. Take a descent step with $\eta = 0.1$ and an L2 penalty of strength $\lambda = 0.5$. Compare with the same step without a penalty.
+
+<Callout kind="tip" title="Solution to exercise 2: one step with weight decay">
+**Step 1.** Write the rule with the penalty.
+
+$$
+w \leftarrow (1 - 2\eta\lambda)\,w - \eta\,\frac{\partial L}{\partial w}.
+$$
+
+**Step 2.** Compute the decay factor.
+
+$$
+1 - 2 \cdot 0.1 \cdot 0.5 = 1 - 0.1 = 0.9.
+$$
+
+**Step 3.** Apply it to the weight.
+
+$$
+0.9 \cdot 2 = 1.8.
+$$
+
+**Step 4.** Compute the gradient correction.
+
+$$
+\eta\,\frac{\partial L}{\partial w} = 0.1 \cdot 0.5 = 0.05.
+$$
+
+**Step 5.** Subtract it.
+
+$$
+w \leftarrow 1.8 - 0.05 = 1.75.
+$$
+
+**Step 6.** Without a penalty, the factor is $1$.
+
+$$
+w \leftarrow 2 - 0.05 = 1.95.
+$$
+
+**Result.** With the penalty, the weight goes to $1.75$ instead of $1.95$. The difference, $0.2$, is the decay: $2\eta\lambda\,w = 0.1 \cdot 2$.
+
+</Callout>
+
+**Exercise 3.** A two-weight score is $L(w) = 4\,(w_1 - 1)^2 + 0.25\,(w_2 - 1)^2$. With an L2 penalty of strength $\lambda = 1$, where is the minimum? Which direction is shrunk the most, and why?
+
+<Callout kind="tip" title="Solution to exercise 3: shrinkage according to curvature">
+We read the data: $a_1 = 4$, $a_2 = 0.25$, and $w_1^\star = w_2^\star = 1$.
+
+**Step 1.** Apply the theorem to the first weight.
+
+$$
+w_1 = \frac{4}{4 + 1} \cdot 1 = 0.8.
+$$
+
+**Step 2.** Apply it to the second.
+
+$$
+w_2 = \frac{0.25}{0.25 + 1} \cdot 1 = \frac{0.25}{1.25} = 0.2.
+$$
+
+**Result.** The penalised minimum is $(0.8,\ 0.2)$. The second weight is shrunk the most: its curvature $0.25$ is small compared with $\lambda = 1$, so the data determine it poorly, and the penalty crushes it towards zero. The first, well determined, keeps $80\,\%$ of its value.
+
+</Callout>
+
+**Exercise 4.** Three weights have the unpenalised minimum $c = (3,\ 0.4,\ -1)$, each on a score $(w - c)^2$. Compute the optimal weights with an L1 penalty of strength $\lambda = 1$, then with an L2 penalty of the same strength.
+
+<Callout kind="tip" title="Solution to exercise 4: L1 versus L2">
+**Step 1.** With L1, the threshold is $\frac{\lambda}{2}$.
+
+$$
+\frac{\lambda}{2} = \frac{1}{2} = 0.5.
+$$
+
+**Step 2.** First weight: $c = 3 > 0.5$, so we subtract the threshold.
+
+$$
+w = 3 - 0.5 = 2.5.
+$$
+
+**Step 3.** Second weight: $|c| = 0.4 \le 0.5$, so it falls to zero.
+
+$$
+w = 0.
+$$
+
+**Step 4.** Third weight: $c = -1 < -0.5$, so we add the threshold.
+
+$$
+w = -1 + 0.5 = -0.5.
+$$
+
+**Step 5.** With L2, each weight is divided by $1 + \lambda = 2$.
+
+$$
+\frac{3}{2} = 1.5, \qquad \frac{0.4}{2} = 0.2, \qquad \frac{-1}{2} = -0.5.
+$$
+
+**Result.** L1 gives $(2.5,\ 0,\ -0.5)$ and L2 gives $(1.5,\ 0.2,\ -0.5)$. L1 switches off the small weight and spares the large one. L2 keeps every weight non-zero, but trims the large one much harder.
+
+</Callout>
+
+**Exercise 5.** A direction has curvature $a = 0.1$ and minimum $w^\star = 2$. We start from $w = 0$ with $\eta = 0.1$ and stop after $t = 5$ steps. Compute the resulting weight, check the corollary's bound, then compare with the associated L2 penalty $\lambda = \frac{1}{2\eta t}$.
+
+<Callout kind="tip" title="Solution to exercise 5: early stopping versus L2">
+**Step 1.** Compute the factor of each step.
+
+$$
+1 - 2\eta a = 1 - 2 \cdot 0.1 \cdot 0.1 = 0.98.
+$$
+
+**Step 2.** Raise it to the power $5$.
+
+$$
+0.98^5 \approx 0.9039.
+$$
+
+**Step 3.** Apply the trajectory formula.
+
+$$
+w(5) = (1 - 0.9039) \cdot 2 = 0.0961 \cdot 2 \approx 0.192.
+$$
+
+**Step 4.** Compute the corollary's bound.
+
+$$
+2\eta t\,a = 2 \cdot 0.1 \cdot 5 \cdot 0.1 = 0.1.
+$$
+
+The factor $0.0961$ is indeed below $0.1$.
+
+**Step 5.** Compute the associated penalty.
+
+$$
+\lambda = \frac{1}{2 \cdot 0.1 \cdot 5} = 1.
+$$
+
+**Step 6.** Apply the shrinkage theorem.
+
+$$
+w = \frac{0.1}{0.1 + 1} \cdot 2 = \frac{0.2}{1.1} \approx 0.182.
+$$
+
+**Result.** Early stopping gives $0.192$, the associated L2 penalty gives $0.182$. Both stay under the common envelope $0.1 \cdot 2 = 0.2$, and differ by only about $5\,\%$: the equivalence is approximate, but very good.
+
+</Callout>
+
+## In one sentence
+
+A network can learn its examples by heart, and regularisation (the L2 penalty that shrinks blurry directions, the L1 penalty that switches weights off, early stopping that acts like an L2 penalty of strength $\frac{1}{2\eta t}$, dropout that lets a crowd of sub-networks vote) trades a little training score for much better generalisation, tuned on a validation set.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'A network has a training error of 0.01 and a validation error of 0.30. What is happening?',
+      options: [
+        'It underfits',
+        'It overfits: it has learned its examples, not the trend',
+        'It is perfectly balanced',
+        'The learning rate is too large',
+      ],
+      answer: 1,
+      explain:
+        'An excellent training score and a poor validation score are the signature of overfitting. The network sticks to the noise of its examples.',
+    },
+    {
+      q: 'On a score Σ aᵢ (wᵢ − wᵢ*)², what does an L2 penalty of strength λ do?',
+      options: [
+        'It sets every weight to zero',
+        'It multiplies each wᵢ* by aᵢ / (aᵢ + λ): low-curvature directions are crushed the most',
+        'It does not change the minimum',
+        'It doubles every weight',
+      ],
+      answer: 1,
+      explain:
+        'The shrinkage theorem gives wᵢ = aᵢ/(aᵢ + λ) · wᵢ*. A low curvature, hence a direction poorly determined by the data, gives a factor close to 0.',
+    },
+    {
+      q: 'Which penalty can set a weight exactly to zero?',
+      options: ['The L2 penalty', 'The L1 penalty', 'Neither', 'Both, always'],
+      answer: 1,
+      explain:
+        'With L1, the minimum of (w − c)² + λ|w| is zero as soon as |c| ≤ λ/2: this is soft thresholding. With L2, the minimum is c/(1 + λ), never zero if c ≠ 0.',
+    },
+    {
+      q: 'Why is early stopping said to be a form of regularisation?',
+      options: [
+        'Because it reduces computing time',
+        'Because it leaves flat directions behind, like an L2 penalty of strength about 1/(2ηt)',
+        'Because it changes the cost function',
+        'Because it removes neurons',
+      ],
+      answer: 1,
+      explain:
+        'From w = 0, each weight equals (1 − (1 − 2ηaᵢ)ᵗ) wᵢ*. Steep directions converge fast, flat ones barely move. Both factors share the same envelope 2ηt·aᵢ when λ = 1/(2ηt).',
+    },
+    {
+      q: 'With inverted dropout, what do we do at prediction time?',
+      options: [
+        'Keep dropout active',
+        'Use the full network, with no correction, because dividing by p has already preserved the mean',
+        'Multiply every output by p',
+        'Switch off half of the neurons',
+      ],
+      answer: 1,
+      explain:
+        'During training, each kept output is divided by p, so that its mean over the draws equals the original output exactly. At test time, the full network therefore already has the right scale.',
+    },
+  ]}
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Towards chapter 11
+
+Early stopping starts from zero weights, and the L2 penalty pulls the weights towards zero. Everything pushes towards zero. So why not simply start a network with all its weights at zero? Because it would be fatal. Go back to the toy network of chapter 8, with its two hidden neurons. If their weights are identical at the start, they compute the same output, receive the same error signal, and undergo exactly the same update. At the next step, they are still identical, and so on forever. Two twin neurons are worth only one: the network has lost its hidden layer. Conversely, initial weights that are too large saturate the sigmoids, and we fall back on the vanishing gradient of chapter 8. We therefore need to start from weights that are small, but different, and at the right scale. Chapter 11 computes that scale, then shows how to maintain it layer after layer throughout training: this is initialisation, and batch normalisation.
+
+## Sources
+
+- Runge, C. (1901). "Über empirische Funktionen und die Interpolation zwischen äquidistanten Ordinaten." _Zeitschrift für Mathematik und Physik_ 46, 224-243. [archive.org](https://archive.org/details/zeitschriftfurm46unkn)
+- Hoerl, A. E. & Kennard, R. W. (1970). "Ridge Regression: Biased Estimation for Nonorthogonal Problems." _Technometrics_ 12(1), 55-67. [DOI 10.1080/00401706.1970.10488634](https://doi.org/10.1080/00401706.1970.10488634)
+- Krogh, A. & Hertz, J. A. (1992). "A Simple Weight Decay Can Improve Generalization." _Advances in Neural Information Processing Systems 4_, 950-957.
+- Geman, S., Bienenstock, E. & Doursat, R. (1992). "Neural Networks and the Bias/Variance Dilemma." _Neural Computation_ 4(1), 1-58. [DOI 10.1162/neco.1992.4.1.1](https://doi.org/10.1162/neco.1992.4.1.1)
+- Sjöberg, J. & Ljung, L. (1995). "Overtraining, regularization and searching for a minimum, with application to neural networks." _International Journal of Control_ 62(6), 1391-1407. [DOI 10.1080/00207179508921605](https://doi.org/10.1080/00207179508921605)
+- Tibshirani, R. (1996). "Regression Shrinkage and Selection via the Lasso." _Journal of the Royal Statistical Society, Series B_ 58(1), 267-288. [DOI 10.1111/j.2517-6161.1996.tb02080.x](https://doi.org/10.1111/j.2517-6161.1996.tb02080.x)
+- Prechelt, L. (1998). "Early Stopping, But When?" In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 55-69. [DOI 10.1007/3-540-49430-8_3](https://doi.org/10.1007/3-540-49430-8_3)
+- Hinton, G. E., Srivastava, N., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2012). "Improving neural networks by preventing co-adaptation of feature detectors." [arXiv:1207.0580](https://arxiv.org/abs/1207.0580)
+- Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. & Salakhutdinov, R. (2014). "Dropout: A Simple Way to Prevent Neural Networks from Overfitting." _Journal of Machine Learning Research_ 15, 1929-1958. https://www.jmlr.org/papers/v15/srivastava14a.html
+- Zhang, C., Bengio, S., Hardt, M., Recht, B. & Vinyals, O. (2017). "Understanding deep learning requires rethinking generalization." _ICLR 2017_. [arXiv:1611.03530](https://arxiv.org/abs/1611.03530)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 7, especially sections 7.1.1 (L2 penalty) and 7.8 (early stopping). https://www.deeplearningbook.org

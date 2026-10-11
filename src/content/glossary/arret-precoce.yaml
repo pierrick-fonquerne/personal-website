@@ -5,7 +5,7 @@ fr:
   source: Prechelt, 1998
 en:
   term: Early stopping
-  definition: 'A regularization that monitors the validation loss during training and keeps the weights from the moment it was lowest, before the network learns the noise. On a quadratic loss, stopping after t steps acts like an L2 penalty of strength about 1/(2ηt).'
+  definition: 'A regularisation that monitors the validation loss during training and keeps the weights from the moment it was lowest, before the network learns the noise. On a quadratic loss, stopping after t steps acts like an L2 penalty of strength about 1/(2ηt).'
   source: Prechelt, 1998
 seeAlso:
   - ensemble-de-validation
