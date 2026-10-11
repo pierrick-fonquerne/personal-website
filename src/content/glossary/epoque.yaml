@@ -1,0 +1,10 @@
+slug: epoque
+fr:
+  term: Époque
+  definition: "Un passage complet sur toute la base d'entraînement, mini-batch après mini-batch. Avec N exemples et des paquets de taille m, une époque compte N/m pas de descente. L'entraînement d'un réseau se mesure souvent en nombre d'époques."
+en:
+  term: Epoch
+  definition: 'One complete pass over the whole training set, mini-batch after mini-batch. With N examples and batches of size m, an epoch contains N/m descent steps. Training a network is often measured in number of epochs.'
+seeAlso:
+  - mini-batch
+  - descente-de-gradient-stochastique

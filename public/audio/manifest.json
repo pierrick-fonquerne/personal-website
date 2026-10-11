@@ -198,5 +198,13 @@
   "en/spiking-neural-networks/02-the-membrane-potential": {
     "url": "/audio/en/spiking-neural-networks/02-the-membrane-potential.mp3",
     "chars": 6624
+  },
+  "fr/neural-networks-foundations/09-descente-de-gradient": {
+    "url": "/audio/fr/neural-networks-foundations/09-descente-de-gradient.mp3",
+    "chars": 8505
+  },
+  "en/neural-networks-foundations/09-gradient-descent": {
+    "url": "/audio/en/neural-networks-foundations/09-gradient-descent.mp3",
+    "chars": 8269
   }
 }
