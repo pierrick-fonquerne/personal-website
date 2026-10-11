@@ -1,0 +1,13 @@
+slug: arret-precoce
+fr:
+  term: Arrêt précoce
+  definition: "Régularisation qui consiste à surveiller la note de validation pendant l'entraînement et à garder les poids du moment où elle était la plus basse, avant que le réseau n'apprenne le bruit. Sur une note quadratique, arrêter après t pas agit comme une pénalité L2 de force environ 1/(2ηt)."
+  source: Prechelt, 1998
+en:
+  term: Early stopping
+  definition: 'A regularization that monitors the validation loss during training and keeps the weights from the moment it was lowest, before the network learns the noise. On a quadratic loss, stopping after t steps acts like an L2 penalty of strength about 1/(2ηt).'
+  source: Prechelt, 1998
+seeAlso:
+  - ensemble-de-validation
+  - weight-decay
+  - epoque
