@@ -1,0 +1,23 @@
+---
+slug: lecture-excitabilite-synapses-fixes
+---
+
+I read *Rapidly reconfigurable dynamic computing in neural networks with fixed synaptic connectivity*, by Mason, Sennik, Clopath, Gruber and Nicola ([Communications Biology, 2026](https://doi.org/10.1038/s42003-026-10877-7)), peer reviewed. I read it because it asks my question backwards: what is left to learn once the synapses stop moving?
+
+## What the paper shows
+
+The connections are random and frozen. Only each neuron's bias is tuned, meaning its excitability threshold: how easily it fires. With that single knob, a recurrent network reproduces chaotic systems of one to three dimensions and switches from one to another. Twenty uncorrelated sets of biases give the same output for Lorenz, all successful.
+
+In closed loop, the network reaches 99.1 ± 0.7% of targets for an arm, and returns 98.9 ± 0.7% of balls in Pong. A second network, with no recurrence, has two layers of 16,000 neurons. It reaches 84.2% on MNIST and 59.3% on Kuzushiji-MNIST. In all: 24 tasks, ten random seeds, and public code.
+
+## What I take from it
+
+It is a cheap control for my test bench: a "biases only, weights frozen" mode. For the living and persistent neuron, it is also an architecture idea: fast biases specific to the task, and slow shared weights. One more lesson: twenty different solutions for the same task, so comparing two networks neuron by neuron means nothing. I will compare outputs.
+
+## What I don't buy
+
+The learning rule is local only for the recurrent network. The biases are learned offline, not while the network runs. The absence of forgetting comes from one bias vector stored per task: that is filing, not continual learning. Images give a mediocre return. And the authors measure neither how often a switch fails, nor how many tasks a network can hold, nor the mix with weight plasticity.
+
+## Still open
+
+Measure how often switches fail on my Rust skeleton, with random times and random tasks. Then learn the biases online. And only after that, test fast biases with slow weights.
