@@ -1,0 +1,23 @@
+---
+slug: lecture-code-precoce-snn
+---
+
+I read "Multi-Depth Temporal Fusion for Feedforward, Locally Trained Spiking Neural Networks" by Attar, Cicciarella and Rossi ([arXiv 2609.37047](https://arxiv.org/abs/2609.37047)). I was looking for how to stack layers when no error is backpropagated, which is exactly my situation with local learning.
+
+## What the paper shows
+
+The idea fits in one sentence: without a gradient, what a layer erases is lost. So the authors keep the first layer's code intact, and deeper layers can only annotate it. The code here is the date of a neuron's first spike: early means strong, silence means absent. The learning rule is local, STDP-style, meaning each synapse only looks at the order of spikes around it.
+
+With fully local learning, they report 96.6% on MNIST, 86.3% on Fashion-MNIST, 62.5% on CIFAR-10 and 95.1% on N-MNIST. Without their frozen input stage, accuracy falls to about 10% on images, which is chance. Replacing the early code with a deep layer's code loses 6 to 7% of accuracy (read off a figure). The final code is sparse: 6 to 13% of inputs are active, and 95% of the accuracy remains with 33 to 66% of the events.
+
+## What I take from it
+
+One invariant that I note for the [local learning](/en/research/apprentissage-local) page: every locally learned layer keeps a direct path from its input to the decision. I also borrow their three-factor readout rule, with a temporal corridor, several prototypes per class and a punishment limited to close rivals. Finally, three measures for my test bench: the frozen-trunk ablation, the spike budget, the data curve.
+
+## What I don't buy
+
+It is a preprint, not peer reviewed. The gain specific to the fusion is on the order of the noise between seeds. The big gaps in the abstract (+18.2 points on Fashion-MNIST, +29.2 on CIFAR-10) come from the whole system, mostly from the input stage. The neuron model is never written down, and there is no gradient baseline at equal budget and no energy measurement. Above all, nothing on continual learning: training runs in phases, with freezing and caching, and each image is an independent wave of spikes.
+
+## Still open
+
+Deep layers trained by STDP add almost nothing. I want to replace that rule with a local rule that receives a task signal, then remove the freezing and let all layers learn as a stream. If the early code stays stable while the readout learns, then the principle holds.

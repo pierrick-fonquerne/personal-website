@@ -1,0 +1,10 @@
+slug: lecture-code-precoce-snn
+research: apprentissage-local
+date: 2026-10-09
+title:
+  fr: 'Garder le code précoce : une lecture sur les réseaux à impulsions'
+  en: 'Keeping the early code: a reading on spiking networks'
+excerpt:
+  fr: "Sans gradient, ce qu'une couche efface est perdu : je lis un papier qui garde le code de la première couche intact, et je dis ce que j'en retiens et ce que je n'achète pas."
+  en: 'Without a gradient, what a layer erases is lost: I read a paper that keeps the first layer code intact, and say what I take from it and what I do not buy.'
+published: false

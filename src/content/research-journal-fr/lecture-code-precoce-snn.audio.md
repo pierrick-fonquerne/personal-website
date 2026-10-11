@@ -1,0 +1,15 @@
+Journal de recherche. Garder le code précoce : une lecture sur les réseaux à impulsions. Un papier sur la façon d'empiler des couches quand aucune erreur ne rétropropage.
+
+J'ai lu un papier d'Attar, Cicciarella et Rossi, sur la fusion temporelle dans des réseaux à impulsions entraînés localement. C'est une prépublication de la plateforme arXiv. Je cherchais comment empiler des couches quand aucune erreur ne rétropropage, ce qui est exactement mon cas avec l'apprentissage local.
+
+L'idée tient en une phrase : sans gradient, ce qu'une couche efface est perdu. Les auteurs gardent donc le code de la première couche intact, et les couches profondes ne peuvent que l'annoter. Ce code, c'est la date du premier tir d'un neurone : tôt veut dire fort, et silence veut dire absent. La règle d'apprentissage est locale, de type STDP, ce qui veut dire que chaque synapse regarde seulement l'ordre des tirs autour d'elle.
+
+Avec un apprentissage entièrement local, ils annoncent quatre-vingt-seize virgule six pour cent sur MNIST, quatre-vingt-six virgule trois pour cent sur Fashion MNIST, soixante-deux virgule cinq pour cent sur CIFAR dix, et quatre-vingt-quinze virgule un pour cent sur N MNIST. Sans leur étage d'entrée figé, la précision tombe à environ dix pour cent sur les images, c'est-à-dire au hasard. Et remplacer le code précoce par celui d'une couche profonde fait perdre six à sept pour cent de précision. Le code final est creux : entre six et treize pour cent des entrées sont actives, et on garde quatre-vingt-quinze pour cent de la précision avec un tiers à deux tiers des événements.
+
+Ce que j'en retiens, c'est d'abord un invariant pour ma page sur l'apprentissage local : toute couche apprise localement garde un chemin direct de son entrée vers la décision. J'emprunte aussi leur règle de lecture à trois facteurs, avec un couloir temporel, plusieurs prototypes par classe et une punition limitée aux rivaux proches. Et je prends trois mesures pour mon banc d'essai : l'ablation à tronc gelé, le budget d'impulsions et la courbe de données.
+
+Ce que je n'achète pas, maintenant. C'est une prépublication, non relue par des pairs. Le gain propre à la fusion est de l'ordre du bruit entre deux graines aléatoires. Les gros écarts du résumé viennent de tout le système, surtout de l'étage d'entrée. Le modèle de neurone n'est jamais écrit, et il n'y a ni référence par gradient à budget égal, ni mesure d'énergie. Surtout, rien sur l'apprentissage continu, car l'entraînement se fait par phases, avec gel et cache, et chaque image est une vague de tirs indépendante.
+
+Reste ouvert. Les couches profondes entraînées par STDP n'ajoutent presque rien. Je veux donc remplacer cette règle par une règle locale qui reçoit un signal de la tâche, puis supprimer le gel et laisser toutes les couches apprendre en flux. Si le code précoce reste stable pendant que la lecture apprend, alors le principe tient.
+
+En une phrase. Sans gradient, ce qu'une couche efface est perdu, alors je garde un chemin direct vers la décision, et je teste maintenant si ce principe survit quand plus rien n'est gelé.
