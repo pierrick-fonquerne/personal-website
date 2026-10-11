@@ -1,0 +1,25 @@
+---
+slug: lecture-neuroevolution-continue
+---
+
+I read "Continual Reinforcement Learning with Neuroevolution" by Nisioti, Cossu, Korte and Risi ([arXiv 2610.01583](https://arxiv.org/abs/2610.01583)). I read it because it asks a question close to mine: what helps a network keep its ability to learn when the task changes without warning?
+
+## What the paper shows
+
+The authors compare seven methods on the same network, two of them without gradients: ES, which scores noisy copies of the weights, and a genetic algorithm. Seven environments, 18 configurations of 20 tasks, the same budget, ten trials each.
+
+ES has the best trade-off between learning and forgetting in 8 configurations out of 18. Gradient descent is the best in none. The genetic algorithm learns fastest in 10 configurations, but it forgets more.
+
+The proposed explanation is one idea: ES settles in wide neighborhoods, meaning zones where you can move the weights without breaking the task. They are 3.9 times wider than PPO's, in median. And the width shared between two tasks predicts the trade-off, with a Spearman correlation of 0.77.
+
+## What I take from it
+
+For the structural plasticity page, the useful lesson is not "no gradient, therefore stable". The genetic algorithm has no gradient either, and it forgets. What protects ES is being evaluated under perturbation. I also keep a measure that does not depend on the learning rule: perturb the weights and see whether the task holds. It applies as is to a plastic network.
+
+## What I don't buy
+
+It is a preprint, not peer reviewed. 8 out of 18 is not domination. The mechanism rests on a correlation, with no intervention, and on very small networks. ES freezes when actions are inverted, on two environments. And nothing is said about data cost, learning during an individual's lifetime, or local rules.
+
+## Still open
+
+I want to test a local rule based on perturbation: a single network, each weight keeps its perturbation, and a global reward decides whether to reinforce it. If it inherits ES's stability, it is a bridge toward learning while serving. Before that, I rerun my Rust test bench at the paper's full budget, to find out whether the gap I saw in ES's stability comes from my reduced budget.
