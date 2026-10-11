@@ -1,0 +1,29 @@
+---
+slug: lecture-motifs-hubs-snn
+---
+
+J'ai lu « Stochastic Dynamics of Large-Scale Motif-Embedded Spiking Neuronal Networks » de Jagdev, Bertram et Yu ([arXiv 2610.00616](https://arxiv.org/abs/2610.00616)), paru le 30 septembre. Je l'ai lu parce qu'il touche ma question de fond : la forme du câblage compte-t-elle, et d'où vient-elle ?
+
+## Ce que montre le papier
+
+Les auteurs simulent quatre réseaux de 1 000 neurones à impulsions. Le fond du réseau est soit aléatoire, soit à hubs (quelques neurones très connectés). On y insère ou non des motifs, c'est-à-dire de petits circuits de 2 à 4 neurones. Les témoins ont le même nombre de synapses : seule la disposition change.
+
+Un bruit intermédiaire rend l'activité la plus régulière, entre 0,30 et 0,43 selon le réseau. On appelle cela la résonance de cohérence. Les motifs ajoutent 11 % de régularité sur fond aléatoire, et seulement 3 % sur fond à hubs. Le fond à hubs domine : un rapport signal sur bruit d'environ 72 contre 26. Il répond aussi plus vite et plus fort, avec un pic à 50 ms et 47 Hz contre 100 ms et 12 Hz.
+
+Retirer les 7,5 % de neurones les plus connectés fait passer ce rapport de 20 à 11. Retirer le même nombre de neurones au hasard le laisse vers 17.
+
+## Ce que j'en retiens
+
+Ce papier est un contrepoint à ma page sur la plasticité structurelle. J'y écris que la topologie ne vaut que par le critère qui l'oriente, et qu'un gabarit imposé de l'extérieur n'est pas le but. Or ici, les auteurs imposent motifs et hubs à la main, et le gain est déjà net, sans aucun apprentissage. La forme de départ pèse donc plus lourd que ma page ne le laisse entendre.
+
+Je retiens aussi que la disposition compte, pas seulement la force : mélanger les connexions d'un motif M2 fait tomber le rapport de 24 à 18. Et le hub rappelle le problème de stabilité : ce qui fait la force est aussi ce qui fragilise. Enfin, les auteurs désignent eux-mêmes la suite : des motifs et des hubs qui émergent par plasticité. C'est mon sujet.
+
+## Ce que je n'achète pas
+
+C'est une prépublication, non relue par des pairs. Tout est simulé, sans donnée biologique. Le banc d'essai est petit : 1 000 neurones, et même 500 pour le test de recâblage, avec des motifs renforcés pour faire ressortir l'effet. L'effet des motifs est modeste.
+
+La plasticité STDP est active dans les simulations, mais son rôle n'est jamais mesuré. Surtout, rien ne relie ce rythme à une capacité d'apprendre : le papier mesure la régularité et la transmission d'un signal, rien d'autre. Le code n'est pas publié, et quelques paramètres manquent pour reproduire.
+
+## Reste ouvert
+
+D'abord reproduire le classement des quatre réseaux en Rust, puis relancer sans STDP. C'est la première mesure que le papier ne contient pas. Ensuite, partir d'un réseau aléatoire sans motifs, ajouter la création et la suppression de synapses, compter les motifs et suivre le rapport signal sur bruit au fil du temps. Des hubs apparaîtront-ils ? Je ne sais pas, et c'est ce qui rend l'expérience intéressante.
