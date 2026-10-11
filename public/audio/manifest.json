@@ -206,5 +206,13 @@
   "en/neural-networks-foundations/09-gradient-descent": {
     "url": "/audio/en/neural-networks-foundations/09-gradient-descent.mp3",
     "chars": 8269
+  },
+  "fr/neural-networks-foundations/10-regularisation": {
+    "url": "/audio/fr/neural-networks-foundations/10-regularisation.mp3",
+    "chars": 11729
+  },
+  "en/neural-networks-foundations/10-regularization": {
+    "url": "/audio/en/neural-networks-foundations/10-regularization.mp3",
+    "chars": 11058
   }
 }
