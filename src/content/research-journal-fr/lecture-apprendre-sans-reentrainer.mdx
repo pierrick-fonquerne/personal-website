@@ -1,0 +1,23 @@
+---
+slug: lecture-apprendre-sans-reentrainer
+---
+
+J'ai lu « Continual Learning without Continual Training » de Narayanan, Majumdar et Parbhoo ([arXiv 2610.10379](https://arxiv.org/abs/2610.10379)). Le papier défend l'inverse de ce que je cherche, et c'est pour ça que je l'ai lu : pour voir ce qu'il faudrait battre.
+
+## Ce que montre le papier
+
+Un modèle est entraîné une seule fois, puis gelé. Ensuite, pour apprendre de nouvelles classes, on se contente de ranger quelques exemples dans une mémoire que le modèle relit à chaque prédiction. Aucun poids ne bouge, donc rien ne peut être écrasé. On appelle « oubli » la perte de précision sur ce qu'on savait déjà.
+
+Sur les flux où le domaine change, l'oubli est quasi nul : moins 0,007 sur Rotated MNIST, plus 0,005 sur des radiographies de quatre hôpitaux. Sur Split MNIST, où les classes arrivent par paquets, la précision finale est de 0,794, contre 0,749 pour DER++ et 0,714 pour InfLoRA. Mais il y a un oubli réel de 0,072 sur ce même flux, causé par des exemples en mémoire qui se gênent entre eux. Et sur Rotated MNIST, la précision est de 0,789, contre 0,958 pour InfLoRA.
+
+## Ce que j'en retiens
+
+C'est un contrepoint à ma page sur la [plasticité structurelle](/research/plasticite-structurelle). Moi, je défends l'idée qu'un réseau doit changer de forme pour apprendre. Eux montrent qu'on peut avoir un oubli quasi nul sans rien changer du tout, avec une simple mémoire. Ça fixe une référence honnête : avant de dire qu'un mécanisme plastique aide, il doit faire mieux que « mémoire seule ». Leurs mesures et leur protocole à mémoire égale, je les reprends tels quels.
+
+## Ce que je n'achète pas
+
+C'est une prépublication, non relue par des pairs. Le banc d'essai est petit : MNIST et des radiographies, jusqu'à dix classes. Leur phrase « oublie le moins partout » est contredite par leur propre tableau, car InfLoRA fait mieux deux fois. Il n'y a pas d'ablation sans les concepts annotés. Le modèle de référence ne fait pas mieux qu'un plus proche voisin sur pixels, que j'ai mesuré à 0,645 sur Split MNIST. Et « sans entraînement continu » cache 16,4 millions de tirages d'images à l'entraînement initial. Le code et le coût quand la mémoire grossit manquent.
+
+## Reste ouvert
+
+Que valent les vecteurs rangés en mémoire quand l'encodeur, lui, continue d'apprendre ? C'est là que mon travail et ce papier se touchent. L'expérience : mesurer la précision en fonction du nombre d'exemples gardés, d'abord pour la mémoire seule, puis pour un premier mécanisme plastique.
