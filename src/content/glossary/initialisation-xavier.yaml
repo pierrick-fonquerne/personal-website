@@ -1,0 +1,13 @@
+slug: initialisation-xavier
+fr:
+  term: Initialisation de Xavier (Glorot)
+  definition: "Tirage des poids initiaux d'une couche avec une moyenne nulle et une variance 2/(n_entrée + n_sortie). Ce choix garde à peu près constante la variance des activations à l'aller et celle des gradients au retour, pour des activations centrées comme tanh. Version uniforme : U[−a, a] avec a = √(6/(n_entrée + n_sortie))."
+  source: Glorot et Bengio, 2010
+en:
+  term: Xavier (Glorot) initialisation
+  definition: 'Drawing the initial weights of a layer with zero mean and variance 2/(n_in + n_out). This choice keeps the variance of the activations on the forward pass and of the gradients on the backward pass roughly constant, for centred activations such as tanh. Uniform version: U[−a, a] with a = √(6/(n_in + n_out)).'
+  source: Glorot and Bengio, 2010
+seeAlso:
+  - variance
+  - initialisation-he
+  - tanh

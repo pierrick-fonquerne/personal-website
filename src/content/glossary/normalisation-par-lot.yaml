@@ -1,0 +1,13 @@
+slug: normalisation-par-lot
+fr:
+  term: Normalisation par lot (batch normalization)
+  definition: "Opération insérée dans un réseau qui, pour chaque neurone, recentre et réduit les pré-activations d'un mini-batch (moyenne nulle, variance presque 1), puis les multiplie par γ et leur ajoute β, deux paramètres appris. Elle rend la couche insensible à l'échelle de ses poids. À la prédiction, on utilise des moyennes glissantes au lieu des statistiques du lot."
+  source: Ioffe et Szegedy, 2015
+en:
+  term: Batch normalisation
+  definition: 'An operation inserted in a network that, for each neuron, centres and rescales the pre-activations of a mini-batch (zero mean, variance close to 1), then multiplies them by γ and adds β, two learned parameters. It makes the layer insensitive to the scale of its weights. At prediction time, running averages replace the batch statistics.'
+  source: Ioffe and Szegedy, 2015
+seeAlso:
+  - mini-batch
+  - variance
+  - initialisation-he

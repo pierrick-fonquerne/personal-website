@@ -1,0 +1,11 @@
+slug: brisure-de-symetrie
+fr:
+  term: Brisure de symétrie
+  definition: "Raison pour laquelle on tire les poids initiaux au hasard. Deux neurones cachés qui partent avec les mêmes poids calculent la même sortie, reçoivent le même signal d'erreur et subissent la même mise à jour : ils restent identiques pour toujours, et la couche perd ce qu'ils auraient pu apporter séparément. Des poids de départ différents cassent cette symétrie."
+en:
+  term: Symmetry breaking
+  definition: 'The reason initial weights are drawn at random. Two hidden neurons that start with the same weights compute the same output, receive the same error signal and undergo the same update: they stay identical forever, and the layer loses what they could have contributed separately. Different starting weights break this symmetry.'
+seeAlso:
+  - backpropagation
+  - signal-d-erreur
+  - couche-cachee
