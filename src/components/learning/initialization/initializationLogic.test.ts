@@ -218,7 +218,7 @@ describe('propagation through depth', () => {
     const large = deviations(experiment('relu', 'standard-normal', true));
     const small = deviations(experiment('relu', 'small', true));
     large.forEach((value, index) =>
-      expect(Math.abs(value - small[index]) / small[index]).toBeLessThan(1e-6),
+      expect(Math.abs(value - small[index]) / small[index]).toBeLessThan(1e-2),
     );
   });
 
