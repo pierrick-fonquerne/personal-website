@@ -1,22 +1,572 @@
 ---
 course: neural-networks-foundations
 order: 11
-title: Initialisation des poids et batch normalization
-subtitle: "Pourquoi le choix initial des poids et la normalisation par lot transforment l'entraînement."
-estimatedMinutes: 15
+title: Initialisation des poids et normalisation par lot
+subtitle: "Partir du bon point, à la bonne échelle, et garder cette échelle couche après couche."
+estimatedMinutes: 40
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import InitializationLab from '../../../components/learning/InitializationLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  Ce chapitre est encore vide. Le squelette est en place, le contenu sera rédigé bientôt.
+Au chapitre 9, on a démontré que la descente de gradient fait baisser la note pas à pas, d'où qu'elle parte. Au chapitre 10, toutes les régularisations tiraient les poids vers zéro. Une question a été soigneusement évitée : d'où part-on, au juste ? Le chapitre 10 s'est terminé sur un avertissement. Partir de zéro est fatal. Partir de trop grand aussi.
+
+La question de ce chapitre est donc : quels poids donner à un réseau avant qu'il ait vu le moindre exemple ? On va démontrer pourquoi ils doivent être tous différents, calculer l'échelle exacte qu'ils doivent avoir, puis voir comment une opération toute simple, la normalisation par lot, garde cette échelle pendant tout l'entraînement.
+
+<Callout kind="info" title="Pré-requis et niveau">
+**Ce qu'il faut savoir** : la rétropropagation et les signaux d'erreur $\delta$ (chapitre 8), le facteur $1 - 2\eta a$ de la descente sur une parabole et le mini-batch (chapitre 9), le problème XOR (chapitres 4 et 5). La notion de moyenne.
+
+**Ce qu'il n'est pas nécessaire de connaître** : les probabilités au-delà de la moyenne (on définit la variance ici), les valeurs propres d'une matrice, les optimiseurs avancés comme Adam (chapitre 12).
+
+**Niveau de rigueur** : on démontre que deux neurones jumeaux le restent pour toujours, la formule de la variance d'une somme pondérée, le facteur un demi de la ReLU, et trois propriétés exactes de la normalisation par lot. Cinq exercices papier-crayon aux corrigés détaillés ligne par ligne.
+
 </Callout>
 
-## Ce que tu vas apprendre
+## Acte 1 : les jumeaux
 
-- Pourquoi initialiser tous les poids à zéro ne marche pas
-- Les schémas de Xavier-Glorot et de He, et quand utiliser quoi
-- Le principe de la batch normalization et pourquoi elle accélère la convergence
+Imagine deux élèves qui, dès le premier jour de l'année, recopient chacun la copie de l'autre. Ils rendent la même copie, reçoivent la même correction, en tirent la même leçon, et rendent encore la même copie au devoir suivant. À la fin de l'année, la classe a deux élèves, mais un seul cerveau.
 
-Initialiser un réseau profond est un art : un mauvais départ peut le rendre incapable d'apprendre. Ce chapitre démystifie les choix qui font la différence entre un réseau qui converge en quelques minutes et un qui n'apprend jamais.
+Deux neurones cachés qui démarrent avec exactement les mêmes poids vivent la même histoire. Reprends le réseau du chapitre 8 : une couche cachée de sigmoïdes, puis une sortie. Le neurone caché $j$ a un vecteur de poids entrants $w_j$, un biais $b_j$, et il est relié à la sortie par un poids $w^{(2)}_j$. Sa pré-activation vaut $z_j = w_j \cdot x + b_j$ et sa sortie $a_j = \sigma(z_j)$. On rappelle les deux formules de la passe arrière du chapitre 8 :
+
+$$
+\delta_j = w^{(2)}_j\,\delta_{\text{sortie}}\,\sigma'(z_j), \qquad \frac{\partial L}{\partial w_j} = \delta_j\,x.
+$$
+
+Elles se lisent : le signal d'erreur du neurone $j$ est le signal de sortie, ramené par le poids qui les relie, puis modulé par la pente locale. Le gradient de ses poids entrants est ce signal multiplié par l'entrée.
+
+**Théorème (les jumeaux restent jumeaux).** On suppose qu'au départ deux neurones cachés $j$ et $k$ ont les mêmes poids entrants, le même biais et le même poids de sortie : $w_j = w_k$, $b_j = b_k$ et $w^{(2)}_j = w^{(2)}_k$. Alors, après n'importe quel nombre de pas de descente de gradient, sur n'importe quels exemples, ces trois égalités sont toujours vraies.
+
+**Démonstration.** On raisonne par récurrence sur le numéro du pas $t$.
+
+*Initialisation.* Au pas $t = 0$, les trois égalités sont vraies par hypothèse.
+
+*Hérédité.* On suppose les trois égalités vraies au pas $t$, et on montre qu'elles restent vraies au pas $t + 1$. Prends un exemple $x$ quelconque.
+
+- Passe avant : $z_j = w_j \cdot x + b_j = w_k \cdot x + b_k = z_k$, donc $a_j = a_k$.
+- Le signal $\delta_{\text{sortie}}$ ne dépend que de la sortie du réseau : c'est le même nombre pour tous les neurones cachés.
+- Passe arrière : $\delta_j = w^{(2)}_j\,\delta_{\text{sortie}}\,\sigma'(z_j) = w^{(2)}_k\,\delta_{\text{sortie}}\,\sigma'(z_k) = \delta_k$.
+- Gradients : $\delta_j\,x = \delta_k\,x$ pour les poids entrants, $\delta_j = \delta_k$ pour les biais, et $\delta_{\text{sortie}}\,a_j = \delta_{\text{sortie}}\,a_k$ pour les poids de sortie.
+
+Les deux neurones reçoivent donc les mêmes gradients pour chaque exemple. Une moyenne sur un lot d'exemples de nombres égaux deux à deux donne encore des nombres égaux. Enfin, chaque paramètre est mis à jour par la même règle $\theta \leftarrow \theta - \eta\,g$, à partir de valeurs égales et de gradients égaux : les nouvelles valeurs sont égales. □
+
+**Ce que ça coûte.** Deux jumeaux font exactement le même travail. Ils contribuent à la sortie par $w^{(2)}_j\,a_j + w^{(2)}_k\,a_k = 2\,w^{(2)}_j\,a_j$ : c'est un seul neurone dont le poids de sortie serait doublé. Si tous les neurones cachés démarrent identiques, toute la couche se comporte comme un seul neurone, pour toujours.
+
+Et un seul neurone caché ne sait pas résoudre XOR. La sortie du réseau vaut $\sigma\big(c\,\sigma(u) + d\big)$ avec $u = w \cdot x + b$. Chaque étage est une fonction monotone de $u$, donc la sortie aussi : elle dépasse $\frac{1}{2}$ exactement d'un seul côté d'une droite $u = \text{constante}$. La frontière de décision est une droite, et le chapitre 4 a démontré qu'aucune droite ne sépare les deux classes de XOR.
+
+**Partir de zéro, c'est pire.** Si tous les poids valent zéro, les neurones cachés sont jumeaux, et en plus $w^{(2)}_j = 0$ annule leur signal d'erreur : au premier pas, la couche cachée ne bouge même pas. Seuls les poids de sortie avancent, tous de la même quantité. Au pas suivant, les jumeaux se mettent en mouvement, mais ensemble.
+
+Le remède est de tirer les poids de départ au hasard : deux neurones qui ne partent pas du même point ne reçoivent pas les mêmes gradients, et chacun peut se spécialiser. C'est la <Term slug="brisure-de-symetrie">brisure de symétrie</Term>. Les biais, eux, peuvent partir de zéro : dès que les poids diffèrent, la symétrie est déjà cassée.
+
+Lance le laboratoire. Il entraîne un réseau à deux neurones cachés sur les quatre points de XOR, en partant soit de deux jumeaux (tous les poids à $0{,}5$), soit de poids tirés au hasard entre $-1$ et $1$. Le carré montre les quatre points et la droite de chaque neurone caché.
+
+<InitializationLab client:visible locale="fr" />
+
+Trois choses à observer en jouant :
+
+- Au départ jumeaux, les deux droites restent superposées du premier au dernier pas, et l'écart entre les neurones affiche exactement zéro. La note se bloque vers $0{,}48$ : le réseau prédit $0$ pour $(0, 0)$ et environ $0{,}67$ pour les trois autres points, le mieux que puisse faire une seule droite qui isole $(0, 0)$.
+- Au départ aléatoire, les deux droites s'écartent et viennent encadrer la diagonale. La note tombe près de zéro en quelques centaines de pas : XOR est résolu.
+- Regarde le début de la course aléatoire : la note stagne un moment avant de plonger. C'est un plateau, comme au chapitre 9.
+
+## Acte 2 : la bonne échelle
+
+On sait qu'il faut des poids différents. Mais de quelle taille ? Pense à une chaîne d'amplificateurs, comme sur une sono de concert. Si chaque étage multiplie le volume par $1{,}1$, au bout de cinquante étages le son est $1{,}1^{50} \approx 117$ fois plus fort. S'il le multiplie par $0{,}9$, il est $0{,}9^{50} \approx 0{,}005$, près de deux cents fois plus faible. Un réseau profond est une chaîne de ce genre : chaque couche multiplie la taille du signal par un facteur qui dépend de ses poids. Pour que le signal traverse cinquante couches sans exploser ni s'éteindre, il faut que ce facteur vaille $1$.
+
+Trop petit, le signal s'éteint, et avec lui le gradient. Trop grand, il explose, et les pré-activations partent loin de zéro, dans la zone de <Term slug="saturation">saturation</Term> des sigmoïdes, où la pente est presque nulle : on retombe sur le vanishing gradient du chapitre 8. Il faut donc mesurer la taille d'un signal aléatoire. C'est le rôle de la variance.
+
+**Définition.** Pour une grandeur aléatoire $X$ de moyenne $\mathbb{E}[X]$, la <Term slug="variance">variance</Term> est la moyenne du carré de l'écart à la moyenne :
+
+$$
+\operatorname{Var}(X) = \mathbb{E}\Big[\big(X - \mathbb{E}[X]\big)^2\Big].
+$$
+
+Sa racine carrée est l'**écart-type**, qui a la même unité que $X$. Une grandeur est dite **centrée** si sa moyenne est nulle. On a besoin de trois propriétés.
+
+- **(P1) Une grandeur centrée a pour variance la moyenne de son carré** : si $\mathbb{E}[X] = 0$, alors $\operatorname{Var}(X) = \mathbb{E}[X^2]$. C'est la définition, avec $\mathbb{E}[X] = 0$.
+- **(P2) Changer d'échelle multiplie la variance par le carré** : $\operatorname{Var}(aX) = a^2\,\operatorname{Var}(X)$. En effet, $\mathbb{E}[aX] = a\,\mathbb{E}[X]$, donc l'écart à la moyenne est multiplié par $a$, et son carré par $a^2$.
+- **(P3) Indépendance et produit** : si $X$ et $Y$ sont indépendantes, $\mathbb{E}[XY] = \mathbb{E}[X]\,\mathbb{E}[Y]$. Pour des grandeurs à valeurs en nombre fini, la probabilité d'un couple est le produit des probabilités, donc $\mathbb{E}[XY] = \sum_{x,y} x\,y\,P(x)\,P(y) = \big(\sum_x x\,P(x)\big)\big(\sum_y y\,P(y)\big)$.
+
+**Lemme (variance d'une somme pondérée).** Soit $z = \sum_{i=1}^{n} w_i\,x_i$. On suppose que les poids $w_i$ sont centrés, de même variance $\operatorname{Var}(w)$, indépendants entre eux et indépendants des entrées, et que chaque entrée a le même carré moyen $\mathbb{E}[x_i^2] = \mathbb{E}[x^2]$. Alors $z$ est centrée et
+
+$$
+\operatorname{Var}(z) = n\,\operatorname{Var}(w)\,\mathbb{E}[x^2].
+$$
+
+**Démonstration.** D'abord, $\mathbb{E}[w_i\,x_i] = \mathbb{E}[w_i]\,\mathbb{E}[x_i] = 0$ par (P3), donc $z$ est centrée, et par (P1) sa variance est $\mathbb{E}[z^2]$. On développe le carré de la somme :
+
+$$
+z^2 = \sum_{i=1}^{n} \sum_{k=1}^{n} w_i\,w_k\,x_i\,x_k.
+$$
+
+On prend la moyenne terme à terme. Si $i \ne k$, le poids $w_i$ est indépendant de tout le reste du produit, donc $\mathbb{E}[w_i\,w_k\,x_i\,x_k] = \mathbb{E}[w_i]\,\mathbb{E}[w_k\,x_i\,x_k] = 0$. Il ne reste que les $n$ termes où $i = k$ :
+
+$$
+\mathbb{E}[w_i^2\,x_i^2] = \mathbb{E}[w_i^2]\,\mathbb{E}[x_i^2] = \operatorname{Var}(w)\,\mathbb{E}[x^2].
+$$
+
+La somme de ces $n$ termes égaux donne la formule. □
+
+Remarque bien ce que le lemme n'exige pas : les entrées n'ont pas besoin d'être centrées, ni indépendantes entre elles. Seuls les poids doivent l'être. Ce détail servira à l'acte 3.
+
+**Couche après couche.** Prends une activation qui se comporte comme l'identité près de zéro et qui est centrée, comme la <Term slug="tanh">tangente hyperbolique</Term> : $\tanh(z) \approx z$ pour $z$ petit. Alors l'entrée de la couche suivante a pour carré moyen à peu près la variance de la pré-activation précédente, et le lemme donne
+
+$$
+\operatorname{Var}\big(z^{(l)}\big) \approx n\,\operatorname{Var}(w)\,\operatorname{Var}\big(z^{(l-1)}\big).
+$$
+
+C'est exactement la chaîne d'amplificateurs, avec un facteur $n\,\operatorname{Var}(w)$ par couche. Au bout de $L$ couches, il est élevé à la puissance $L$. Pour qu'il vaille $1$, il faut
+
+$$
+\operatorname{Var}(w) = \frac{1}{n}.
+$$
+
+C'est la recommandation de LeCun et ses coauteurs (1998) : un écart-type de $\frac{1}{\sqrt{n}}$, où $n$ est le nombre d'entrées du neurone. Avec des poids tirés selon une loi normale de variance $1$ et $n = 100$ entrées, le facteur vaudrait $100$ par couche.
+
+**Le retour compte aussi.** Le même raisonnement s'applique à la passe arrière. Le signal d'erreur d'un neurone est une somme pondérée des signaux de la couche suivante, avec autant de termes que cette couche a de neurones, $n_{\text{sortie}}$. Pour que le gradient garde sa taille en remontant, il faudrait $n_{\text{sortie}}\,\operatorname{Var}(w) = 1$. Les deux exigences ne coïncident que si la couche a autant d'entrées que de sorties. Glorot et Bengio (2010) proposent un compromis, l'<Term slug="initialisation-xavier">initialisation de Xavier</Term> (du prénom de Glorot) :
+
+$$
+\operatorname{Var}(w) = \frac{2}{n_{\text{entrée}} + n_{\text{sortie}}}.
+$$
+
+Elle se lit : un sur la moyenne du nombre d'entrées et du nombre de sorties. Elle est souvent tirée selon une loi uniforme sur $[-a, a]$. Cette loi a pour variance $\frac{a^2}{3}$ (calcul de l'exercice 3), d'où $a = \sqrt{\frac{6}{n_{\text{entrée}} + n_{\text{sortie}}}}$.
+
+<Callout kind="note" title="Et la sigmoïde ?">
+Tout le raisonnement suppose une activation centrée. La sigmoïde ne l'est pas : $\sigma(0) = \frac{1}{2}$, donc ses sorties sont toutes positives, autour de $0{,}5$. En plus, sa pente ne dépasse jamais $\frac{1}{4}$, si bien que même idéalement réglé, le signal d'erreur est divisé par au moins quatre à chaque couche remontée. Glorot et Bengio (2010) ont observé que les réseaux profonds de sigmoïdes s'entraînent mal, et nettement mieux avec la tangente hyperbolique. C'est une des raisons pour lesquelles la sigmoïde a quitté les couches cachées, au profit de tanh puis de ReLU.
+
+</Callout>
+
+## Acte 3 : la ReLU et le facteur deux
+
+La ReLU, $\operatorname{ReLU}(z) = \max(0, z)$, est l'activation par défaut des réseaux profonds. Elle n'est pas centrée, et elle n'est pas l'identité près de zéro : elle efface toute la moitié négative. Le raisonnement de l'acte 2 ne s'applique pas tel quel. Mais le lemme, lui, s'applique, puisqu'il n'exige rien des entrées. Il suffit de calculer leur carré moyen.
+
+**Lemme (le demi de la ReLU).** Si $z$ est symétrique, c'est-à-dire si $z$ et $-z$ ont la même loi, alors
+
+$$
+\mathbb{E}\big[\operatorname{ReLU}(z)^2\big] = \frac{1}{2}\,\operatorname{Var}(z).
+$$
+
+**Démonstration.** Une grandeur symétrique est centrée, donc $\operatorname{Var}(z) = \mathbb{E}[z^2]$ par (P1). On sépare $z^2$ selon le signe de $z$ :
+
+$$
+\mathbb{E}[z^2] = \mathbb{E}\big[z^2 \text{ quand } z > 0\big] + \mathbb{E}\big[z^2 \text{ quand } z < 0\big].
+$$
+
+Ici, « $z^2$ quand $z > 0$ » désigne la grandeur qui vaut $z^2$ si $z > 0$ et $0$ sinon. Par symétrie, remplacer $z$ par $-z$ ne change pas les moyennes, et échange les deux morceaux : ils sont donc égaux, et chacun vaut $\frac{1}{2}\,\mathbb{E}[z^2]$. Or $\operatorname{ReLU}(z)^2$ vaut $z^2$ quand $z > 0$ et $0$ sinon : c'est exactement le premier morceau. □
+
+L'hypothèse de symétrie est vérifiée dans notre réseau : une pré-activation $\sum_i w_i\,x_i$ dont les poids sont tirés selon une loi symétrique est elle-même symétrique, puisque changer le signe de tous les poids ne change pas leur loi, et change le signe de la somme.
+
+**Le facteur deux.** On combine les deux lemmes. L'entrée de la couche $l$ est la ReLU de la pré-activation de la couche $l - 1$ :
+
+$$
+\operatorname{Var}\big(z^{(l)}\big) = n\,\operatorname{Var}(w)\cdot\frac{1}{2}\,\operatorname{Var}\big(z^{(l-1)}\big).
+$$
+
+Cette fois l'égalité est exacte, sans approximation. Pour que le facteur $\frac{1}{2}\,n\,\operatorname{Var}(w)$ vaille $1$, il faut
+
+$$
+\operatorname{Var}(w) = \frac{2}{n_{\text{entrée}}}.
+$$
+
+C'est l'<Term slug="initialisation-he">initialisation de He</Term> (He et al., 2015). Le facteur $2$ compense exactement la moitié du signal que la ReLU efface. He et ses coauteurs montrent aussi que régler la passe arrière donne $\frac{2}{n_{\text{sortie}}}$, et que l'un ou l'autre choix suffit en pratique.
+
+**Ce que ça change, en chiffres.** Prends dix couches ReLU de $64$ neurones. Avec des poids de variance $1$, le facteur par couche vaut $\frac{1}{2} \cdot 64 = 32$ sur la variance, soit $\sqrt{32} \approx 5{,}7$ sur l'écart-type : le signal est multiplié par environ $5{,}7^{9}$, des millions, entre la première et la dixième couche. Avec Xavier, $\operatorname{Var}(w) = \frac{1}{64}$, le facteur vaut $\frac{1}{2}$ : l'écart-type est divisé par $\sqrt{2}$ à chaque couche. Avec He, il vaut exactement $1$.
+
+Passe le laboratoire en mode profondeur. Il tire un réseau de dix couches de $64$ neurones, lui présente $128$ exemples aléatoires, et affiche couche par couche l'écart-type des activations et la taille du gradient des poids, sur une échelle logarithmique.
+
+<InitializationLab client:visible locale="fr" defaultMode="depth" />
+
+Trois choses à observer en jouant :
+
+- En ReLU avec des poids de variance $1$, les barres d'écart-type grimpent d'un facteur constant à chaque couche : c'est une droite sur l'échelle logarithmique, la signature d'une explosion exponentielle.
+- En ReLU avec Xavier, elles descendent régulièrement, et avec He elles restent à plat. Le facteur deux se voit à l'œil.
+- En tanh avec des poids d'écart-type $0{,}01$, le signal s'éteint en trois couches, et le gradient avec lui : c'est le cas « trop petit ».
+
+## Acte 4 : la normalisation par lot
+
+Une bonne initialisation règle l'échelle au départ. Mais l'entraînement modifie les poids, et à chaque pas, la distribution des entrées de chaque couche se déplace. Une couche profonde doit apprendre sur un terrain qui bouge sans cesse sous ses pieds. Ioffe et Szegedy (2015) ont proposé de remettre l'échelle d'aplomb à chaque couche, à chaque pas.
+
+Pense à un conseil de classe qui harmonise les notes de plusieurs correcteurs. Un correcteur sévère qui note tout à moitié, un autre généreux qui ajoute trois points partout : après harmonisation, chaque copie retrouve sa place relative, quel que soit le correcteur. La <Term slug="normalisation-par-lot">normalisation par lot</Term> (batch normalization) fait cela pour chaque neurone.
+
+**La définition.** On fixe un neurone, et on regarde ses $m$ pré-activations $z_1, \ldots, z_m$ sur les $m$ exemples d'un mini-batch. On calcule leur moyenne et leur variance :
+
+$$
+\mu = \frac{1}{m}\sum_{i=1}^{m} z_i, \qquad s^2 = \frac{1}{m}\sum_{i=1}^{m} (z_i - \mu)^2.
+$$
+
+On les recentre et on les réduit, puis on applique deux paramètres appris, $\gamma$ et $\beta$ :
+
+$$
+\hat z_i = \frac{z_i - \mu}{\sqrt{s^2 + \varepsilon}}, \qquad y_i = \gamma\,\hat z_i + \beta.
+$$
+
+Le petit nombre $\varepsilon$, de l'ordre de $10^{-5}$, évite de diviser par zéro si toutes les valeurs du lot sont égales. C'est $y_i$, et non $z_i$, qui passe ensuite dans l'activation. Les paramètres $\gamma$ et $\beta$ sont appris par descente de gradient, comme les poids, et le gradient traverse aussi le calcul de $\mu$ et de $s^2$.
+
+**Proposition 1 (moyenne nulle, variance presque un).** Sur le lot, les $\hat z_i$ ont une moyenne nulle et une variance $\frac{s^2}{s^2 + \varepsilon}$.
+
+**Démonstration.** La somme des écarts à la moyenne est nulle :
+
+$$
+\sum_{i=1}^{m} (z_i - \mu) = \sum_{i=1}^{m} z_i - m\,\mu = m\,\mu - m\,\mu = 0.
+$$
+
+En divisant par $\sqrt{s^2 + \varepsilon}$, la somme des $\hat z_i$ reste nulle, donc leur moyenne aussi. Leur variance est alors la moyenne de leurs carrés :
+
+$$
+\frac{1}{m}\sum_{i=1}^{m} \hat z_i^2 = \frac{1}{s^2 + \varepsilon}\cdot\frac{1}{m}\sum_{i=1}^{m} (z_i - \mu)^2 = \frac{s^2}{s^2 + \varepsilon}. \qquad \square
+$$
+
+Dès que $s^2$ est grand devant $\varepsilon$, cette variance vaut presque exactement $1$.
+
+**Proposition 2 (invariance d'échelle).** On néglige $\varepsilon$. Si on remplace chaque $z_i$ par $a\,z_i + c$, avec $a > 0$, les valeurs normalisées $\hat z_i$ ne changent pas.
+
+**Démonstration.** La nouvelle moyenne vaut $a\,\mu + c$. Le nouvel écart à la moyenne vaut donc
+
+$$
+(a\,z_i + c) - (a\,\mu + c) = a\,(z_i - \mu).
+$$
+
+Chaque écart est multiplié par $a$, donc la nouvelle variance vaut $a^2\,s^2$, et le nouvel écart-type $a\,s$, puisque $a > 0$. On divise :
+
+$$
+\frac{a\,(z_i - \mu)}{a\,s} = \frac{z_i - \mu}{s} = \hat z_i. \qquad \square
+$$
+
+**Comment le lire.** Multiplier tous les poids entrants d'un neurone par $a > 0$ multiplie sa pré-activation par $a$ : après la normalisation, plus rien ne se voit. Avant une normalisation par lot, l'échelle des poids n'a donc plus d'importance pour la passe avant. Et le biais du neurone, qui ajoute la même constante $c$ à tous les $z_i$, est effacé lui aussi : c'est $\beta$ qui prend son rôle. En pratique, on supprime le biais des couches suivies d'une normalisation par lot.
+
+**Proposition 3 (rien n'est perdu).** Si on choisit $\gamma = \sqrt{s^2 + \varepsilon}$ et $\beta = \mu$, alors $y_i = z_i$ pour tout $i$.
+
+**Démonstration.** On remplace :
+
+$$
+y_i = \sqrt{s^2 + \varepsilon}\cdot\frac{z_i - \mu}{\sqrt{s^2 + \varepsilon}} + \mu = z_i - \mu + \mu = z_i. \qquad \square
+$$
+
+**Comment le lire.** Normaliser de force pourrait priver une couche de ce qu'elle sait faire : forcer les entrées d'une sigmoïde à rester près de zéro la cantonnerait à sa partie presque linéaire. Grâce à $\gamma$ et $\beta$, la couche peut apprendre à défaire la normalisation si c'est ce qui fait baisser la note (Ioffe et Szegedy, 2015). La normalisation ne retire donc aucun pouvoir expressif, elle change seulement la façon dont les paramètres sont rangés.
+
+**Au moment de prédire.** Pour un seul exemple, il n'y a pas de lot. Pendant l'entraînement, on tient donc à jour une moyenne glissante des $\mu$ et des $s^2$ rencontrés, et c'est elle qu'on utilise à la prédiction. Ainsi, la réponse du réseau pour un exemple ne dépend pas des autres exemples présentés avec lui.
+
+Rebascule le laboratoire en mode profondeur, normalisation par lot activée, et refais les essais de l'acte 3.
+
+<InitializationLab client:visible locale="fr" defaultMode="depth" defaultBatchNormalized />
+
+Trois choses à observer en jouant :
+
+- Poids de variance $1$ ou d'écart-type $0{,}01$ : les barres d'écart-type sont identiques. C'est la proposition 2, à l'écran.
+- Les barres de gradient retrouvent une taille raisonnable, entre $0{,}5$ et $3$ environ. Sans normalisation, en ReLU, elles valaient des dizaines de millions avec des poids de variance $1$.
+- Avec la normalisation, le choix du schéma d'initialisation ne compte presque plus. Il redevient important dès qu'on la retire.
+
+<Callout kind="note" title="Pourquoi ça marche : un fait et une explication discutée">
+**Le fait** est solide : la normalisation par lot accélère beaucoup l'entraînement et tolère des taux d'apprentissage plus grands. Sur leur réseau de classification d'images, Ioffe et Szegedy (2015) atteignent la même précision avec quatorze fois moins de pas.
+
+**L'explication** est discutée. Ioffe et Szegedy l'attribuaient à la réduction du « décalage de covariance interne », le terrain qui bouge sous les pieds de chaque couche. Santurkar, Tsipras, Ilyas et Madry (2018) ont testé cette hypothèse : en ajoutant volontairement du bruit après chaque normalisation, pour faire bouger le terrain, l'entraînement reste aussi rapide. Ils proposent une autre explication : la normalisation rend la surface de coût plus lisse, avec une note et un gradient qui varient moins brutalement, ce qui autorise des pas plus grands. La question n'est pas entièrement tranchée.
+
+Une variante très utilisée, la normalisation par couche (Ba, Kiros et Hinton, 2016), normalise sur les neurones d'une couche pour chaque exemple, au lieu de normaliser sur les exemples du lot pour chaque neurone. Elle ne dépend pas de la taille du lot, et c'est celle des transformers.
+
+</Callout>
+
+## Exercices
+
+Prends de quoi écrire. Les corrigés sont volontairement détaillés, ligne par ligne.
+
+**Exercice 1.** Reprends le réseau jouet du chapitre 8, mais avec deux neurones cachés jumeaux : chacun a les poids entrants $(0{,}1\,;\,0{,}2)$ et un biais nul, et chacun est relié à la sortie par le poids $0{,}5$. Le biais de sortie vaut $0{,}1$. L'entrée est $x = (1\,;\,2)$, la cible $y = 1$, la note $L = (a - y)^2$. On donne $\sigma(0{,}5) = 0{,}622$ et $\sigma(0{,}722) = 0{,}673$. Fais un pas de descente avec $\eta = 0{,}5$ sur les poids entrants, et vérifie que les deux neurones restent jumeaux.
+
+<Callout kind="tip" title="Corrigé de l'exercice 1 : les jumeaux à la main">
+**Étape 1.** Passe avant dans chaque neurone caché.
+
+$$
+z_1 = z_2 = 0{,}1 \cdot 1 + 0{,}2 \cdot 2 = 0{,}5, \qquad a_1 = a_2 = \sigma(0{,}5) = 0{,}622.
+$$
+
+**Étape 2.** Passe avant dans la sortie.
+
+$$
+z^{(2)} = 0{,}5 \cdot 0{,}622 + 0{,}5 \cdot 0{,}622 + 0{,}1 = 0{,}722, \qquad a^{(2)} = 0{,}673.
+$$
+
+**Étape 3.** Signal d'erreur de sortie, avec la formule du chapitre 8.
+
+$$
+\delta_{\text{sortie}} = 2\,(0{,}673 - 1) \cdot 0{,}673 \cdot (1 - 0{,}673) \approx -0{,}144.
+$$
+
+**Étape 4.** Pente de la sigmoïde cachée.
+
+$$
+\sigma'(0{,}5) = 0{,}622 \cdot (1 - 0{,}622) = 0{,}622 \cdot 0{,}378 \approx 0{,}235.
+$$
+
+**Étape 5.** Signal d'erreur de chaque neurone caché.
+
+$$
+\delta_1 = \delta_2 = 0{,}5 \cdot (-0{,}144) \cdot 0{,}235 \approx -0{,}0169.
+$$
+
+**Étape 6.** Gradients des poids entrants : on multiplie par chaque entrée.
+
+$$
+\frac{\partial L}{\partial w_{j1}} = -0{,}0169 \cdot 1 = -0{,}0169, \qquad \frac{\partial L}{\partial w_{j2}} = -0{,}0169 \cdot 2 = -0{,}0338.
+$$
+
+**Étape 7.** Mise à jour, identique pour $j = 1$ et $j = 2$.
+
+$$
+w_{j1} \leftarrow 0{,}1 + 0{,}5 \cdot 0{,}0169 \approx 0{,}108, \qquad w_{j2} \leftarrow 0{,}2 + 0{,}5 \cdot 0{,}0338 \approx 0{,}217.
+$$
+
+**Résultat.** Les deux neurones passent ensemble de $(0{,}1\,;\,0{,}2)$ à environ $(0{,}108\,;\,0{,}217)$. Leurs poids de sortie reçoivent aussi le même gradient, $\delta_{\text{sortie}} \cdot 0{,}622 \approx -0{,}090$. Ils sont toujours jumeaux, comme le prédit le théorème.
+
+</Callout>
+
+**Exercice 2.** Un neurone a $n = 100$ entrées de carré moyen $\mathbb{E}[x^2] = 1$. Calcule l'écart-type de sa pré-activation si ses poids ont une variance $1$, puis une variance $\frac{1}{100}$. Dans le premier cas, que vaut la pente d'une sigmoïde en $z = 10$, une valeur typique ? On donne $\sigma(10) \approx 0{,}999955$.
+
+<Callout kind="tip" title="Corrigé de l'exercice 2 : une pré-activation trop grande">
+**Étape 1.** Applique le lemme avec $\operatorname{Var}(w) = 1$.
+
+$$
+\operatorname{Var}(z) = 100 \cdot 1 \cdot 1 = 100.
+$$
+
+**Étape 2.** Prends la racine carrée.
+
+$$
+\sqrt{100} = 10.
+$$
+
+**Étape 3.** Calcule la pente en $z = 10$.
+
+$$
+\sigma'(10) = \sigma(10)\,\big(1 - \sigma(10)\big) \approx 0{,}999955 \cdot 0{,}000045 \approx 4{,}5 \cdot 10^{-5}.
+$$
+
+**Étape 4.** Compare avec la pente maximale, $\sigma'(0) = 0{,}25$.
+
+$$
+\frac{0{,}25}{4{,}5 \cdot 10^{-5}} \approx 5\,500.
+$$
+
+**Étape 5.** Applique le lemme avec $\operatorname{Var}(w) = \frac{1}{100}$.
+
+$$
+\operatorname{Var}(z) = 100 \cdot \frac{1}{100} \cdot 1 = 1, \qquad \text{écart-type } 1.
+$$
+
+**Résultat.** Avec des poids de variance $1$, la pré-activation a un écart-type de $10$ : la sigmoïde sature, et le signal d'erreur qui la traverse est divisé par environ $5\,500$ par rapport au meilleur cas. Avec une variance $\frac{1}{n}$, l'écart-type vaut $1$, en plein dans la zone où la pente est utile.
+
+</Callout>
+
+**Exercice 3.** Une couche a $256$ entrées et $128$ sorties. Calcule la variance de Xavier, puis la borne $a$ de la version uniforme, sachant qu'une loi uniforme sur $[-a, a]$ a pour densité $\frac{1}{2a}$. Calcule enfin la variance de He.
+
+<Callout kind="tip" title="Corrigé de l'exercice 3 : Xavier et He sur une couche">
+**Étape 1.** Variance de Xavier.
+
+$$
+\operatorname{Var}(w) = \frac{2}{256 + 128} = \frac{2}{384} = \frac{1}{192} \approx 0{,}0052.
+$$
+
+**Étape 2.** Variance d'une loi uniforme sur $[-a, a]$. Elle est centrée par symétrie, donc sa variance est la moyenne de son carré.
+
+$$
+\mathbb{E}[w^2] = \int_{-a}^{a} \frac{t^2}{2a}\,dt = \frac{1}{2a}\cdot\frac{2a^3}{3} = \frac{a^2}{3}.
+$$
+
+**Étape 3.** On égale les deux variances.
+
+$$
+\frac{a^2}{3} = \frac{2}{384}, \qquad a^2 = \frac{6}{384} = \frac{1}{64}.
+$$
+
+**Étape 4.** On prend la racine carrée.
+
+$$
+a = \frac{1}{8} = 0{,}125.
+$$
+
+**Étape 5.** Variance de He, qui ne regarde que les entrées.
+
+$$
+\operatorname{Var}(w) = \frac{2}{256} = \frac{1}{128} \approx 0{,}0078.
+$$
+
+**Résultat.** Xavier tire les poids uniformément dans $[-0{,}125\,;\,0{,}125]$, soit une variance d'environ $0{,}0052$. He demande une variance d'environ $0{,}0078$, une fois et demie plus grande, pour compenser la ReLU.
+
+</Callout>
+
+**Exercice 4.** Un réseau empile des couches ReLU qui ont toutes $n$ entrées et $n$ sorties, initialisées avec Xavier. Par combien l'écart-type de la pré-activation est-il divisé après dix couches supplémentaires ? Et avec He ?
+
+<Callout kind="tip" title="Corrigé de l'exercice 4 : dix couches ReLU">
+**Étape 1.** Avec $n_{\text{entrée}} = n_{\text{sortie}} = n$, la variance de Xavier vaut
+
+$$
+\operatorname{Var}(w) = \frac{2}{n + n} = \frac{1}{n}.
+$$
+
+**Étape 2.** Facteur sur la variance à chaque couche, d'après le lemme de la ReLU.
+
+$$
+\frac{1}{2} \cdot n \cdot \frac{1}{n} = \frac{1}{2}.
+$$
+
+**Étape 3.** Après dix couches, ce facteur est appliqué dix fois.
+
+$$
+\Big(\frac{1}{2}\Big)^{10} = \frac{1}{1\,024}.
+$$
+
+**Étape 4.** L'écart-type est la racine carrée de la variance.
+
+$$
+\sqrt{\frac{1}{1\,024}} = \frac{1}{32}.
+$$
+
+**Étape 5.** Avec He, $\operatorname{Var}(w) = \frac{2}{n}$, et le facteur vaut
+
+$$
+\frac{1}{2} \cdot n \cdot \frac{2}{n} = 1.
+$$
+
+**Résultat.** Avec Xavier, l'écart-type est divisé par $32$ en dix couches, et par plus d'un million en quarante. Avec He, il ne bouge pas.
+
+</Callout>
+
+**Exercice 5.** Sur un mini-batch, un neurone a les pré-activations $(2\,;\,4\,;\,6\,;\,8)$. Normalise-les en négligeant $\varepsilon$, puis applique $\gamma = 2$ et $\beta = 1$. Vérifie enfin qu'en doublant toutes les pré-activations, les valeurs normalisées ne changent pas.
+
+<Callout kind="tip" title="Corrigé de l'exercice 5 : une normalisation par lot à la main">
+**Étape 1.** Moyenne du lot.
+
+$$
+\mu = \frac{2 + 4 + 6 + 8}{4} = \frac{20}{4} = 5.
+$$
+
+**Étape 2.** Écarts à la moyenne : $-3$, $-1$, $1$, $3$. Leurs carrés : $9$, $1$, $1$, $9$. Variance du lot :
+
+$$
+s^2 = \frac{9 + 1 + 1 + 9}{4} = \frac{20}{4} = 5.
+$$
+
+**Étape 3.** Écart-type.
+
+$$
+s = \sqrt{5} \approx 2{,}236.
+$$
+
+**Étape 4.** Valeurs normalisées : on divise chaque écart par $s$.
+
+$$
+\hat z \approx (-1{,}342\,;\,-0{,}447\,;\,0{,}447\,;\,1{,}342).
+$$
+
+**Étape 5.** On applique $\gamma = 2$ et $\beta = 1$. Par exemple, pour la première valeur :
+
+$$
+2 \cdot (-1{,}342) + 1 = -2{,}683 + 1 = -1{,}683.
+$$
+
+De même pour les autres :
+
+$$
+y \approx (-1{,}683\,;\,0{,}106\,;\,1{,}894\,;\,3{,}683).
+$$
+
+**Étape 6.** On double le lot : $(4\,;\,8\,;\,12\,;\,16)$. Sa moyenne vaut $10$, ses écarts $-6$, $-2$, $2$, $6$, sa variance
+
+$$
+\frac{36 + 4 + 4 + 36}{4} = 20, \qquad \text{écart-type } \sqrt{20} = 2\sqrt{5}.
+$$
+
+**Étape 7.** Première valeur normalisée :
+
+$$
+\frac{-6}{2\sqrt{5}} = \frac{-3}{\sqrt{5}} \approx -1{,}342.
+$$
+
+**Résultat.** Les valeurs normalisées sont $(-1{,}342\,;\,-0{,}447\,;\,0{,}447\,;\,1{,}342)$, puis $(-1{,}683\,;\,0{,}106\,;\,1{,}894\,;\,3{,}683)$ après $\gamma$ et $\beta$. Doubler le lot ne change rien aux valeurs normalisées : c'est l'invariance d'échelle.
+
+</Callout>
+
+## En une phrase
+
+Des poids de départ identiques restent identiques pour toujours, donc on les tire au hasard, avec une variance $\frac{2}{n_{\text{entrée}} + n_{\text{sortie}}}$ (Xavier) ou $\frac{2}{n_{\text{entrée}}}$ pour la ReLU (He) afin que le signal ne s'éteigne ni n'explose d'une couche à l'autre, et la normalisation par lot maintient cette échelle pendant tout l'entraînement en rendant chaque couche insensible à l'échelle de ses poids.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Deux neurones cachés démarrent avec exactement les mêmes poids entrants, le même biais et le même poids de sortie. Que se passe-t-il pendant l’entraînement ?',
+      options: [
+        'Le bruit des mini-batchs finit par les séparer',
+        'Ils reçoivent toujours les mêmes gradients et restent identiques pour toujours',
+        'Le plus utile des deux prend le dessus',
+        'Ils convergent vers des poids opposés',
+      ],
+      answer: 1,
+      explain:
+        'Par récurrence : mêmes poids, donc mêmes activations, mêmes signaux d’erreur, mêmes gradients, et la même mise à jour. Un mini-batch ne change rien, car les deux neurones voient les mêmes exemples.',
+    },
+    {
+      q: 'Des poids indépendants et centrés de variance Var(w) reçoivent n entrées de carré moyen E[x²]. Que vaut la variance de la pré-activation ?',
+      options: ['Var(w) · E[x²]', 'n · Var(w) · E[x²]', 'n² · Var(w) · E[x²]', 'Var(w) / n'],
+      answer: 1,
+      explain:
+        'En développant le carré de la somme, tous les termes croisés ont une moyenne nulle car les poids sont centrés et indépendants. Il reste n termes égaux à Var(w) · E[x²].',
+    },
+    {
+      q: 'D’où vient le facteur 2 de l’initialisation de He, Var(w) = 2/n ?',
+      options: [
+        'De la moyenne entre entrées et sorties',
+        'De la ReLU, qui annule la moitié négative et divise par deux le carré moyen du signal',
+        'Du biais, qui double la variance',
+        'De la dérivée de la sigmoïde',
+      ],
+      answer: 1,
+      explain:
+        'Pour une pré-activation symétrique, E[ReLU(z)²] = ½ Var(z). Le facteur 2 dans les poids compense exactement ce demi.',
+    },
+    {
+      q: 'On multiplie par 10 tous les poids entrants d’un neurone suivi d’une normalisation par lot. Que deviennent ses valeurs normalisées ?',
+      options: [
+        'Elles sont multipliées par 10',
+        'Elles sont multipliées par 100',
+        'Elles ne changent pas, aux effets de ε près',
+        'Elles deviennent toutes nulles',
+      ],
+      answer: 2,
+      explain:
+        'La moyenne et l’écart-type du lot sont multipliés par 10, et la normalisation divise l’un par l’autre : c’est l’invariance d’échelle.',
+    },
+    {
+      q: 'À quoi servent les paramètres γ et β de la normalisation par lot ?',
+      options: [
+        'À éviter une division par zéro',
+        'À permettre à la couche de défaire la normalisation si c’est utile, donc à ne perdre aucun pouvoir expressif',
+        'À calculer la moyenne glissante',
+        'À remplacer le taux d’apprentissage',
+      ],
+      answer: 1,
+      explain:
+        'Avec γ égal à l’écart-type du lot et β égal à sa moyenne, la sortie redevient exactement la pré-activation d’origine. La division par zéro, c’est le rôle de ε.',
+    },
+  ]}
+  submitLabel="Valider"
+  resetLabel="Recommencer"
+  scoreLabel="Score"
+/>
+
+## Vers le chapitre 12
+
+Le réseau part maintenant du bon point, à la bonne échelle, et la normalisation par lot l'y maintient. Mais tous ses poids avancent encore au même rythme, celui d'un unique taux d'apprentissage $\eta$. Or le chapitre 9 a montré le piège de la ravine. Prends une note $L = 100\,w_1^2 + w_2^2$, raide selon $w_1$ et plate selon $w_2$. Pour ne pas diverger dans la direction raide, il faut $\eta < \frac{1}{100}$. Avec $\eta = 0{,}009$, le facteur de la direction raide vaut $1 - 2 \cdot 0{,}009 \cdot 100 = -0{,}8$ : le poids change de signe à chaque pas, la descente zigzague d'un bord à l'autre. Celui de la direction plate vaut $1 - 2 \cdot 0{,}009 \cdot 1 = 0{,}982$ : il faut environ $250$ pas pour réduire l'écart de $99\,\%$. Un seul pas pour tout le monde est trop grand pour l'une et trop petit pour l'autre. Le chapitre 12 apporte deux idées : donner de l'inertie à la descente pour amortir le zigzag, c'est le momentum, et donner à chaque poids son propre pas, c'est RMSprop puis Adam.
+
+## Sources
+
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). « Learning representations by back-propagating errors. » _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Bengio, Y., Simard, P. & Frasconi, P. (1994). « Learning long-term dependencies with gradient descent is difficult. » _IEEE Transactions on Neural Networks_ 5(2), 157-166. [DOI 10.1109/72.279181](https://doi.org/10.1109/72.279181)
+- LeCun, Y., Bottou, L., Orr, G. B. & Müller, K.-R. (1998). « Efficient BackProp. » In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 9-50. [DOI 10.1007/3-540-49430-8_2](https://doi.org/10.1007/3-540-49430-8_2)
+- Glorot, X. & Bengio, Y. (2010). « Understanding the difficulty of training deep feedforward neural networks. » _AISTATS 2010_, PMLR 9, 249-256. [proceedings.mlr.press](https://proceedings.mlr.press/v9/glorot10a.html)
+- He, K., Zhang, X., Ren, S. & Sun, J. (2015). « Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification. » _ICCV 2015_, 1026-1034. [DOI 10.1109/ICCV.2015.123](https://doi.org/10.1109/ICCV.2015.123)
+- Ioffe, S. & Szegedy, C. (2015). « Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift. » _ICML 2015_, PMLR 37, 448-456. [arXiv:1502.03167](https://arxiv.org/abs/1502.03167)
+- Ba, J. L., Kiros, J. R. & Hinton, G. E. (2016). « Layer Normalization. » [arXiv:1607.06450](https://arxiv.org/abs/1607.06450)
+- Santurkar, S., Tsipras, D., Ilyas, A. & Madry, A. (2018). « How Does Batch Normalization Help Optimization? » _NeurIPS 2018_. [arXiv:1805.11604](https://arxiv.org/abs/1805.11604)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapitre 8, en particulier les sections 8.4 (initialisation des paramètres) et 8.7 (stratégies d'optimisation, dont la normalisation par lot). [deeplearningbook.org](https://www.deeplearningbook.org)
