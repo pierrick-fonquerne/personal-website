@@ -17,7 +17,7 @@ papers:
   - title: 'Misalignment of Low-Loss Regions Causes Grokking'
     authors: 'Tian, Al-Ars, Kitsak & Hofstee (2026)'
     href: 'https://arxiv.org/abs/2610.00620'
-published: false
+published: true
 fr:
   title: 'Généralisation tardive : quand le réseau comprend longtemps après avoir appris par cœur'
   tagline: "Le grokking, ou comment un réseau passe d'une mémorisation parfaite à une généralisation soudaine, et ce que ça dit de nos jeux de données."

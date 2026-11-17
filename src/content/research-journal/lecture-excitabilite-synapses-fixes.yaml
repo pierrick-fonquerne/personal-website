@@ -7,4 +7,4 @@ title:
 excerpt:
   fr: "Un réseau aux connexions figées apprend des dizaines de tâches en ne réglant qu'un biais par neurone : ce que j'en retiens et ce que je n'achète pas."
   en: "A network with frozen connections learns dozens of tasks by tuning a single bias per neuron: what I take from it and what I don't buy."
-published: false
+published: true
