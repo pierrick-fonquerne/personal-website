@@ -214,5 +214,101 @@
   "en/neural-networks-foundations/10-regularization": {
     "url": "/audio/en/neural-networks-foundations/10-regularization.mp3",
     "chars": 11058
+  },
+  "fr/research-journal/la-memoire-comme-paysage": {
+    "url": "/audio/fr/research-journal/la-memoire-comme-paysage.mp3",
+    "chars": 4285
+  },
+  "fr/research-journal/lecture-apprendre-sans-reentrainer": {
+    "url": "/audio/fr/research-journal/lecture-apprendre-sans-reentrainer.mp3",
+    "chars": 3260
+  },
+  "fr/research-journal/lecture-code-precoce-snn": {
+    "url": "/audio/fr/research-journal/lecture-code-precoce-snn.mp3",
+    "chars": 3114
+  },
+  "fr/research-journal/lecture-cout-memoire-longue": {
+    "url": "/audio/fr/research-journal/lecture-cout-memoire-longue.mp3",
+    "chars": 3115
+  },
+  "fr/research-journal/lecture-excitabilite-synapses-fixes": {
+    "url": "/audio/fr/research-journal/lecture-excitabilite-synapses-fixes.mp3",
+    "chars": 2812
+  },
+  "fr/research-journal/lecture-grokking-decoupe-donnees": {
+    "url": "/audio/fr/research-journal/lecture-grokking-decoupe-donnees.mp3",
+    "chars": 2912
+  },
+  "fr/research-journal/lecture-motifs-hubs-snn": {
+    "url": "/audio/fr/research-journal/lecture-motifs-hubs-snn.mp3",
+    "chars": 3459
+  },
+  "fr/research-journal/lecture-neuroevolution-continue": {
+    "url": "/audio/fr/research-journal/lecture-neuroevolution-continue.mp3",
+    "chars": 2980
+  },
+  "fr/research-journal/lecture-neuromodulation-types-neurones": {
+    "url": "/audio/fr/research-journal/lecture-neuromodulation-types-neurones.mp3",
+    "chars": 3277
+  },
+  "fr/research-journal/lecture-rejeu-neurones-silencieux": {
+    "url": "/audio/fr/research-journal/lecture-rejeu-neurones-silencieux.mp3",
+    "chars": 2992
+  },
+  "fr/research-journal/pourquoi-un-seul-neurone": {
+    "url": "/audio/fr/research-journal/pourquoi-un-seul-neurone.mp3",
+    "chars": 2216
+  },
+  "en/research-journal/la-memoire-comme-paysage": {
+    "url": "/audio/en/research-journal/la-memoire-comme-paysage.mp3",
+    "chars": 3835
+  },
+  "en/research-journal/lecture-apprendre-sans-reentrainer": {
+    "url": "/audio/en/research-journal/lecture-apprendre-sans-reentrainer.mp3",
+    "chars": 2896
+  },
+  "en/research-journal/lecture-code-precoce-snn": {
+    "url": "/audio/en/research-journal/lecture-code-precoce-snn.mp3",
+    "chars": 2739
+  },
+  "en/research-journal/lecture-cout-memoire-longue": {
+    "url": "/audio/en/research-journal/lecture-cout-memoire-longue.mp3",
+    "chars": 2829
+  },
+  "en/research-journal/lecture-excitabilite-synapses-fixes": {
+    "url": "/audio/en/research-journal/lecture-excitabilite-synapses-fixes.mp3",
+    "chars": 2470
+  },
+  "en/research-journal/lecture-grokking-decoupe-donnees": {
+    "url": "/audio/en/research-journal/lecture-grokking-decoupe-donnees.mp3",
+    "chars": 2623
+  },
+  "en/research-journal/lecture-motifs-hubs-snn": {
+    "url": "/audio/en/research-journal/lecture-motifs-hubs-snn.mp3",
+    "chars": 3312
+  },
+  "en/research-journal/lecture-neuroevolution-continue": {
+    "url": "/audio/en/research-journal/lecture-neuroevolution-continue.mp3",
+    "chars": 2777
+  },
+  "en/research-journal/lecture-neuromodulation-types-neurones": {
+    "url": "/audio/en/research-journal/lecture-neuromodulation-types-neurones.mp3",
+    "chars": 3052
+  },
+  "en/research-journal/lecture-rejeu-neurones-silencieux": {
+    "url": "/audio/en/research-journal/lecture-rejeu-neurones-silencieux.mp3",
+    "chars": 2820
+  },
+  "en/research-journal/pourquoi-un-seul-neurone": {
+    "url": "/audio/en/research-journal/pourquoi-un-seul-neurone.mp3",
+    "chars": 2129
+  },
+  "fr/research/generalisation-tardive": {
+    "url": "/audio/fr/research/generalisation-tardive.mp3",
+    "chars": 3637
+  },
+  "en/research/generalisation-tardive": {
+    "url": "/audio/en/research/generalisation-tardive.mp3",
+    "chars": 3307
   }
 }
