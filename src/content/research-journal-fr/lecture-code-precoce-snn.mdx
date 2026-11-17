@@ -1,0 +1,23 @@
+---
+slug: lecture-code-precoce-snn
+---
+
+J'ai lu « Multi-Depth Temporal Fusion for Feedforward, Locally Trained Spiking Neural Networks » d'Attar, Cicciarella et Rossi ([arXiv 2609.37047](https://arxiv.org/abs/2609.37047)). Je cherchais comment empiler des couches quand aucune erreur ne rétropropage, ce qui est exactement mon cas avec l'apprentissage local.
+
+## Ce que montre le papier
+
+L'idée tient en une phrase : sans gradient, ce qu'une couche efface est perdu. Les auteurs gardent donc le code de la première couche intact, et les couches profondes ne peuvent que l'annoter. Le code, ici, est la date du premier tir d'un neurone : tôt veut dire fort, silence veut dire absent. La règle d'apprentissage est locale, de type STDP, c'est-à-dire que chaque synapse ne regarde que l'ordre des tirs autour d'elle.
+
+Avec un apprentissage entièrement local, ils annoncent 96,6 % sur MNIST, 86,3 % sur Fashion-MNIST, 62,5 % sur CIFAR-10 et 95,1 % sur N-MNIST. Sans leur étage d'entrée figé, on tombe à environ 10 % sur les images, c'est-à-dire le hasard. Remplacer le code précoce par celui d'une couche profonde fait perdre 6 à 7 % de précision (lu sur une figure). Le code final est creux : 6 à 13 % d'entrées actives, et 95 % de la précision reste là avec 33 à 66 % des événements.
+
+## Ce que j'en retiens
+
+Un invariant que je note pour la page [apprentissage local](/research/apprentissage-local) : toute couche apprise localement garde un chemin direct de son entrée vers la décision. J'emprunte aussi leur règle de lecture à trois facteurs, avec un couloir temporel, plusieurs prototypes par classe et une punition limitée aux rivaux proches. Enfin, trois mesures pour mon banc d'essai : l'ablation à tronc gelé, le budget d'impulsions, la courbe de données.
+
+## Ce que je n'achète pas
+
+C'est une prépublication, non relue par des pairs. Le gain propre à la fusion est de l'ordre du bruit entre graines. Les gros écarts du résumé (+18,2 points sur Fashion-MNIST, +29,2 sur CIFAR-10) viennent de tout le système, surtout de l'étage d'entrée. Le modèle de neurone n'est jamais écrit, il n'y a ni référence par gradient à budget égal, ni mesure d'énergie. Surtout, rien sur l'apprentissage continu : l'entraînement se fait par phases, avec gel et cache, et chaque image est une vague de tirs indépendante.
+
+## Reste ouvert
+
+Les couches profondes entraînées par STDP n'ajoutent presque rien. Je veux remplacer cette règle par une règle locale qui reçoit un signal de la tâche, puis supprimer le gel et faire apprendre toutes les couches en flux. Si le code précoce reste stable pendant que la lecture apprend, alors le principe tient.

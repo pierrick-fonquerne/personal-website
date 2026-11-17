@@ -1,0 +1,23 @@
+---
+slug: lecture-excitabilite-synapses-fixes
+---
+
+J'ai lu *Rapidly reconfigurable dynamic computing in neural networks with fixed synaptic connectivity*, de Mason, Sennik, Clopath, Gruber et Nicola ([Communications Biology, 2026](https://doi.org/10.1038/s42003-026-10877-7)), relu par les pairs. Je l'ai lu parce qu'il pose ma question à l'envers : que reste-t-il à apprendre quand les synapses ne bougent plus ?
+
+## Ce que montre le papier
+
+Les connexions sont aléatoires et figées. Seul le biais de chaque neurone est réglé, c'est-à-dire son seuil d'excitabilité : la facilité avec laquelle il s'active. Avec ce seul réglage, un réseau récurrent reproduit des systèmes chaotiques de une à trois dimensions et passe de l'un à l'autre. Vingt jeux de biais non corrélés donnent la même sortie pour Lorenz, tous réussis.
+
+En boucle fermée, le réseau atteint 99,1 ± 0,7 % de cibles pour un bras, et renvoie 98,9 ± 0,7 % des balles à Pong. Un second réseau, sans récurrence, a deux couches de 16 000 neurones. Il atteint 84,2 % sur MNIST et 59,3 % sur Kuzushiji-MNIST. Au total, 24 tâches, dix graines aléatoires, et un code public.
+
+## Ce que j'en retiens
+
+C'est un témoin bon marché pour mon banc d'essai : un mode « biais seuls, poids figés ». Pour le neurone vivant et persistant, c'est aussi une idée d'architecture : des biais rapides, propres à la tâche, et des poids lents partagés. Autre leçon : vingt solutions différentes pour la même tâche, donc comparer deux réseaux neurone par neurone ne veut rien dire. Je comparerai les sorties.
+
+## Ce que je n'achète pas
+
+La règle d'apprentissage n'est locale que pour le réseau récurrent. Les biais sont appris hors ligne, pas pendant que le réseau tourne. L'absence d'oubli vient d'un vecteur de biais rangé par tâche : c'est un classement, pas de l'apprentissage continu. Les images donnent un rendement médiocre. Et les auteurs ne mesurent ni la fréquence des bascules ratées, ni le nombre de tâches qu'un réseau peut porter, ni le mélange avec une plasticité des poids.
+
+## Reste ouvert
+
+Mesurer la fréquence des bascules ratées sur mon squelette Rust, avec des instants et des tâches tirés au hasard. Ensuite, apprendre les biais en ligne. Et seulement après, tester des biais rapides avec des poids lents.

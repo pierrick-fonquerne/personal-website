@@ -1,0 +1,23 @@
+---
+slug: lecture-rejeu-neurones-silencieux
+---
+
+I just read "Replay in the Silent Degrees of Freedom: Continual Learning Without an Offline Phase" ([arXiv 2609.31630](https://arxiv.org/abs/2609.31630)), by Zhang Yanhai, Zhang Jie and Xu Chi, accepted at NeurIPS 2026. I read it because it asks my question: consolidating old memories without ever stopping learning.
+
+## What the paper shows
+
+Replay means retraining the network on old examples kept in memory, so that it does not forget. Usually this happens in a "night" phase, offline. Here, replay happens during the stream, in the neurons that the current input does not use. The network is small (512 then 256 units), it learns with a local rule, and it keeps 1,000 examples in memory.
+
+On split-MNIST, it reaches 91.6% (± 0.3). The replay method DER++ gets 91.5% (± 0.5), and the version with a real offline night 89.0% (± 3.5). Most of the gain comes from one simple rule: the units that were active in one batch are switched off in the next. It brings 3.6 points. The mask that protects the current input adds only 0.1 to 0.3.
+
+## What I take from it
+
+It is one of the rare papers that keeps plastic weights, a local rule, and no border between learning and serving. That is exactly the idea of the [local learning](/en/research/apprentissage-local) page. In my reduced Rust version, the rotation lowers forgetting (from 10.5 to 6.1), without changing the final score.
+
+## What I don't buy
+
+The paper is accepted at NeurIPS 2026, but I read the arXiv version. The testbed is small: MNIST, and on raw CIFAR-10 the system gets 28.4% against 31.6% for ER-ACE. Everything rests on 1,000 stored images: without memory, it falls to 19.4%. The title sells the isolation, while the gain comes from the rotation. On an ordinary stream, the rotation has a cost: 94.1% against 95.4%. And replay needs 2.2 times more examples and about 6 times more time than the night. Finally, I could not read appendices B to I. And the accuracy gain does not show up in my reduced version.
+
+## Still open
+
+In the paper, "awake" is defined over a batch of 16 examples. My system processes a stream. I want two measures the paper does not have: the rotation against ordinary dropout at the same rate, then a version where each neuron keeps a trace of its recent activity. If the rotation only works by batches, it will not be useful.

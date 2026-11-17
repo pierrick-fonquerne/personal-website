@@ -1,0 +1,25 @@
+---
+slug: lecture-neuroevolution-continue
+---
+
+J'ai lu « Continual Reinforcement Learning with Neuroevolution » de Nisioti, Cossu, Korte et Risi ([arXiv 2610.01583](https://arxiv.org/abs/2610.01583)). Je l'ai lu parce qu'il pose une question proche de la mienne : qu'est-ce qui aide un réseau à garder la capacité d'apprendre quand la tâche change sans prévenir ?
+
+## Ce que montre le papier
+
+Les auteurs comparent sept méthodes sur le même réseau, dont deux sans gradient : ES, qui note des copies bruitées des poids, et un algorithme génétique. Sept environnements, 18 configurations de 20 tâches, même budget, dix essais chacune.
+
+ES a le meilleur compromis entre apprendre et oublier dans 8 configurations sur 18. Le gradient n'est le meilleur dans aucune. L'algorithme génétique apprend le plus vite dans 10 configurations, mais il oublie davantage.
+
+L'explication proposée tient en une idée : ES s'installe dans des voisinages larges, c'est-à-dire des zones où l'on peut bouger les poids sans casser la tâche. Ils sont 3,9 fois plus larges que ceux de PPO, en médiane. Et la largeur partagée entre deux tâches prédit le compromis, avec une corrélation de Spearman de 0,77.
+
+## Ce que j'en retiens
+
+Pour la page plasticité structurelle, la leçon utile n'est pas « sans gradient, donc stable ». L'algorithme génétique n'a pas de gradient non plus, et il oublie. Ce qui protège ES, c'est d'être évalué sous perturbation. Je garde aussi une mesure qui ne dépend pas de la règle d'apprentissage : on perturbe les poids et on regarde si la tâche tient. Elle s'applique telle quelle à un réseau plastique.
+
+## Ce que je n'achète pas
+
+C'est une prépublication, non relue par des pairs. 8 sur 18 n'est pas une domination. Le mécanisme repose sur une corrélation, sans intervention, et sur de très petits réseaux. ES se fige quand les actions sont inversées, sur deux environnements. Et rien n'est dit sur le coût en données, l'apprentissage pendant la vie d'un individu ou les règles locales.
+
+## Reste ouvert
+
+Je veux tester une règle locale par perturbation : un seul réseau, chaque poids garde sa perturbation, une récompense globale décide de la renforcer. Si elle hérite de la stabilité d'ES, on tient un pont vers apprendre pendant qu'on sert. Avant cela, je relance mon banc Rust au budget complet de l'article, pour savoir si l'écart observé sur la stabilité d'ES vient de mon budget réduit.

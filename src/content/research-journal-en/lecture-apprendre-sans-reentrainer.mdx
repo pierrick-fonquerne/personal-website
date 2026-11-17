@@ -1,0 +1,23 @@
+---
+slug: lecture-apprendre-sans-reentrainer
+---
+
+I read "Continual Learning without Continual Training" by Narayanan, Majumdar and Parbhoo ([arXiv 2610.10379](https://arxiv.org/abs/2610.10379)). The paper argues the opposite of what I am looking for, and that is why I read it: to see what I would have to beat.
+
+## What the paper shows
+
+A model is trained once, then frozen. After that, to learn new classes, you simply store a few examples in a memory that the model rereads at every prediction. No weight moves, so nothing can be overwritten. "Forgetting" means the loss of accuracy on what the model already knew.
+
+On streams where the domain changes, forgetting is almost zero: minus 0.007 on Rotated MNIST, plus 0.005 on chest X-rays from four hospitals. On Split MNIST, where classes arrive in batches, final accuracy is 0.794, against 0.749 for DER++ and 0.714 for InfLoRA. But there is real forgetting of 0.072 on that same stream, caused by stored examples interfering with each other. And on Rotated MNIST, accuracy is 0.789, against 0.958 for InfLoRA.
+
+## What I take from it
+
+This is a counterpoint to my page on [structural plasticity](/en/research/plasticite-structurelle). I defend the idea that a network must change shape to learn. They show you can get almost no forgetting without changing anything, with a plain memory. That sets an honest baseline: before I claim a plastic mechanism helps, it has to beat "memory alone". I take their measures and their equal-memory protocol as they are.
+
+## What I don't buy
+
+It is a preprint, not peer reviewed. The test bench is small: MNIST and X-rays, up to ten classes. Their claim "forgets the least everywhere" is contradicted by their own table, since InfLoRA does better twice. There is no ablation without the annotated concepts. The reference model does no better than a nearest neighbour on pixels, which I measured at 0.645 on Split MNIST. And "without continual training" hides 16.4 million image draws in the initial training. The code and the cost when memory grows are missing.
+
+## Still open
+
+What are the stored vectors worth when the encoder keeps learning? That is where my work and this paper meet. The experiment: measure accuracy as a function of the number of examples kept, first for memory alone, then for a first plastic mechanism.

@@ -1,0 +1,36 @@
+---
+slug: generalisation-tardive
+---
+
+Un réseau de neurones apprend par cœur tous ses exemples d'entraînement, reste nul sur les exemples jamais vus pendant des milliers d'époques, puis se met d'un coup à généraliser. Ce phénomène porte un nom : le **grokking**. Cette page explique ce qu'il est, pourquoi il intéresse un programme sur l'apprentissage continu et local, et ce qu'on ignore encore.
+
+## Ce qu'est le grokking
+
+Le phénomène a été décrit en 2022 par Power et ses collègues sur de petites tâches algorithmiques, dont l'addition modulaire (un calcul où l'on ne garde que le reste d'une division). Le réseau atteint vite 100 % sur l'entraînement. La validation, elle, reste au plancher très longtemps, puis monte brutalement.
+
+Quatre comportements sont possibles, et il vaut mieux les nommer :
+
+- **Compréhension** : l'entraînement et la validation montent ensemble.
+- **Grokking** : la validation monte, mais bien après l'entraînement.
+- **Mémorisation** : l'entraînement monte, la validation ne monte jamais.
+- **Confusion** : rien ne monte.
+
+## Une explication par la découpe des données
+
+Un papier de septembre 2026 (Tian, Al-Ars, Kitsak et Hofstee, prépublication) avance que le retard vient d'abord de la façon dont on coupe les données entre entraînement et validation. Leur test : garder le même réseau, le même optimiseur, le même nombre d'exemples, et ne changer que la découpe. Quand les paires (a, b) et (b, a) tombent toujours du même côté, la validation ne décolle plus. Comme l'addition est commutative, la deuxième paire n'apprend presque rien de neuf.
+
+Leur idée de fond : ce qui compte n'est pas le nombre d'exemples, mais l'information utile qu'ils portent. Selon cette lecture, le grokking serait un signal d'alarme (un jeu trop pauvre pour le modèle) plutôt qu'une prouesse cachée. C'est une hypothèse, pas un fait établi : la cause avancée n'est pas mesurée directement.
+
+## Pourquoi ça compte pour l'apprentissage continu et local
+
+Un système qui apprend en continu n'a pas de découpe figée, mais il a un ordre d'arrivée des exemples, et la même question se pose : combien d'information utile chaque exemple apporte-t-il ? Un flux donne peu d'exemples par unité de temps. On risque donc de vivre longtemps dans le régime où mémoriser et généraliser se disputent la place.
+
+Autre point : les auteurs soutiennent que les régions de faible perte dépendent du réseau et des données, pas de l'optimiseur. Si c'est vrai, la même découpe devrait bloquer un réseau entraîné par règles locales, sans gradient. C'est une prédiction testable, et c'est ce qui rattache ce concept à mes programmes.
+
+## Questions ouvertes
+
+- Le résultat tient-il avec du weight decay (la force qui ramène les poids vers zéro) ? Le papier ne le teste pas sur son cas bloqué.
+- Hors d'un transformer et de l'arithmétique modulaire, qu'en reste-t-il ? Rien n'est testé sur d'autres architectures ni sur des données réelles.
+- Un apprentissage par règle locale se comporte-t-il comme un apprentissage par gradient face à la même découpe ?
+- Comment mesurer directement le désalignement des régions, au lieu de le déduire des comportements observés ?
+- Que devient la découpe quand les exemples arrivent un par un, dans un ordre qui compte ?
