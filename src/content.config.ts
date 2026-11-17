@@ -2,6 +2,7 @@ import { defineCollection } from 'astro:content';
 import { z } from 'astro:schema';
 import { glob } from 'astro/loaders';
 
+import { researchPaperSchema } from './lib/research-paper';
 import { ACADEMIC_STAGES, THEMES } from './lib/taxonomy';
 
 const courseSchema = z.object({
@@ -105,12 +106,6 @@ const researchLocaleSchema = z.object({
   title: z.string(),
   tagline: z.string(),
   summary: z.string(),
-});
-
-const researchPaperSchema = z.object({
-  title: z.string(),
-  authors: z.string(),
-  href: z.string().url(),
 });
 
 const researchSchema = z.object({

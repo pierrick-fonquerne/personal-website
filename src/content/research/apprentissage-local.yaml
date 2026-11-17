@@ -25,6 +25,18 @@ papers:
   - title: 'Unsupervised learning of digit recognition using spike-timing-dependent plasticity'
     authors: 'Diehl & Cook (2015)'
     href: 'https://doi.org/10.3389/fncom.2015.00099'
+  - title: 'Replay in the Silent Degrees of Freedom: Continual Learning Without an Offline Phase'
+    authors: 'Zhang et al. (2026)'
+    href: 'https://arxiv.org/abs/2609.31630'
+    note:
+      fr: "La consolidation se fait pendant le flux, sans phase de sommeil. C'est la rotation réfractaire qui porte le gain ; le masque d'isolation ajoute peu."
+      en: "Consolidation happens during the stream, with no sleep phase. The refractory rotation carries the gain; the isolation mask adds little."
+  - title: 'Multi-Depth Temporal Fusion for Feedforward, Locally Trained Spiking Neural Networks'
+    authors: 'Attar, Cicciarella & Rossi (2026)'
+    href: 'https://arxiv.org/abs/2609.37047'
+    note:
+      fr: "Sans rétropropagation, ce qu'une couche efface est perdu. Chaque couche apprise par STDP doit donc garder un chemin direct vers la décision."
+      en: "Without backpropagation, what a layer erases is lost. Each layer trained by STDP must therefore keep a direct path to the decision."
 published: true
 fr:
   title: "Apprentissage local : apprendre sans gradient global"

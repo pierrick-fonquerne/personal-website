@@ -1,0 +1,45 @@
+---
+import ExternalLink from '../ui/icons/ExternalLink.astro';
+import type { Locale } from '../../lib/i18n';
+import { resolvePaperNote, type ResearchPaper } from '../../lib/research-paper';
+
+interface Props {
+  paper: ResearchPaper;
+  locale: Locale;
+  variant?: 'card' | 'page';
+}
+
+const { paper, locale, variant = 'page' } = Astro.props;
+const isCard = variant === 'card';
+const note = isCard ? undefined : resolvePaperNote(paper, locale);
+---
+
+{
+  isCard ? (
+    <li class="text-[13px] leading-[1.45] text-[var(--color-fg-muted)]">
+      <a
+        href={paper.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="transition-colors duration-200 hover:text-[var(--color-accent)]"
+      >
+        {paper.title}
+      </a>
+      <span class="text-[var(--color-fg-dim)]"> · {paper.authors}</span>
+    </li>
+  ) : (
+    <li class="flex flex-col gap-1">
+      <a
+        href={paper.href}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 text-[16px] leading-[1.4] text-[var(--color-fg)] transition-colors duration-200 hover:text-[var(--color-accent)]"
+      >
+        {paper.title}
+        <ExternalLink class="h-[12px] w-[12px] opacity-70" />
+      </a>
+      <span class="font-mono text-[12px] text-[var(--color-fg-dim)]">{paper.authors}</span>
+      {note && <p class="text-[14px] leading-[1.55] text-[var(--color-fg-muted)]">{note}</p>}
+    </li>
+  )
+}
