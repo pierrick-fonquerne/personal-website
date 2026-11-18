@@ -2,21 +2,571 @@
 course: neural-networks-foundations
 order: 11
 title: Weight initialisation and batch normalisation
-subtitle: 'Why the initial choice of weights and per-batch normalisation transform training.'
-estimatedMinutes: 15
+subtitle: 'Starting from the right point, at the right scale, and keeping that scale layer after layer.'
+estimatedMinutes: 40
 published: false
 ---
 
 import Callout from '../../../components/learning/Callout.astro';
+import Term from '../../../components/learning/Term.astro';
+import InitializationLab from '../../../components/learning/InitializationLab.tsx';
+import Quiz from '../../../components/learning/Quiz.tsx';
 
-<Callout kind="note">
-  This chapter is still empty. The skeleton is in place; content will follow soon.
+In chapter 9, we proved that gradient descent drives the score down step by step, wherever it starts from. In chapter 10, every regularisation pulled the weights towards zero. One question was carefully avoided: where do we start from, exactly? Chapter 10 ended on a warning. Starting from zero is fatal. Starting too large is too.
+
+The question of this chapter is therefore: which weights should we give a network before it has seen a single example? We will prove why they must all be different, compute the exact scale they must have, then see how a very simple operation, batch normalisation, keeps that scale throughout training.
+
+<Callout kind="info" title="Prerequisites and level">
+**What you need to know**: backpropagation and the error signals $\delta$ (chapter 8), the factor $1 - 2\eta a$ of descent on a parabola and the mini-batch (chapter 9), the XOR problem (chapters 4 and 5). The notion of an average.
+
+**What you do not need to know**: probability beyond the average (we define variance here), the eigenvalues of a matrix, advanced optimisers such as Adam (chapter 12).
+
+**Level of rigour**: we prove that two twin neurons stay twins forever, the formula for the variance of a weighted sum, the factor one half of the ReLU, and three exact properties of batch normalisation. Five pencil-and-paper exercises with detailed line-by-line solutions.
+
 </Callout>
 
-## What you will learn
+## Act 1: the twins
 
-- Why initialising all weights to zero does not work
-- The Xavier-Glorot and He schemes, and when to use each
-- The principle of batch normalisation and why it speeds convergence
+Picture two students who, from the very first day of the year, each copy the other's paper. They hand in the same paper, receive the same correction, draw the same lesson from it, and hand in the same paper again for the next assignment. By the end of the year, the class has two students but only one brain.
 
-Initialising a deep network is an art: a bad start can make it unable to learn. This chapter demystifies the choices that separate a network that converges in minutes from one that never learns.
+Two hidden neurons that start with exactly the same weights live the same story. Take the network of chapter 8: a hidden layer of sigmoids, then one output. Hidden neuron $j$ has a vector of incoming weights $w_j$, a bias $b_j$, and it is connected to the output by a weight $w^{(2)}_j$. Its pre-activation is $z_j = w_j \cdot x + b_j$ and its output is $a_j = \sigma(z_j)$. Recall the two formulas of the backward pass from chapter 8:
+
+$$
+\delta_j = w^{(2)}_j\,\delta_{\text{output}}\,\sigma'(z_j), \qquad \frac{\partial L}{\partial w_j} = \delta_j\,x.
+$$
+
+They read: the error signal of neuron $j$ is the output signal, carried back through the weight that links them, then modulated by the local slope. The gradient of its incoming weights is that signal multiplied by the input.
+
+**Theorem (twins stay twins).** Suppose that at the start two hidden neurons $j$ and $k$ have the same incoming weights, the same bias and the same output weight: $w_j = w_k$, $b_j = b_k$ and $w^{(2)}_j = w^{(2)}_k$. Then, after any number of gradient descent steps, on any examples, these three equalities still hold.
+
+**Proof.** We argue by induction on the step number $t$.
+
+*Base case.* At step $t = 0$, the three equalities hold by assumption.
+
+*Inductive step.* Suppose the three equalities hold at step $t$, and show that they still hold at step $t + 1$. Take any example $x$.
+
+- Forward pass: $z_j = w_j \cdot x + b_j = w_k \cdot x + b_k = z_k$, so $a_j = a_k$.
+- The signal $\delta_{\text{output}}$ depends only on the output of the network: it is the same number for all hidden neurons.
+- Backward pass: $\delta_j = w^{(2)}_j\,\delta_{\text{output}}\,\sigma'(z_j) = w^{(2)}_k\,\delta_{\text{output}}\,\sigma'(z_k) = \delta_k$.
+- Gradients: $\delta_j\,x = \delta_k\,x$ for the incoming weights, $\delta_j = \delta_k$ for the biases, and $\delta_{\text{output}}\,a_j = \delta_{\text{output}}\,a_k$ for the output weights.
+
+The two neurons therefore receive the same gradients for each example. An average over a batch of examples, of numbers that are equal two by two, is again equal two by two. Finally, each parameter is updated by the same rule $\theta \leftarrow \theta - \eta\,g$, from equal values and equal gradients: the new values are equal. □
+
+**What it costs.** Two twins do exactly the same work. They contribute to the output by $w^{(2)}_j\,a_j + w^{(2)}_k\,a_k = 2\,w^{(2)}_j\,a_j$: this is a single neuron whose output weight has been doubled. If all the hidden neurons start identical, the whole layer behaves like a single neuron, forever.
+
+And a single hidden neuron cannot solve XOR. The output of the network is $\sigma\big(c\,\sigma(u) + d\big)$ with $u = w \cdot x + b$. Each stage is a monotonic function of $u$, so the output is too: it exceeds $\frac{1}{2}$ on exactly one side of a line $u = \text{constant}$. The decision boundary is a line, and chapter 4 proved that no line separates the two classes of XOR.
+
+**Starting from zero is worse.** If all the weights are zero, the hidden neurons are twins, and on top of that $w^{(2)}_j = 0$ cancels their error signal: at the first step, the hidden layer does not even move. Only the output weights advance, all by the same amount. At the next step the twins start moving, but together.
+
+The remedy is to draw the starting weights at random: two neurons that do not start from the same point do not receive the same gradients, and each can specialise. This is <Term slug="brisure-de-symetrie">symmetry breaking</Term>. The biases, for their part, can start at zero: as soon as the weights differ, the symmetry is already broken.
+
+Launch the lab. It trains a network with two hidden neurons on the four points of XOR, starting either from two twins (all weights at $0.5$) or from weights drawn at random between $-1$ and $1$. The square shows the four points and the line of each hidden neuron.
+
+<InitializationLab client:visible locale="en" />
+
+Three things to watch for while you play:
+
+- Starting as twins, the two lines stay superimposed from the first step to the last, and the gap between the neurons shows exactly zero. The score gets stuck around $0.48$: the network predicts $0$ for $(0, 0)$ and about $0.67$ for the other three points, the best a single line that isolates $(0, 0)$ can do.
+- Starting at random, the two lines move apart and come to frame the diagonal. The score falls close to zero within a few hundred steps: XOR is solved.
+- Look at the start of the random run: the score stagnates for a while before plunging. This is a plateau, as in chapter 9.
+
+## Act 2: the right scale
+
+We know the weights must be different. But how large? Think of a chain of amplifiers, like a concert sound system. If each stage multiplies the volume by $1.1$, after fifty stages the sound is $1.1^{50} \approx 117$ times louder. If it multiplies it by $0.9$, it is $0.9^{50} \approx 0.005$, nearly two hundred times quieter. A deep network is a chain of this kind: each layer multiplies the size of the signal by a factor that depends on its weights. For the signal to cross fifty layers without exploding or dying out, that factor must equal $1$.
+
+Too small, and the signal dies out, and the gradient with it. Too large, and it explodes, and the pre-activations move far from zero, into the <Term slug="saturation">saturation</Term> zone of the sigmoids, where the slope is almost zero: we fall back on the vanishing gradient of chapter 8. So we need to measure the size of a random signal. That is the job of variance.
+
+**Definition.** For a random quantity $X$ with mean $\mathbb{E}[X]$, the <Term slug="variance">variance</Term> is the mean of the square of the distance to the mean:
+
+$$
+\operatorname{Var}(X) = \mathbb{E}\Big[\big(X - \mathbb{E}[X]\big)^2\Big].
+$$
+
+Its square root is the **standard deviation**, which has the same unit as $X$. A quantity is said to be **centred** if its mean is zero. We need three properties.
+
+- **(P1) A centred quantity has, as its variance, the mean of its square**: if $\mathbb{E}[X] = 0$, then $\operatorname{Var}(X) = \mathbb{E}[X^2]$. This is the definition, with $\mathbb{E}[X] = 0$.
+- **(P2) Changing the scale multiplies the variance by the square**: $\operatorname{Var}(aX) = a^2\,\operatorname{Var}(X)$. Indeed, $\mathbb{E}[aX] = a\,\mathbb{E}[X]$, so the distance to the mean is multiplied by $a$, and its square by $a^2$.
+- **(P3) Independence and product**: if $X$ and $Y$ are independent, $\mathbb{E}[XY] = \mathbb{E}[X]\,\mathbb{E}[Y]$. For quantities taking finitely many values, the probability of a pair is the product of the probabilities, so $\mathbb{E}[XY] = \sum_{x,y} x\,y\,P(x)\,P(y) = \big(\sum_x x\,P(x)\big)\big(\sum_y y\,P(y)\big)$.
+
+**Lemma (variance of a weighted sum).** Let $z = \sum_{i=1}^{n} w_i\,x_i$. Suppose the weights $w_i$ are centred, have the same variance $\operatorname{Var}(w)$, are independent of one another and independent of the inputs, and that each input has the same mean square $\mathbb{E}[x_i^2] = \mathbb{E}[x^2]$. Then $z$ is centred and
+
+$$
+\operatorname{Var}(z) = n\,\operatorname{Var}(w)\,\mathbb{E}[x^2].
+$$
+
+**Proof.** First, $\mathbb{E}[w_i\,x_i] = \mathbb{E}[w_i]\,\mathbb{E}[x_i] = 0$ by (P3), so $z$ is centred, and by (P1) its variance is $\mathbb{E}[z^2]$. We expand the square of the sum:
+
+$$
+z^2 = \sum_{i=1}^{n} \sum_{k=1}^{n} w_i\,w_k\,x_i\,x_k.
+$$
+
+We take the mean term by term. If $i \ne k$, the weight $w_i$ is independent of everything else in the product, so $\mathbb{E}[w_i\,w_k\,x_i\,x_k] = \mathbb{E}[w_i]\,\mathbb{E}[w_k\,x_i\,x_k] = 0$. Only the $n$ terms where $i = k$ remain:
+
+$$
+\mathbb{E}[w_i^2\,x_i^2] = \mathbb{E}[w_i^2]\,\mathbb{E}[x_i^2] = \operatorname{Var}(w)\,\mathbb{E}[x^2].
+$$
+
+The sum of these $n$ equal terms gives the formula. □
+
+Note carefully what the lemma does not require: the inputs need not be centred, nor independent of one another. Only the weights must be. This detail will matter in act 3.
+
+**Layer after layer.** Take an activation that behaves like the identity near zero and is centred, like the <Term slug="tanh">hyperbolic tangent</Term>: $\tanh(z) \approx z$ for small $z$. Then the input of the next layer has a mean square of roughly the variance of the previous pre-activation, and the lemma gives
+
+$$
+\operatorname{Var}\big(z^{(l)}\big) \approx n\,\operatorname{Var}(w)\,\operatorname{Var}\big(z^{(l-1)}\big).
+$$
+
+This is exactly the chain of amplifiers, with a factor $n\,\operatorname{Var}(w)$ per layer. After $L$ layers, it is raised to the power $L$. For it to equal $1$, we need
+
+$$
+\operatorname{Var}(w) = \frac{1}{n}.
+$$
+
+This is the recommendation of LeCun and his co-authors (1998): a standard deviation of $\frac{1}{\sqrt{n}}$, where $n$ is the number of inputs of the neuron. With weights drawn from a normal distribution of variance $1$ and $n = 100$ inputs, the factor would be $100$ per layer.
+
+**The way back matters too.** The same reasoning applies to the backward pass. The error signal of a neuron is a weighted sum of the signals of the next layer, with as many terms as that layer has neurons, $n_{\text{out}}$. For the gradient to keep its size on the way up, we would need $n_{\text{out}}\,\operatorname{Var}(w) = 1$. The two requirements coincide only if the layer has as many inputs as outputs. Glorot and Bengio (2010) propose a compromise, <Term slug="initialisation-xavier">Xavier initialisation</Term> (after Glorot's first name):
+
+$$
+\operatorname{Var}(w) = \frac{2}{n_{\text{in}} + n_{\text{out}}}.
+$$
+
+It reads: one over the average of the number of inputs and the number of outputs. It is often drawn from a uniform distribution on $[-a, a]$. That distribution has variance $\frac{a^2}{3}$ (computed in exercise 3), hence $a = \sqrt{\frac{6}{n_{\text{in}} + n_{\text{out}}}}$.
+
+<Callout kind="note" title="What about the sigmoid?">
+The whole argument assumes a centred activation. The sigmoid is not: $\sigma(0) = \frac{1}{2}$, so its outputs are all positive, around $0.5$. On top of that, its slope never exceeds $\frac{1}{4}$, so even when ideally tuned, the error signal is divided by at least four at each layer climbed. Glorot and Bengio (2010) observed that deep networks of sigmoids train poorly, and clearly better with the hyperbolic tangent. This is one of the reasons the sigmoid left the hidden layers, in favour of tanh and then ReLU.
+
+</Callout>
+
+## Act 3: the ReLU and the factor two
+
+The ReLU, $\operatorname{ReLU}(z) = \max(0, z)$, is the default activation of deep networks. It is not centred, and it is not the identity near zero: it wipes out the entire negative half. The argument of act 2 does not apply as it stands. But the lemma does, since it demands nothing of the inputs. We only need to compute their mean square.
+
+**Lemma (the half of the ReLU).** If $z$ is symmetric, that is, if $z$ and $-z$ have the same distribution, then
+
+$$
+\mathbb{E}\big[\operatorname{ReLU}(z)^2\big] = \frac{1}{2}\,\operatorname{Var}(z).
+$$
+
+**Proof.** A symmetric quantity is centred, so $\operatorname{Var}(z) = \mathbb{E}[z^2]$ by (P1). We split $z^2$ according to the sign of $z$:
+
+$$
+\mathbb{E}[z^2] = \mathbb{E}\big[z^2 \text{ when } z > 0\big] + \mathbb{E}\big[z^2 \text{ when } z < 0\big].
+$$
+
+Here, "$z^2$ when $z > 0$" denotes the quantity that equals $z^2$ if $z > 0$ and $0$ otherwise. By symmetry, replacing $z$ by $-z$ changes neither the means, and swaps the two pieces: they are therefore equal, and each is worth $\frac{1}{2}\,\mathbb{E}[z^2]$. Now $\operatorname{ReLU}(z)^2$ equals $z^2$ when $z > 0$ and $0$ otherwise: it is exactly the first piece. □
+
+The symmetry assumption holds in our network: a pre-activation $\sum_i w_i\,x_i$ whose weights are drawn from a symmetric distribution is itself symmetric, since changing the sign of all the weights does not change their distribution, and changes the sign of the sum.
+
+**The factor two.** We combine the two lemmas. The input of layer $l$ is the ReLU of the pre-activation of layer $l - 1$:
+
+$$
+\operatorname{Var}\big(z^{(l)}\big) = n\,\operatorname{Var}(w)\cdot\frac{1}{2}\,\operatorname{Var}\big(z^{(l-1)}\big).
+$$
+
+This time the equality is exact, with no approximation. For the factor $\frac{1}{2}\,n\,\operatorname{Var}(w)$ to equal $1$, we need
+
+$$
+\operatorname{Var}(w) = \frac{2}{n_{\text{in}}}.
+$$
+
+This is <Term slug="initialisation-he">He initialisation</Term> (He et al., 2015). The factor $2$ exactly compensates for the half of the signal the ReLU wipes out. He and his co-authors also show that tuning the backward pass gives $\frac{2}{n_{\text{out}}}$, and that either choice is enough in practice.
+
+**What it changes, in numbers.** Take ten ReLU layers of $64$ neurons. With weights of variance $1$, the factor per layer is $\frac{1}{2} \cdot 64 = 32$ on the variance, that is $\sqrt{32} \approx 5.7$ on the standard deviation: the signal is multiplied by about $5.7^{9}$, millions, between the first and the tenth layer. With Xavier, $\operatorname{Var}(w) = \frac{1}{64}$, the factor is $\frac{1}{2}$: the standard deviation is divided by $\sqrt{2}$ at each layer. With He, it is exactly $1$.
+
+Switch the lab to depth mode. It draws a network of ten layers of $64$ neurons, feeds it $128$ random examples, and displays, layer by layer, the standard deviation of the activations and the size of the weight gradient, on a logarithmic scale.
+
+<InitializationLab client:visible locale="en" defaultMode="depth" />
+
+Three things to watch for while you play:
+
+- In ReLU with weights of variance $1$, the standard deviation bars climb by a constant factor at each layer: it is a straight line on the logarithmic scale, the signature of an exponential explosion.
+- In ReLU with Xavier, they decrease steadily, and with He they stay flat. The factor two is visible to the naked eye.
+- In tanh with weights of standard deviation $0.01$, the signal dies out within three layers, and the gradient with it: this is the "too small" case.
+
+## Act 4: batch normalisation
+
+A good initialisation sets the scale at the start. But training modifies the weights, and at every step, the distribution of the inputs of each layer shifts. A deep layer has to learn on ground that keeps moving under its feet. Ioffe and Szegedy (2015) proposed putting the scale back in order at every layer, at every step.
+
+Think of an exam moderation panel that harmonises the marks of several examiners. A strict examiner who marks everything at half, another generous one who adds three points everywhere: after harmonisation, each paper regains its relative place, whichever examiner marked it. <Term slug="normalisation-par-lot">Batch normalisation</Term> does this for each neuron.
+
+**The definition.** We fix a neuron, and look at its $m$ pre-activations $z_1, \ldots, z_m$ over the $m$ examples of a mini-batch. We compute their mean and variance:
+
+$$
+\mu = \frac{1}{m}\sum_{i=1}^{m} z_i, \qquad s^2 = \frac{1}{m}\sum_{i=1}^{m} (z_i - \mu)^2.
+$$
+
+We recentre and rescale them, then apply two learned parameters, $\gamma$ and $\beta$:
+
+$$
+\hat z_i = \frac{z_i - \mu}{\sqrt{s^2 + \varepsilon}}, \qquad y_i = \gamma\,\hat z_i + \beta.
+$$
+
+The small number $\varepsilon$, of the order of $10^{-5}$, avoids dividing by zero if all the values of the batch are equal. It is $y_i$, not $z_i$, that then goes through the activation. The parameters $\gamma$ and $\beta$ are learned by gradient descent, like the weights, and the gradient also flows through the computation of $\mu$ and $s^2$.
+
+**Proposition 1 (zero mean, variance almost one).** Over the batch, the $\hat z_i$ have mean zero and variance $\frac{s^2}{s^2 + \varepsilon}$.
+
+**Proof.** The sum of the distances to the mean is zero:
+
+$$
+\sum_{i=1}^{m} (z_i - \mu) = \sum_{i=1}^{m} z_i - m\,\mu = m\,\mu - m\,\mu = 0.
+$$
+
+Dividing by $\sqrt{s^2 + \varepsilon}$, the sum of the $\hat z_i$ stays zero, so their mean too. Their variance is then the mean of their squares:
+
+$$
+\frac{1}{m}\sum_{i=1}^{m} \hat z_i^2 = \frac{1}{s^2 + \varepsilon}\cdot\frac{1}{m}\sum_{i=1}^{m} (z_i - \mu)^2 = \frac{s^2}{s^2 + \varepsilon}. \qquad \square
+$$
+
+As soon as $s^2$ is large compared to $\varepsilon$, this variance is almost exactly $1$.
+
+**Proposition 2 (scale invariance).** We neglect $\varepsilon$. If we replace each $z_i$ by $a\,z_i + c$, with $a > 0$, the normalised values $\hat z_i$ do not change.
+
+**Proof.** The new mean is $a\,\mu + c$. The new distance to the mean is therefore
+
+$$
+(a\,z_i + c) - (a\,\mu + c) = a\,(z_i - \mu).
+$$
+
+Each distance is multiplied by $a$, so the new variance is $a^2\,s^2$, and the new standard deviation is $a\,s$, since $a > 0$. We divide:
+
+$$
+\frac{a\,(z_i - \mu)}{a\,s} = \frac{z_i - \mu}{s} = \hat z_i. \qquad \square
+$$
+
+**How to read it.** Multiplying all the incoming weights of a neuron by $a > 0$ multiplies its pre-activation by $a$: after normalisation, nothing shows any more. Before a batch normalisation, the scale of the weights therefore no longer matters for the forward pass. And the neuron's bias, which adds the same constant $c$ to all the $z_i$, is erased too: it is $\beta$ that takes over its role. In practice, we remove the bias from layers followed by a batch normalisation.
+
+**Proposition 3 (nothing is lost).** If we choose $\gamma = \sqrt{s^2 + \varepsilon}$ and $\beta = \mu$, then $y_i = z_i$ for every $i$.
+
+**Proof.** We substitute:
+
+$$
+y_i = \sqrt{s^2 + \varepsilon}\cdot\frac{z_i - \mu}{\sqrt{s^2 + \varepsilon}} + \mu = z_i - \mu + \mu = z_i. \qquad \square
+$$
+
+**How to read it.** Forced normalisation might deprive a layer of what it knows how to do: forcing the inputs of a sigmoid to stay near zero would confine it to its almost linear part. Thanks to $\gamma$ and $\beta$, the layer can learn to undo the normalisation if that is what lowers the score (Ioffe and Szegedy, 2015). Normalisation therefore removes no expressive power, it only changes the way the parameters are arranged.
+
+**At prediction time.** For a single example, there is no batch. During training, we therefore keep a running average of the $\mu$ and $s^2$ encountered, and that is what we use at prediction. This way, the network's answer for an example does not depend on the other examples presented with it.
+
+Switch the lab back to depth mode, with batch normalisation on, and repeat the experiments of act 3.
+
+<InitializationLab client:visible locale="en" defaultMode="depth" defaultBatchNormalized />
+
+Three things to watch for while you play:
+
+- Weights of variance $1$ or of standard deviation $0.01$: the standard deviation bars are identical. This is proposition 2, on screen.
+- The gradient bars regain a reasonable size, between about $0.5$ and $3$. Without normalisation, in ReLU, they were worth tens of millions with weights of variance $1$.
+- With normalisation, the choice of initialisation scheme hardly matters any more. It becomes important again as soon as you remove it.
+
+<Callout kind="note" title="Why it works: a fact and a debated explanation">
+**The fact** is solid: batch normalisation speeds up training a great deal and tolerates larger learning rates. On their image classification network, Ioffe and Szegedy (2015) reach the same accuracy with fourteen times fewer steps.
+
+**The explanation** is debated. Ioffe and Szegedy attributed it to the reduction of "internal covariate shift", the ground moving under the feet of each layer. Santurkar, Tsipras, Ilyas and Madry (2018) tested this hypothesis: by deliberately adding noise after each normalisation, to make the ground move, training stays just as fast. They propose another explanation: normalisation makes the cost surface smoother, with a score and a gradient that vary less abruptly, which allows larger steps. The question is not entirely settled.
+
+A widely used variant, layer normalisation (Ba, Kiros and Hinton, 2016), normalises over the neurons of a layer for each example, instead of normalising over the examples of the batch for each neuron. It does not depend on the batch size, and it is the one used in transformers.
+
+</Callout>
+
+## Exercises
+
+Grab something to write with. The solutions are deliberately detailed, line by line.
+
+**Exercise 1.** Take the toy network of chapter 8, but with two twin hidden neurons: each has the incoming weights $(0.1\,;\,0.2)$ and a zero bias, and each is connected to the output by the weight $0.5$. The output bias is $0.1$. The input is $x = (1\,;\,2)$, the target $y = 1$, the score $L = (a - y)^2$. We are given $\sigma(0.5) = 0.622$ and $\sigma(0.722) = 0.673$. Take one descent step with $\eta = 0.5$ on the incoming weights, and check that the two neurons remain twins.
+
+<Callout kind="tip" title="Solution to exercise 1: the twins by hand">
+**Step 1.** Forward pass in each hidden neuron.
+
+$$
+z_1 = z_2 = 0.1 \cdot 1 + 0.2 \cdot 2 = 0.5, \qquad a_1 = a_2 = \sigma(0.5) = 0.622.
+$$
+
+**Step 2.** Forward pass in the output.
+
+$$
+z^{(2)} = 0.5 \cdot 0.622 + 0.5 \cdot 0.622 + 0.1 = 0.722, \qquad a^{(2)} = 0.673.
+$$
+
+**Step 3.** Output error signal, with the formula of chapter 8.
+
+$$
+\delta_{\text{output}} = 2\,(0.673 - 1) \cdot 0.673 \cdot (1 - 0.673) \approx -0.144.
+$$
+
+**Step 4.** Slope of the hidden sigmoid.
+
+$$
+\sigma'(0.5) = 0.622 \cdot (1 - 0.622) = 0.622 \cdot 0.378 \approx 0.235.
+$$
+
+**Step 5.** Error signal of each hidden neuron.
+
+$$
+\delta_1 = \delta_2 = 0.5 \cdot (-0.144) \cdot 0.235 \approx -0.0169.
+$$
+
+**Step 6.** Gradients of the incoming weights: we multiply by each input.
+
+$$
+\frac{\partial L}{\partial w_{j1}} = -0.0169 \cdot 1 = -0.0169, \qquad \frac{\partial L}{\partial w_{j2}} = -0.0169 \cdot 2 = -0.0338.
+$$
+
+**Step 7.** Update, identical for $j = 1$ and $j = 2$.
+
+$$
+w_{j1} \leftarrow 0.1 + 0.5 \cdot 0.0169 \approx 0.108, \qquad w_{j2} \leftarrow 0.2 + 0.5 \cdot 0.0338 \approx 0.217.
+$$
+
+**Result.** The two neurons go together from $(0.1\,;\,0.2)$ to about $(0.108\,;\,0.217)$. Their output weights also receive the same gradient, $\delta_{\text{output}} \cdot 0.622 \approx -0.090$. They are still twins, as the theorem predicts.
+
+</Callout>
+
+**Exercise 2.** A neuron has $n = 100$ inputs with mean square $\mathbb{E}[x^2] = 1$. Compute the standard deviation of its pre-activation if its weights have variance $1$, then variance $\frac{1}{100}$. In the first case, what is the slope of a sigmoid at $z = 10$, a typical value? We are given $\sigma(10) \approx 0.999955$.
+
+<Callout kind="tip" title="Solution to exercise 2: a pre-activation that is too large">
+**Step 1.** Apply the lemma with $\operatorname{Var}(w) = 1$.
+
+$$
+\operatorname{Var}(z) = 100 \cdot 1 \cdot 1 = 100.
+$$
+
+**Step 2.** Take the square root.
+
+$$
+\sqrt{100} = 10.
+$$
+
+**Step 3.** Compute the slope at $z = 10$.
+
+$$
+\sigma'(10) = \sigma(10)\,\big(1 - \sigma(10)\big) \approx 0.999955 \cdot 0.000045 \approx 4.5 \cdot 10^{-5}.
+$$
+
+**Step 4.** Compare with the maximum slope, $\sigma'(0) = 0.25$.
+
+$$
+\frac{0.25}{4.5 \cdot 10^{-5}} \approx 5{,}500.
+$$
+
+**Step 5.** Apply the lemma with $\operatorname{Var}(w) = \frac{1}{100}$.
+
+$$
+\operatorname{Var}(z) = 100 \cdot \frac{1}{100} \cdot 1 = 1, \qquad \text{standard deviation } 1.
+$$
+
+**Result.** With weights of variance $1$, the pre-activation has a standard deviation of $10$: the sigmoid saturates, and the error signal passing through it is divided by about $5{,}500$ compared with the best case. With a variance of $\frac{1}{n}$, the standard deviation is $1$, right in the zone where the slope is useful.
+
+</Callout>
+
+**Exercise 3.** A layer has $256$ inputs and $128$ outputs. Compute the Xavier variance, then the bound $a$ of the uniform version, knowing that a uniform distribution on $[-a, a]$ has density $\frac{1}{2a}$. Finally compute the He variance.
+
+<Callout kind="tip" title="Solution to exercise 3: Xavier and He on one layer">
+**Step 1.** Xavier variance.
+
+$$
+\operatorname{Var}(w) = \frac{2}{256 + 128} = \frac{2}{384} = \frac{1}{192} \approx 0.0052.
+$$
+
+**Step 2.** Variance of a uniform distribution on $[-a, a]$. It is centred by symmetry, so its variance is the mean of its square.
+
+$$
+\mathbb{E}[w^2] = \int_{-a}^{a} \frac{t^2}{2a}\,dt = \frac{1}{2a}\cdot\frac{2a^3}{3} = \frac{a^2}{3}.
+$$
+
+**Step 3.** We set the two variances equal.
+
+$$
+\frac{a^2}{3} = \frac{2}{384}, \qquad a^2 = \frac{6}{384} = \frac{1}{64}.
+$$
+
+**Step 4.** We take the square root.
+
+$$
+a = \frac{1}{8} = 0.125.
+$$
+
+**Step 5.** He variance, which only looks at the inputs.
+
+$$
+\operatorname{Var}(w) = \frac{2}{256} = \frac{1}{128} \approx 0.0078.
+$$
+
+**Result.** Xavier draws the weights uniformly in $[-0.125\,;\,0.125]$, a variance of about $0.0052$. He asks for a variance of about $0.0078$, one and a half times larger, to compensate for the ReLU.
+
+</Callout>
+
+**Exercise 4.** A network stacks ReLU layers that all have $n$ inputs and $n$ outputs, initialised with Xavier. By what factor is the standard deviation of the pre-activation divided after ten more layers? And with He?
+
+<Callout kind="tip" title="Solution to exercise 4: ten ReLU layers">
+**Step 1.** With $n_{\text{in}} = n_{\text{out}} = n$, the Xavier variance is
+
+$$
+\operatorname{Var}(w) = \frac{2}{n + n} = \frac{1}{n}.
+$$
+
+**Step 2.** Factor on the variance at each layer, from the ReLU lemma.
+
+$$
+\frac{1}{2} \cdot n \cdot \frac{1}{n} = \frac{1}{2}.
+$$
+
+**Step 3.** After ten layers, this factor is applied ten times.
+
+$$
+\Big(\frac{1}{2}\Big)^{10} = \frac{1}{1{,}024}.
+$$
+
+**Step 4.** The standard deviation is the square root of the variance.
+
+$$
+\sqrt{\frac{1}{1{,}024}} = \frac{1}{32}.
+$$
+
+**Step 5.** With He, $\operatorname{Var}(w) = \frac{2}{n}$, and the factor is
+
+$$
+\frac{1}{2} \cdot n \cdot \frac{2}{n} = 1.
+$$
+
+**Result.** With Xavier, the standard deviation is divided by $32$ in ten layers, and by more than a million in forty. With He, it does not move.
+
+</Callout>
+
+**Exercise 5.** On a mini-batch, a neuron has the pre-activations $(2\,;\,4\,;\,6\,;\,8)$. Normalise them, neglecting $\varepsilon$, then apply $\gamma = 2$ and $\beta = 1$. Finally check that, if you double all the pre-activations, the normalised values do not change.
+
+<Callout kind="tip" title="Solution to exercise 5: a batch normalisation by hand">
+**Step 1.** Mean of the batch.
+
+$$
+\mu = \frac{2 + 4 + 6 + 8}{4} = \frac{20}{4} = 5.
+$$
+
+**Step 2.** Distances to the mean: $-3$, $-1$, $1$, $3$. Their squares: $9$, $1$, $1$, $9$. Variance of the batch:
+
+$$
+s^2 = \frac{9 + 1 + 1 + 9}{4} = \frac{20}{4} = 5.
+$$
+
+**Step 3.** Standard deviation.
+
+$$
+s = \sqrt{5} \approx 2.236.
+$$
+
+**Step 4.** Normalised values: we divide each distance by $s$.
+
+$$
+\hat z \approx (-1.342\,;\,-0.447\,;\,0.447\,;\,1.342).
+$$
+
+**Step 5.** We apply $\gamma = 2$ and $\beta = 1$. For example, for the first value:
+
+$$
+2 \cdot (-1.342) + 1 = -2.683 + 1 = -1.683.
+$$
+
+Likewise for the others:
+
+$$
+y \approx (-1.683\,;\,0.106\,;\,1.894\,;\,3.683).
+$$
+
+**Step 6.** We double the batch: $(4\,;\,8\,;\,12\,;\,16)$. Its mean is $10$, its distances $-6$, $-2$, $2$, $6$, its variance
+
+$$
+\frac{36 + 4 + 4 + 36}{4} = 20, \qquad \text{standard deviation } \sqrt{20} = 2\sqrt{5}.
+$$
+
+**Step 7.** First normalised value:
+
+$$
+\frac{-6}{2\sqrt{5}} = \frac{-3}{\sqrt{5}} \approx -1.342.
+$$
+
+**Result.** The normalised values are $(-1.342\,;\,-0.447\,;\,0.447\,;\,1.342)$, then $(-1.683\,;\,0.106\,;\,1.894\,;\,3.683)$ after $\gamma$ and $\beta$. Doubling the batch changes nothing in the normalised values: this is scale invariance.
+
+</Callout>
+
+## In one sentence
+
+Identical starting weights stay identical forever, so we draw them at random, with a variance $\frac{2}{n_{\text{in}} + n_{\text{out}}}$ (Xavier) or $\frac{2}{n_{\text{in}}}$ for the ReLU (He) so that the signal neither dies out nor explodes from one layer to the next, and batch normalisation maintains that scale throughout training by making each layer insensitive to the scale of its weights.
+
+## Quiz
+
+<Quiz
+  client:visible
+  questions={[
+    {
+      q: 'Two hidden neurons start with exactly the same incoming weights, the same bias and the same output weight. What happens during training?',
+      options: [
+        'The noise of the mini-batches eventually separates them',
+        'They always receive the same gradients and stay identical forever',
+        'The more useful of the two takes over',
+        'They converge to opposite weights',
+      ],
+      answer: 1,
+      explain:
+        'By induction: same weights, so same activations, same error signals, same gradients, and the same update. A mini-batch changes nothing, because both neurons see the same examples.',
+    },
+    {
+      q: 'Independent, centred weights of variance Var(w) receive n inputs of mean square E[x²]. What is the variance of the pre-activation?',
+      options: ['Var(w) · E[x²]', 'n · Var(w) · E[x²]', 'n² · Var(w) · E[x²]', 'Var(w) / n'],
+      answer: 1,
+      explain:
+        'Expanding the square of the sum, all the cross terms have zero mean because the weights are centred and independent. What remains is n terms equal to Var(w) · E[x²].',
+    },
+    {
+      q: 'Where does the factor 2 of He initialisation, Var(w) = 2/n, come from?',
+      options: [
+        'From the average between inputs and outputs',
+        'From the ReLU, which wipes out the negative half and divides the mean square of the signal by two',
+        'From the bias, which doubles the variance',
+        'From the derivative of the sigmoid',
+      ],
+      answer: 1,
+      explain:
+        'For a symmetric pre-activation, E[ReLU(z)²] = ½ Var(z). The factor 2 in the weights exactly compensates for this half.',
+    },
+    {
+      q: 'We multiply by 10 all the incoming weights of a neuron followed by a batch normalisation. What happens to its normalised values?',
+      options: [
+        'They are multiplied by 10',
+        'They are multiplied by 100',
+        'They do not change, up to the effects of ε',
+        'They all become zero',
+      ],
+      answer: 2,
+      explain:
+        'The mean and standard deviation of the batch are multiplied by 10, and the normalisation divides one by the other: this is scale invariance.',
+    },
+    {
+      q: 'What are the parameters γ and β of batch normalisation for?',
+      options: [
+        'To avoid a division by zero',
+        'To let the layer undo the normalisation if that is useful, so that no expressive power is lost',
+        'To compute the running average',
+        'To replace the learning rate',
+      ],
+      answer: 1,
+      explain:
+        'With γ equal to the standard deviation of the batch and β equal to its mean, the output becomes exactly the original pre-activation again. The division by zero is the job of ε.',
+    },
+  ]}
+  submitLabel="Check"
+  resetLabel="Reset"
+  scoreLabel="Score"
+/>
+
+## Towards chapter 12
+
+The network now starts from the right point, at the right scale, and batch normalisation keeps it there. But all its weights still advance at the same pace, that of a single learning rate $\eta$. Yet chapter 9 showed the trap of the ravine. Take a score $L = 100\,w_1^2 + w_2^2$, steep along $w_1$ and flat along $w_2$. To avoid diverging in the steep direction, we need $\eta < \frac{1}{100}$. With $\eta = 0.009$, the factor of the steep direction is $1 - 2 \cdot 0.009 \cdot 100 = -0.8$: the weight changes sign at every step, and the descent zigzags from one edge to the other. The factor of the flat direction is $1 - 2 \cdot 0.009 \cdot 1 = 0.982$: it takes about $250$ steps to reduce the gap by $99\,\%$. A single step for everyone is too large for one and too small for the other. Chapter 12 brings two ideas: giving the descent some inertia to damp the zigzag, which is momentum, and giving each weight its own step, which is RMSprop and then Adam.
+
+## Sources
+
+- Rumelhart, D. E., Hinton, G. E. & Williams, R. J. (1986). "Learning representations by back-propagating errors." _Nature_ 323, 533-536. [DOI 10.1038/323533a0](https://doi.org/10.1038/323533a0)
+- Bengio, Y., Simard, P. & Frasconi, P. (1994). "Learning long-term dependencies with gradient descent is difficult." _IEEE Transactions on Neural Networks_ 5(2), 157-166. [DOI 10.1109/72.279181](https://doi.org/10.1109/72.279181)
+- LeCun, Y., Bottou, L., Orr, G. B. & Müller, K.-R. (1998). "Efficient BackProp." In _Neural Networks: Tricks of the Trade_, LNCS 1524, Springer, 9-50. [DOI 10.1007/3-540-49430-8_2](https://doi.org/10.1007/3-540-49430-8_2)
+- Glorot, X. & Bengio, Y. (2010). "Understanding the difficulty of training deep feedforward neural networks." _AISTATS 2010_, PMLR 9, 249-256. [proceedings.mlr.press](https://proceedings.mlr.press/v9/glorot10a.html)
+- He, K., Zhang, X., Ren, S. & Sun, J. (2015). "Delving Deep into Rectifiers: Surpassing Human-Level Performance on ImageNet Classification." _ICCV 2015_, 1026-1034. [DOI 10.1109/ICCV.2015.123](https://doi.org/10.1109/ICCV.2015.123)
+- Ioffe, S. & Szegedy, C. (2015). "Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift." _ICML 2015_, PMLR 37, 448-456. [arXiv:1502.03167](https://arxiv.org/abs/1502.03167)
+- Ba, J. L., Kiros, J. R. & Hinton, G. E. (2016). "Layer Normalization." [arXiv:1607.06450](https://arxiv.org/abs/1607.06450)
+- Santurkar, S., Tsipras, D., Ilyas, A. & Madry, A. (2018). "How Does Batch Normalization Help Optimization?" _NeurIPS 2018_. [arXiv:1805.11604](https://arxiv.org/abs/1805.11604)
+- Goodfellow, I., Bengio, Y. & Courville, A. (2016). _Deep Learning_. MIT Press. Chapter 8, in particular sections 8.4 (parameter initialisation) and 8.7 (optimisation strategies, including batch normalisation). [deeplearningbook.org](https://www.deeplearningbook.org)

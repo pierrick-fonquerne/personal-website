@@ -1,0 +1,10 @@
+slug: variance
+fr:
+  term: Variance
+  definition: "Mesure de dispersion d'une grandeur aléatoire X autour de sa moyenne : Var(X) = E[(X − E[X])²], la moyenne du carré de l'écart à la moyenne. Sa racine carrée est l'écart-type. Multiplier X par a multiplie la variance par a², et la variance d'une somme de termes non corrélés est la somme de leurs variances."
+en:
+  term: Variance
+  definition: 'A measure of how spread out a random quantity X is around its mean: Var(X) = E[(X − E[X])²], the mean of the squared deviation from the mean. Its square root is the standard deviation. Multiplying X by a multiplies the variance by a², and the variance of a sum of uncorrelated terms is the sum of their variances.'
+seeAlso:
+  - initialisation-xavier
+  - normalisation-par-lot

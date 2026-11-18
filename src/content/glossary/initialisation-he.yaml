@@ -1,0 +1,13 @@
+slug: initialisation-he
+fr:
+  term: Initialisation de He
+  definition: "Tirage des poids initiaux d'une couche suivie de ReLU avec une moyenne nulle et une variance 2/n_entrée. Le facteur 2 compense la ReLU, qui annule la moitié des pré-activations et divise donc par deux le carré moyen du signal à chaque couche."
+  source: He et al., 2015
+en:
+  term: He initialisation
+  definition: 'Drawing the initial weights of a layer followed by ReLU with zero mean and variance 2/n_in. The factor 2 compensates for ReLU, which zeroes half of the pre-activations and therefore halves the mean square of the signal at every layer.'
+  source: He et al., 2015
+seeAlso:
+  - relu
+  - variance
+  - initialisation-xavier
